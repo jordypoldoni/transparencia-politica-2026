@@ -1,2 +1,15 @@
+# Segredos e Configurações Pessoais
 .env
+
+# Dependências do Node
 node_modules/
+
+# Logs e arquivos temporários
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
+
+# Arquivos de diagnóstico e testes temporários
+teste_raiz.js
+agentes_politicos_rows.csv
