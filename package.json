@@ -12,7 +12,9 @@
   "type": "commonjs",
   "dependencies": {
     "@supabase/supabase-js": "^2.95.3",
+    "axios": "^1.13.5",
     "dotenv": "^17.3.1",
+    "fast-xml-parser": "^5.3.6",
     "node-fetch": "^2.7.0"
   }
 }
