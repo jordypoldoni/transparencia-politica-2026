@@ -1,0 +1,38 @@
+// Importamos as lógicas que já criamos
+const ServicoAPI = require('../servicos/servico_api');
+const Auditador = require('../servicos/auditador');
+
+/**
+ * PORTAL DE ACESSO AO FRONTEND (NEXT.JS)
+ * Centraliza todas as chamadas de dados da plataforma.
+ */
+export const PlataformaData = {
+    
+    // Entrega o ranking pronto para o componente de card
+    fetchHomeDash: async (ano) => {
+        const ranking = await ServicoAPI.getRankingGeral(ano);
+        const porCategoria = await ServicoAPI.getGastosPorCategoria(ano);
+        
+        return {
+            ranking,
+            porCategoria
+        };
+    },
+
+    // Entrega os alertas para a barra lateral de fiscalização
+    fetchAlertasIntegridade: async (ano) => {
+        // Exemplo: Audita automaticamente as duas categorias mais críticas
+        const desviosMarketing = await Auditador.detectarDesvios(ano, 'Publicidade e Marketing');
+        const desviosTransporte = await Auditador.detectarDesvios(ano, 'Transporte e Mobilidade');
+        
+        return {
+            marketing: desviosMarketing,
+            transporte: desviosTransporte
+        };
+    },
+
+    // Busca os dados de um político específico para a página de perfil
+    fetchPerfilPolitico: async (id_externo) => {
+        return await ServicoAPI.getFichaPolitico(id_externo);
+    }
+};

@@ -1,0 +1,327 @@
+{
+  "name": "Legislativo_Senado",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "8879fe22-8bd0-4f74-bef8-2e73c7143a92",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "url": "https://legis.senado.leg.br/dadosabertos/materia/tramitando",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        208,
+        0
+      ],
+      "id": "e234b7ed-1b77-4838-9758-46ab612ba5d7",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "ListaMateriasTramitando.Materias.Materia",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        416,
+        0
+      ],
+      "id": "541b8fd2-0699-4667-97d5-f5729e69343c",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "maxItems": 5
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        624,
+        0
+      ],
+      "id": "2befbea5-d269-436d-bde7-397228f757ca",
+      "name": "Limit"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Aja como um analista técnico de integridade democrática, especializado em traduzir leis complexas para uma linguagem simples, neutra, lúdica e acessível.\n\nDados do Projeto:\n\nTítulo: {{ $node[\"Split Out\"].json.IdentificacaoMateria.DescricaoIdentificacaoMateria }}\n\nAutor: {{ $node[\"Split Out\"].json.Autor }}\n\nEmenta Original: {{ $node[\"Split Out\"].json.Ementa }}\n\nSua Missão:\n\nInício Amigável: Comece com: \"Olá, cidadão(ã)! Este projeto propõe...\" e explique a ementa de forma simplificada, como se estivesse contando uma novidade a um amigo.\n\nO que isso muda no seu dia a dia?: Crie esta seção usando exemplos práticos. Se a lei for técnica, use uma metáfora lúdica para explicar o impacto real (ex: \"é como se as regras do condomínio mudassem para garantir que todos paguem o que é justo\").\n\nPor que isso é importante?: Explique o valor democrático ou social da proposta.\n\nRégua de Imparcialidade: Mantenha um tom absolutamente neutro. Não elogie nem critique o autor ou a ideia. Use fatos.\n\nRegras de Ouro:\n\nFormatação: Use negrito para ênfase e bullet points para scaneabilidade.\n\nGlossário Embutido: Não use termos jurídicos (ex: \"vacatio legis\", \"ad referendum\") sem explicá-los de forma simples entre parênteses.\n\nProibição: Não dê opinião política.\n\nSaída esperada: Um resumo estruturado e acolhedor, focado em clareza pedagógica, que faça o cidadão sentir que entende o impacto real do que acontece no Congresso."
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        832,
+        0
+      ],
+      "id": "b7beb503-f200-49a8-9f88-a4afd1ea4c6d",
+      "name": "Message a model",
+      "retryOnFail": true,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "2mcW9yERR3a61Kw8",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "analises_politicas",
+          "mode": "list",
+          "cachedResultName": "analises_politicas"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $node[\"Split Out\"].json.IdentificacaoMateria.CodigoMateria.toInt() }}",
+            "resumo_gemini": "={{ $('Message a model').item.json.content.parts[0] }}",
+            "created_at": "={{ $now }}",
+            "titulo": "={{ $('Split Out').item.json.IdentificacaoMateria.DescricaoIdentificacaoMateria }}",
+            "auditoria_llama": "={{ $json.output }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "created_at",
+              "displayName": "created_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "titulo",
+              "displayName": "titulo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "resumo_gemini",
+              "displayName": "resumo_gemini",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "auditoria_llama",
+              "displayName": "auditoria_llama",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "link_oficial",
+              "displayName": "link_oficial",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1504,
+        0
+      ],
+      "id": "4dcd83e6-3842-4e00-b4dd-28e4ab233414",
+      "name": "Insert or update rows in a table",
+      "credentials": {
+        "postgres": {
+          "id": "CxmaFgGv90thM2gH",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Aja como um auditor de integridade. Compare o resumo da IA com a ementa original.\n\nResumo: {{ $json.content.parts[0].text }} Ementa: {{ $node[\"Split Out\"].json.Ementa }}\n\nResponda apenas com um JSON: {\"imparcial\": true/false, \"nota\": 0-10}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1168,
+        0
+      ],
+      "id": "5492d14f-241d-4b89-b1c2-dce9de8fb3ad",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        1168,
+        192
+      ],
+      "id": "ea637f76-7622-4e0f-b42d-bf32e887d10b",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "a0AuvQhB4UC0yXi5",
+          "name": "Groq account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Insert or update rows in a table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "pinData": {},
+  "triggerCount": 0,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}

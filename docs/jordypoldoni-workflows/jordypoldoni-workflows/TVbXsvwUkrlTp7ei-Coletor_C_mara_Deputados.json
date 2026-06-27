@@ -1,0 +1,322 @@
+{
+  "name": "Coletor Câmara Deputados",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://dadosabertos.camara.leg.br/api/v2/proposicoes?ordem=ASC&ordenarPor=id&itens=5",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1888,
+        0
+      ],
+      "id": "540f2f9a-e358-4ae2-b97b-ee53f1dd32a5",
+      "name": "HTTP Request3"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "dados",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        2096,
+        0
+      ],
+      "id": "f4123eeb-4782-405f-8b61-568e7a11d55e",
+      "name": "Split Out1"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Aja como um analista de integridade democrática e tradutor de transparência. Sua especialidade é converter ementas legislativas áridas em explicações simples, lúdicas e absolutamente neutras.\n\nDado de Entrada: > - Ementa: {{ $json.ementa }}\n\nSua Missão:\n\nO \"Tradutor de Impacto\": Comece com: \"Olá, cidadão(ã)! Esta proposta na Câmara pretende...\" e explique a ementa como se explicasse a regra de um jogo novo para um amigo.\n\nO que isso muda no seu dia a dia?: Crie esta seção focando no benefício ou na mudança prática. Use metáforas do cotidiano se o tema for muito abstrato.\n\nPor que isso é importante?: Explique o objetivo central da proposta para a sociedade, sem adjetivos elogiosos ou críticos.\n\nRegras de Ouro (PID2026):\n\nRégua de Imparcialidade: Não use palavras como \"excelente\", \"prejudicial\", \"avanço\" ou \"retrocesso\". Descreva apenas os fatos e consequências.\n\nFormatação: Use negrito para palavras-chave e bullet points.\n\nGlossário Amigável: Se aparecerem termos como \"Quórum\", \"Relator\", \"Comissão\" ou \"Substitutivo\", explique o significado entre parênteses de forma simples.\n\nSaída esperada: Um resumo estruturado e acolhedor, focado em clareza pedagógica, que faça o cidadão sentir que entende o impacto real do que está sendo discutido pelos deputados."
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        2304,
+        0
+      ],
+      "id": "8e097ca0-c98c-4cf0-a48d-208d84d4fd4b",
+      "name": "Message a model",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "2mcW9yERR3a61Kw8",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "legislativo_projetos",
+          "mode": "list",
+          "cachedResultName": "legislativo_projetos"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "link_oficial": "={{ $('Split Out1').item.json.uri }}",
+            "titulo_projeto": "={{ $('Split Out1').item.json.ementa }}",
+            "resumo_ia": "={{ $('Message a model').item.json.content.parts[0].text }}",
+            "biblio_transparente": "={{ { \"fonte\": \"Câmara dos Deputados\", \"url\": $node[\"Split Out1\"].json.uri } }}",
+            "data_atualizacao": "={{ $now }}",
+            "regua_imparcialidade": "={{ $json.output.match(/\\d+/g).pop() }}"
+          },
+          "matchingColumns": [
+            "link_oficial"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "titulo_projeto",
+              "displayName": "titulo_projeto",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "link_oficial",
+              "displayName": "link_oficial",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "resumo_ia",
+              "displayName": "resumo_ia",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "biblio_transparente",
+              "displayName": "biblio_transparente",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "regua_imparcialidade",
+              "displayName": "regua_imparcialidade",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "data_atualizacao",
+              "displayName": "data_atualizacao",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        2992,
+        0
+      ],
+      "id": "d7a335e1-0222-446d-b6df-6ad78ac3e8bb",
+      "name": "Insert or update rows in a table",
+      "credentials": {
+        "postgres": {
+          "id": "CxmaFgGv90thM2gH",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        2640,
+        208
+      ],
+      "id": "882086a4-985b-4508-b0e2-731b77f4be4a",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "a0AuvQhB4UC0yXi5",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.content.parts[0].text }}",
+        "options": {
+          "systemMessage": "Você é o auditor de imparcialidade da Plataforma de Integridade Democrática 2026. Analise o resumo enviado. Identifique qualquer viés político. Ao final, forneça uma nota de 0 a 10, onde 10 é totalmente neutro. Use o formato: NOTA: [valor]."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        2640,
+        0
+      ],
+      "id": "2e883781-b8d8-44a7-9a9e-b4584dba2e9e",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        1680,
+        0
+      ],
+      "id": "f5b2adfb-64bc-4068-9052-3505dccb9ef6",
+      "name": "When clicking ‘Execute workflow’"
+    }
+  ],
+  "connections": {
+    "HTTP Request3": {
+      "main": [
+        [
+          {
+            "node": "Split Out1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out1": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert or update rows in a table": {
+      "main": [
+        []
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Insert or update rows in a table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "saveExecutionProgress": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "staticData": null,
+  "pinData": {},
+  "triggerCount": 0,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}

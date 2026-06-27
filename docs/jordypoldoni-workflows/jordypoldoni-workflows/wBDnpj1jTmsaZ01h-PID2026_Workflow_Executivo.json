@@ -1,0 +1,468 @@
+{
+  "name": "PID2026_Workflow_Executivo",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "ac471afe-dfcf-4526-8d96-62574400e406",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "url": "https://api.portaldatransparencia.gov.br/api-de-dados/licitacoes",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpMultipleHeadersAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "dataInicial",
+              "value": "01/01/2024"
+            },
+            {
+              "name": "dataFinal",
+              "value": "30/01/2024"
+            },
+            {
+              "name": "pagina",
+              "value": "1"
+            },
+            {
+              "name": "codigoOrgao",
+              "value": "52000"
+            }
+          ]
+        },
+        "options": {
+          "lowercaseHeaders": true,
+          "redirect": {
+            "redirect": {}
+          },
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        208,
+        0
+      ],
+      "id": "71b59cbf-d818-45be-a92d-0578b17d3e72",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpMultipleHeadersAuth": {
+          "id": "2iQ90F1E5xE46mQp",
+          "name": "Multiple Headers Auth account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "body",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        416,
+        0
+      ],
+      "id": "345648d5-7e72-429f-9156-1c6465687eda",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "maxItems": 5
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        624,
+        0
+      ],
+      "id": "ce52a5e6-7f95-40e9-ab7b-66c3e9114443",
+      "name": "Limit"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Aja como um tradutor de transparência pública especializado em linguagem simples e lúdica.\n\nMissão: Traduzir dados técnicos de licitações para o cidadão comum, focando em clareza absoluta e um tom acolhedor.\n\nRegras de Escrita:\n\nO que está acontecendo?: Traduza o \"Objeto\" técnico para uma ação do dia a dia. (Ex: Em vez de \"Aquisição de gêneros alimentícios\", use \"O governo vai às compras para garantir a merenda...\").\n\nQuanto custa?: Destaque o valor em negrito.\n\nO \"Como\" (Lúdico): Explique a modalidade de forma simples. Use estas referências:\n\nPregão: \"É como um leilão ao contrário: quem oferecer o menor preço pelo melhor produto, ganha.\"\n\nDispensa: \"É uma compra direta, geralmente usada para casos urgentes ou valores pequenos, sem precisar de toda a burocracia do leilão.\"\n\nInexigibilidade: \"É quando o governo só tem uma opção de escolha (ex: um artista exclusivo ou uma peça única), então não faz sentido fazer leilão.\"\n\nConcorrência: \"É o processo mais completo e rigoroso, usado para grandes obras ou compras muito complexas.\"\n\nEstrutura do Resumo:\n\nTítulo Chamativo (Ex: 🛒 Compras de papelaria no Ministério X)\n\nParágrafo 1: Ação simplificada e órgão responsável.\n\nParágrafo 2: O valor de R$ [Valor].\n\nParágrafo 3: Explicação lúdica da modalidade utilizada.\n\nDados para processar:\n\nÓrgão: {{ $node[\"Limit\"].json.unidadeGestora.orgaoMaximo.nome }}\n\nObjeto: {{ $node[\"Limit\"].json.licitacao.objeto }}\n\nValor: {{ $node[\"Limit\"].json.valor }}\n\nModalidade: {{ $node[\"Limit\"].json.modalidadeLicitacao }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        832,
+        0
+      ],
+      "id": "63157a20-ab50-4539-9ac8-3ada78425981",
+      "name": "Message a model",
+      "retryOnFail": true,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "2mcW9yERR3a61Kw8",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Aja como um auditor de transparência pública. Analise o resumo feito pela IA anterior e compare com os dados brutos da licitação.\n\nRESUMO DA IA:\n{{ $json.content.parts[0].text }}\n\nDADOS REAIS:\n- Objeto Original: {{ $node[\"Limit\"].json.licitacao.objeto }}\n- Valor: {{ $node[\"Limit\"].json.valor }}\n\nSUA TAREFA:\n1. Verifique se o resumo omitiu alguma informação crítica.\n2. Atribua uma nota de 0 a 10 para a fidelidade do resumo.\n3. Se houver algo suspeito no objeto da compra (ex: valores muito altos para itens simples), aponte de forma imparcial.\n\nRESPONDA EM FORMATO JSON:\n{\n  \"fidelidade_nota\": 0,\n  \"alerta_auditoria\": \"texto aqui\",\n  \"omissao_detectada\": true/false\n}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        1184,
+        0
+      ],
+      "id": "63d6ac38-c15b-476e-8afb-d535d0166e29",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        1184,
+        176
+      ],
+      "id": "3fb1b8d8-3dc3-484d-a383-e244c2c7d162",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "a0AuvQhB4UC0yXi5",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Este código localiza o JSON dentro do texto da IA e o extrai\nconst text = $json.output;\nconst jsonMatch = text.match(/\\{[\\s\\S]*\\}/);\n\nif (jsonMatch) {\n  return JSON.parse(jsonMatch[0]);\n} else {\n  return { error: \"JSON não encontrado\" };\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1536,
+        0
+      ],
+      "id": "45619de5-886e-4594-a798-bf28c0364786",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "executivo_licitacoes",
+          "mode": "list",
+          "cachedResultName": "executivo_licitacoes"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $node[\"Limit\"].json.id }}",
+            "valor_estimado": "={{ $node[\"Limit\"].json.valor }}",
+            "fidelidade_nota": "={{ $json.fidelidade_nota }}",
+            "orgao_nome": "={{ $node[\"Limit\"].json.unidadeGestora.orgaoMaximo.nome }}",
+            "objeto_original": "={{ $node[\"Limit\"].json.licitacao.objeto }}",
+            "resumo_cidadao": "={{ $json.content.parts[0].text }}",
+            "alerta_auditoria": "={{ $json.alerta_auditoria }}",
+            "link_fonte": "https://api.portaldatransparencia.gov.br/api-de-dados/licitacoes",
+            "unidade_gestora": "={{ $node[\"Limit\"].json.unidadeGestora.nome }}",
+            "modalidade": "={{ $node[\"Limit\"].json.modalidadeLicitacao }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": true,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "data_auditoria",
+              "displayName": "data_auditoria",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "orgao_nome",
+              "displayName": "orgao_nome",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "unidade_gestora",
+              "displayName": "unidade_gestora",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "objeto_original",
+              "displayName": "objeto_original",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "modalidade",
+              "displayName": "modalidade",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "valor_estimado",
+              "displayName": "valor_estimado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "resumo_cidadao",
+              "displayName": "resumo_cidadao",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "fidelidade_nota",
+              "displayName": "fidelidade_nota",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "alerta_auditoria",
+              "displayName": "alerta_auditoria",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "link_fonte",
+              "displayName": "link_fonte",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1952,
+        0
+      ],
+      "id": "3c570828-752a-4f07-9218-b3ff199f761f",
+      "name": "Insert or update rows in a table",
+      "credentials": {
+        "postgres": {
+          "id": "CxmaFgGv90thM2gH",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1760,
+        0
+      ],
+      "id": "ee61f13b-f05b-46e4-b9b9-7fb6bc7ad468",
+      "name": "Merge"
+    }
+  ],
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert or update rows in a table": {
+      "main": [
+        []
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Insert or update rows in a table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "pinData": {},
+  "triggerCount": 0,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}

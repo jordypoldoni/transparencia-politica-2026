@@ -1,0 +1,255 @@
+{
+  "name": "Legislativo_Senado",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "daa3985c-d809-4d4a-94ee-b44cf2b6163a",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "url": "https://legis.senado.leg.br/dadosabertos/materia/tramitando",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        208,
+        0
+      ],
+      "id": "8fb3b068-0eed-41f4-b6cf-f3080a5159f3",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "ListaMateriasTramitando.Materias.Materia",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        416,
+        0
+      ],
+      "id": "b40805d7-e637-4ab5-a97f-f689851defc4",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "legislativo_projetos",
+          "mode": "list",
+          "cachedResultName": "legislativo_projetos"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "regua_imparcialidade": "={{ $json.regua_imparcialidade }}",
+            "link_oficial": "={{ $json.link_oficial }}",
+            "titulo_projeto": "={{ $json.titulo_projeto }}",
+            "resumo_ia": "={{ $json.resumo_ia }}",
+            "biblio_transparente": "={{ $json.biblio_transparente }}",
+            "data_atualizacao": "={{ $now }}"
+          },
+          "matchingColumns": [
+            "link_oficial"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "titulo_projeto",
+              "displayName": "titulo_projeto",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "link_oficial",
+              "displayName": "link_oficial",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "resumo_ia",
+              "displayName": "resumo_ia",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "biblio_transparente",
+              "displayName": "biblio_transparente",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "regua_imparcialidade",
+              "displayName": "regua_imparcialidade",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "data_atualizacao",
+              "displayName": "data_atualizacao",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "autor_principal_id",
+              "displayName": "autor_principal_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        832,
+        0
+      ],
+      "id": "351db0a6-189a-468c-be84-3470b2bc8dc5",
+      "name": "Insert or update rows in a table",
+      "credentials": {
+        "postgres": {
+          "id": "aTv2bMBtnVWAMUMy",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Acessa os dados com proteção contra campos vazios (undefined)\nconst materia = $input.item.json;\n\n// Função auxiliar para evitar erros de leitura em campos profundos\nconst getSafe = (obj, path, defaultValue = \"\") => {\n  return path.split('.').reduce((acc, part) => acc && acc[part], obj) || defaultValue;\n};\n\nreturn {\n  titulo_projeto: (getSafe(materia, 'IdentificacaoMateria.SiglaCasa') + \" \" + \n                  getSafe(materia, 'IdentificacaoMateria.NumeroMateria') + \"/\" + \n                  getSafe(materia, 'IdentificacaoMateria.AnoMateria')).trim(),\n  \n  link_oficial: `https://www25.senado.leg.br/web/atividade/materias/-/materia/${getSafe(materia, 'IdentificacaoMateria.CodigoMateria')}`,\n  \n  resumo_ia: \"Aguardando processamento...\", \n  \n  biblio_transparente: {\n    codigo_materia: getSafe(materia, 'IdentificacaoMateria.CodigoMateria'),\n    ementa_original: getSafe(materia, 'DadosBasicosMateria.EmentaMateria', \"Ementa não disponível\"),\n    data_apresentacao: getSafe(materia, 'DadosBasicosMateria.DataApresentacao'),\n    casa: \"Senado Federal\"\n  },\n  \n  data_atualizacao: new Date().toISOString(),\n  regua_imparcialidade: 0.5\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        624,
+        0
+      ],
+      "id": "1a3fb9d3-35b6-4443-9e50-e281c4c0371f",
+      "name": "Code in JavaScript"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Insert or update rows in a table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "7fcf441a-5ef5-4636-b5ae-968db2759275",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "038088ad5d8525828354a2cf9252ed07cbe79cb4318d479b08d5f4f618208cd2"
+  },
+  "id": "SiqkxTQQwQnn6W-pQ3g-6",
+  "tags": []
+}

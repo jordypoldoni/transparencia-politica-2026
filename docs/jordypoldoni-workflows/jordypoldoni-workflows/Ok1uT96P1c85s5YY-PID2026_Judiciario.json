@@ -1,0 +1,350 @@
+{
+  "name": "PID2026_Judiciario",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "2cd033f3-5c9e-46eb-b667-98da53202b24",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "url": "https://api.portaldatransparencia.gov.br/api-de-dados/licitacoes",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpMultipleHeadersAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "pagina",
+              "value": "1"
+            },
+            {
+              "name": "codigoOrgao",
+              "value": "15000"
+            },
+            {
+              "name": "dataInicial",
+              "value": "01/01/2024"
+            },
+            {
+              "name": "dataFinal",
+              "value": "13/01/2024"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        208,
+        0
+      ],
+      "id": "b24ffe34-8faa-4a63-9737-c847962442aa",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpMultipleHeadersAuth": {
+          "id": "2iQ90F1E5xE46mQp",
+          "name": "Multiple Headers Auth account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Entrada:\n\nTribunal: {{ $json.unidadeGestora.nome }}\n\nObjeto: {{ $json.licitacao.objeto }}\n\nModalidade: {{ $json.modalidadeLicitacao }}\n\nMissão:\n\nO que o Tribunal está fazendo?: Explique de forma lúdica o objeto da licitação. (Ex: No caso de resíduos de saúde, explique que o tribunal está cuidando do descarte correto de lixo hospitalar para manter o ambiente seguro e dentro da lei).\n\nO que isso muda na sua vida?: Conecte com a eficiência e a saúde pública.\n\nRégua de Imparcialidade: Mantenha neutralidade total, sem elogios ou críticas.\n\nSaída esperada: Um texto acolhedor que faça o cidadão sentir que entende como o Judiciário cuida da infraestrutura para prestar o serviço de justiça."
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        416,
+        0
+      ],
+      "id": "472d8818-2178-4163-befa-4a53b2824e8a",
+      "name": "Message a model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "2mcW9yERR3a61Kw8",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Persona: Auditor de Integridade Democrática. Tarefa: Analise se a descrição do objeto é clara ou se apresenta termos genéricos que dificultam o controle social. Dados: {{ $json.content.parts[0].text }}  Saída: Forneça (estritamente neste formato JSON para que eu possa processar: { \"nota\": [número de 0 a 10], \"justificativa\": \"[sua explicação curta]\" }) uma nota de 0 a 10 para a transparência da descrição e uma justificativa curta.",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        768,
+        0
+      ],
+      "id": "d19471ff-21c4-4dae-a28c-a524666f1a89",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        768,
+        176
+      ],
+      "id": "2991ca52-46e8-4e02-b3af-9ab7d9efdfcb",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "a0AuvQhB4UC0yXi5",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "pid2026_judiciario",
+          "mode": "list",
+          "cachedResultName": "pid2026_judiciario"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "data_licitacao": "={{ $('HTTP Request').item.json.dataPublicacao }}",
+            "tribunal": "={{ $('HTTP Request').item.json.unidadeGestora.nome }}",
+            "objeto_original": "={{ $('HTTP Request').item.json.licitacao.objeto }}",
+            "resumo_ludico": "={{ $('Message a model').item.json.content.parts[0].text }}",
+            "nota_transparencia": "={{ $json.output.match(/\\d+/) ? parseInt($json.output.match(/\\d+/)[0]) : 0 }}",
+            "justificativa_auditoria": "={{ $json.output }}",
+            "modalidade": "={{ $('HTTP Request').item.json.modalidadeLicitacao }}",
+            "link_original": "https://api.portaldatransparencia.gov.br/api-de-dados/licitacoes",
+            "id": "={{ $node[\"HTTP Request\"].json[\"id\"] }}",
+            "data_processamento": "={{ $now }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "data_processamento",
+              "displayName": "data_processamento",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "data_licitacao",
+              "displayName": "data_licitacao",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "tribunal",
+              "displayName": "tribunal",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "objeto_original",
+              "displayName": "objeto_original",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "resumo_ludico",
+              "displayName": "resumo_ludico",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "nota_transparencia",
+              "displayName": "nota_transparencia",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "justificativa_auditoria",
+              "displayName": "justificativa_auditoria",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "modalidade",
+              "displayName": "modalidade",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "link_original",
+              "displayName": "link_original",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "id_api",
+              "displayName": "id_api",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1120,
+        0
+      ],
+      "id": "f2125113-63bb-457a-b8e0-9a44687ebb5c",
+      "name": "Insert or update rows in a table",
+      "executeOnce": false,
+      "retryOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "CxmaFgGv90thM2gH",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Insert or update rows in a table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "pinData": {},
+  "triggerCount": 0,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}

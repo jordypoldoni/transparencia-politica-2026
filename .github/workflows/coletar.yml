@@ -1,0 +1,62 @@
+name: Coletar dados (votos)
+
+on:
+  schedule:
+    - cron: '0 9 * * *'   # todo dia 09:00 UTC (06:00 Brasília)
+  workflow_dispatch:        # permite rodar manualmente pelo botão "Run workflow"
+
+jobs:
+  coletar-votos:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Instalar dependências
+        run: npm install
+
+      - name: Rodar coletor de votos
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          VOTACOES_LIMIT: '60'
+        run: node coletores/coletor_votos.js
+
+      - name: Rodar coletor de votos do Senado
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          ANO: '2026'
+        run: node coletores/coletor_votos_senado.js
+
+      - name: Rodar coletor de gastos (cota parlamentar)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          ANO: '2026'
+        run: node coletores/coletor_gastos.js
+
+      - name: Sincronizar senadores (lista atual)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node coletores/coletor_senadores.js
+
+      - name: Rodar coletor de gastos do Senado (CEAPS)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          ANO: '2026'
+        run: node coletores/coletor_gastos_senado.js
+
+      - name: Piloto estadual — deputados de SP (ALESP)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          ANO_ALESP: '2026'
+        run: node coletores/coletor_alesp.js

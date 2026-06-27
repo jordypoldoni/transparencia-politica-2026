@@ -1,0 +1,401 @@
+{
+  "name": "PID2026_datajud",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "5c780476-2a4b-4b7c-9abb-5ec1853c86f2",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api-publica.datajud.cnj.jus.br/api_publica_tst/_search",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpMultipleHeadersAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"size\": 5,\n  \"query\": {\n    \"match_all\": {}\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        208,
+        0
+      ],
+      "id": "d9c8c680-11cf-4495-8e55-2ace01856f49",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpMultipleHeadersAuth": {
+          "id": "TISBesXo3bXiUWXO",
+          "name": "Multiple Headers Auth account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Analise os dados do processo judicial {{ $json._source.numeroProcesso }}. \n\n1. **Resumo para Leigos**: Explique de forma simples o que significa a classe \"{{ $json._source.classe.nome }}\" e os assuntos citados.\n2. **Assuntos Técnicos**: {{ $json._source.assuntos.map(a => a.nome).join(', ') }}.\n3. **Status Atual**: A última movimentação registrada foi \"{{ $json._source.movimentos[0].nome }}\" em {{ new Date($json._source.movimentos[0].dataHora).toLocaleDateString('pt-BR') }}.\n4. **Transparência**: Este processo tramita no {{ $json._source.tribunal }} no órgão {{ $json._source.orgaoJulgador.nome }}."
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        592,
+        0
+      ],
+      "id": "c3f3efab-1f44-4249-9f9c-dff782244d89",
+      "name": "Message a model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "2mcW9yERR3a61Kw8",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analise o resumo abaixo do processo {{ $json.content.parts[0].text.substring(0, 50) }}...\n\nCONTEÚDO PARA AUDITORIA:\n{{ $json.content.parts[0].text }}\n\nFORMATO DE RESPOSTA (JSON):\n{\n  \"nota_integridade\": [valor de 0 a 10],\n  \"justificativa_nota\": \"texto curto\",\n  \"conflito_identificado\": \"sim/não (se a IA anterior pareceu tendenciosa)\"\n}",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        912,
+        0
+      ],
+      "id": "24732a03-624b-44f9-906d-44cd330727d6",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        912,
+        176
+      ],
+      "id": "da6a58cb-5fbf-4f89-9ed0-1c25fcdf8dba",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "a0AuvQhB4UC0yXi5",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "processos_judiciarios",
+          "mode": "list",
+          "cachedResultName": "processos_judiciarios"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "tribunal": "={{ $('HTTP Request').item.json.unidadeGestora.nome }}",
+            "justificativa_auditoria": "={{ $json.justificativa_nota }}",
+            "id": "={{ $node[\"HTTP Request\"].json[\"id\"] }}",
+            "nota_integridade": "={{ $json.nota_integridade }}",
+            "numero_processo": "={{ $node[\"Split Out\"].json._source.numeroProcesso }}  tribunal: {{ $node[\"Split Out\"].json._source.tribunal }}",
+            "resumo_leigo": "{{ $node[\"Gemini\"].json.content.parts[0].text }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "numero_processo",
+              "displayName": "numero_processo",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "tribunal",
+              "displayName": "tribunal",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "orgao_julgador",
+              "displayName": "orgao_julgador",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "classe_processual",
+              "displayName": "classe_processual",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "resumo_leigo",
+              "displayName": "resumo_leigo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "analise_tecnica",
+              "displayName": "analise_tecnica",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "assuntos_lista",
+              "displayName": "assuntos_lista",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "nota_integridade",
+              "displayName": "nota_integridade",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "justificativa_auditoria",
+              "displayName": "justificativa_auditoria",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "conflito_identificado",
+              "displayName": "conflito_identificado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "data_movimentacao_oficial",
+              "displayName": "data_movimentacao_oficial",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "link_fonte_oficial",
+              "displayName": "link_fonte_oficial",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "criado_em",
+              "displayName": "criado_em",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "atualizado_em",
+              "displayName": "atualizado_em",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        1232,
+        0
+      ],
+      "id": "783d1166-f3c6-4a82-8f20-a4d132e407a8",
+      "name": "Insert or update rows in a table",
+      "executeOnce": false,
+      "retryOnFail": true,
+      "credentials": {
+        "postgres": {
+          "id": "CxmaFgGv90thM2gH",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "hits.hits",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        384,
+        0
+      ],
+      "id": "628ad2d1-bac9-46e6-bf80-8a9e08a3df66",
+      "name": "Split Out"
+    }
+  ],
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Insert or update rows in a table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "staticData": null,
+  "pinData": {},
+  "triggerCount": 0,
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}

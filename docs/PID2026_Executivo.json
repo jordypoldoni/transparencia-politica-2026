@@ -1,0 +1,313 @@
+{
+  "name": "PID2026_Executivo",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "e5a94b19-4884-45b5-ba91-3b1192e2f5a3",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "executivo_licitacoes",
+          "mode": "list",
+          "cachedResultName": "executivo_licitacoes"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "valor_estimado": "={{ $json.valor_estimado }}",
+            "fidelidade_nota": "={{ $json.fidelidade_nota }}",
+            "orgao_nome": "={{ $json.orgao_nome }}",
+            "objeto_original": "={{ $json.objeto_original }}",
+            "resumo_cidadao": "={{ $json.resumo_cidadao }}",
+            "alerta_auditoria": "={{ $json.alerta_auditoria }}",
+            "unidade_gestora": "={{ $json.unidade_gestora }}",
+            "modalidade": "={{ $json.modalidade }}",
+            "link_fonte": "={{ $json.link_fonte }}",
+            "data_auditoria": "={{ $json.data_auditoria }}",
+            "agente_responsavel_id": "={{ $json.agente_responsavel_id }}",
+            "categoria_gasto": "={{ $json.categoria_gasto }}",
+            "agente_autorizador_id": "={{ $json.agente_autorizador_id }}",
+            "id": "={{ $json.id }}",
+            "numero_processo": "={{ $json.numero_processo }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": true,
+              "defaultMatch": true,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "data_auditoria",
+              "displayName": "data_auditoria",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "orgao_nome",
+              "displayName": "orgao_nome",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "unidade_gestora",
+              "displayName": "unidade_gestora",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "objeto_original",
+              "displayName": "objeto_original",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "modalidade",
+              "displayName": "modalidade",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "valor_estimado",
+              "displayName": "valor_estimado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "resumo_cidadao",
+              "displayName": "resumo_cidadao",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "fidelidade_nota",
+              "displayName": "fidelidade_nota",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "alerta_auditoria",
+              "displayName": "alerta_auditoria",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "link_fonte",
+              "displayName": "link_fonte",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "agente_responsavel_id",
+              "displayName": "agente_responsavel_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "categoria_gasto",
+              "displayName": "categoria_gasto",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "agente_autorizador_id",
+              "displayName": "agente_autorizador_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            },
+            {
+              "id": "numero_processo",
+              "displayName": "numero_processo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        656,
+        0
+      ],
+      "id": "368a8342-ca68-40b9-bd87-f32648a6543d",
+      "name": "Insert or update rows in a table",
+      "credentials": {
+        "postgres": {
+          "id": "aTv2bMBtnVWAMUMy",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const item = $input.item.json;\n\n// 1. Lógica de Captura Robusta\n// Buscamos o valor onde a API realmente o coloca\nconst valor = item.licitacao?.valor || item.valor || 0;\n\n// Buscamos o processo onde a API realmente o coloca\nconst processo = item.licitacao?.numeroProcesso || item.numeroProcesso || \"Não informado\";\n\n// 2. Lógica de Auditoria (Mantida, agora com o valor correto)\nlet alerta = \"Normal\";\nconst modalidade = item.modalidadeLicitacao || \"Não informada\";\n\nif (modalidade.includes(\"Dispensa\") && valor > 50000) {\n    alerta = \"⚠️ Valor alto para Dispensa de Licitação\";\n} else if (valor > 1000000) {\n    alerta = \"💰 Contrato Milionário: Requer Atenção\";\n} else if (valor > 500000) {\n    alerta = \"👀 Valor Expressivo: Verificar Detalhes\";\n}\n\n// 3. Retorno para o Postgres\nreturn {\n    json: {\n        id: item.id,\n        data_auditoria: new Date().toISOString(),\n        orgao_nome: item.unidadeGestora?.orgaoMaximo?.nome || \"Órgão não identificado\",\n        unidade_gestora: item.unidadeGestora?.nome || \"Unidade não identificada\",\n        \n        // Agora pegando da variável 'processo' que extraímos acima\n        numero_processo: processo,\n\n        objeto_original: item.licitacao?.objeto || \"Sem descrição\",\n        modalidade: modalidade,\n        \n        // Agora pegando da variável 'valor' que extraímos acima\n        valor_estimado: valor, \n        \n        resumo_cidadao: \"Resumo disponível sob demanda no painel.\",\n        fidelidade_nota: 10,\n        alerta_auditoria: alerta,\n        link_fonte: `https://portaldatransparencia.gov.br/licitacoes/${item.id}`,\n        agente_responsavel_id: null,\n        categoria_gasto: null,\n        agente_autorizador_id: null\n    }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "45959bc4-cf6a-4323-8ee8-2f55dcb1222e",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Configurações Iniciais\nconst apiKey = 'a872c438262a647dfe89cd3c531c2cb0'.trim();\n\n// 2. Período de Teste (Janeiro de 2024 - Validado)\nconst dataInicio = \"01/01/2024\";\nconst dataFim = \"31/01/2024\";\nconst orgao = \"52000\";\n\nconst options = {\n  method: 'GET',\n  url: `https://api.portaldatransparencia.gov.br/api-de-dados/licitacoes`,\n  qs: {\n    dataInicial: dataInicio, \n    dataFinal: dataFim,\n    codigoOrgao: orgao,\n    pagina: 1\n  },\n  headers: {\n    'accept': 'application/json',\n    'chave-api-dados': apiKey,\n    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'\n  },\n  json: true\n};\n\ntry {\n  const response = await this.helpers.httpRequest(options);\n  \n  if (!response || response.length === 0) {\n    return [{ \n      json: { \n        status: \"vazio\", \n        msg: `Sem dados encontrados para ${orgao} em ${dataInicio}` \n      } \n    }];\n  }\n\n  // IMPORTANTE: Retornamos os dados garantindo que o campo 'id' exista\n  return response.map(item => ({ json: item }));\n\n} catch (error) {\n  return [{\n    json: {\n      status: \"erro\",\n      codigo: error.response ? error.response.statusCode : \"Conexao\",\n      mensagem: error.message,\n      detalhe: error.response ? JSON.stringify(error.response.body) : \"Erro na requisição\"\n    }\n  }];\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "83fa1d51-39c4-4a86-bda7-65e81392436f",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const apiKey = 'a872c438262a647dfe89cd3c531c2cb0'.trim();\n\n// 1. Tentamos pegar o número do processo de diferentes caminhos possíveis na API\nconst item = $input.item.json;\nconst numProcesso = item.numeroProcesso || \n                    item.licitacao?.numeroProcesso || \n                    item.processo || \n                    \"\";\n\nconst codOrgao = \"52000\"; \n\n// Se não achou número de processo, vamos logar o que veio para entender o erro\nif (!numProcesso || numProcesso === \"\") {\n    return [{ \n        json: { \n            status: \"debug_necessario\", \n            mensagem: \"Não encontramos o campo numeroProcesso no objeto anterior\",\n            o_que_recebi: item \n        } \n    }];\n}\n\nconst options = {\n  method: 'GET',\n  url: `https://api.portaldatransparencia.gov.br/api-de-dados/despesas/por-processo-licitatorio`,\n  qs: {\n    pagina: 1,\n    numeroProcesso: numProcesso.trim(),\n    codigoOrgao: codOrgao\n  },\n  headers: {\n    'accept': 'application/json',\n    'chave-api-dados': apiKey,\n    'User-Agent': 'Mozilla/5.0'\n  },\n  json: true\n};\n\ntry {\n  const response = await this.helpers.httpRequest(options);\n  \n  if (!response || response.length === 0) {\n    return [{ json: { status: \"vazio\", processo_buscado: numProcesso, msg: \"Processo existe, mas sem pagamentos ainda.\" } }];\n  }\n\n  return response.map(gasto => ({\n    json: {\n      id: gasto.id, \n      licitacao_id: item.id, // Vínculo com a tabela de licitações\n      data_pagamento: gasto.dataReferencia,\n      valor_pago: gasto.valorApurado,\n      fase_despesa: gasto.faseDespesa,\n      favorecido_nome: gasto.favorecido?.nome || \"Não informado\",\n      favorecido_documento: gasto.favorecido?.cpfCnpjFormatado || \"---\",\n      orgao_nome: gasto.unidadeGestora?.orgaoMaximo?.nome || \"Ministério da Defesa\",\n      link_fonte: `https://portaldatransparencia.gov.br/despesas/pagamento/${gasto.id}`\n    }\n  }));\n\n} catch (error) {\n  return [{ \n    json: { \n      status: \"erro_vinculo\", \n      codigo: error.response ? error.response.statusCode : \"???\",\n      msg: error.message,\n      processo_tentado: numProcesso\n    } \n  }];\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        896,
+        0
+      ],
+      "id": "dc546829-e88a-42e2-bcb0-4dbd767a262e",
+      "name": "Code in JavaScript2"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Insert or update rows in a table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert or update rows in a table": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "748931e0-f801-4a8d-868c-dd2a8edf9321",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "038088ad5d8525828354a2cf9252ed07cbe79cb4318d479b08d5f4f618208cd2"
+  },
+  "id": "3ByHIFsamLP0d47dsqd0D",
+  "tags": []
+}

@@ -1,0 +1,584 @@
+{
+  "name": "Coletor Câmara Deputados/Senador",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "https://dadosabertos.camara.leg.br/api/v2/deputados?ordem=ASC&ordenarPor=nome",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        272,
+        96
+      ],
+      "id": "644dc873-1075-414a-9740-1f7daa3ffd43",
+      "name": "HTTP Request3"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "dados",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        480,
+        96
+      ],
+      "id": "c245cb39-6a86-435e-b38e-02b5958734a6",
+      "name": "Split Out1"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Aja como um analista de integridade democrática e tradutor de transparência. Sua especialidade é converter ementas legislativas áridas em explicações simples, lúdicas e absolutamente neutras.\n\nDado de Entrada: > - Ementa: {{ $json.ementa }}\n\nSua Missão:\n\nO \"Tradutor de Impacto\": Comece com: \"Olá, cidadão(ã)! Esta proposta na Câmara pretende...\" e explique a ementa como se explicasse a regra de um jogo novo para um amigo.\n\nO que isso muda no seu dia a dia?: Crie esta seção focando no benefício ou na mudança prática. Use metáforas do cotidiano se o tema for muito abstrato.\n\nPor que isso é importante?: Explique o objetivo central da proposta para a sociedade, sem adjetivos elogiosos ou críticos.\n\nRegras de Ouro (PID2026):\n\nRégua de Imparcialidade: Não use palavras como \"excelente\", \"prejudicial\", \"avanço\" ou \"retrocesso\". Descreva apenas os fatos e consequências.\n\nFormatação: Use negrito para palavras-chave e bullet points.\n\nGlossário Amigável: Se aparecerem termos como \"Quórum\", \"Relator\", \"Comissão\" ou \"Substitutivo\", explique o significado entre parênteses de forma simples.\n\nSaída esperada: Um resumo estruturado e acolhedor, focado em clareza pedagógica, que faça o cidadão sentir que entende o impacto real do que está sendo discutido pelos deputados."
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        32,
+        -512
+      ],
+      "id": "d2ca030c-3c40-4ddc-86f0-2e8d7c9c5214",
+      "name": "Message a model",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "kwBPo4lnKMDsEbmH",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "llama-3.3-70b-versatile",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        368,
+        -336
+      ],
+      "id": "b9659d98-7881-467c-a054-311ef9521623",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "V7cJFoRueMbHdjLz",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.content.parts[0].text }}",
+        "options": {
+          "systemMessage": "Você é o auditor de imparcialidade da Plataforma de Integridade Democrática 2026. Analise o resumo enviado. Identifique qualquer viés político. Ao final, forneça uma nota de 0 a 10, onde 10 é totalmente neutro. Use o formato: NOTA: [valor]."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        368,
+        -512
+      ],
+      "id": "5a0ccb1e-340e-461e-8bc7-101059e0021f",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        192
+      ],
+      "id": "0b3499fa-63a6-41e8-a58e-bfa410d389bd",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "agentes_politicos",
+          "mode": "list",
+          "cachedResultName": "agentes_politicos"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "nome_completo": "={{ $json.nome }}",
+            "partido_atual": "={{ $json.siglaPartido }}",
+            "cargo_atual": "Deputado Federal",
+            "uf_sede": "={{ $json.siglaUf }}",
+            "foto_url": "={{ $json.urlFoto }}",
+            "nome_urna": "={{ $json.nome }}",
+            "id_externo_api": "={{ $json.id }}",
+            "fonte_api": "https://www.camara.leg.br/deputados/{{id_externo_api}}"
+          },
+          "matchingColumns": [
+            "nome_urna"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "nome_completo",
+              "displayName": "nome_completo",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "nome_urna",
+              "displayName": "nome_urna",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "partido_atual",
+              "displayName": "partido_atual",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "cargo_atual",
+              "displayName": "cargo_atual",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "uf_sede",
+              "displayName": "uf_sede",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "promessas_campanha",
+              "displayName": "promessas_campanha",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "redes_sociais",
+              "displayName": "redes_sociais",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "foto_url",
+              "displayName": "foto_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "data_atualizacao",
+              "displayName": "data_atualizacao",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "id_externo_api",
+              "displayName": "id_externo_api",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "fonte_api",
+              "displayName": "fonte_api",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        688,
+        96
+      ],
+      "id": "eb05d5e8-bef8-4866-8c10-b3080bb41459",
+      "name": "Insert or update rows in a table",
+      "credentials": {
+        "postgres": {
+          "id": "aTv2bMBtnVWAMUMy",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://legis.senado.leg.br/dadosabertos/senador/lista/atual.json",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        272,
+        304
+      ],
+      "id": "f4666032-cc2f-4ef4-8122-97fe8e33ba74",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "ListaParlamentarEmExercicio.Parlamentares.Parlamentar",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        480,
+        304
+      ],
+      "id": "7a1bafc4-866c-4dfc-8044-99a84afcbc97",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "schema": {
+          "__rl": true,
+          "mode": "list",
+          "value": "public"
+        },
+        "table": {
+          "__rl": true,
+          "value": "agentes_politicos",
+          "mode": "list",
+          "cachedResultName": "agentes_politicos"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "nome_completo": "={{ $json.IdentificacaoParlamentar.NomeCompletoParlamentar }}",
+            "partido_atual": "={{ $json.IdentificacaoParlamentar.SiglaPartidoParlamentar }}",
+            "cargo_atual": "Senador",
+            "uf_sede": "={{ $json.IdentificacaoParlamentar.UfParlamentar }}",
+            "foto_url": "={{ $json.IdentificacaoParlamentar.UrlFotoParlamentar }}",
+            "nome_urna": "={{ $json.IdentificacaoParlamentar.NomeCompletoParlamentar }}",
+            "id_externo_api": "={{ $json.IdentificacaoParlamentar.CodigoParlamentar }}",
+            "fonte_api": "={{ $('HTTP Request').item.json.ListaParlamentarEmExercicio.noNamespaceSchemaLocation }}"
+          },
+          "matchingColumns": [
+            "nome_urna"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "nome_completo",
+              "displayName": "nome_completo",
+              "required": true,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "nome_urna",
+              "displayName": "nome_urna",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "partido_atual",
+              "displayName": "partido_atual",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "cargo_atual",
+              "displayName": "cargo_atual",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "uf_sede",
+              "displayName": "uf_sede",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "promessas_campanha",
+              "displayName": "promessas_campanha",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "redes_sociais",
+              "displayName": "redes_sociais",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "object",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "foto_url",
+              "displayName": "foto_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "data_atualizacao",
+              "displayName": "data_atualizacao",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "canBeUsedToMatch": false
+            },
+            {
+              "id": "id_externo_api",
+              "displayName": "id_externo_api",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "fonte_api",
+              "displayName": "fonte_api",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        688,
+        304
+      ],
+      "id": "c960e48f-badc-44de-827e-186900c1ab03",
+      "name": "Insert or update rows in a table1",
+      "credentials": {
+        "postgres": {
+          "id": "aTv2bMBtnVWAMUMy",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "HTTP Request3": {
+      "main": [
+        [
+          {
+            "node": "Split Out1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out1": {
+      "main": [
+        [
+          {
+            "node": "Insert or update rows in a table",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        []
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request3",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Insert or update rows in a table1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "97a8d571-8365-44bd-805c-d9e9427868ec",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "038088ad5d8525828354a2cf9252ed07cbe79cb4318d479b08d5f4f618208cd2"
+  },
+  "id": "rEABJASY4s-XVLaSXoJwd",
+  "tags": []
+}
