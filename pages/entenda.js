@@ -144,7 +144,7 @@ export default function Entenda() {
         </div>
 
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-          <Link href="/deputados" style={{ ...fonte, background: t.cor.verde, color: '#fff', border: 'none' }}>Ver os parlamentares →</Link>
+          <Link href="/deputados" style={{ ...fonte, background: t.cor.verde, color: t.cor.ouro, border: 'none' }}>Ver os parlamentares →</Link>
           <Link href="/votacoes" style={fonte}>Ver as votações →</Link>
         </div>
       </div>

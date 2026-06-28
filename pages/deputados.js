@@ -36,7 +36,7 @@ export default function Parlamentares({ deputados, qInicial, ufInicial, casaInic
   const pilulaCasa = (ativa) => ({
     padding: '11px 22px', fontSize: '0.95rem', fontWeight: 700, fontFamily: t.fonte.corpo,
     borderRadius: t.raio.pill, cursor: 'pointer', border: 'none',
-    background: ativa ? t.cor.verde : '#fff', color: ativa ? '#fff' : t.cor.tinta,
+    background: ativa ? t.cor.verde : '#fff', color: ativa ? t.cor.ouro : t.cor.tinta,
     boxShadow: t.sombra.clicavel,
   });
 

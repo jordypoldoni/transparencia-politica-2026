@@ -17,7 +17,7 @@ const corVoto = (tp) => {
   return t.cor.cinza;
 };
 const rotulo = (tp) => (tp === 'Sim' ? 'A favor' : tp === 'Não' ? 'Contra' : tp);
-const pilula = { display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 18px', fontSize: '0.9rem', fontWeight: 700, fontFamily: t.fonte.corpo, borderRadius: t.raio.pill, cursor: 'pointer', textDecoration: 'none', background: '#fff', color: t.cor.tinta, boxShadow: t.sombra.clicavel };
+const pilula = { display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 18px', fontSize: '0.9rem', fontWeight: 700, fontFamily: t.fonte.corpo, borderRadius: t.raio.pill, cursor: 'pointer', textDecoration: 'none', border: 'none', background: '#fff', color: t.cor.tinta, boxShadow: t.sombra.clicavel };
 
 export default function Votacao({ meta, votos }) {
   const router = useRouter();

@@ -150,7 +150,24 @@ const ServicoAPI = {
             .eq('agente_id', id)
             .order('data_voto', { ascending: false });
 
-        const votos = (votosTodos || []).slice(0, 40);
+        // Busca ementa real da proposição para os votos mais recentes (o que estava sendo decidido)
+        const idsVotacoes = [...new Set((votosTodos || []).slice(0, 40).map((v) => v.votacao_id_externa).filter(Boolean))];
+        let metaVotacoes = {};
+        if (idsVotacoes.length > 0) {
+            const { data: votacoesData } = await supabase
+                .from('votacoes')
+                .select('votacao_id_externa, ementa, proposicao_titulo')
+                .in('votacao_id_externa', idsVotacoes);
+            for (const v of votacoesData || []) {
+                metaVotacoes[v.votacao_id_externa] = { ementa: v.ementa, proposicao_titulo: v.proposicao_titulo };
+            }
+        }
+
+        const votos = (votosTodos || []).slice(0, 40).map((v) => ({
+            ...v,
+            ementa_votacao: metaVotacoes[v.votacao_id_externa]?.ementa || null,
+            proposicao_titulo: metaVotacoes[v.votacao_id_externa]?.proposicao_titulo || null,
+        }));
         const resumo_votos = (votosTodos || []).reduce((acc, v) => {
             const t = v.voto_tipo || 'Outro';
             acc[t] = (acc[t] || 0) + 1;
