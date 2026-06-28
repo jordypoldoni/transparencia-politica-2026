@@ -22,6 +22,16 @@ const corVoto = (tipo) => {
 };
 const corCoerencia = (p) => (p >= 80 ? t.cor.sim : p >= 50 ? t.cor.ouro : t.cor.nao);
 
+// Remove prefixo "Votação nominal do" e sufixos genéricos (Senado não tem ementa real)
+function limparEmentaNominal(texto) {
+  if (!texto) return texto;
+  return texto
+    .replace(/^Votação nominal d[ao]\s+/i, '')
+    .replace(/,?\s*nos termos d[oa]s?\s+pareceres?\.?\s*$/i, '')
+    .replace(/,?\s*nos termos d[oa]\s+parecer\.?\s*$/i, '')
+    .trim();
+}
+
 // Extrai da string crua da API: ementa limpa + placar do plenário
 function parsearVoto(texto) {
   if (!texto) return { ementa: '', sim: null, nao: null, abs: null };
@@ -89,7 +99,11 @@ export default function PerfilPolitico({ dados }) {
   const rotuloCota = ehEstadual ? 'cota (verba de gabinete) ?' : 'cota parlamentar ?';
   const fonteNome = ehEstadual ? 'ALESP' : (perfil.fonte_api || '').includes('senado') ? 'Senado Federal' : 'Câmara dos Deputados';
   // % do teto mensal da cota — federal (CEAP), senador (CEAPS) e estadual-SP (verba ALESP)
-  const tetoInfo = pctDoTeto({ fonteApi: perfil.fonte_api, casa: perfil.casa_legislativa, uf: perfil.uf_sede }, media_mensal);
+  const tetoInfo = pctDoTeto({ fonteApi: perfil.fonte_api, casa: perfil.casa_legislativa, uf: perfil.uf_sede }, mediaAno || media_mensal);
+  // Valores do ANO SELECIONADO (reativo ao seletor de ano)
+  const totalAno = dadosAno?.total ?? total_geral;
+  const nNotasAno = dadosAno?.n_notas ?? n_notas;
+  const maiorCatAno = dadosAno?.maior_categoria ?? maior_categoria;
   const corBarra = t.cor.ouro; // cor neutra (sem semáforo verde/vermelho que sugere julgamento)
 
   const linkOficial = () => {
@@ -171,10 +185,10 @@ export default function PerfilPolitico({ dados }) {
         </div>
 
         <p style={{ fontSize: '1.15rem', lineHeight: 1.6, margin: '24px 0 0', maxWidth: '62ch' }}>
-          {n_notas > 0 ? (
-            <>Em <strong>2026</strong>, {perfil.nome_urna} usou <strong style={{ color: t.cor.ouro }}>{brl(total_geral)}</strong> da verba pública de mandato
+          {nNotasAno > 0 ? (
+            <>Em <strong>{anoSel}</strong>, {perfil.nome_urna} usou <strong style={{ color: t.cor.ouro }}>{brl(totalAno)}</strong> da verba pública de mandato
             {' '}— a <button onClick={() => setExplicaCota(!explicaCota)} style={{ background: 'none', border: 'none', color: t.cor.ouro, fontWeight: 700, cursor: 'pointer', padding: 0, fontSize: 'inherit', textDecoration: 'underline dotted' }}>{rotuloCota}</button> —
-            {' '}em <strong>{n_notas}</strong> notas fiscais, cerca de <strong>{brl(media_mensal)} por mês</strong>{maior_categoria ? <>, com mais gasto em <strong>{maior_categoria}</strong></> : null}.</>
+            {' '}em <strong>{nNotasAno}</strong> notas fiscais, cerca de <strong>{brl(mediaAno || media_mensal)} por mês</strong>{maiorCatAno ? <>, com mais gasto em <strong>{maiorCatAno}</strong></> : null}.</>
           ) : (
             <>Ainda estamos reunindo os gastos da <button onClick={() => setExplicaCota(!explicaCota)} style={{ background: 'none', border: 'none', color: t.cor.ouro, fontWeight: 700, cursor: 'pointer', padding: 0, fontSize: 'inherit', textDecoration: 'underline dotted' }}>{rotuloCota}</button> de {perfil.nome_urna} — em breve aqui.</>
           )}
@@ -335,9 +349,13 @@ export default function PerfilPolitico({ dados }) {
                   const { ementa: ementaSubvoto, sim, nao, abs } = parsearVoto(v.ementa_resumida_voto);
                   // Pula ementa genérica tipo "Votação nominal do PLP X nos termos dos pareceres"
                   const ehEmentaGenerica = !v.ementa_votacao || /^Votação nominal/i.test(v.ementa_votacao);
-                  const tituloPrincipal = (ehEmentaGenerica ? null : v.ementa_votacao)
+                  const tituloBruto = (ehEmentaGenerica ? null : v.ementa_votacao)
                     || ementaSubvoto
                     || v.ementa_resumida_voto;
+                  // Para senadores: limpa "Votação nominal do … nos termos dos pareceres" → só o identificador da proposta
+                  const tituloPrincipal = /^Votação nominal/i.test(tituloBruto || '')
+                    ? limparEmentaNominal(tituloBruto)
+                    : tituloBruto;
                   const resultadoPlenario = typeof v.aprovacao === 'number'
                     ? (v.aprovacao === 1 ? 'Aprovado' : 'Rejeitado')
                     : (sim != null && nao != null ? (sim > nao ? 'Aprovado' : 'Rejeitado') : null);
@@ -385,8 +403,8 @@ export default function PerfilPolitico({ dados }) {
                       {aberto && (
                         <div style={{ padding: '0 16px 16px', borderTop: `1px solid ${t.cor.papelQuente2}` }}>
 
-                          {/* O que especificamente foi votado nesta sessão */}
-                          {ementaSubvoto && ementaSubvoto !== tituloPrincipal && (
+                          {/* O que especificamente foi votado nesta sessão (só exibe se não for texto genérico "Votação nominal") */}
+                          {ementaSubvoto && ementaSubvoto !== tituloPrincipal && !/^Votação nominal/i.test(ementaSubvoto) && (
                             <div style={{ margin: '14px 0 0', padding: '12px 14px', background: '#fff', borderRadius: t.raio.sm }}>
                               <p style={{ margin: '0 0 2px', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: t.cor.cinza }}>O que foi votado nesta sessão</p>
                               <p style={{ margin: 0, fontSize: '0.88rem', lineHeight: 1.5, color: t.cor.tinta }}>{ementaSubvoto}</p>
@@ -403,8 +421,8 @@ export default function PerfilPolitico({ dados }) {
                             </p>
                           )}
 
-                          {/* Botão para a página da votação */}
-                          {v.votacao_id_externa && (
+                          {/* Botão para a página da votação — só exibe quando existe registro na tabela votacoes (senadores usam SF-XXXX que não têm página) */}
+                          {v.votacao_id_externa && v.ementa_votacao && (
                             <div style={{ marginTop: '16px' }}>
                               <Link href={`/votacao/${v.votacao_id_externa}`}
                                 style={{

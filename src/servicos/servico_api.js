@@ -120,18 +120,26 @@ const ServicoAPI = {
         for (const g of todosGastos) {
             const a = g.ano; if (!a) continue;
             const v = parseFloat(g.valor_liquido || 0);
-            serie[a] = serie[a] || { total: 0, meses: {} };
+            if (!serie[a]) serie[a] = { total: 0, meses: {}, cats: {}, n_notas: 0 };
             serie[a].total += v;
             if (g.mes) serie[a].meses[g.mes] = (serie[a].meses[g.mes] || 0) + v;
+            const cat = g.categoria_normalizada || 'Outros';
+            serie[a].cats[cat] = (serie[a].cats[cat] || 0) + v;
+            serie[a].n_notas++;
         }
         const anosDisponiveis = Object.keys(serie).map(Number).sort((a, b) => b - a);
         const anoReferencia = anosDisponiveis.includes(2026) ? 2026 : (anosDisponiveis[0] || 2026);
-        const serieMensal = anosDisponiveis.map((a) => ({
-            ano: a,
-            total: serie[a].total,
-            meses: Array.from({ length: 12 }, (_, i) => ({ mes: i + 1, valor: serie[a].meses[i + 1] || 0 })),
-            meses_com_gasto: Object.keys(serie[a].meses).length,
-        }));
+        const serieMensal = anosDisponiveis.map((a) => {
+            const catEntries = Object.entries(serie[a].cats || {}).sort((x, y) => y[1] - x[1]);
+            return {
+                ano: a,
+                total: serie[a].total,
+                meses: Array.from({ length: 12 }, (_, i) => ({ mes: i + 1, valor: serie[a].meses[i + 1] || 0 })),
+                meses_com_gasto: Object.keys(serie[a].meses).length,
+                n_notas: serie[a].n_notas,
+                maior_categoria: catEntries[0]?.[0] || null,
+            };
+        });
 
         // Agregados do veredito usam o ANO DE REFERÊNCIA (atual, ou o mais recente com dados)
         const gastosAno = todosGastos.filter((g) => g.ano === anoReferencia);
