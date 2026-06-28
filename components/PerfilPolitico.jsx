@@ -9,11 +9,15 @@ import { explicarTipo } from '../src/lib/votacao';
 const brl = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v || 0);
 const brlExato = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
 
+const VOTOS_REAIS = new Set(['sim', 'não', 'nao', 'obstrução', 'abstenção', 'abstencao']);
+const isVotoReal = (tipo) => VOTOS_REAIS.has((tipo || '').toLowerCase());
+
 const corVoto = (tipo) => {
   const x = (tipo || '').toLowerCase();
   if (x === 'sim') return { bg: '#E7F3EC', fg: t.cor.sim };
   if (x === 'não' || x === 'nao') return { bg: '#FBEAE7', fg: t.cor.nao };
   if (x === 'obstrução') return { bg: '#FCEFE0', fg: t.cor.alertaTexto };
+  if (x === 'abstenção' || x === 'abstencao') return { bg: '#F0EFE9', fg: t.cor.cinza };
   return { bg: '#EEEDE8', fg: t.cor.cinza };
 };
 const corCoerencia = (p) => (p >= 80 ? t.cor.sim : p >= 50 ? t.cor.ouro : t.cor.nao);
@@ -307,21 +311,33 @@ export default function PerfilPolitico({ dados }) {
 
           {votos.length > 0 ? (
             <>
-              {/* Resumo por tipo */}
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '18px' }}>
-                {Object.entries(resumo_votos).map(([tipo, q]) => (
-                  <span key={tipo} style={{ fontSize: '0.78rem', fontWeight: 700, padding: '4px 12px', borderRadius: '6px', background: corVoto(tipo).bg, color: corVoto(tipo).fg }}>{tipo}: {q}</span>
-                ))}
-              </div>
+              {/* Resumo por tipo — separa votos reais de ausências */}
+              {(() => {
+                const entradas = Object.entries(resumo_votos);
+                const reais = entradas.filter(([tp]) => isVotoReal(tp));
+                const totalAusencias = entradas.filter(([tp]) => !isVotoReal(tp)).reduce((s, [, q]) => s + q, 0);
+                return (
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '18px' }}>
+                    {reais.map(([tipo, q]) => (
+                      <span key={tipo} style={{ fontSize: '0.78rem', fontWeight: 700, padding: '4px 12px', borderRadius: '6px', background: corVoto(tipo).bg, color: corVoto(tipo).fg }}>{tipo}: {q}</span>
+                    ))}
+                    {totalAusencias > 0 && (
+                      <span style={{ fontSize: '0.78rem', fontWeight: 700, padding: '4px 12px', borderRadius: '6px', background: '#EEEDE8', color: t.cor.cinza }}>Ausente: {totalAusencias}</span>
+                    )}
+                  </div>
+                );
+              })()}
 
               {/* Cards de votos com expansão */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {votos.slice(0, 20).map((v, i) => {
+                {votos.filter((v) => isVotoReal(v.voto_tipo)).slice(0, 20).map((v, i) => {
                   const aberto = votoAberto === i;
                   const { ementa: ementaSubvoto, sim, nao, abs } = parsearVoto(v.ementa_resumida_voto);
-                  // Título principal = ementa da proposição (o que está sendo decidido)
-                  // Fallback = texto limpo do subvoto (para senado/votos sem ementa na tabela)
-                  const tituloPrincipal = v.ementa_votacao || ementaSubvoto || v.ementa_resumida_voto;
+                  // Pula ementa genérica tipo "Votação nominal do PLP X nos termos dos pareceres"
+                  const ehEmentaGenerica = !v.ementa_votacao || /^Votação nominal/i.test(v.ementa_votacao);
+                  const tituloPrincipal = (ehEmentaGenerica ? null : v.ementa_votacao)
+                    || ementaSubvoto
+                    || v.ementa_resumida_voto;
                   const resultadoPlenario = typeof v.aprovacao === 'number'
                     ? (v.aprovacao === 1 ? 'Aprovado' : 'Rejeitado')
                     : (sim != null && nao != null ? (sim > nao ? 'Aprovado' : 'Rejeitado') : null);
