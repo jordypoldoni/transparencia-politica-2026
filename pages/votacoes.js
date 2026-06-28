@@ -12,8 +12,8 @@ const hv = (v) => humanizarVotacao({ descricao_votacao: v.descricao, aprovacao: 
 
 const pill = (ativo) => ({
   padding: '8px 16px', fontSize: '0.85rem', fontWeight: 700, fontFamily: t.fonte.corpo,
-  borderRadius: t.raio.pill, cursor: 'pointer',
-  background: ativo ? t.cor.verde : '#fff', color: ativo ? '#fff' : t.cor.tinta,
+  borderRadius: t.raio.pill, cursor: 'pointer', border: 'none',
+  background: ativo ? t.cor.verde : '#fff', color: ativo ? t.cor.ouro : t.cor.tinta,
   boxShadow: t.sombra.clicavel, transition: 'background .15s',
 });
 
@@ -76,29 +76,28 @@ export default function Votacoes({ votacoes, temas = [] }) {
           <CampoBusca valor={busca} aoMudar={setBusca} placeholder="Buscar por assunto, proposta ou autor… (ex.: saúde, imposto, PEC 45)" aoLabel="Buscar votações" />
         </div>
 
-        {/* Período + status */}
-        <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
-          <div style={{ flex: '0 1 220px', minWidth: '180px' }}>
+        {/* Período + Tema + status */}
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '22px', flexWrap: 'wrap', alignItems: 'center' }}>
+          <div style={{ flex: '0 1 200px', minWidth: '160px' }}>
             <CampoSelect opcoes={PERIODOS} valor={periodo} aoSelecionar={setPeriodo} placeholder="Qualquer período" aoLabel="Filtrar por período" buscavel={false} />
           </div>
+          {temas.length > 0 && (
+            <div style={{ flex: '0 1 220px', minWidth: '170px' }}>
+              <CampoSelect
+                opcoes={[{ valor: '', rotulo: 'Qualquer tema' }, ...temas.map((c) => ({ valor: c.nome_categoria, rotulo: c.nome_categoria }))]}
+                valor={tema}
+                aoSelecionar={setTema}
+                placeholder="Qualquer tema"
+                aoLabel="Filtrar por tema"
+                buscavel={false}
+              />
+            </div>
+          )}
           <button onClick={() => setFiltro('todas')} style={pill(filtro === 'todas')}>Todas</button>
           <button onClick={() => setFiltro('aprovadas')} style={pill(filtro === 'aprovadas')}>Aprovadas</button>
           <button onClick={() => setFiltro('rejeitadas')} style={pill(filtro === 'rejeitadas')}>Rejeitadas</button>
           <span style={{ marginLeft: 'auto', alignSelf: 'center', fontSize: '0.85rem', color: t.cor.cinza }}>{lista.length} votaç{lista.length === 1 ? 'ão' : 'ões'}</span>
         </div>
-
-        {/* Temas — filtragem rápida */}
-        {temas.length > 0 && (
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '22px', flexWrap: 'wrap', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.8rem', color: t.cor.cinza, fontWeight: 700 }}>Tema:</span>
-            <button onClick={() => setTema('')} style={pill(tema === '')}>Todos</button>
-            {temas.map((c) => (
-              <button key={c.nome_categoria} onClick={() => setTema(tema === c.nome_categoria ? '' : c.nome_categoria)} style={pill(tema === c.nome_categoria)}>
-                {c.nome_categoria}
-              </button>
-            ))}
-          </div>
-        )}
 
         {votacoes.length === 0 ? (
           <p style={{ color: t.cor.cinza }}>Ainda não há votações com metadados coletados. Rode o coletor de votos para popular o assunto e o autor.</p>

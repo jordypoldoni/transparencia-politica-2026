@@ -19,10 +19,10 @@ const botaoPilula = {
   border: 'none', borderRadius: t.raio.pill, cursor: 'pointer', textDecoration: 'none',
 };
 
-export default function Home({ radarCamara, radarSenado, votacoes, parlamentares = [] }) {
+export default function Home({ radarCamara, radarSenado, radarEstadual, votacoes, parlamentares = [] }) {
   const router = useRouter();
   const [casa, setCasa] = useState('Câmara');
-  const radar = casa === 'Senado' ? radarSenado : radarCamara;
+  const radar = casa === 'Senado' ? radarSenado : casa === 'Estaduais SP' ? radarEstadual : radarCamara;
 
   const parlOpcoes = useMemo(() => parlamentares.map((p) => ({
     valor: p.slug,
@@ -114,15 +114,18 @@ export default function Home({ radarCamara, radarSenado, votacoes, parlamentares
             <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.4rem,3vw,2rem)', margin: 0 }}>
               Quem mais usou a verba pública
             </h2>
-            <div style={{ display: 'flex', gap: '8px' }} role="tablist">
-              <button onClick={() => setCasa('Câmara')} style={togglePilula(casa === 'Câmara')}>Deputados</button>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }} role="tablist">
+              <button onClick={() => setCasa('Câmara')} style={togglePilula(casa === 'Câmara')}>Dep. Federais</button>
               <button onClick={() => setCasa('Senado')} style={togglePilula(casa === 'Senado')}>Senadores</button>
+              <button onClick={() => setCasa('Estaduais SP')} style={togglePilula(casa === 'Estaduais SP')}>Dep. Estaduais SP</button>
             </div>
           </div>
           <p style={{ color: 'rgba(255,255,255,0.82)', maxWidth: '62ch', lineHeight: 1.5, margin: '10px 0 22px', fontSize: '0.96rem' }}>
             {casa === 'Senado'
               ? 'Senadores que mais usaram a cota (CEAPS) em 2026.'
-              : 'Deputados que mais usaram a cota parlamentar em 2026.'}{' '}Toque para ver <em>em quê</em>. O <strong style={{ color: t.cor.ouro }}>teto da cota muda por estado e é diferente entre Câmara e Senado</strong> — por isso as listas são separadas. Fonte: {casa === 'Senado' ? 'Senado Federal' : 'Câmara dos Deputados'}.
+              : casa === 'Estaduais SP'
+              ? 'Deputados estaduais de SP que mais usaram a verba de gabinete em 2026.'
+              : 'Deputados federais que mais usaram a cota parlamentar em 2026.'}{' '}Toque para ver <em>em quê</em>. O <strong style={{ color: t.cor.ouro }}>teto da cota muda por estado e é diferente entre Câmara, Senado e Assembleias</strong> — por isso as listas são separadas. Fonte: {casa === 'Senado' ? 'Senado Federal' : casa === 'Estaduais SP' ? 'ALESP' : 'Câmara dos Deputados'}.
           </p>
           <ol style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: '8px' }}>
             {radar.map((p, i) => (
@@ -195,11 +198,12 @@ export default function Home({ radarCamara, radarSenado, votacoes, parlamentares
 }
 
 export async function getServerSideProps() {
-  let radarCamara = [], radarSenado = [], votacoes = [], parlamentares = [];
+  let radarCamara = [], radarSenado = [], radarEstadual = [], votacoes = [], parlamentares = [];
   try {
-    [radarCamara, radarSenado, votacoes, parlamentares] = await Promise.all([
+    [radarCamara, radarSenado, radarEstadual, votacoes, parlamentares] = await Promise.all([
       ServicoAPI.getRadarGastos(2026, 6, 'Câmara'),
       ServicoAPI.getRadarGastos(2026, 6, 'Senado'),
+      ServicoAPI.getRadarGastos(2026, 6, 'Assembleia (SP)'),
       ServicoAPI.getVotacoesRecentes(10),
       ServicoAPI.listarDeputados(),
     ]);
@@ -213,6 +217,7 @@ export async function getServerSideProps() {
     props: {
       radarCamara: JSON.parse(JSON.stringify(radarCamara)),
       radarSenado: JSON.parse(JSON.stringify(radarSenado)),
+      radarEstadual: JSON.parse(JSON.stringify(radarEstadual)),
       votacoes: JSON.parse(JSON.stringify(votacoes)),
       parlamentares: JSON.parse(JSON.stringify(parlamentaresSlim)),
     },

@@ -8,8 +8,8 @@ const UFS = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','P
 
 const pilula = (ativo) => ({
   padding: '9px 16px', fontSize: '0.9rem', fontWeight: 700, fontFamily: t.fonte.corpo,
-  borderRadius: t.raio.pill, cursor: 'pointer',
-  background: ativo ? t.cor.verde : '#fff', color: ativo ? '#fff' : t.cor.tinta,
+  borderRadius: t.raio.pill, cursor: 'pointer', border: 'none',
+  background: ativo ? t.cor.verde : '#fff', color: ativo ? t.cor.ouro : t.cor.tinta,
   boxShadow: t.sombra.clicavel, transition: 'background .15s',
 });
 
@@ -134,7 +134,7 @@ export default function Comecar({ modo, temasDisponiveis, ufSel, temasSel, deput
       </div>
 
       <button onClick={enviar} disabled={!uf && temas.length === 0}
-        style={{ padding: '16px 30px', fontSize: '1.05rem', fontWeight: 700, fontFamily: t.fonte.corpo, color: '#fff', background: (!uf && temas.length === 0) ? t.cor.cinza : t.cor.verde, border: 'none', borderRadius: t.raio.pill, cursor: (!uf && temas.length === 0) ? 'not-allowed' : 'pointer', boxShadow: (!uf && temas.length === 0) ? 'none' : t.sombra.clicavel }}>
+        style={{ padding: '16px 30px', fontSize: '1.05rem', fontWeight: 700, fontFamily: t.fonte.corpo, color: (!uf && temas.length === 0) ? '#fff' : t.cor.ouro, background: (!uf && temas.length === 0) ? t.cor.cinza : t.cor.verde, border: 'none', borderRadius: t.raio.pill, cursor: (!uf && temas.length === 0) ? 'not-allowed' : 'pointer', boxShadow: (!uf && temas.length === 0) ? 'none' : t.sombra.clicavel }}>
         Ver o que importa pra mim →
       </button>
     </div>

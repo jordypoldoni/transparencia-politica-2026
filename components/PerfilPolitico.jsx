@@ -16,6 +16,18 @@ const corVoto = (tipo) => {
 };
 const corCoerencia = (p) => (p >= 80 ? t.cor.sim : p >= 50 ? t.cor.ouro : t.cor.nao);
 
+// Remove artefatos do texto cru da API:
+// - prefixo "Aprovado/Rejeitado a/o ..." (redundante com o badge)
+// - sufixo ". Sim: N; Não: N; Abstenção: N; Total: N."
+function limparEmentaVoto(texto) {
+  if (!texto) return '';
+  return texto
+    .replace(/^(Aprovad[ao]|Rejeitad[ao]|Votad[ao]|Retirad[ao])\s+(a|o|em|por)\s+/i, '')
+    .replace(/\.\s*Sim:\s*\d+[^.]*\.?\s*$/i, '')
+    .replace(/\s*Sim:\s*\d+[^.]*\.?\s*$/i, '')
+    .trim();
+}
+
 const dicionario = {
   'Publicidade e Marketing': 'Divulgação do mandato: redes, sites, impressos.',
   'Escritório e Apoio': 'Aluguel de sala, internet, telefone, correios no estado.',
@@ -292,13 +304,20 @@ export default function PerfilPolitico({ dados }) {
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {votos.slice(0, 12).map((v, i) => (
-                  <div key={i} style={{ display: 'flex', gap: '12px', alignItems: 'flex-start', padding: '12px', background: t.cor.papelQuente, borderRadius: t.raio.md, boxShadow: t.sombra.sutil }}>
-                    <span style={{ flexShrink: 0, fontSize: '0.7rem', fontWeight: 800, padding: '4px 10px', borderRadius: '6px', background: corVoto(v.voto_tipo).bg, color: corVoto(v.voto_tipo).fg, minWidth: '54px', textAlign: 'center' }}>{v.voto_tipo}</span>
-                    <div>
-                      <p style={{ margin: '0 0 4px', fontSize: '0.88rem', lineHeight: 1.4 }}>{v.ementa_resumida_voto}</p>
-                      <span style={{ fontSize: '0.72rem', color: t.cor.cinza }}>
+                  <div key={i} style={{ display: 'flex', gap: '14px', alignItems: 'flex-start', padding: '14px', background: t.cor.papelQuente, borderRadius: t.raio.md, boxShadow: t.sombra.sutil }}>
+                    <span style={{
+                      flexShrink: 0, fontSize: '0.85rem', fontWeight: 800,
+                      padding: '6px 14px', borderRadius: '8px',
+                      background: corVoto(v.voto_tipo).bg, color: corVoto(v.voto_tipo).fg,
+                      minWidth: '62px', textAlign: 'center', lineHeight: 1.2,
+                    }}>{v.voto_tipo}</span>
+                    <div style={{ minWidth: 0 }}>
+                      <p style={{ margin: '0 0 5px', fontSize: '0.9rem', lineHeight: 1.45, color: t.cor.tinta }}>
+                        {limparEmentaVoto(v.ementa_resumida_voto)}
+                      </p>
+                      <span style={{ fontSize: '0.75rem', color: t.cor.cinza }}>
                         {v.data_voto ? new Date(v.data_voto).toLocaleDateString('pt-BR') : ''}
-                        {typeof v.aprovacao === 'number' && (v.aprovacao === 1 ? ' · Aprovado' : ' · Rejeitado')}
+                        {typeof v.aprovacao === 'number' && (v.aprovacao === 1 ? ' · Aprovado no plenário' : ' · Rejeitado no plenário')}
                       </span>
                     </div>
                   </div>
