@@ -15,12 +15,13 @@ jobs:
       - name: Configurar Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Instalar dependências
-        run: npm install
+        # --ignore-scripts evita compilação nativa do sharp (não usado nos coletores)
+        run: npm install --ignore-scripts
 
-      - name: Rodar coletor de votos
+      - name: Rodar coletor de votos (Câmara)
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
@@ -32,6 +33,7 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           ANO: '2026'
+        continue-on-error: true
         run: node coletores/coletor_votos_senado.js
 
       - name: Rodar coletor de gastos (cota parlamentar)
@@ -39,12 +41,14 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           ANO: '2026'
+        continue-on-error: true
         run: node coletores/coletor_gastos.js
 
       - name: Sincronizar senadores (lista atual)
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        continue-on-error: true
         run: node coletores/coletor_senadores.js
 
       - name: Rodar coletor de gastos do Senado (CEAPS)
@@ -52,6 +56,7 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           ANO: '2026'
+        continue-on-error: true
         run: node coletores/coletor_gastos_senado.js
 
       - name: Piloto estadual — deputados de SP (ALESP)
@@ -59,4 +64,5 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           ANO_ALESP: '2026'
+        continue-on-error: true
         run: node coletores/coletor_alesp.js
