@@ -76,11 +76,17 @@ async function main() {
   for (const j of janelas) {
     let url = `${API}/votacoes?dataInicio=${j.dataInicio}&dataFim=${j.dataFim}&ordem=DESC&ordenarPor=dataHoraRegistro&itens=100`;
     for (let pagina = 0; pagina < MAX_PAGINAS && url; pagina++) {
-      const r = await getJson(url);
-      for (const v of r.dados || []) {
-        if (EH_NOMINAL.test(v.descricao || '')) nominais.push(v);
+      try {
+        const r = await getJson(url);
+        for (const v of r.dados || []) {
+          if (EH_NOMINAL.test(v.descricao || '')) nominais.push(v);
+        }
+        url = (r.links || []).find((l) => l.rel === 'next')?.href || null;
+      } catch (e) {
+        // Falha numa página não mata o coletor — pula e vai para próxima janela
+        console.warn(`⚠️  Janela ${j.dataInicio}→${j.dataFim} pág ${pagina + 1} falhou após retries: ${e.message}. Continuando...`);
+        url = null; // encerra paginação desta janela
       }
-      url = (r.links || []).find((l) => l.rel === 'next')?.href || null;
       await sleep(200);
     }
   }
