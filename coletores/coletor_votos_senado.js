@@ -16,10 +16,18 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const arr = (x) => (Array.isArray(x) ? x : (x ? [x] : []));
 const fmt = (d) => d.toISOString().slice(0, 10).replace(/-/g, ''); // AAAAMMDD
 
-async function getJson(url) {
-  const res = await fetch(url, { headers: { Accept: 'application/json' } });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return res.json();
+async function getJson(url, tentativas = 4) {
+  for (let t = 0; t < tentativas; t++) {
+    const res = await fetch(url, { headers: { Accept: 'application/json' } });
+    if (res.ok) return res.json();
+    if (res.status >= 500 && t < tentativas - 1) {
+      const espera = (t + 1) * 15000;
+      console.warn(`⚠️  HTTP ${res.status} (tentativa ${t + 1}/${tentativas}) — aguardando ${espera / 1000}s...`);
+      await sleep(espera);
+      continue;
+    }
+    throw new Error(`HTTP ${res.status}`);
+  }
 }
 
 function normVoto(v) {

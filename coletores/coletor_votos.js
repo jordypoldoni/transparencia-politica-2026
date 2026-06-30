@@ -20,10 +20,19 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 // Votação nominal tem "Sim: 154; Não: 245..." na descrição.
 const EH_NOMINAL = /sim:\s*\d+/i;
 
-async function getJson(url) {
-  const res = await fetch(url, { headers: { Accept: 'application/json' } });
-  if (!res.ok) throw new Error(`HTTP ${res.status} em ${url}`);
-  return res.json();
+async function getJson(url, tentativas = 4) {
+  for (let t = 0; t < tentativas; t++) {
+    const res = await fetch(url, { headers: { Accept: 'application/json' } });
+    if (res.ok) return res.json();
+    // 5xx = falha temporária do servidor — espera e tenta de novo
+    if (res.status >= 500 && t < tentativas - 1) {
+      const espera = (t + 1) * 15000; // 15s, 30s, 45s
+      console.warn(`⚠️  HTTP ${res.status} (tentativa ${t + 1}/${tentativas}) — aguardando ${espera / 1000}s...`);
+      await sleep(espera);
+      continue;
+    }
+    throw new Error(`HTTP ${res.status} em ${url}`);
+  }
 }
 
 // A API da Câmara rejeita intervalos largos; quebramos em janelas de ~30 dias.
