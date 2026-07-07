@@ -140,4 +140,7 @@ async function main() {
   console.log(`Concluido: ${linhasAg.length} deputados estaduais e ${linhasDesp.length} despesas (SP/${ANO}).`);
 }
 
-main().catch((e) => { console.error('ERRO:', e.message); process.exit(1); });
+import { refreshRadar } from './refresh_radar.js';
+main()
+  .then(() => refreshRadar())
+  .catch((e) => { console.error('ERRO:', e.message); process.exit(1); });

@@ -127,24 +127,30 @@ export default function Home({ radarCamara, radarSenado, radarEstadual, votacoes
               ? 'Deputados estaduais de SP que mais usaram a verba de gabinete em 2026.'
               : 'Deputados federais que mais usaram a cota parlamentar em 2026.'}{' '}Toque para ver <em>em quê</em>. O <strong style={{ color: t.cor.ouro }}>teto da cota muda por estado e é diferente entre Câmara, Senado e Assembleias</strong> — por isso as listas são separadas. Fonte: {casa === 'Senado' ? 'Senado Federal' : casa === 'Estaduais SP' ? 'ALESP' : 'Câmara dos Deputados'}.
           </p>
-          <ol style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: '8px' }}>
-            {radar.map((p, i) => (
-              <li key={p.id}>
-                <Link href={`/deputado/${p.slug}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '14px', background: 'rgba(255,255,255,0.07)', borderRadius: '6px', padding: '12px 16px' }}>
-                  <span style={{ flexShrink: 0, width: '26px', fontFamily: t.fonte.titulo, fontWeight: 600, color: t.cor.ouro, fontSize: '1.2rem' }}>{i + 1}</span>
-                  <img src={p.foto_url || 'https://via.placeholder.com/80'} alt={p.nome_urna} loading="lazy" style={{ width: '44px', height: '44px', borderRadius: '50%', objectFit: 'cover', objectPosition: 'top', flexShrink: 0, background: '#fff2' }} />
-                  <span style={{ flex: 1, minWidth: 0 }}>
-                    <span style={{ display: 'block', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.nome_urna}</span>
-                    <span style={{ fontSize: '0.82rem', opacity: 0.75 }}>{p.partido_atual} · {p.uf_sede} · em {p.n_notas} notas</span>
-                  </span>
-                  <span style={{ flexShrink: 0, textAlign: 'right' }}>
-                    <span style={{ display: 'block', fontWeight: 800, fontSize: '1.05rem' }}>{brl(p.total)}</span>
-                    <span style={{ fontSize: '0.72rem', opacity: 0.7 }}>ver no quê →</span>
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ol>
+          {radar.length === 0 ? (
+            <p style={{ color: 'rgba(255,255,255,0.55)', margin: 0, fontSize: '0.95rem' }}>
+              Dados temporariamente indisponíveis. Tente recarregar a página.
+            </p>
+          ) : (
+            <ol style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: '8px' }}>
+              {radar.map((p, i) => (
+                <li key={p.id}>
+                  <Link href={`/deputado/${p.slug}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '14px', background: 'rgba(255,255,255,0.07)', borderRadius: '6px', padding: '12px 16px' }}>
+                    <span style={{ flexShrink: 0, width: '26px', fontFamily: t.fonte.titulo, fontWeight: 600, color: t.cor.ouro, fontSize: '1.2rem' }}>{i + 1}</span>
+                    <img src={p.foto_url || 'https://via.placeholder.com/80'} alt={p.nome_urna} loading="lazy" style={{ width: '44px', height: '44px', borderRadius: '50%', objectFit: 'cover', objectPosition: 'top', flexShrink: 0, background: '#fff2' }} />
+                    <span style={{ flex: 1, minWidth: 0 }}>
+                      <span style={{ display: 'block', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.nome_urna}</span>
+                      <span style={{ fontSize: '0.82rem', opacity: 0.75 }}>{p.partido_atual} · {p.uf_sede} · em {p.n_notas} notas</span>
+                    </span>
+                    <span style={{ flexShrink: 0, textAlign: 'right' }}>
+                      <span style={{ display: 'block', fontWeight: 800, fontSize: '1.05rem' }}>{brl(p.total)}</span>
+                      <span style={{ fontSize: '0.72rem', opacity: 0.7 }}>ver no quê →</span>
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ol>
+          )}
         </div>
       </section>
 
@@ -198,18 +204,19 @@ export default function Home({ radarCamara, radarSenado, radarEstadual, votacoes
 }
 
 export async function getServerSideProps() {
-  let radarCamara = [], radarSenado = [], radarEstadual = [], votacoes = [], parlamentares = [];
-  try {
-    [radarCamara, radarSenado, radarEstadual, votacoes, parlamentares] = await Promise.all([
-      ServicoAPI.getRadarGastos(2026, 6, 'Câmara'),
-      ServicoAPI.getRadarGastos(2026, 6, 'Senado'),
-      ServicoAPI.getRadarGastos(2026, 6, 'Assembleia (SP)'),
-      ServicoAPI.getVotacoesRecentes(10),
-      ServicoAPI.listarDeputados(),
-    ]);
-  } catch (e) {
-    console.error('Home:', e.message);
-  }
+  const settled = await Promise.allSettled([
+    ServicoAPI.getRadarGastos(2026, 6, 'Câmara'),
+    ServicoAPI.getRadarGastos(2026, 6, 'Senado'),
+    ServicoAPI.getRadarGastos(2026, 6, 'Assembleia (SP)'),
+    ServicoAPI.getVotacoesRecentes(10),
+    ServicoAPI.listarDeputados(),
+  ]);
+  const get = (i) => (settled[i].status === 'fulfilled' ? settled[i].value : []);
+  const radarCamara   = get(0);
+  const radarSenado   = get(1);
+  const radarEstadual = get(2);
+  const votacoes      = get(3);
+  const parlamentares = get(4);
   const parlamentaresSlim = (parlamentares || [])
     .filter((p) => p.slug)
     .map((p) => ({ slug: p.slug, nome: p.nome, partido: p.partido, uf: p.uf }));

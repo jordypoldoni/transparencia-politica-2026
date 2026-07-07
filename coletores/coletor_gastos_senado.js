@@ -123,4 +123,7 @@ async function main() {
   console.log(`✅ ${linhasOut.length} despesas do Senado gravadas.`);
 }
 
-main().catch((e) => { console.error('💥 Erro:', e.message); process.exit(1); });
+import { refreshRadar } from './refresh_radar.js';
+main()
+  .then(() => refreshRadar())
+  .catch((e) => { console.error('💥 Erro:', e.message); process.exit(1); });

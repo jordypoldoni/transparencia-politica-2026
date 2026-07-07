@@ -109,4 +109,7 @@ async function main() {
   console.log(`✅ ${processados} deputados, ${totalLinhas} lançamentos de gasto gravados.`);
 }
 
-main().catch((e) => { console.error('💥 Erro:', e.message); process.exit(1); });
+import { refreshRadar } from './refresh_radar.js';
+main()
+  .then(() => refreshRadar())
+  .catch((e) => { console.error('💥 Erro:', e.message); process.exit(1); });
