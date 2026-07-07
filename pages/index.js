@@ -49,7 +49,7 @@ export default function Home({ radarCamara, radarSenado, radarEstadual, votacoes
               Você elegeu.<br />Agora <span style={{ color: t.cor.ouroTexto }}>fiscalize</span>.
             </h1>
             <p style={{ fontSize: '1.1rem', color: t.cor.cinza, maxWidth: '46ch', lineHeight: 1.5, margin: '0 0 24px' }}>
-              Traduzimos o que cada deputado e senador vota e gasta — com a fonte oficial do lado. Você confere e entende em 1 minuto.
+              Política não se aceita. Se verifica. Votos e gastos dos seus representantes, em português claro, com o documento oficial do lado. Nós trazemos os dados — você decide.
             </p>
             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
               <div style={{ flex: '2 1 320px', minWidth: 0 }}>
