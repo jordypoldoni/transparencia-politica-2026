@@ -215,6 +215,20 @@ const ServicoAPI = {
             }
         }
 
+        // 5. Presença nas votações nominais (registrou voto ÷ total de votações da casa no período)
+        let presenca = null;
+        try {
+            const { data: pres } = await supabase.rpc('presenca_votacoes', { p_agente: id });
+            if (pres && pres.total > 0) {
+                presenca = {
+                    compareceu: pres.compareceu,
+                    total: pres.total,
+                    casa: pres.casa,
+                    percentual: (pres.compareceu / pres.total) * 100,
+                };
+            }
+        } catch (e) { console.error('presenca_votacoes:', e.message); }
+
         const total_geral = Object.values(categorias).reduce((a, b) => a + b, 0);
         const n_notas = gastosAno.length;
         const mesesSet = new Set(gastosAno.map((g) => g.mes).filter(Boolean));
@@ -235,7 +249,8 @@ const ServicoAPI = {
             meses_com_gasto: mesesSet.size,
             votos,
             resumo_votos,
-            coerencia
+            coerencia,
+            presenca
         };
     },
 

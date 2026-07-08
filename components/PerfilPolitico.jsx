@@ -67,6 +67,42 @@ const MES_NOME = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'J
 
 const pilula = { display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 18px', fontSize: '0.9rem', fontWeight: 700, fontFamily: t.fonte.corpo, borderRadius: t.raio.pill, cursor: 'pointer', textDecoration: 'none', border: 'none' };
 
+// Idade em anos cheios a partir da data de nascimento (YYYY-MM-DD)
+function idadeDe(iso) {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (isNaN(d)) return null;
+  const hoje = new Date();
+  let a = hoje.getFullYear() - d.getFullYear();
+  const m = hoje.getMonth() - d.getMonth();
+  if (m < 0 || (m === 0 && hoje.getDate() < d.getDate())) a--;
+  return a >= 0 && a < 120 ? a : null;
+}
+
+// Detecta a rede social pela URL (rótulo cidadão, sem depender de biblioteca de ícones)
+function redeInfo(url) {
+  const u = (url || '').toLowerCase();
+  if (u.includes('instagram')) return { nome: 'Instagram' };
+  if (u.includes('facebook')) return { nome: 'Facebook' };
+  if (u.includes('twitter') || u.includes('x.com')) return { nome: 'X (Twitter)' };
+  if (u.includes('youtube')) return { nome: 'YouTube' };
+  if (u.includes('tiktok')) return { nome: 'TikTok' };
+  if (u.includes('linkedin')) return { nome: 'LinkedIn' };
+  if (u.includes('flickr')) return { nome: 'Flickr' };
+  return { nome: 'Site/rede' };
+}
+
+// Cartão de dado biográfico (rótulo + valor) — reutilizável
+function DadoBio({ rotulo, valor }) {
+  if (!valor) return null;
+  return (
+    <div style={{ minWidth: '140px' }}>
+      <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.cor.cinza, marginBottom: '2px' }}>{rotulo}</div>
+      <div style={{ fontSize: '0.95rem', fontWeight: 600, color: t.cor.tinta }}>{valor}</div>
+    </div>
+  );
+}
+
 // Quebra de texto no canvas; retorna o y final
 function wrapCanvas(ctx, text, x, y, maxW, lh) {
   const palavras = (text || '').split(' ');
@@ -88,7 +124,16 @@ export default function PerfilPolitico({ dados }) {
   const [explicaCota, setExplicaCota] = useState(false);
 
   const { perfil, resumo_gastos, total_geral, n_notas, media_mensal, maior_categoria, lista_detalhada, votos = [], resumo_votos = {}, coerencia = null,
-    serie_mensal = [], anos_disponiveis = [], ano_referencia, meses_com_gasto = 0 } = dados;
+    serie_mensal = [], anos_disponiveis = [], ano_referencia, meses_com_gasto = 0, presenca = null } = dados;
+
+  // Ficha 360°: dados biográficos e de atuação (podem estar vazios até o coletor rodar)
+  const idade = idadeDe(perfil.data_nascimento);
+  const naturalidade = [perfil.naturalidade_municipio, perfil.naturalidade_uf].filter(Boolean).join(' - ') || null;
+  const redes = Array.isArray(perfil.redes_sociais) ? perfil.redes_sociais.filter(Boolean) : [];
+  const comissoes = Array.isArray(perfil.comissoes) ? perfil.comissoes : [];
+  const frentes = Array.isArray(perfil.frentes) ? perfil.frentes : [];
+  const proposicoes = Array.isArray(perfil.proposicoes) ? perfil.proposicoes : [];
+  const temBio = !!(idade || naturalidade || perfil.escolaridade || perfil.profissao || perfil.email_oficial || redes.length || perfil.website || perfil.situacao);
 
   const [anoSel, setAnoSel] = useState(ano_referencia);
   const dadosAno = serie_mensal.find((s) => s.ano === anoSel) || serie_mensal[0] || null;
@@ -223,8 +268,46 @@ export default function PerfilPolitico({ dados }) {
         </div>
       </div>
 
-      {/* DETALHE: gastos + votos */}
+      {/* DETALHE: quem é + gastos + atuação + votos */}
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr)', gap: '20px' }}>
+
+        {/* QUEM É — cartão biográfico (Ficha 360°) */}
+        <div style={{ background: t.cor.papelCartao, borderRadius: t.raio.lg, padding: 'clamp(20px,3vw,32px)', boxShadow: t.sombra.sutil }}>
+          <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.4rem', margin: '0 0 6px' }}>Quem é</h2>
+          {temBio ? (
+            <>
+              <p style={{ color: t.cor.cinza, fontSize: '0.9rem', margin: '0 0 20px' }}>
+                Dados de identificação do parlamentar, direto do cadastro oficial da {fonteNome}.
+              </p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px 32px' }}>
+                <DadoBio rotulo="Nome civil" valor={perfil.nome_completo && perfil.nome_completo !== perfil.nome_urna ? perfil.nome_completo : null} />
+                <DadoBio rotulo="Idade" valor={idade ? `${idade} anos` : null} />
+                <DadoBio rotulo="Natural de" valor={naturalidade} />
+                <DadoBio rotulo="Escolaridade" valor={perfil.escolaridade} />
+                <DadoBio rotulo="Profissão" valor={perfil.profissao} />
+                <DadoBio rotulo="Situação no mandato" valor={perfil.situacao} />
+                <DadoBio rotulo="Condição eleitoral" valor={perfil.condicao_eleitoral} />
+              </div>
+              {(perfil.email_oficial || perfil.website || redes.length > 0) && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '20px', paddingTop: '18px', borderTop: `1px solid ${t.cor.papelQuente2}` }}>
+                  {perfil.email_oficial && (
+                    <a href={`mailto:${perfil.email_oficial}`} style={{ ...pilula, background: t.cor.papelQuente, color: t.cor.tinta, boxShadow: t.sombra.clicavel, fontSize: '0.82rem', padding: '8px 14px' }}>✉ {perfil.email_oficial}</a>
+                  )}
+                  {perfil.website && (
+                    <a href={perfil.website} target="_blank" rel="noopener noreferrer" style={{ ...pilula, background: t.cor.papelQuente, color: t.cor.ouroTexto, boxShadow: t.sombra.clicavel, fontSize: '0.82rem', padding: '8px 14px' }}>🌐 Site oficial</a>
+                  )}
+                  {redes.map((u, i) => (
+                    <a key={i} href={u} target="_blank" rel="noopener noreferrer" style={{ ...pilula, background: t.cor.papelQuente, color: t.cor.ouroTexto, boxShadow: t.sombra.clicavel, fontSize: '0.82rem', padding: '8px 14px' }}>{redeInfo(u).nome}</a>
+                  ))}
+                </div>
+              )}
+            </>
+          ) : (
+            <p style={{ margin: 0, color: t.cor.cinza, fontSize: '0.9rem', lineHeight: 1.5 }}>
+              Ainda estamos reunindo os dados de identificação deste parlamentar (nascimento, formação, profissão e contato). Em breve aqui — sempre a partir da fonte oficial.
+            </p>
+          )}
+        </div>
 
         {dadosAno && (
           <div style={{ background: t.cor.papelCartao, borderRadius: t.raio.lg, padding: 'clamp(20px,3vw,32px)', boxShadow: t.sombra.sutil }}>
@@ -311,8 +394,90 @@ export default function PerfilPolitico({ dados }) {
           </div>
         </div>
 
+        {/* ATUAÇÃO — comissões e frentes (Ficha 360°) */}
+        <div style={{ background: t.cor.papelCartao, borderRadius: t.raio.lg, padding: 'clamp(20px,3vw,32px)', boxShadow: t.sombra.sutil }}>
+          <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.4rem', margin: '0 0 6px' }}>Onde ele atua</h2>
+          <p style={{ color: t.cor.cinza, fontSize: '0.9rem', margin: '0 0 20px', lineHeight: 1.5 }}>
+            É nas <strong>comissões</strong> que os projetos são debatidos e votados antes do plenário; as <strong>frentes parlamentares</strong> são grupos temáticos que o parlamentar integra. Fonte: {fonteNome}.
+          </p>
+
+          {comissoes.length > 0 && (
+            <div style={{ marginBottom: frentes.length > 0 ? '22px' : 0 }}>
+              <h3 style={{ fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: t.cor.cinza, margin: '0 0 10px' }}>Comissões que ocupa ({comissoes.length})</h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {comissoes.slice(0, 12).map((c, i) => (
+                  <div key={i} style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'baseline', background: t.cor.papelQuente, borderRadius: t.raio.md, padding: '12px 14px' }}>
+                    <span style={{ fontSize: '0.9rem', fontWeight: 600, color: t.cor.tinta }}>
+                      {c.nome || c.sigla}{c.sigla && c.nome ? <span style={{ color: t.cor.cinza, fontWeight: 400 }}> · {c.sigla}</span> : null}
+                    </span>
+                    {c.papel && <span style={{ flexShrink: 0, fontSize: '0.72rem', fontWeight: 700, color: t.cor.ouroTexto }}>{c.papel}</span>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {frentes.length > 0 && (
+            <div>
+              <h3 style={{ fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: t.cor.cinza, margin: '0 0 10px' }}>Frentes parlamentares ({frentes.length})</h3>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {frentes.slice(0, 20).map((f, i) => (
+                  <span key={i} style={{ fontSize: '0.8rem', fontWeight: 600, color: t.cor.tinta, background: t.cor.papelQuente, borderRadius: t.raio.pill, padding: '6px 14px' }}>{f.titulo}</span>
+                ))}
+                {frentes.length > 20 && <span style={{ fontSize: '0.8rem', color: t.cor.cinza, alignSelf: 'center' }}>+{frentes.length - 20}</span>}
+              </div>
+            </div>
+          )}
+
+          {comissoes.length === 0 && frentes.length === 0 && (
+            <p style={{ margin: 0, color: t.cor.cinza, fontSize: '0.9rem', lineHeight: 1.5 }}>
+              Ainda não reunimos as comissões e frentes deste parlamentar. Em breve aqui, a partir da fonte oficial.
+            </p>
+          )}
+        </div>
+
+        {/* PROPOSIÇÕES — leis e projetos apresentados (Ficha 360°) */}
+        <div style={{ background: t.cor.papelCartao, borderRadius: t.raio.lg, padding: 'clamp(20px,3vw,32px)', boxShadow: t.sombra.sutil }}>
+          <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.4rem', margin: '0 0 6px' }}>O que ele propôs</h2>
+          {proposicoes.length > 0 ? (
+            <>
+              <p style={{ color: t.cor.cinza, fontSize: '0.9rem', margin: '0 0 18px', lineHeight: 1.5 }}>
+                Projetos de lei, emendas e outras propostas que {perfil.nome_urna} apresentou neste mandato
+                {typeof perfil.n_proposicoes === 'number' ? <> — <strong style={{ color: t.cor.tinta }}>{perfil.n_proposicoes}</strong> no total{perfil.n_proposicoes > proposicoes.length ? ` (mostrando as ${proposicoes.length} mais recentes)` : ''}</> : null}. Propor não é o mesmo que aprovar. Fonte: {fonteNome}.
+              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {proposicoes.map((p, i) => (
+                  <div key={i} style={{ background: t.cor.papelQuente, borderRadius: t.raio.md, padding: '12px 14px' }}>
+                    {(p.tipo || p.numero || p.ano) && (
+                      <span style={{ display: 'inline-block', fontSize: '0.72rem', fontWeight: 700, color: t.cor.ouroTexto, marginBottom: '3px' }}>
+                        {[p.tipo, p.numero].filter(Boolean).join(' ')}{p.ano ? `/${p.ano}` : ''}
+                      </span>
+                    )}
+                    {p.ementa && <p style={{ margin: 0, fontSize: '0.88rem', lineHeight: 1.45, color: t.cor.tinta }}>{p.ementa}</p>}
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <p style={{ margin: '6px 0 0', color: t.cor.cinza, fontSize: '0.9rem', lineHeight: 1.5 }}>
+              {perfil.n_proposicoes === 0
+                ? `${perfil.nome_urna} não consta como autor de proposições neste mandato nos dados oficiais.`
+                : 'Ainda estamos reunindo as proposições apresentadas por este parlamentar. Em breve aqui, a partir da fonte oficial.'}
+            </p>
+          )}
+        </div>
+
         <div style={{ background: t.cor.papelCartao, borderRadius: t.raio.lg, padding: 'clamp(20px,3vw,32px)', boxShadow: t.sombra.sutil }}>
           <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.4rem', margin: '0 0 16px' }}>Como ele votou</h2>
+
+          {presenca && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px', background: t.cor.papelQuente, borderRadius: t.raio.md, marginBottom: '16px', boxShadow: t.sombra.sutil }}>
+              <span style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '2.2rem', color: corCoerencia(presenca.percentual) }}>{presenca.percentual.toFixed(0)}%</span>
+              <span style={{ fontSize: '0.9rem', color: t.cor.cinza, lineHeight: 1.45 }}>
+                <strong style={{ color: t.cor.tinta }}>Presença nas votações.</strong> Registrou voto em <strong style={{ color: t.cor.tinta }}>{presenca.compareceu}</strong> das <strong style={{ color: t.cor.tinta }}>{presenca.total}</strong> votações nominais do período que coletamos. Ausências justificadas (licença, missão) também contam como não registrado.
+              </span>
+            </div>
+          )}
 
           {coerencia && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px', background: t.cor.papelQuente, borderRadius: t.raio.md, marginBottom: '20px', boxShadow: t.sombra.sutil }}>
