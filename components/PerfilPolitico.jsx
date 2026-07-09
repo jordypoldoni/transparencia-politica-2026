@@ -152,6 +152,19 @@ export default function PerfilPolitico({ dados }) {
   const baseEleitoral = perfil.base_eleitoral || null;
   const biografiaTexto = perfil.biografia_texto || null;
   const temBio = !!(idade || naturalidade || perfil.escolaridade || perfil.profissao || perfil.email_oficial || redes.length || perfil.situacao || ocupacoes.length || cargosAnteriores.length || telContato || areasAtuacao.length || filiacoes.length || mandatoResumo || baseEleitoral || biografiaTexto);
+  const temTrajetoria = ocupacoes.length > 0 || cargosAnteriores.length > 0 || filiacoes.length > 1;
+
+  // Navegação por seções (só lista as que existem para este parlamentar)
+  const secoes = [
+    { id: 'resumo', rotulo: 'Resumo' },
+    temBio && { id: 'quem-e', rotulo: 'Quem é' },
+    dadosAno && { id: 'gastos', rotulo: 'Gastos' },
+    { id: 'atuacao', rotulo: 'Atuação' },
+    temTrajetoria && { id: 'trajetoria', rotulo: 'Trajetória' },
+    { id: 'proposicoes', rotulo: 'Proposições' },
+    { id: 'votos', rotulo: 'Votos' },
+  ].filter(Boolean);
+  const ancora = { scrollMarginTop: '112px' }; // compensa header + barra fixa ao rolar até a âncora
 
   const [anoSel, setAnoSel] = useState(ano_referencia);
   const dadosAno = serie_mensal.find((s) => s.ano === anoSel) || serie_mensal[0] || null;
@@ -235,10 +248,18 @@ export default function PerfilPolitico({ dados }) {
 
   return (
     <div className="pagina">
-      <button onClick={() => router.back()} style={{ ...pilula, background: '#fff', color: t.cor.tinta, marginBottom: '24px', boxShadow: t.sombra.clicavel }}>← Voltar</button>
+      <style jsx global>{`html{scroll-behavior:smooth}`}</style>
+      <button onClick={() => router.back()} style={{ ...pilula, background: '#fff', color: t.cor.tinta, marginBottom: '16px', boxShadow: t.sombra.clicavel }}>← Voltar</button>
+
+      {/* Navegação por seções — fixa abaixo do cabeçalho */}
+      <nav aria-label="Seções do perfil" style={{ position: 'sticky', top: '56px', zIndex: 40, marginBottom: '20px', padding: '8px', display: 'flex', gap: '8px', overflowX: 'auto', background: 'rgba(251,248,242,0.92)', backdropFilter: 'blur(8px)', borderRadius: t.raio.pill, boxShadow: t.sombra.clicavel }}>
+        {secoes.map((s) => (
+          <a key={s.id} href={`#${s.id}`} style={{ flexShrink: 0, fontSize: '0.82rem', fontWeight: 700, color: t.cor.tinta, textDecoration: 'none', padding: '7px 15px', borderRadius: t.raio.pill, background: t.cor.papelCartao, boxShadow: t.sombra.sutil }}>{s.rotulo}</a>
+        ))}
+      </nav>
 
       {/* CAMADA ZERO — veredito em português claro */}
-      <div className="surgir" style={{ background: t.cor.verde, color: '#fff', borderRadius: t.raio.lg, padding: 'clamp(24px,4vw,40px)', marginBottom: '24px' }}>
+      <div id="resumo" className="surgir" style={{ ...ancora, background: t.cor.verde, color: '#fff', borderRadius: t.raio.lg, padding: 'clamp(24px,4vw,40px)', marginBottom: '24px' }}>
         <div style={{ display: 'flex', gap: '20px', alignItems: 'center', flexWrap: 'wrap' }}>
           <Avatar nome={perfil.nome_urna} foto={perfil.foto_url} size={92} borda="3px solid rgba(255,255,255,0.3)" />
           <div style={{ flex: 1, minWidth: '220px' }}>
@@ -290,7 +311,7 @@ export default function PerfilPolitico({ dados }) {
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr)', gap: '20px' }}>
 
         {/* QUEM É — cartão biográfico (Ficha 360°) */}
-        <div style={{ background: t.cor.papelCartao, borderRadius: t.raio.lg, padding: 'clamp(20px,3vw,32px)', boxShadow: t.sombra.sutil }}>
+        <div id="quem-e" style={{ ...ancora, background: t.cor.papelCartao, borderRadius: t.raio.lg, padding: 'clamp(20px,3vw,32px)', boxShadow: t.sombra.sutil }}>
           <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.4rem', margin: '0 0 6px' }}>Quem é</h2>
           {temBio ? (
             <>
@@ -308,36 +329,6 @@ export default function PerfilPolitico({ dados }) {
                 <DadoBio rotulo="Mandatos" valor={mandatoResumo} />
                 <DadoBio rotulo="Base eleitoral" valor={baseEleitoral} />
               </div>
-
-              {/* Ocupações — atuação profissional declarada */}
-              {ocupacoes.length > 0 && (
-                <div style={{ marginTop: '22px', paddingTop: '18px', borderTop: `1px solid ${t.cor.papelQuente2}` }}>
-                  <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.cor.cinza, marginBottom: '8px' }}>Atuação profissional</div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                    {ocupacoes.slice(0, 8).map((o, i) => (
-                      <span key={i} style={{ fontSize: '0.82rem', fontWeight: 600, color: t.cor.tinta, background: t.cor.papelQuente, borderRadius: t.raio.pill, padding: '6px 14px' }}>
-                        {o.titulo}{o.entidade ? <span style={{ color: t.cor.cinza, fontWeight: 400 }}> · {o.entidade}</span> : null}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Trajetória — cargos eletivos anteriores */}
-              {cargosAnteriores.length > 0 && (
-                <div style={{ marginTop: '22px', paddingTop: '18px', borderTop: `1px solid ${t.cor.papelQuente2}` }}>
-                  <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.cor.cinza, marginBottom: '8px' }}>Cargos que já ocupou</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    {cargosAnteriores.slice(0, 10).map((c, i) => (
-                      <div key={i} style={{ fontSize: '0.88rem', color: t.cor.tinta }}>
-                        <strong>{c.cargo}</strong>
-                        {(c.municipio || c.uf) ? <span style={{ color: t.cor.cinza }}> — {[c.municipio, c.uf].filter(Boolean).join('/')}</span> : null}
-                        {c.ano ? <span style={{ color: t.cor.cinza }}> · {c.ano}{c.partido ? ` (${c.partido})` : ''}</span> : null}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
 
               {/* Contato do gabinete — fica DENTRO do site */}
               {telContato && (
@@ -363,35 +354,6 @@ export default function PerfilPolitico({ dados }) {
                   ))}
                 </div>
               )}
-
-              {/* Áreas de atuação (temas de trabalho declarados) */}
-              {areasAtuacao.length > 0 && (
-                <div style={{ marginTop: '22px', paddingTop: '18px', borderTop: `1px solid ${t.cor.papelQuente2}` }}>
-                  <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.cor.cinza, marginBottom: '8px' }}>Áreas de atuação</div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                    {areasAtuacao.slice(0, 14).map((a, i) => (
-                      <span key={i} style={{ fontSize: '0.82rem', fontWeight: 600, color: t.cor.tinta, background: t.cor.papelQuente, borderRadius: t.raio.pill, padding: '6px 14px' }}>{a}</span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Histórico partidário — trocas de partido ao longo da carreira */}
-              {filiacoes.length > 1 && (
-                <div style={{ marginTop: '22px', paddingTop: '18px', borderTop: `1px solid ${t.cor.papelQuente2}` }}>
-                  <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.cor.cinza, marginBottom: '8px' }}>Partidos ao longo da carreira</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    {filiacoes.slice(0, 8).map((f, i) => (
-                      <div key={i} style={{ fontSize: '0.86rem', color: t.cor.tinta }}>
-                        <strong>{f.sigla}</strong>
-                        {f.inicio ? <span style={{ color: t.cor.cinza }}> — {String(f.inicio).slice(0, 4)}{f.fim ? ` a ${String(f.fim).slice(0, 4)}` : ' (atual)'}</span> : null}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Contato do gabinete e redes — já renderizados acima */}
 
               {/* Nas palavras do gabinete — biografia auto-escrita, com ressalva honesta */}
               {biografiaTexto && (
@@ -428,7 +390,7 @@ export default function PerfilPolitico({ dados }) {
         </div>
 
         {dadosAno && (
-          <div style={{ background: t.cor.papelCartao, borderRadius: t.raio.lg, padding: 'clamp(20px,3vw,32px)', boxShadow: t.sombra.sutil }}>
+          <div id="gastos" style={{ ...ancora, background: t.cor.papelCartao, borderRadius: t.raio.lg, padding: 'clamp(20px,3vw,32px)', boxShadow: t.sombra.sutil }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '12px', flexWrap: 'wrap', marginBottom: '6px' }}>
               <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.4rem', margin: 0 }}>Gastos mês a mês</h2>
               {anos_disponiveis.length > 1 && (
@@ -513,7 +475,7 @@ export default function PerfilPolitico({ dados }) {
         </div>
 
         {/* ATUAÇÃO — comissões e frentes (Ficha 360°) */}
-        <div style={{ background: t.cor.papelCartao, borderRadius: t.raio.lg, padding: 'clamp(20px,3vw,32px)', boxShadow: t.sombra.sutil }}>
+        <div id="atuacao" style={{ ...ancora, background: t.cor.papelCartao, borderRadius: t.raio.lg, padding: 'clamp(20px,3vw,32px)', boxShadow: t.sombra.sutil }}>
           <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.4rem', margin: '0 0 6px' }}>Onde ele atua</h2>
           <p style={{ color: t.cor.cinza, fontSize: '0.9rem', margin: '0 0 20px', lineHeight: 1.5 }}>
             É nas <strong>comissões</strong> que os projetos são debatidos e votados antes do plenário; as <strong>frentes parlamentares</strong> são grupos temáticos que o parlamentar integra. Fonte: {fonteNome}.
@@ -547,15 +509,77 @@ export default function PerfilPolitico({ dados }) {
             </div>
           )}
 
-          {comissoes.length === 0 && frentes.length === 0 && (
+          {/* Áreas de atuação (temas de trabalho declarados) */}
+          {areasAtuacao.length > 0 && (
+            <div style={{ marginTop: (comissoes.length > 0 || frentes.length > 0) ? '22px' : 0, paddingTop: (comissoes.length > 0 || frentes.length > 0) ? '18px' : 0, borderTop: (comissoes.length > 0 || frentes.length > 0) ? `1px solid ${t.cor.papelQuente2}` : 'none' }}>
+              <h3 style={{ fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: t.cor.cinza, margin: '0 0 10px' }}>Áreas de atuação</h3>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                {areasAtuacao.slice(0, 14).map((a, i) => (
+                  <span key={i} style={{ fontSize: '0.8rem', fontWeight: 600, color: t.cor.tinta, background: t.cor.papelQuente, borderRadius: t.raio.pill, padding: '6px 14px' }}>{a}</span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {comissoes.length === 0 && frentes.length === 0 && areasAtuacao.length === 0 && (
             <p style={{ margin: 0, color: t.cor.cinza, fontSize: '0.9rem', lineHeight: 1.5 }}>
               Ainda não reunimos as comissões e frentes deste parlamentar. Em breve aqui, a partir da fonte oficial.
             </p>
           )}
         </div>
 
+        {/* TRAJETÓRIA — atuação profissional, cargos anteriores e partidos */}
+        {temTrajetoria && (
+          <div id="trajetoria" style={{ ...ancora, background: t.cor.papelCartao, borderRadius: t.raio.lg, padding: 'clamp(20px,3vw,32px)', boxShadow: t.sombra.sutil }}>
+            <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.4rem', margin: '0 0 6px' }}>Trajetória</h2>
+            <p style={{ color: t.cor.cinza, fontSize: '0.9rem', margin: '0 0 20px', lineHeight: 1.5 }}>De onde veio: profissão, cargos eletivos anteriores e os partidos pelos quais passou. Fonte: {fonteNome}.</p>
+
+            {ocupacoes.length > 0 && (
+              <div style={{ marginBottom: (cargosAnteriores.length > 0 || filiacoes.length > 1) ? '22px' : 0 }}>
+                <h3 style={{ fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: t.cor.cinza, margin: '0 0 10px' }}>Atuação profissional</h3>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  {ocupacoes.slice(0, 8).map((o, i) => (
+                    <span key={i} style={{ fontSize: '0.8rem', fontWeight: 600, color: t.cor.tinta, background: t.cor.papelQuente, borderRadius: t.raio.pill, padding: '6px 14px' }}>
+                      {o.titulo}{o.entidade ? <span style={{ color: t.cor.cinza, fontWeight: 400 }}> · {o.entidade}</span> : null}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {cargosAnteriores.length > 0 && (
+              <div style={{ marginBottom: filiacoes.length > 1 ? '22px' : 0 }}>
+                <h3 style={{ fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: t.cor.cinza, margin: '0 0 10px' }}>Cargos que já ocupou</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {cargosAnteriores.slice(0, 10).map((c, i) => (
+                    <div key={i} style={{ fontSize: '0.88rem', color: t.cor.tinta }}>
+                      <strong>{c.cargo}</strong>
+                      {(c.municipio || c.uf) ? <span style={{ color: t.cor.cinza }}> — {[c.municipio, c.uf].filter(Boolean).join('/')}</span> : null}
+                      {c.ano ? <span style={{ color: t.cor.cinza }}> · {c.ano}{c.partido ? ` (${c.partido})` : ''}</span> : null}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {filiacoes.length > 1 && (
+              <div>
+                <h3 style={{ fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: t.cor.cinza, margin: '0 0 10px' }}>Partidos ao longo da carreira</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {filiacoes.slice(0, 8).map((f, i) => (
+                    <div key={i} style={{ fontSize: '0.86rem', color: t.cor.tinta }}>
+                      <strong>{f.sigla}</strong>
+                      {f.inicio ? <span style={{ color: t.cor.cinza }}> — {String(f.inicio).slice(0, 4)}{f.fim ? ` a ${String(f.fim).slice(0, 4)}` : ' (atual)'}</span> : null}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* PROPOSIÇÕES — leis e projetos apresentados (Ficha 360°) */}
-        <div style={{ background: t.cor.papelCartao, borderRadius: t.raio.lg, padding: 'clamp(20px,3vw,32px)', boxShadow: t.sombra.sutil }}>
+        <div id="proposicoes" style={{ ...ancora, background: t.cor.papelCartao, borderRadius: t.raio.lg, padding: 'clamp(20px,3vw,32px)', boxShadow: t.sombra.sutil }}>
           <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.4rem', margin: '0 0 6px' }}>O que ele propôs</h2>
           {proposicoes.length > 0 ? (
             <>
@@ -585,7 +609,7 @@ export default function PerfilPolitico({ dados }) {
           )}
         </div>
 
-        <div style={{ background: t.cor.papelCartao, borderRadius: t.raio.lg, padding: 'clamp(20px,3vw,32px)', boxShadow: t.sombra.sutil }}>
+        <div id="votos" style={{ ...ancora, background: t.cor.papelCartao, borderRadius: t.raio.lg, padding: 'clamp(20px,3vw,32px)', boxShadow: t.sombra.sutil }}>
           <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.4rem', margin: '0 0 16px' }}>Como ele votou</h2>
 
           {presenca && (
