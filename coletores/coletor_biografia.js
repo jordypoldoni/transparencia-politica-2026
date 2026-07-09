@@ -218,13 +218,13 @@ async function bioSenado(codigo) {
     profissao: cap(db.Profissao),
     email_oficial: cap(id.EmailParlamentar),
     situacao: 'Exercício',
-    condicao_eleitoral: cap(mandatoS.participacao), // Titular/Suplente
+    // condicao_eleitoral e mandato do senador são propriedade do coletor_mandato_senado.js
+    // (vêm de /senador/{cod}/mandatos). NÃO gravar aqui — senão o run diário zera de volta.
     website: cap(id.UrlPaginaParlamentar),
     redes_sociais: [],
     contato: temContatoS ? contatoS : null,
     ocupacoes: [],
     cargos_anteriores: [],
-    mandato: (mandatoS.participacao || mandatoS.legislatura) ? mandatoS : null,
     comissoes,
     frentes: [],
     proposicoes,
