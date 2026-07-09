@@ -198,15 +198,16 @@ async function bioSenado(codigo) {
     ?? aut?.AutoriasParlamentar?.Autorias?.Autoria
   );
   nProps = materias.length;
+  // Estrutura real (confirmada na API): Autoria > Materia { Sigla, Numero, Ano, Ementa, DescricaoIdentificacao }.
   proposicoes = materias.slice(0, 20).map((m) => {
-    const mat = m?.IdentificacaoMateria || m?.Materia?.IdentificacaoMateria || {};
+    const mat = m?.Materia || {};
     return {
-      tipo: cap(mat.SiglaSubtipoMateria || mat.SiglaTipoMateria),
-      numero: mat.NumeroMateria || null,
-      ano: mat.AnoMateria || null,
-      ementa: cap(mat.EmentaMateria || m?.EmentaMateria || m?.Materia?.EmentaMateria || m?.Ementa),
+      tipo: cap(mat.Sigla),
+      numero: mat.Numero || null,
+      ano: mat.Ano || null,
+      ementa: cap(mat.Ementa),
     };
-  });
+  }).filter((p) => p.ementa || p.tipo);
 
   return {
     nome_completo: cap(id.NomeCompletoParlamentar),

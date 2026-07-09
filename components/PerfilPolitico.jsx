@@ -133,7 +133,8 @@ export default function PerfilPolitico({ dados }) {
   const redes = Array.isArray(perfil.redes_sociais) ? perfil.redes_sociais.filter(Boolean) : [];
   const comissoes = Array.isArray(perfil.comissoes) ? perfil.comissoes : [];
   const frentes = Array.isArray(perfil.frentes) ? perfil.frentes : [];
-  const proposicoes = Array.isArray(perfil.proposicoes) ? perfil.proposicoes : [];
+  // Só proposições com conteúdo exibível — evita "cards fantasma" se algum campo vier vazio.
+  const proposicoes = (Array.isArray(perfil.proposicoes) ? perfil.proposicoes : []).filter((p) => p && (p.ementa || p.tipo || p.numero));
   const ocupacoes = Array.isArray(perfil.ocupacoes) ? perfil.ocupacoes : [];
   const cargosAnteriores = Array.isArray(perfil.cargos_anteriores) ? perfil.cargos_anteriores : [];
   const areasAtuacao = Array.isArray(perfil.areas_atuacao) ? perfil.areas_atuacao.filter(Boolean) : [];
