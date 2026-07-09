@@ -122,6 +122,7 @@ export default function PerfilPolitico({ dados }) {
   const [votoAberto, setVotoAberto] = useState(null);
   const [modal, setModal] = useState(false);
   const [explicaCota, setExplicaCota] = useState(false);
+  const [bioAberta, setBioAberta] = useState(false);
 
   const { perfil, resumo_gastos, total_geral, n_notas, media_mensal, maior_categoria, lista_detalhada, votos = [], resumo_votos = {}, coerencia = null,
     serie_mensal = [], anos_disponiveis = [], ano_referencia, meses_com_gasto = 0, presenca = null } = dados;
@@ -135,9 +136,21 @@ export default function PerfilPolitico({ dados }) {
   const proposicoes = Array.isArray(perfil.proposicoes) ? perfil.proposicoes : [];
   const ocupacoes = Array.isArray(perfil.ocupacoes) ? perfil.ocupacoes : [];
   const cargosAnteriores = Array.isArray(perfil.cargos_anteriores) ? perfil.cargos_anteriores : [];
+  const areasAtuacao = Array.isArray(perfil.areas_atuacao) ? perfil.areas_atuacao.filter(Boolean) : [];
+  const filiacoes = Array.isArray(perfil.filiacoes) ? perfil.filiacoes : [];
   const contato = perfil.contato && typeof perfil.contato === 'object' ? perfil.contato : null;
   const telContato = contato && (contato.telefone || contato.predio || contato.sala) ? contato : null;
-  const temBio = !!(idade || naturalidade || perfil.escolaridade || perfil.profissao || perfil.email_oficial || redes.length || perfil.situacao || ocupacoes.length || cargosAnteriores.length || telContato);
+  const mandatoObj = perfil.mandato && typeof perfil.mandato === 'object' ? perfil.mandato : null;
+  // Resumo do mandato em linguagem cidadã (varia por casa): "5º mandato · desde 2007" (ALESP) etc.
+  const mandatoResumo = mandatoObj
+    ? [
+        mandatoObj.numero_mandatos ? `${mandatoObj.numero_mandatos}º mandato` : null,
+        mandatoObj.desde ? `desde ${mandatoObj.desde}` : null,
+      ].filter(Boolean).join(' · ') || null
+    : null;
+  const baseEleitoral = perfil.base_eleitoral || null;
+  const biografiaTexto = perfil.biografia_texto || null;
+  const temBio = !!(idade || naturalidade || perfil.escolaridade || perfil.profissao || perfil.email_oficial || redes.length || perfil.situacao || ocupacoes.length || cargosAnteriores.length || telContato || areasAtuacao.length || filiacoes.length || mandatoResumo || baseEleitoral || biografiaTexto);
 
   const [anoSel, setAnoSel] = useState(ano_referencia);
   const dadosAno = serie_mensal.find((s) => s.ano === anoSel) || serie_mensal[0] || null;
@@ -291,6 +304,8 @@ export default function PerfilPolitico({ dados }) {
                 <DadoBio rotulo="Profissão" valor={perfil.profissao} />
                 <DadoBio rotulo="Situação no mandato" valor={perfil.situacao} />
                 <DadoBio rotulo="Condição / cadeira" valor={perfil.condicao_eleitoral} />
+                <DadoBio rotulo="Mandatos" valor={mandatoResumo} />
+                <DadoBio rotulo="Base eleitoral" valor={baseEleitoral} />
               </div>
 
               {/* Ocupações — atuação profissional declarada */}
@@ -345,6 +360,55 @@ export default function PerfilPolitico({ dados }) {
                   {redes.map((u, i) => (
                     <a key={i} href={u} target="_blank" rel="noopener noreferrer" style={{ ...pilula, background: t.cor.papelQuente, color: t.cor.ouroTexto, boxShadow: t.sombra.clicavel, fontSize: '0.82rem', padding: '8px 14px' }}>{redeInfo(u).nome}</a>
                   ))}
+                </div>
+              )}
+
+              {/* Áreas de atuação (temas de trabalho declarados) */}
+              {areasAtuacao.length > 0 && (
+                <div style={{ marginTop: '22px', paddingTop: '18px', borderTop: `1px solid ${t.cor.papelQuente2}` }}>
+                  <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.cor.cinza, marginBottom: '8px' }}>Áreas de atuação</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                    {areasAtuacao.slice(0, 14).map((a, i) => (
+                      <span key={i} style={{ fontSize: '0.82rem', fontWeight: 600, color: t.cor.tinta, background: t.cor.papelQuente, borderRadius: t.raio.pill, padding: '6px 14px' }}>{a}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Histórico partidário — trocas de partido ao longo da carreira */}
+              {filiacoes.length > 1 && (
+                <div style={{ marginTop: '22px', paddingTop: '18px', borderTop: `1px solid ${t.cor.papelQuente2}` }}>
+                  <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.cor.cinza, marginBottom: '8px' }}>Partidos ao longo da carreira</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {filiacoes.slice(0, 8).map((f, i) => (
+                      <div key={i} style={{ fontSize: '0.86rem', color: t.cor.tinta }}>
+                        <strong>{f.sigla}</strong>
+                        {f.inicio ? <span style={{ color: t.cor.cinza }}> — {String(f.inicio).slice(0, 4)}{f.fim ? ` a ${String(f.fim).slice(0, 4)}` : ' (atual)'}</span> : null}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Contato do gabinete e redes — já renderizados acima */}
+
+              {/* Nas palavras do gabinete — biografia auto-escrita, com ressalva honesta */}
+              {biografiaTexto && (
+                <div style={{ marginTop: '22px', paddingTop: '18px', borderTop: `1px solid ${t.cor.papelQuente2}` }}>
+                  <button onClick={() => setBioAberta(!bioAberta)} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: t.fonte.corpo }}>
+                    <span style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.cor.cinza }}>Nas palavras do gabinete</span>
+                    <span style={{ fontSize: '0.72rem', color: t.cor.cinza }}>{bioAberta ? '▲ ocultar' : '▼ ler'}</span>
+                  </button>
+                  {bioAberta && (
+                    <div style={{ marginTop: '12px' }}>
+                      <p style={{ margin: '0 0 10px', fontSize: '0.78rem', color: t.cor.cinza, fontStyle: 'italic', lineHeight: 1.5 }}>
+                        Texto escrito pelo próprio gabinete do parlamentar. Reproduzimos como está, sem endossar nem revisar — os fatos acima vêm do cadastro oficial.
+                      </p>
+                      {biografiaTexto.split(/\n{2,}/).map((par, i) => (
+                        <p key={i} style={{ margin: '0 0 10px', fontSize: '0.9rem', lineHeight: 1.6, color: t.cor.tinta }}>{par}</p>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 
