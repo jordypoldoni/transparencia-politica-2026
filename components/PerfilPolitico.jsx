@@ -133,7 +133,11 @@ export default function PerfilPolitico({ dados }) {
   const comissoes = Array.isArray(perfil.comissoes) ? perfil.comissoes : [];
   const frentes = Array.isArray(perfil.frentes) ? perfil.frentes : [];
   const proposicoes = Array.isArray(perfil.proposicoes) ? perfil.proposicoes : [];
-  const temBio = !!(idade || naturalidade || perfil.escolaridade || perfil.profissao || perfil.email_oficial || redes.length || perfil.website || perfil.situacao);
+  const ocupacoes = Array.isArray(perfil.ocupacoes) ? perfil.ocupacoes : [];
+  const cargosAnteriores = Array.isArray(perfil.cargos_anteriores) ? perfil.cargos_anteriores : [];
+  const contato = perfil.contato && typeof perfil.contato === 'object' ? perfil.contato : null;
+  const telContato = contato && (contato.telefone || contato.predio || contato.sala) ? contato : null;
+  const temBio = !!(idade || naturalidade || perfil.escolaridade || perfil.profissao || perfil.email_oficial || redes.length || perfil.situacao || ocupacoes.length || cargosAnteriores.length || telContato);
 
   const [anoSel, setAnoSel] = useState(ano_referencia);
   const dadosAno = serie_mensal.find((s) => s.ano === anoSel) || serie_mensal[0] || null;
@@ -286,19 +290,68 @@ export default function PerfilPolitico({ dados }) {
                 <DadoBio rotulo="Escolaridade" valor={perfil.escolaridade} />
                 <DadoBio rotulo="Profissão" valor={perfil.profissao} />
                 <DadoBio rotulo="Situação no mandato" valor={perfil.situacao} />
-                <DadoBio rotulo="Condição eleitoral" valor={perfil.condicao_eleitoral} />
+                <DadoBio rotulo="Condição / cadeira" valor={perfil.condicao_eleitoral} />
               </div>
-              {(perfil.email_oficial || perfil.website || redes.length > 0) && (
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '20px', paddingTop: '18px', borderTop: `1px solid ${t.cor.papelQuente2}` }}>
+
+              {/* Ocupações — atuação profissional declarada */}
+              {ocupacoes.length > 0 && (
+                <div style={{ marginTop: '22px', paddingTop: '18px', borderTop: `1px solid ${t.cor.papelQuente2}` }}>
+                  <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.cor.cinza, marginBottom: '8px' }}>Atuação profissional</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                    {ocupacoes.slice(0, 8).map((o, i) => (
+                      <span key={i} style={{ fontSize: '0.82rem', fontWeight: 600, color: t.cor.tinta, background: t.cor.papelQuente, borderRadius: t.raio.pill, padding: '6px 14px' }}>
+                        {o.titulo}{o.entidade ? <span style={{ color: t.cor.cinza, fontWeight: 400 }}> · {o.entidade}</span> : null}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Trajetória — cargos eletivos anteriores */}
+              {cargosAnteriores.length > 0 && (
+                <div style={{ marginTop: '22px', paddingTop: '18px', borderTop: `1px solid ${t.cor.papelQuente2}` }}>
+                  <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.cor.cinza, marginBottom: '8px' }}>Cargos que já ocupou</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    {cargosAnteriores.slice(0, 10).map((c, i) => (
+                      <div key={i} style={{ fontSize: '0.88rem', color: t.cor.tinta }}>
+                        <strong>{c.cargo}</strong>
+                        {(c.municipio || c.uf) ? <span style={{ color: t.cor.cinza }}> — {[c.municipio, c.uf].filter(Boolean).join('/')}</span> : null}
+                        {c.ano ? <span style={{ color: t.cor.cinza }}> · {c.ano}{c.partido ? ` (${c.partido})` : ''}</span> : null}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Contato do gabinete — fica DENTRO do site */}
+              {telContato && (
+                <div style={{ marginTop: '22px', paddingTop: '18px', borderTop: `1px solid ${t.cor.papelQuente2}` }}>
+                  <div style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.cor.cinza, marginBottom: '8px' }}>Gabinete</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px 32px', fontSize: '0.9rem', color: t.cor.tinta }}>
+                    {telContato.telefone && <span><strong style={{ fontWeight: 600 }}>Telefone:</strong> {telContato.telefone}</span>}
+                    {(telContato.predio || telContato.sala) && (
+                      <span><strong style={{ fontWeight: 600 }}>Local:</strong> {[telContato.predio && `Prédio ${telContato.predio}`, telContato.andar && `${telContato.andar}º andar`, telContato.sala && `sala ${telContato.sala}`].filter(Boolean).join(', ')}</span>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Ações de contato in-site: e-mail + redes reais (não levam embora sem valor) */}
+              {(perfil.email_oficial || redes.length > 0) && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '20px' }}>
                   {perfil.email_oficial && (
                     <a href={`mailto:${perfil.email_oficial}`} style={{ ...pilula, background: t.cor.papelQuente, color: t.cor.tinta, boxShadow: t.sombra.clicavel, fontSize: '0.82rem', padding: '8px 14px' }}>✉ {perfil.email_oficial}</a>
-                  )}
-                  {perfil.website && (
-                    <a href={perfil.website} target="_blank" rel="noopener noreferrer" style={{ ...pilula, background: t.cor.papelQuente, color: t.cor.ouroTexto, boxShadow: t.sombra.clicavel, fontSize: '0.82rem', padding: '8px 14px' }}>🌐 Site oficial</a>
                   )}
                   {redes.map((u, i) => (
                     <a key={i} href={u} target="_blank" rel="noopener noreferrer" style={{ ...pilula, background: t.cor.papelQuente, color: t.cor.ouroTexto, boxShadow: t.sombra.clicavel, fontSize: '0.82rem', padding: '8px 14px' }}>{redeInfo(u).nome}</a>
                   ))}
+                </div>
+              )}
+
+              {/* Link discreto pra fonte — verificação, não chamada principal */}
+              {perfil.website && (
+                <div style={{ marginTop: '18px' }}>
+                  <a href={perfil.website} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8rem', color: t.cor.cinza, textDecoration: 'underline dotted' }}>ver ficha completa na fonte oficial →</a>
                 </div>
               )}
             </>

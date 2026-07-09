@@ -84,6 +84,33 @@ async function bioCamara(id) {
   const fr = await getJSON(`${CAMARA}/deputados/${id}/frentes`);
   if (fr?.dados?.length) frentes = fr.dados.map((f) => ({ titulo: cap(f.titulo) })).filter((f) => f.titulo);
 
+  // Ocupações/atuação profissional declarada (empregos, cargos fora do parlamento).
+  let ocupacoes = [];
+  const ocu = await getJSON(`${CAMARA}/deputados/${id}/ocupacoes`);
+  if (ocu?.dados?.length) {
+    ocupacoes = ocu.dados
+      .map((o) => ({ titulo: cap(o.titulo), entidade: cap(o.entidade), uf: cap(o.entidadeUF), inicio: o.anoInicio || null, fim: o.anoFim || null }))
+      .filter((o) => o.titulo || o.entidade);
+  }
+
+  // Cargos eletivos anteriores (trajetória: vereador, prefeito, dep. estadual…).
+  let cargos_anteriores = [];
+  const mex = await getJSON(`${CAMARA}/deputados/${id}/mandatosExternos`);
+  if (mex?.dados?.length) {
+    cargos_anteriores = mex.dados.map((m) => ({
+      cargo: cap(m.cargo), municipio: cap(m.municipio), uf: cap(m.siglaUf),
+      ano: m.anoInicio || null, partido: cap(m.siglaPartidoEleicao),
+    })).filter((m) => m.cargo);
+  }
+
+  // Contato do gabinete (fica DENTRO do site — utilidade real, não leva embora).
+  const g = st.gabinete || {};
+  const contato = {
+    predio: cap(g.predio), sala: cap(g.sala), andar: cap(g.andar),
+    telefone: cap(g.telefone), email: cap(g.email || st.email),
+  };
+  const temContato = Object.values(contato).some(Boolean);
+
   // Proposições apresentadas no mandato atual (autor). Pagina até acabar (teto 5 páginas de 100).
   let props = [];
   for (let pag = 1; pag <= 5; pag++) {
@@ -99,6 +126,7 @@ async function bioCamara(id) {
 
   return {
     nome_completo: cap(d.nomeCivil),
+    sexo: cap(d.sexo),
     data_nascimento: d.dataNascimento || null,
     naturalidade_uf: cap(d.ufNascimento),
     naturalidade_municipio: cap(d.municipioNascimento),
@@ -109,6 +137,10 @@ async function bioCamara(id) {
     condicao_eleitoral: cap(st.condicaoEleitoral),
     website: cap(d.urlWebsite),
     redes_sociais: arr(d.redeSocial).map((u) => cap(u)).filter(Boolean),
+    contato: temContato ? contato : null,
+    ocupacoes,
+    cargos_anteriores,
+    mandato: { legislatura: st.idLegislatura || null, condicao: cap(st.condicaoEleitoral), partido: cap(st.siglaPartido) },
     comissoes,
     frentes,
     proposicoes,
@@ -124,6 +156,21 @@ async function bioSenado(codigo) {
   if (!par) return null;
   const db = par.DadosBasicosParlamentar || {};
   const id = par.IdentificacaoParlamentar || {};
+
+  // Telefone do gabinete (primeiro da lista) — contato dentro do site.
+  const tel = arr(par?.Telefones?.Telefone)[0];
+  const contatoS = { telefone: cap(tel?.NumeroTelefone), email: cap(id.EmailParlamentar) };
+  const temContatoS = Object.values(contatoS).some(Boolean);
+
+  // Mandato: titular/suplente + legislatura de início.
+  const mand = par.UltimoMandato || par.MandatoAtual || {};
+  const primeira = mand.PrimeiraLegislaturaDoMandato || {};
+  const mandatoS = {
+    participacao: cap(mand.DescricaoParticipacao),
+    legislatura: primeira.NumeroLegislatura || null,
+    inicio: primeira.DataInicio || null,
+    uf: cap(mand.UfParlamentar || db.UfNaturalidade),
+  };
 
   // Comissões atuais (sem data de fim).
   let comissoes = [];
@@ -163,6 +210,7 @@ async function bioSenado(codigo) {
 
   return {
     nome_completo: cap(id.NomeCompletoParlamentar),
+    sexo: cap(id.SexoParlamentar),
     data_nascimento: db.DataNascimento || null,
     naturalidade_uf: cap(db.UfNaturalidade),
     naturalidade_municipio: cap(db.Naturalidade),
@@ -170,9 +218,13 @@ async function bioSenado(codigo) {
     profissao: cap(db.Profissao),
     email_oficial: cap(id.EmailParlamentar),
     situacao: 'Exercício',
-    condicao_eleitoral: null,
+    condicao_eleitoral: cap(mandatoS.participacao), // Titular/Suplente
     website: cap(id.UrlPaginaParlamentar),
     redes_sociais: [],
+    contato: temContatoS ? contatoS : null,
+    ocupacoes: [],
+    cargos_anteriores: [],
+    mandato: (mandatoS.participacao || mandatoS.legislatura) ? mandatoS : null,
     comissoes,
     frentes: [],
     proposicoes,
