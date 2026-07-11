@@ -154,7 +154,13 @@ export default function PerfilPolitico({ dados }) {
   const temBio = !!(idade || naturalidade || perfil.escolaridade || perfil.profissao || perfil.email_oficial || redes.length || perfil.situacao || ocupacoes.length || cargosAnteriores.length || telContato || areasAtuacao.length || filiacoes.length || mandatoResumo || baseEleitoral || biografiaTexto);
   const temTrajetoria = ocupacoes.length > 0 || cargosAnteriores.length > 0 || filiacoes.length > 1;
 
+  const [anoSel, setAnoSel] = useState(ano_referencia);
+  const dadosAno = serie_mensal.find((s) => s.ano === anoSel) || serie_mensal[0] || null;
+  const maxMes = dadosAno ? Math.max(...dadosAno.meses.map((m) => m.valor), 1) : 1;
+  const mediaAno = dadosAno && dadosAno.meses_com_gasto > 0 ? dadosAno.total / dadosAno.meses_com_gasto : 0;
+
   // Navegação por seções (só lista as que existem para este parlamentar)
+  // ATENÇÃO: precisa vir DEPOIS de `dadosAno` — referenciar antes causa TDZ ("Cannot access before initialization") no build de produção.
   const secoes = [
     { id: 'resumo', rotulo: 'Resumo' },
     temBio && { id: 'quem-e', rotulo: 'Quem é' },
@@ -165,11 +171,6 @@ export default function PerfilPolitico({ dados }) {
     { id: 'votos', rotulo: 'Votos' },
   ].filter(Boolean);
   const ancora = { scrollMarginTop: '112px' }; // compensa header + barra fixa ao rolar até a âncora
-
-  const [anoSel, setAnoSel] = useState(ano_referencia);
-  const dadosAno = serie_mensal.find((s) => s.ano === anoSel) || serie_mensal[0] || null;
-  const maxMes = dadosAno ? Math.max(...dadosAno.meses.map((m) => m.valor), 1) : 1;
-  const mediaAno = dadosAno && dadosAno.meses_com_gasto > 0 ? dadosAno.total / dadosAno.meses_com_gasto : 0;
 
   const ehEstadual = perfil.casa_legislativa === 'estadual' || (perfil.fonte_api || '').includes('alesp');
   const rotuloCota = ehEstadual ? 'cota (verba de gabinete) ?' : 'cota parlamentar ?';
