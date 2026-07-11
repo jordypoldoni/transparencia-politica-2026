@@ -7,7 +7,9 @@ import CampoBusca from '../components/CampoBusca';
 import { NOMES_UF } from '../src/lib/cotas';
 import { t } from '../src/estilo/tokens';
 
-export default function Parlamentares({ deputados, qInicial, ufInicial, casaInicial }) {
+const brl = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v || 0);
+
+export default function Parlamentares({ deputados, qInicial, ufInicial, casaInicial, radarCamara = [], radarSenado = [], radarEstadual = [] }) {
   const [busca, setBusca] = useState(qInicial || '');
   const [uf, setUf] = useState(ufInicial || '');
   const [casa, setCasa] = useState(casaInicial || 'Câmara');
@@ -15,6 +17,8 @@ export default function Parlamentares({ deputados, qInicial, ufInicial, casaInic
   useEffect(() => { setCasa(casaInicial || 'Câmara'); setUf(''); }, [casaInicial]);
   // "Senadores" é uma página própria; "Deputados" agrupa federais + estaduais.
   const grupo = casa === 'Senado' ? 'senador' : 'deputado';
+  // Ranking de gastos da casa ativa (troca junto com o toggle Federais/Estaduais e a rota Senadores).
+  const radar = casa === 'Senado' ? radarSenado : casa === 'Assembleia (SP)' ? radarEstadual : radarCamara;
 
   const ufs = useMemo(
     () => Array.from(new Set(deputados.filter((d) => d.casa === casa).map((d) => d.uf).filter(Boolean))).sort(),
@@ -68,6 +72,46 @@ export default function Parlamentares({ deputados, qInicial, ufInicial, casaInic
         </div>
       )}
 
+      {/* Ranking de gastos — quem mais usou a verba (casa ativa) */}
+      <section style={{ margin: '0 0 28px' }}>
+        <div style={{ background: t.cor.verde, borderRadius: t.raio.lg, padding: 'clamp(20px,3.5vw,32px)', color: '#fff' }}>
+          <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.3rem,2.6vw,1.7rem)', margin: '0 0 6px' }}>
+            Quem mais usou a verba pública
+          </h2>
+          <p style={{ color: 'rgba(255,255,255,0.82)', maxWidth: '64ch', lineHeight: 1.5, margin: '0 0 18px', fontSize: '0.92rem' }}>
+            {casa === 'Senado'
+              ? 'Senadores que mais usaram a cota (CEAPS) em 2026.'
+              : casa === 'Assembleia (SP)'
+              ? 'Deputados estaduais de SP que mais usaram a verba de gabinete em 2026.'
+              : 'Deputados federais que mais usaram a cota parlamentar em 2026.'}{' '}Toque para ver <em>em quê</em>. Fonte: {casa === 'Senado' ? 'Senado Federal' : casa === 'Assembleia (SP)' ? 'ALESP' : 'Câmara dos Deputados'}.
+          </p>
+          {radar.length === 0 ? (
+            <p style={{ color: 'rgba(255,255,255,0.55)', margin: 0, fontSize: '0.95rem' }}>
+              Dados temporariamente indisponíveis. Tente recarregar a página.
+            </p>
+          ) : (
+            <ol style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: '8px' }}>
+              {radar.map((p, i) => (
+                <li key={p.id}>
+                  <Link href={`/deputado/${p.slug}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '14px', background: 'rgba(255,255,255,0.07)', borderRadius: '6px', padding: '12px 16px' }}>
+                    <span style={{ flexShrink: 0, width: '26px', fontFamily: t.fonte.titulo, fontWeight: 600, color: t.cor.ouro, fontSize: '1.2rem' }}>{i + 1}</span>
+                    <Avatar nome={p.nome_urna} foto={p.foto_url} size={44} />
+                    <span style={{ flex: 1, minWidth: 0 }}>
+                      <span style={{ display: 'block', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.nome_urna}</span>
+                      <span style={{ fontSize: '0.82rem', opacity: 0.75 }}>{p.partido_atual} · {p.uf_sede} · em {p.n_notas} notas</span>
+                    </span>
+                    <span style={{ flexShrink: 0, textAlign: 'right' }}>
+                      <span style={{ display: 'block', fontWeight: 800, fontSize: '1.05rem' }}>{brl(p.total)}</span>
+                      <span style={{ fontSize: '0.72rem', opacity: 0.7 }}>ver no quê →</span>
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ol>
+          )}
+        </div>
+      </section>
+
       {/* Busca + estado */}
       <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '28px', position: 'sticky', top: '70px', zIndex: 10 }}>
         <div style={{ flex: 1, minWidth: '240px' }}>
@@ -111,12 +155,14 @@ export default function Parlamentares({ deputados, qInicial, ufInicial, casaInic
 }
 
 export async function getServerSideProps({ query }) {
-  let deputados = [];
-  try {
-    deputados = await ServicoAPI.listarDeputados();
-  } catch (e) {
-    console.error('Parlamentares:', e.message);
-  }
+  const settled = await Promise.allSettled([
+    ServicoAPI.listarDeputados(),
+    ServicoAPI.getRadarGastos(2026, 10, 'Câmara'),
+    ServicoAPI.getRadarGastos(2026, 10, 'Senado'),
+    ServicoAPI.getRadarGastos(2026, 10, 'Assembleia (SP)'),
+  ]);
+  const get = (i) => (settled[i].status === 'fulfilled' ? settled[i].value : []);
+  const deputados = get(0);
   const c = String(query.casa || '').toLowerCase();
   const casaInicial = c.includes('sen') ? 'Senado' : (c.includes('sp') || c.includes('estad') || c.includes('alesp')) ? 'Assembleia (SP)' : 'Câmara';
   return {
@@ -125,6 +171,9 @@ export async function getServerSideProps({ query }) {
       qInicial: query.q || '',
       ufInicial: query.uf || '',
       casaInicial,
+      radarCamara: JSON.parse(JSON.stringify(get(1))),
+      radarSenado: JSON.parse(JSON.stringify(get(2))),
+      radarEstadual: JSON.parse(JSON.stringify(get(3))),
     },
   };
 }

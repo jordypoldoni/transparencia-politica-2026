@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import ServicoAPI from '../src/servicos/servico_api';
@@ -11,7 +11,6 @@ import { t } from '../src/estilo/tokens';
 
 const ESTADOS = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
 const ESTADOS_OPCOES = ESTADOS.map((uf) => ({ valor: uf, rotulo: `${uf} · ${NOMES_UF[uf] || uf}`, busca: `${uf} ${NOMES_UF[uf] || ''}` }));
-const brl = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v || 0);
 
 const botaoPilula = {
   display: 'inline-flex', alignItems: 'center', gap: '6px',
@@ -19,22 +18,14 @@ const botaoPilula = {
   border: 'none', borderRadius: t.raio.pill, cursor: 'pointer', textDecoration: 'none',
 };
 
-export default function Home({ radarCamara, radarSenado, radarEstadual, votacoes, parlamentares = [] }) {
+export default function Home({ votacoes, parlamentares = [] }) {
   const router = useRouter();
-  const [casa, setCasa] = useState('Câmara');
-  const radar = casa === 'Senado' ? radarSenado : casa === 'Estaduais SP' ? radarEstadual : radarCamara;
 
   const parlOpcoes = useMemo(() => parlamentares.map((p) => ({
     valor: p.slug,
     rotulo: `${p.nome} · ${p.partido}${p.uf ? '-' + p.uf : ''}`,
     busca: `${p.nome} ${p.partido} ${p.uf}`,
   })), [parlamentares]);
-
-  const togglePilula = (ativo) => ({
-    padding: '7px 16px', fontSize: '0.82rem', fontWeight: 700, fontFamily: t.fonte.corpo,
-    borderRadius: t.raio.pill, cursor: 'pointer', border: 'none',
-    background: ativo ? t.cor.ouro : 'rgba(255,255,255,0.12)', color: ativo ? t.cor.tinta : '#fff',
-  });
 
   return (
     <div>
@@ -107,50 +98,20 @@ export default function Home({ radarCamara, radarSenado, radarEstadual, votacoes
         </div>
       </section>
 
-      {/* RADAR DA COTA — por casa */}
+      {/* PANORAMA FISCAL — em construção (União/estados/DF/municípios) */}
       <section style={{ padding: '16px 24px' }}>
         <div style={{ background: t.cor.verde, borderRadius: t.raio.lg, padding: 'clamp(24px,4vw,40px)', color: '#fff' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
-            <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.4rem,3vw,2rem)', margin: 0 }}>
-              Quem mais usou a verba pública
-            </h2>
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }} role="tablist">
-              <button onClick={() => setCasa('Câmara')} style={togglePilula(casa === 'Câmara')}>Dep. Federais</button>
-              <button onClick={() => setCasa('Senado')} style={togglePilula(casa === 'Senado')}>Senadores</button>
-              <button onClick={() => setCasa('Estaduais SP')} style={togglePilula(casa === 'Estaduais SP')}>Dep. Estaduais SP</button>
-            </div>
-          </div>
-          <p style={{ color: 'rgba(255,255,255,0.82)', maxWidth: '62ch', lineHeight: 1.5, margin: '10px 0 22px', fontSize: '0.96rem' }}>
-            {casa === 'Senado'
-              ? 'Senadores que mais usaram a cota (CEAPS) em 2026.'
-              : casa === 'Estaduais SP'
-              ? 'Deputados estaduais de SP que mais usaram a verba de gabinete em 2026.'
-              : 'Deputados federais que mais usaram a cota parlamentar em 2026.'}{' '}Toque para ver <em>em quê</em>. O <strong style={{ color: t.cor.ouro }}>teto da cota muda por estado e é diferente entre Câmara, Senado e Assembleias</strong> — por isso as listas são separadas. Fonte: {casa === 'Senado' ? 'Senado Federal' : casa === 'Estaduais SP' ? 'ALESP' : 'Câmara dos Deputados'}.
+          <span style={{ display: 'inline-block', fontSize: '0.72rem', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: t.cor.ouro }}>Em breve</span>
+          <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.4rem,3vw,2rem)', margin: '10px 0 12px' }}>
+            Para onde vai o dinheiro público
+          </h2>
+          <p style={{ color: 'rgba(255,255,255,0.82)', maxWidth: '62ch', lineHeight: 1.55, margin: '0 0 20px', fontSize: '0.98rem' }}>
+            Estamos preparando um panorama de arrecadação e gastos da <strong style={{ color: t.cor.ouro }}>União, dos estados, do DF e dos municípios</strong> — em linguagem clara e com a fonte oficial do lado. Enquanto isso, você já pode fiscalizar quem te representa:
           </p>
-          {radar.length === 0 ? (
-            <p style={{ color: 'rgba(255,255,255,0.55)', margin: 0, fontSize: '0.95rem' }}>
-              Dados temporariamente indisponíveis. Tente recarregar a página.
-            </p>
-          ) : (
-            <ol style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: '8px' }}>
-              {radar.map((p, i) => (
-                <li key={p.id}>
-                  <Link href={`/deputado/${p.slug}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '14px', background: 'rgba(255,255,255,0.07)', borderRadius: '6px', padding: '12px 16px' }}>
-                    <span style={{ flexShrink: 0, width: '26px', fontFamily: t.fonte.titulo, fontWeight: 600, color: t.cor.ouro, fontSize: '1.2rem' }}>{i + 1}</span>
-                    <img src={p.foto_url || 'https://via.placeholder.com/80'} alt={p.nome_urna} loading="lazy" style={{ width: '44px', height: '44px', borderRadius: '50%', objectFit: 'cover', objectPosition: 'top', flexShrink: 0, background: '#fff2' }} />
-                    <span style={{ flex: 1, minWidth: 0 }}>
-                      <span style={{ display: 'block', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.nome_urna}</span>
-                      <span style={{ fontSize: '0.82rem', opacity: 0.75 }}>{p.partido_atual} · {p.uf_sede} · em {p.n_notas} notas</span>
-                    </span>
-                    <span style={{ flexShrink: 0, textAlign: 'right' }}>
-                      <span style={{ display: 'block', fontWeight: 800, fontSize: '1.05rem' }}>{brl(p.total)}</span>
-                      <span style={{ fontSize: '0.72rem', opacity: 0.7 }}>ver no quê →</span>
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ol>
-          )}
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            <Link href="/deputados?casa=Câmara" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '11px 20px', fontWeight: 700, borderRadius: t.raio.pill, background: t.cor.ouro, color: t.cor.tinta, textDecoration: 'none' }}>Ver ranking de gastos →</Link>
+            <Link href="/votacoes" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '11px 20px', fontWeight: 700, borderRadius: t.raio.pill, background: 'rgba(255,255,255,0.12)', color: '#fff', textDecoration: 'none' }}>Ver votações →</Link>
+          </div>
         </div>
       </section>
 
@@ -205,26 +166,17 @@ export default function Home({ radarCamara, radarSenado, radarEstadual, votacoes
 
 export async function getServerSideProps() {
   const settled = await Promise.allSettled([
-    ServicoAPI.getRadarGastos(2026, 6, 'Câmara'),
-    ServicoAPI.getRadarGastos(2026, 6, 'Senado'),
-    ServicoAPI.getRadarGastos(2026, 6, 'Assembleia (SP)'),
     ServicoAPI.getVotacoesRecentes(10),
     ServicoAPI.listarDeputados(),
   ]);
   const get = (i) => (settled[i].status === 'fulfilled' ? settled[i].value : []);
-  const radarCamara   = get(0);
-  const radarSenado   = get(1);
-  const radarEstadual = get(2);
-  const votacoes      = get(3);
-  const parlamentares = get(4);
+  const votacoes      = get(0);
+  const parlamentares = get(1);
   const parlamentaresSlim = (parlamentares || [])
     .filter((p) => p.slug)
     .map((p) => ({ slug: p.slug, nome: p.nome, partido: p.partido, uf: p.uf }));
   return {
     props: {
-      radarCamara: JSON.parse(JSON.stringify(radarCamara)),
-      radarSenado: JSON.parse(JSON.stringify(radarSenado)),
-      radarEstadual: JSON.parse(JSON.stringify(radarEstadual)),
       votacoes: JSON.parse(JSON.stringify(votacoes)),
       parlamentares: JSON.parse(JSON.stringify(parlamentaresSlim)),
     },
