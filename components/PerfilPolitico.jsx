@@ -283,14 +283,15 @@ export default function PerfilPolitico({ dados }) {
   return (
     <div className="pagina">
       <style jsx global>{`html{scroll-behavior:smooth}`}</style>
-      <button onClick={() => router.back()} style={{ ...pilula, background: '#fff', color: t.cor.tinta, marginBottom: '16px', boxShadow: t.sombra.clicavel }}>← Voltar</button>
-
-      {/* Navegação por seções — fixa abaixo do cabeçalho */}
-      <nav aria-label="Seções do perfil" style={{ position: 'sticky', top: '56px', zIndex: 40, marginBottom: '20px', padding: '8px', display: 'flex', gap: '8px', overflowX: 'auto', background: 'rgba(251,248,242,0.92)', backdropFilter: 'blur(8px)', borderRadius: t.raio.pill, boxShadow: t.sombra.clicavel }}>
-        {secoes.map((s) => (
-          <button key={s.id} type="button" onClick={() => irParaSecao(s.id)} style={{ flexShrink: 0, fontSize: '0.82rem', fontWeight: 700, color: t.cor.tinta, cursor: 'pointer', border: 'none', padding: '7px 15px', borderRadius: t.raio.pill, background: t.cor.papelCartao, boxShadow: t.sombra.sutil, fontFamily: t.fonte.corpo }}>{s.rotulo}</button>
-        ))}
-      </nav>
+      {/* Voltar + navegação por seções — barra fixa única abaixo do cabeçalho */}
+      <div style={{ position: 'sticky', top: '56px', zIndex: 40, marginBottom: '20px', display: 'flex', gap: '10px', alignItems: 'center' }}>
+        <button onClick={() => router.back()} style={{ ...pilula, flexShrink: 0, background: '#fff', color: t.cor.tinta, boxShadow: t.sombra.clicavel }}>← Voltar</button>
+        <nav aria-label="Seções do perfil" style={{ flex: 1, minWidth: 0, padding: '8px', display: 'flex', gap: '8px', overflowX: 'auto', background: t.cor.verde, borderRadius: t.raio.pill, boxShadow: t.sombra.clicavel }}>
+          {secoes.map((s) => (
+            <button key={s.id} type="button" onClick={() => irParaSecao(s.id)} style={{ flexShrink: 0, fontSize: '0.82rem', fontWeight: 700, color: t.cor.tinta, cursor: 'pointer', border: 'none', padding: '7px 15px', borderRadius: t.raio.pill, background: t.cor.papelCartao, boxShadow: t.sombra.sutil, fontFamily: t.fonte.corpo }}>{s.rotulo}</button>
+          ))}
+        </nav>
+      </div>
 
       {/* CAMADA ZERO — veredito em português claro */}
       <div id="resumo" className="surgir" style={{ ...ancora, background: t.cor.verde, color: '#fff', borderRadius: t.raio.lg, padding: 'clamp(24px,4vw,40px)', marginBottom: '24px' }}>
