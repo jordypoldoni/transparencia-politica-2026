@@ -1,4 +1,5 @@
 import supabase from '../supabase_cliente.js';
+import { garantirResumo } from '../lib/siconfi.js';
 
 const ServicoAPI = {
     // Busca o ranking de maiores gastadores
@@ -464,6 +465,70 @@ const ServicoAPI = {
             .ilike('fonte_api', '%camara%')
             .not('slug', 'is', null);
         return (data || []).map((d) => d.slug);
+    },
+
+    // ============ PANORAMA FISCAL (SICONFI: União, estados, DF, municípios) ============
+
+    // Resumo + despesa por função de um ente. Município ainda não coletado: busca sob demanda e cacheia.
+    getPanoramaEnte: async (codIbge) => {
+        const cod = Number(codIbge);
+        if (!cod) return null;
+        const { data: ente } = await supabase.from('entes_fiscais').select('*').eq('cod_ibge', cod).maybeSingle();
+        let { data: resumo } = await supabase.from('fiscal_resumo').select('*').eq('cod_ibge', cod).maybeSingle();
+        if (!resumo) {
+            try { resumo = await garantirResumo(supabase, cod); } catch (e) { console.error('garantirResumo:', e.message); }
+        }
+        if (!resumo) return ente ? { ente, resumo: null, funcoes: [] } : null;
+        const { data: funcoes } = await supabase.from('fiscal_funcao')
+            .select('funcao, valor').eq('cod_ibge', cod).eq('ano', resumo.ano)
+            .order('valor', { ascending: false });
+        return { ente: ente || null, resumo, funcoes: funcoes || [] };
+    },
+
+    getPanoramaUniao: async () => ServicoAPI.getPanoramaEnte(1),
+
+    // Estados + DF com resumo (para o seletor de estado e comparações na home).
+    listarEstadosFiscais: async () => {
+        const { data } = await supabase.from('fiscal_resumo')
+            .select('cod_ibge, receita_total, despesa_total, resultado, populacao, entes_fiscais!inner(ente, uf)')
+            .in('esfera', ['E', 'D']);
+        const linhas = (data || []).map((d) => ({
+            cod_ibge: d.cod_ibge, ente: d.entes_fiscais.ente, uf: d.entes_fiscais.uf,
+            receita_total: d.receita_total, despesa_total: d.despesa_total,
+            resultado: d.resultado, populacao: d.populacao,
+        }));
+        linhas.sort((a, b) => a.ente.localeCompare(b.ente, 'pt-BR'));
+        return linhas;
+    },
+
+    // Ranking de entes por gasto numa função (por habitante ou absoluto).
+    getRankingFuncao: async ({ funcao, esferas = ['E', 'D'], porHabitante = true, limite = 10 }) => {
+        const { data } = await supabase.from('fiscal_funcao')
+            .select('cod_ibge, valor, entes_fiscais!inner(ente, uf, esfera, populacao)')
+            .eq('funcao', funcao)
+            .in('entes_fiscais.esfera', esferas);
+        const linhas = (data || []).map((d) => {
+            const e = d.entes_fiscais;
+            const pop = e.populacao || null;
+            return {
+                cod_ibge: d.cod_ibge, ente: e.ente, uf: e.uf, valor: Number(d.valor),
+                populacao: pop, por_hab: pop ? Number(d.valor) / pop : null,
+            };
+        }).filter((l) => (porHabitante ? l.por_hab != null : true));
+        linhas.sort((a, b) => (porHabitante ? b.por_hab - a.por_hab : b.valor - a.valor));
+        return linhas.slice(0, limite);
+    },
+
+    // Busca de entes por nome (autocomplete de município — usada pela rota /api/buscar-ente).
+    buscarEntesFiscais: async (termo, limite = 20) => {
+        const q = (termo || '').trim();
+        if (q.length < 2) return [];
+        const { data } = await supabase.from('entes_fiscais')
+            .select('cod_ibge, ente, uf, esfera, populacao')
+            .ilike('ente', `%${q}%`)
+            .order('populacao', { ascending: false, nullsFirst: false })
+            .limit(limite);
+        return data || [];
     }
 };
 

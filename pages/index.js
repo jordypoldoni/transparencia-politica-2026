@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import ServicoAPI from '../src/servicos/servico_api';
@@ -18,8 +18,68 @@ const botaoPilula = {
   border: 'none', borderRadius: t.raio.pill, cursor: 'pointer', textDecoration: 'none',
 };
 
-export default function Home({ votacoes, parlamentares = [] }) {
+// Formatação compacta de reais para os grandes números fiscais (R$ 1,45 tri / R$ 132 bi).
+const brlC = (v) => {
+  if (v == null) return '—';
+  const n = Number(v), a = Math.abs(n);
+  if (a >= 1e12) return `R$ ${(n / 1e12).toLocaleString('pt-BR', { maximumFractionDigits: 2 })} tri`;
+  if (a >= 1e9) return `R$ ${(n / 1e9).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} bi`;
+  if (a >= 1e6) return `R$ ${(n / 1e6).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} mi`;
+  return `R$ ${n.toLocaleString('pt-BR', { maximumFractionDigits: 0 })}`;
+};
+
+function NumHero({ rotulo, valor, destaque }) {
+  return (
+    <div>
+      <div style={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'rgba(255,255,255,0.6)' }}>{rotulo}</div>
+      <div style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.6rem', color: destaque ? t.cor.ouro : '#fff' }}>{valor}</div>
+    </div>
+  );
+}
+
+// Busca de município (assíncrona) → vai para /ente/[cod].
+function BuscaMunicipio() {
   const router = useRouter();
+  const [q, setQ] = useState('');
+  const [itens, setItens] = useState([]);
+  const [aberto, setAberto] = useState(false);
+  useEffect(() => {
+    const termo = q.trim();
+    if (termo.length < 2) { setItens([]); return; }
+    const id = setTimeout(async () => {
+      try {
+        const r = await fetch(`/api/buscar-ente?q=${encodeURIComponent(termo)}`);
+        const data = await r.json();
+        setItens(Array.isArray(data) ? data.filter((e) => e.esfera === 'M') : []);
+        setAberto(true);
+      } catch { setItens([]); }
+    }, 250);
+    return () => clearTimeout(id);
+  }, [q]);
+  return (
+    <div style={{ position: 'relative' }}>
+      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Digite o município…" aria-label="Buscar município"
+        style={{ width: '100%', padding: '12px 14px', borderRadius: t.raio.pill, border: `1px solid ${t.cor.linha}`, fontSize: '0.95rem', fontFamily: t.fonte.corpo, boxSizing: 'border-box' }} />
+      {aberto && itens.length > 0 && (
+        <ul style={{ position: 'absolute', zIndex: 30, left: 0, right: 0, marginTop: '6px', listStyle: 'none', padding: '6px', background: '#fff', borderRadius: t.raio.md, boxShadow: t.sombra.media, maxHeight: '260px', overflowY: 'auto' }}>
+          {itens.map((e) => (
+            <li key={e.cod_ibge}>
+              <button type="button" onClick={() => router.push(`/ente/${e.cod_ibge}`)}
+                style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', padding: '9px 12px', borderRadius: t.raio.sm, fontSize: '0.9rem', fontFamily: t.fonte.corpo }}>
+                {e.ente} <span style={{ color: t.cor.cinza }}>· {e.uf}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+export default function Home({ votacoes, parlamentares = [], uniao = null, estados = [], rankingSaude = [] }) {
+  const router = useRouter();
+
+  const estadoOpcoes = useMemo(() => estados.map((e) => ({ valor: String(e.cod_ibge), rotulo: e.ente, busca: e.ente })), [estados]);
 
   const parlOpcoes = useMemo(() => parlamentares.map((p) => ({
     valor: p.slug,
@@ -98,21 +158,54 @@ export default function Home({ votacoes, parlamentares = [] }) {
         </div>
       </section>
 
-      {/* PANORAMA FISCAL — em construção (União/estados/DF/municípios) */}
+      {/* PANORAMA FISCAL — União, estados, DF, municípios (SICONFI) */}
       <section style={{ padding: '16px 24px' }}>
-        <div style={{ background: t.cor.verde, borderRadius: t.raio.lg, padding: 'clamp(24px,4vw,40px)', color: '#fff' }}>
-          <span style={{ display: 'inline-block', fontSize: '0.72rem', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: t.cor.ouro }}>Em breve</span>
-          <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.4rem,3vw,2rem)', margin: '10px 0 12px' }}>
-            Para onde vai o dinheiro público
-          </h2>
-          <p style={{ color: 'rgba(255,255,255,0.82)', maxWidth: '62ch', lineHeight: 1.55, margin: '0 0 20px', fontSize: '0.98rem' }}>
-            Estamos preparando um panorama de arrecadação e gastos da <strong style={{ color: t.cor.ouro }}>União, dos estados, do DF e dos municípios</strong> — em linguagem clara e com a fonte oficial do lado. Enquanto isso, você já pode fiscalizar quem te representa:
-          </p>
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-            <Link href="/deputados?casa=Câmara" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '11px 20px', fontWeight: 700, borderRadius: t.raio.pill, background: t.cor.ouro, color: t.cor.tinta, textDecoration: 'none' }}>Ver ranking de gastos →</Link>
-            <Link href="/votacoes" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '11px 20px', fontWeight: 700, borderRadius: t.raio.pill, background: 'rgba(255,255,255,0.12)', color: '#fff', textDecoration: 'none' }}>Ver votações →</Link>
+        <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.7rem', margin: '0 0 4px' }}>Para onde vai o dinheiro público</h2>
+        <p style={{ color: t.cor.cinza, fontSize: '0.92rem', margin: '0 0 18px', lineHeight: 1.5, maxWidth: '70ch' }}>
+          Quanto a União, os estados, o DF e os municípios <strong>arrecadam e gastam</strong> — em linguagem clara, direto da fonte oficial (<a href="https://siconfi.tesouro.gov.br/" target="_blank" rel="noopener noreferrer" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>SICONFI/Tesouro</a>). Números acumulados de {uniao?.resumo?.ano || '2026'}.
+        </p>
+
+        {uniao?.resumo && (
+          <Link href="/ente/1" style={{ textDecoration: 'none', color: '#fff', display: 'block', background: t.cor.verde, borderRadius: t.raio.lg, padding: 'clamp(20px,3vw,32px)', marginBottom: '14px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '10px', flexWrap: 'wrap', marginBottom: '16px' }}>
+              <span style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.4rem' }}>União · Governo Federal</span>
+              <span style={{ color: t.cor.ouro, fontWeight: 700, fontSize: '0.85rem' }}>ver detalhe →</span>
+            </div>
+            <div style={{ display: 'flex', gap: '24px 44px', flexWrap: 'wrap' }}>
+              <NumHero rotulo="Arrecadou" valor={brlC(uniao.resumo.receita_total)} />
+              <NumHero rotulo="Gastou" valor={brlC(uniao.resumo.despesa_total)} destaque />
+            </div>
+          </Link>
+        )}
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px,1fr))', gap: '12px', marginBottom: '16px' }}>
+          <div style={{ background: t.cor.papelCartao, borderRadius: t.raio.md, padding: '18px', boxShadow: t.sombra.sutil }}>
+            <p style={{ margin: '0 0 10px', fontWeight: 700, fontSize: '0.9rem' }}>Orçamento do seu estado</p>
+            <CampoSelect opcoes={estadoOpcoes} placeholder="Escolha o estado" aoLabel="Estado" icone={<Pino />} aoSelecionar={(cod) => router.push(`/ente/${cod}`)} />
+          </div>
+          <div style={{ background: t.cor.papelCartao, borderRadius: t.raio.md, padding: '18px', boxShadow: t.sombra.sutil }}>
+            <p style={{ margin: '0 0 10px', fontWeight: 700, fontSize: '0.9rem' }}>Orçamento do seu município</p>
+            <BuscaMunicipio />
           </div>
         </div>
+
+        {rankingSaude && rankingSaude.length > 0 && (
+          <div style={{ background: t.cor.papelCartao, borderRadius: t.raio.lg, padding: 'clamp(18px,3vw,28px)', boxShadow: t.sombra.sutil }}>
+            <h3 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.15rem', margin: '0 0 4px' }}>Estados que mais gastam em Saúde por habitante</h3>
+            <p style={{ color: t.cor.cinza, fontSize: '0.85rem', margin: '0 0 14px' }}>Despesa liquidada em Saúde ÷ população. Acumulado de {uniao?.resumo?.ano || '2026'}. Toque para ver o ente.</p>
+            <ol style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: '6px' }}>
+              {rankingSaude.map((e, i) => (
+                <li key={e.cod_ibge}>
+                  <Link href={`/ente/${e.cod_ibge}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '12px', background: t.cor.papelQuente, borderRadius: t.raio.sm, padding: '10px 14px' }}>
+                    <span style={{ width: '22px', flexShrink: 0, fontFamily: t.fonte.titulo, fontWeight: 600, color: t.cor.ouroTexto }}>{i + 1}</span>
+                    <span style={{ flex: 1, minWidth: 0, fontWeight: 600, fontSize: '0.9rem' }}>{e.ente}</span>
+                    <span style={{ flexShrink: 0, fontWeight: 700, fontSize: '0.9rem' }}>R$ {Math.round(e.por_hab).toLocaleString('pt-BR')}/hab</span>
+                  </Link>
+                </li>
+              ))}
+            </ol>
+          </div>
+        )}
       </section>
 
       {/* VOTAÇÕES — em linguagem clara */}
@@ -168,10 +261,16 @@ export async function getServerSideProps() {
   const settled = await Promise.allSettled([
     ServicoAPI.getVotacoesRecentes(10),
     ServicoAPI.listarDeputados(),
+    ServicoAPI.getPanoramaUniao(),
+    ServicoAPI.listarEstadosFiscais(),
+    ServicoAPI.getRankingFuncao({ funcao: 'Saúde', esferas: ['E', 'D'], porHabitante: true, limite: 6 }),
   ]);
   const get = (i) => (settled[i].status === 'fulfilled' ? settled[i].value : []);
   const votacoes      = get(0);
   const parlamentares = get(1);
+  const uniao         = settled[2].status === 'fulfilled' ? settled[2].value : null;
+  const estados       = get(3);
+  const rankingSaude  = get(4);
   const parlamentaresSlim = (parlamentares || [])
     .filter((p) => p.slug)
     .map((p) => ({ slug: p.slug, nome: p.nome, partido: p.partido, uf: p.uf }));
@@ -179,6 +278,9 @@ export async function getServerSideProps() {
     props: {
       votacoes: JSON.parse(JSON.stringify(votacoes)),
       parlamentares: JSON.parse(JSON.stringify(parlamentaresSlim)),
+      uniao: JSON.parse(JSON.stringify(uniao)),
+      estados: JSON.parse(JSON.stringify(estados)),
+      rankingSaude: JSON.parse(JSON.stringify(rankingSaude)),
     },
   };
 }
