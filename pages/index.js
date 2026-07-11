@@ -1,10 +1,11 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import ServicoAPI from '../src/servicos/servico_api';
 import { humanizarVotacao, explicarTipo } from '../src/lib/votacao';
 import Termo from '../components/Termo';
 import CampoSelect from '../components/CampoSelect';
+import BuscaMunicipio from '../components/BuscaMunicipio';
 import { Lupa, Pino } from '../components/icones';
 import { NOMES_UF } from '../src/lib/cotas';
 import { t } from '../src/estilo/tokens';
@@ -37,46 +38,7 @@ function NumHero({ rotulo, valor, destaque }) {
   );
 }
 
-// Busca de município (assíncrona) → vai para /ente/[cod].
-function BuscaMunicipio() {
-  const router = useRouter();
-  const [q, setQ] = useState('');
-  const [itens, setItens] = useState([]);
-  const [aberto, setAberto] = useState(false);
-  useEffect(() => {
-    const termo = q.trim();
-    if (termo.length < 2) { setItens([]); return; }
-    const id = setTimeout(async () => {
-      try {
-        const r = await fetch(`/api/buscar-ente?q=${encodeURIComponent(termo)}`);
-        const data = await r.json();
-        setItens(Array.isArray(data) ? data.filter((e) => e.esfera === 'M') : []);
-        setAberto(true);
-      } catch { setItens([]); }
-    }, 250);
-    return () => clearTimeout(id);
-  }, [q]);
-  return (
-    <div style={{ position: 'relative' }}>
-      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Digite o município…" aria-label="Buscar município"
-        style={{ width: '100%', padding: '12px 14px', borderRadius: t.raio.pill, border: `1px solid ${t.cor.linha}`, fontSize: '0.95rem', fontFamily: t.fonte.corpo, boxSizing: 'border-box' }} />
-      {aberto && itens.length > 0 && (
-        <ul style={{ position: 'absolute', zIndex: 30, left: 0, right: 0, marginTop: '6px', listStyle: 'none', padding: '6px', background: '#fff', borderRadius: t.raio.md, boxShadow: t.sombra.media, maxHeight: '260px', overflowY: 'auto' }}>
-          {itens.map((e) => (
-            <li key={e.cod_ibge}>
-              <button type="button" onClick={() => router.push(`/ente/${e.cod_ibge}`)}
-                style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', padding: '9px 12px', borderRadius: t.raio.sm, fontSize: '0.9rem', fontFamily: t.fonte.corpo }}>
-                {e.ente} <span style={{ color: t.cor.cinza }}>· {e.uf}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
-
-export default function Home({ votacoes, parlamentares = [], uniao = null, estados = [], rankingSaude = [] }) {
+export default function Home({ votacoes, parlamentares = [], uniao = null, estados = [] }) {
   const router = useRouter();
 
   const estadoOpcoes = useMemo(() => estados.map((e) => ({ valor: String(e.cod_ibge), rotulo: e.ente, busca: e.ente })), [estados]);
@@ -189,23 +151,9 @@ export default function Home({ votacoes, parlamentares = [], uniao = null, estad
           </div>
         </div>
 
-        {rankingSaude && rankingSaude.length > 0 && (
-          <div style={{ background: t.cor.papelCartao, borderRadius: t.raio.lg, padding: 'clamp(18px,3vw,28px)', boxShadow: t.sombra.sutil }}>
-            <h3 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.15rem', margin: '0 0 4px' }}>Estados que mais gastam em Saúde por habitante</h3>
-            <p style={{ color: t.cor.cinza, fontSize: '0.85rem', margin: '0 0 14px' }}>Despesa liquidada em Saúde ÷ população. Acumulado de {uniao?.resumo?.ano || '2026'}. Toque para ver o ente.</p>
-            <ol style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: '6px' }}>
-              {rankingSaude.map((e, i) => (
-                <li key={e.cod_ibge}>
-                  <Link href={`/ente/${e.cod_ibge}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '12px', background: t.cor.papelQuente, borderRadius: t.raio.sm, padding: '10px 14px' }}>
-                    <span style={{ width: '22px', flexShrink: 0, fontFamily: t.fonte.titulo, fontWeight: 600, color: t.cor.ouroTexto }}>{i + 1}</span>
-                    <span style={{ flex: 1, minWidth: 0, fontWeight: 600, fontSize: '0.9rem' }}>{e.ente}</span>
-                    <span style={{ flexShrink: 0, fontWeight: 700, fontSize: '0.9rem' }}>R$ {Math.round(e.por_hab).toLocaleString('pt-BR')}/hab</span>
-                  </Link>
-                </li>
-              ))}
-            </ol>
-          </div>
-        )}
+        <Link href="/gastos-publicos" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 24px', fontWeight: 700, fontSize: '0.95rem', borderRadius: t.raio.pill, background: t.cor.verde, color: t.cor.ouro, textDecoration: 'none', boxShadow: t.sombra.clicavel }}>
+          Explorar gastos públicos →
+        </Link>
       </section>
 
       {/* VOTAÇÕES — em linguagem clara */}
@@ -263,14 +211,12 @@ export async function getServerSideProps() {
     ServicoAPI.listarDeputados(),
     ServicoAPI.getPanoramaUniao(),
     ServicoAPI.listarEstadosFiscais(),
-    ServicoAPI.getRankingFuncao({ funcao: 'Saúde', esferas: ['E', 'D'], porHabitante: true, limite: 6 }),
   ]);
   const get = (i) => (settled[i].status === 'fulfilled' ? settled[i].value : []);
   const votacoes      = get(0);
   const parlamentares = get(1);
   const uniao         = settled[2].status === 'fulfilled' ? settled[2].value : null;
   const estados       = get(3);
-  const rankingSaude  = get(4);
   const parlamentaresSlim = (parlamentares || [])
     .filter((p) => p.slug)
     .map((p) => ({ slug: p.slug, nome: p.nome, partido: p.partido, uf: p.uf }));
@@ -280,7 +226,6 @@ export async function getServerSideProps() {
       parlamentares: JSON.parse(JSON.stringify(parlamentaresSlim)),
       uniao: JSON.parse(JSON.stringify(uniao)),
       estados: JSON.parse(JSON.stringify(estados)),
-      rankingSaude: JSON.parse(JSON.stringify(rankingSaude)),
     },
   };
 }

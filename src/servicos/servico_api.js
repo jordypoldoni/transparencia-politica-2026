@@ -529,6 +529,17 @@ const ServicoAPI = {
             .order('populacao', { ascending: false, nullsFirst: false })
             .limit(limite);
         return data || [];
+    },
+
+    // Todas as despesas por função de estados + DF (para o ranking configurável de /gastos-publicos).
+    listarGastosFuncaoEstados: async () => {
+        const { data } = await supabase.from('fiscal_funcao')
+            .select('cod_ibge, funcao, valor, entes_fiscais!inner(ente, esfera, populacao)')
+            .in('entes_fiscais.esfera', ['E', 'D']);
+        return (data || []).map((d) => ({
+            cod_ibge: d.cod_ibge, funcao: d.funcao, valor: Number(d.valor),
+            ente: d.entes_fiscais.ente, populacao: d.entes_fiscais.populacao || null,
+        }));
     }
 };
 

@@ -9,6 +9,7 @@ const navItens = [
   { href: '/deputados', rotulo: 'Deputados' },
   { href: '/deputados?casa=senado', rotulo: 'Senadores' },
   { href: '/votacoes', rotulo: 'Votações' },
+  { href: '/gastos-publicos', rotulo: 'Gastos públicos' },
   { href: '/entenda', rotulo: 'Entenda' },
   { href: '/sobre', rotulo: 'Sobre & Fontes' },
 ];
