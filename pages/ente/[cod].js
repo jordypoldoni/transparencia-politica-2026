@@ -25,7 +25,9 @@ export default function EntePanorama({ dados }) {
   const { ente, resumo, funcoes } = dados;
   const nome = ente?.ente || 'Ente';
   const esferaLabel = ESFERA[ente?.esfera] || 'Ente federativo';
-  const pop = resumo?.populacao || ente?.populacao || null;
+  // A União tem um valor de "população" espúrio no dataset do SICONFI (~8,5 mi, sem sentido)
+  // e per-capita não se aplica ao orçamento federal → não usamos população para a União.
+  const pop = ente?.esfera === 'U' ? null : (resumo?.populacao || ente?.populacao || null);
   const superavit = resumo && resumo.resultado != null && resumo.resultado >= 0;
   const maxFuncao = funcoes && funcoes.length ? Math.max(...funcoes.map((f) => Number(f.valor) || 0), 1) : 1;
   const ateMes = resumo ? BIMESTRE_MES[resumo.periodo] : null;
