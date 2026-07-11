@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { t } from '../src/estilo/tokens';
@@ -116,6 +116,27 @@ function wrapCanvas(ctx, text, x, y, maxW, lh) {
   return yy;
 }
 
+const ANCORA = { scrollMarginTop: '112px' }; // compensa header + barra fixa ao rolar até a âncora
+
+// Caixa de seção recolhível: cabeçalho sempre visível (clicável) + corpo que expande/recolhe.
+function Secao({ id, titulo, aberta, onToggle, children }) {
+  return (
+    <div id={id} style={{ ...ANCORA, background: t.cor.papelCartao, borderRadius: t.raio.lg, boxShadow: t.sombra.sutil, overflow: 'hidden' }}>
+      <h2 style={{ margin: 0 }}>
+        <button type="button" onClick={onToggle} aria-expanded={aberta} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', padding: 'clamp(16px,3vw,22px) clamp(20px,3vw,32px)', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.4rem', color: t.cor.tinta }}>
+          <span>{titulo}</span>
+          <span aria-hidden style={{ fontSize: '0.85rem', flexShrink: 0, opacity: 0.55, color: t.cor.cinza }}>{aberta ? '▲' : '▼'}</span>
+        </button>
+      </h2>
+      {aberta && (
+        <div style={{ padding: '0 clamp(20px,3vw,32px) clamp(20px,3vw,32px)' }}>
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function PerfilPolitico({ dados }) {
   const router = useRouter();
   const [aberta, setAberta] = useState(null);
@@ -123,6 +144,18 @@ export default function PerfilPolitico({ dados }) {
   const [modal, setModal] = useState(false);
   const [explicaCota, setExplicaCota] = useState(false);
   const [bioAberta, setBioAberta] = useState(false);
+  // Seções recolhíveis: só o Resumo vem aberto; o resto começa recolhido.
+  const [secoesAbertas, setSecoesAbertas] = useState({ resumo: true });
+  const [alvoScroll, setAlvoScroll] = useState(null);
+  const toggleSecao = (id) => setSecoesAbertas((s) => ({ ...s, [id]: !s[id] }));
+  // Menu rápido: abre a seção e rola até ela (rola depois do render, com a seção já expandida).
+  const irParaSecao = (id) => { setSecoesAbertas((s) => ({ ...s, [id]: true })); setAlvoScroll(id); };
+  useEffect(() => {
+    if (!alvoScroll) return;
+    const el = typeof document !== 'undefined' ? document.getElementById(alvoScroll) : null;
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setAlvoScroll(null);
+  }, [alvoScroll]);
 
   const { perfil, resumo_gastos, total_geral, n_notas, media_mensal, maior_categoria, lista_detalhada, votos = [], resumo_votos = {}, coerencia = null,
     serie_mensal = [], anos_disponiveis = [], ano_referencia, meses_com_gasto = 0, presenca = null } = dados;
@@ -255,7 +288,7 @@ export default function PerfilPolitico({ dados }) {
       {/* Navegação por seções — fixa abaixo do cabeçalho */}
       <nav aria-label="Seções do perfil" style={{ position: 'sticky', top: '56px', zIndex: 40, marginBottom: '20px', padding: '8px', display: 'flex', gap: '8px', overflowX: 'auto', background: 'rgba(251,248,242,0.92)', backdropFilter: 'blur(8px)', borderRadius: t.raio.pill, boxShadow: t.sombra.clicavel }}>
         {secoes.map((s) => (
-          <a key={s.id} href={`#${s.id}`} style={{ flexShrink: 0, fontSize: '0.82rem', fontWeight: 700, color: t.cor.tinta, textDecoration: 'none', padding: '7px 15px', borderRadius: t.raio.pill, background: t.cor.papelCartao, boxShadow: t.sombra.sutil }}>{s.rotulo}</a>
+          <button key={s.id} type="button" onClick={() => irParaSecao(s.id)} style={{ flexShrink: 0, fontSize: '0.82rem', fontWeight: 700, color: t.cor.tinta, cursor: 'pointer', border: 'none', padding: '7px 15px', borderRadius: t.raio.pill, background: t.cor.papelCartao, boxShadow: t.sombra.sutil, fontFamily: t.fonte.corpo }}>{s.rotulo}</button>
         ))}
       </nav>
 
@@ -267,8 +300,11 @@ export default function PerfilPolitico({ dados }) {
             <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.6rem,4vw,2.4rem)', margin: '0 0 2px' }}>{perfil.nome_urna}</h1>
             <p style={{ margin: 0, opacity: 0.85 }}>{perfil.cargo_atual || 'Deputado Federal'} · {perfil.partido_atual} · {perfil.uf_sede || 'BR'}</p>
           </div>
+          <button type="button" onClick={() => toggleSecao('resumo')} aria-expanded={secoesAbertas.resumo} aria-label={secoesAbertas.resumo ? 'Recolher resumo' : 'Expandir resumo'} style={{ flexShrink: 0, background: 'rgba(255,255,255,0.14)', border: 'none', color: '#fff', cursor: 'pointer', borderRadius: '999px', width: '36px', height: '36px', fontSize: '0.8rem' }}>{secoesAbertas.resumo ? '▲' : '▼'}</button>
         </div>
 
+        {secoesAbertas.resumo && (
+        <>
         <p style={{ fontSize: '1.15rem', lineHeight: 1.6, margin: '24px 0 0', maxWidth: '62ch' }}>
           {nNotasAno > 0 ? (
             <>Em <strong>{anoSel}</strong>, {perfil.nome_urna} usou <strong style={{ color: t.cor.ouro }}>{brl(totalAno)}</strong> da verba pública de mandato
@@ -306,14 +342,15 @@ export default function PerfilPolitico({ dados }) {
           <button onClick={gerarCard} style={{ ...pilula, background: 'rgba(255,255,255,0.12)', color: '#fff' }}>📷 Gerar card</button>
           <button onClick={() => setModal(true)} style={{ ...pilula, background: 'rgba(255,255,255,0.12)', color: '#fff' }}>🔗 Ver na fonte oficial</button>
         </div>
+        </>
+        )}
       </div>
 
       {/* DETALHE: quem é + gastos + atuação + votos */}
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr)', gap: '20px' }}>
 
         {/* QUEM É — cartão biográfico (Ficha 360°) */}
-        <div id="quem-e" style={{ ...ancora, background: t.cor.papelCartao, borderRadius: t.raio.lg, padding: 'clamp(20px,3vw,32px)', boxShadow: t.sombra.sutil }}>
-          <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.4rem', margin: '0 0 6px' }}>Quem é</h2>
+        <Secao id="quem-e" titulo="Quem é" aberta={secoesAbertas['quem-e']} onToggle={() => toggleSecao('quem-e')}>
           {temBio ? (
             <>
               <p style={{ color: t.cor.cinza, fontSize: '0.9rem', margin: '0 0 20px' }}>
@@ -388,21 +425,18 @@ export default function PerfilPolitico({ dados }) {
               Ainda estamos reunindo os dados de identificação deste parlamentar (nascimento, formação, profissão e contato). Em breve aqui — sempre a partir da fonte oficial.
             </p>
           )}
-        </div>
+        </Secao>
 
         {dadosAno && (
-          <div id="gastos" style={{ ...ancora, background: t.cor.papelCartao, borderRadius: t.raio.lg, padding: 'clamp(20px,3vw,32px)', boxShadow: t.sombra.sutil }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '12px', flexWrap: 'wrap', marginBottom: '6px' }}>
-              <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.4rem', margin: 0 }}>Gastos mês a mês</h2>
-              {anos_disponiveis.length > 1 && (
-                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }} role="tablist" aria-label="Ano">
-                  {anos_disponiveis.map((a) => (
-                    <button key={a} onClick={() => setAnoSel(a)} aria-selected={a === anoSel}
-                      style={{ padding: '6px 14px', fontSize: '0.85rem', fontWeight: 700, fontFamily: t.fonte.corpo, borderRadius: t.raio.pill, cursor: 'pointer', border: 'none', background: a === anoSel ? t.cor.verde : t.cor.papelQuente, color: a === anoSel ? t.cor.ouro : t.cor.tinta, boxShadow: t.sombra.clicavel }}>{a}</button>
-                  ))}
-                </div>
-              )}
-            </div>
+          <Secao id="gastos" titulo="Gastos mês a mês" aberta={secoesAbertas.gastos} onToggle={() => toggleSecao('gastos')}>
+            {anos_disponiveis.length > 1 && (
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '14px' }} role="tablist" aria-label="Ano">
+                {anos_disponiveis.map((a) => (
+                  <button key={a} onClick={() => setAnoSel(a)} aria-selected={a === anoSel}
+                    style={{ padding: '6px 14px', fontSize: '0.85rem', fontWeight: 700, fontFamily: t.fonte.corpo, borderRadius: t.raio.pill, cursor: 'pointer', border: 'none', background: a === anoSel ? t.cor.verde : t.cor.papelQuente, color: a === anoSel ? t.cor.ouro : t.cor.tinta, boxShadow: t.sombra.clicavel }}>{a}</button>
+                ))}
+              </div>
+            )}
             <p style={{ color: t.cor.cinza, fontSize: '0.9rem', margin: '0 0 18px', lineHeight: 1.5 }}>
               Quanto {perfil.nome_urna} usou da verba em cada mês de <strong>{anoSel}</strong> — cada barra é a soma das notas fiscais daquele mês. Passe o mouse para ver o valor.
             </p>
@@ -430,11 +464,10 @@ export default function PerfilPolitico({ dados }) {
                 <strong style={{ color: t.cor.tinta }}>Como a média é calculada:</strong> somamos todas as notas de {anoSel} e dividimos pelo número de meses com gasto registrado ({dadosAno.meses_com_gasto}). Meses sem nota não entram na conta — por isso a média pode ficar acima do gasto de um mês isolado. Fonte: {fonteNome}.
               </p>
             </div>
-          </div>
+          </Secao>
         )}
 
-        <div style={{ background: t.cor.papelCartao, borderRadius: t.raio.lg, padding: 'clamp(20px,3vw,32px)', boxShadow: t.sombra.sutil }}>
-          <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.4rem', margin: '0 0 6px' }}>Em que ele gastou</h2>
+        <Secao id="em-que-gastou" titulo="Em que ele gastou" aberta={secoesAbertas['em-que-gastou']} onToggle={() => toggleSecao('em-que-gastou')}>
           <p style={{ color: t.cor.cinza, fontSize: '0.9rem', margin: '0 0 20px' }}>Toque numa categoria para ver as notas e o link de cada documento.</p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {Object.entries(resumo_gastos).sort((a, b) => b[1] - a[1]).map(([cat, val]) => (
@@ -473,11 +506,10 @@ export default function PerfilPolitico({ dados }) {
               </div>
             ))}
           </div>
-        </div>
+        </Secao>
 
         {/* ATUAÇÃO — comissões e frentes (Ficha 360°) */}
-        <div id="atuacao" style={{ ...ancora, background: t.cor.papelCartao, borderRadius: t.raio.lg, padding: 'clamp(20px,3vw,32px)', boxShadow: t.sombra.sutil }}>
-          <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.4rem', margin: '0 0 6px' }}>Onde ele atua</h2>
+        <Secao id="atuacao" titulo="Onde ele atua" aberta={secoesAbertas.atuacao} onToggle={() => toggleSecao('atuacao')}>
           <p style={{ color: t.cor.cinza, fontSize: '0.9rem', margin: '0 0 20px', lineHeight: 1.5 }}>
             É nas <strong>comissões</strong> que os projetos são debatidos e votados antes do plenário; as <strong>frentes parlamentares</strong> são grupos temáticos que o parlamentar integra. Fonte: {fonteNome}.
           </p>
@@ -527,12 +559,11 @@ export default function PerfilPolitico({ dados }) {
               Ainda não reunimos as comissões e frentes deste parlamentar. Em breve aqui, a partir da fonte oficial.
             </p>
           )}
-        </div>
+        </Secao>
 
         {/* TRAJETÓRIA — atuação profissional, cargos anteriores e partidos */}
         {temTrajetoria && (
-          <div id="trajetoria" style={{ ...ancora, background: t.cor.papelCartao, borderRadius: t.raio.lg, padding: 'clamp(20px,3vw,32px)', boxShadow: t.sombra.sutil }}>
-            <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.4rem', margin: '0 0 6px' }}>Trajetória</h2>
+          <Secao id="trajetoria" titulo="Trajetória" aberta={secoesAbertas.trajetoria} onToggle={() => toggleSecao('trajetoria')}>
             <p style={{ color: t.cor.cinza, fontSize: '0.9rem', margin: '0 0 20px', lineHeight: 1.5 }}>De onde veio: profissão, cargos eletivos anteriores e os partidos pelos quais passou. Fonte: {fonteNome}.</p>
 
             {ocupacoes.length > 0 && (
@@ -576,12 +607,11 @@ export default function PerfilPolitico({ dados }) {
                 </div>
               </div>
             )}
-          </div>
+          </Secao>
         )}
 
         {/* PROPOSIÇÕES — leis e projetos apresentados (Ficha 360°) */}
-        <div id="proposicoes" style={{ ...ancora, background: t.cor.papelCartao, borderRadius: t.raio.lg, padding: 'clamp(20px,3vw,32px)', boxShadow: t.sombra.sutil }}>
-          <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.4rem', margin: '0 0 6px' }}>O que ele propôs</h2>
+        <Secao id="proposicoes" titulo="O que ele propôs" aberta={secoesAbertas.proposicoes} onToggle={() => toggleSecao('proposicoes')}>
           {proposicoes.length > 0 ? (
             <>
               <p style={{ color: t.cor.cinza, fontSize: '0.9rem', margin: '0 0 18px', lineHeight: 1.5 }}>
@@ -608,10 +638,9 @@ export default function PerfilPolitico({ dados }) {
                 : 'Ainda estamos reunindo as proposições apresentadas por este parlamentar. Em breve aqui, a partir da fonte oficial.'}
             </p>
           )}
-        </div>
+        </Secao>
 
-        <div id="votos" style={{ ...ancora, background: t.cor.papelCartao, borderRadius: t.raio.lg, padding: 'clamp(20px,3vw,32px)', boxShadow: t.sombra.sutil }}>
-          <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.4rem', margin: '0 0 16px' }}>Como ele votou</h2>
+        <Secao id="votos" titulo="Como ele votou" aberta={secoesAbertas.votos} onToggle={() => toggleSecao('votos')}>
 
           {presenca && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px', background: t.cor.papelQuente, borderRadius: t.raio.md, marginBottom: '16px', boxShadow: t.sombra.sutil }}>
@@ -765,7 +794,7 @@ export default function PerfilPolitico({ dados }) {
               )}
             </div>
           )}
-        </div>
+        </Secao>
       </div>
 
       {modal && (
