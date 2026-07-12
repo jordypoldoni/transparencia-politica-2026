@@ -44,3 +44,86 @@ export function explicarTipo(descricao) {
     return { termo: 'PL — Projeto de Lei', texto: 'é uma proposta para criar ou mudar uma lei comum do país.' };
   return { termo: 'Decisão em plenário', texto: 'é uma decisão tomada no plenário da Câmara. Veja abaixo o que foi votado e quem votou.' };
 }
+
+// ===== Agrupamento por matéria (uma proposição = várias votações no processo) =====
+
+const TIPOS_MATERIA = new Set(['PL', 'PLP', 'PEC', 'MPV', 'PDL', 'PLV', 'PLN', 'PDC', 'PDS', 'PLC', 'PLS']);
+const ehMateria = (p) => !!p && TIPOS_MATERIA.has(String(p.siglaTipo || '').toUpperCase());
+
+function tituloProp(p) {
+  if (!p || !p.siglaTipo || p.numero == null) return null;
+  const ano = p.ano && p.ano > 0 ? `/${p.ano}` : '';
+  return `${String(p.siglaTipo).toUpperCase()} ${p.numero}${ano}`;
+}
+
+const EXTENSO = {
+  'projeto de lei complementar': 'PLP', 'projeto de lei': 'PL',
+  'proposta de emenda à constituição': 'PEC', 'proposta de emenda a constituicao': 'PEC',
+  'medida provisória': 'MPV', 'medida provisoria': 'MPV', 'projeto de decreto legislativo': 'PDL',
+};
+
+// Extrai "PL 5490/2025" de texto livre (descrição da votação ou ementa de um requerimento).
+export function materiaDeTexto(s) {
+  const t = String(s || '');
+  let m = t.match(/\b(PLP|PLV|PLC|PLN|PDC|PDS|PDL|PEC|MPV|MP|PL)\s*n?[ºo]?\s*([\d.]+)\s*\/\s*(\d{4})/i);
+  if (m) { let sig = m[1].toUpperCase(); if (sig === 'MP') sig = 'MPV'; return `${sig} ${m[2].replace(/\./g, '')}/${m[3]}`; }
+  m = t.match(/(projeto de lei complementar|projeto de lei|proposta de emenda à constituição|proposta de emenda a constituicao|medida provisória|medida provisoria|projeto de decreto legislativo)\s+n[ºo]?\s*([\d.]+),?\s*de\s*(\d{4})/i);
+  if (m) { const sig = EXTENSO[m[1].toLowerCase()]; if (sig) return `${sig} ${m[2].replace(/\./g, '')}/${m[3]}`; }
+  return null;
+}
+
+// Resolve a matéria (chave de agrupamento) do detalhe de uma votação da API da Câmara.
+// Ordem: proposição afetada → matéria entre os objetos possíveis → parse do texto. Best-effort.
+export function resolverMateria(det) {
+  const afetadas = det.proposicoesAfetadas || [];
+  const afetada = afetadas.find(ehMateria) || afetadas[0];
+  if (afetada) return { id: String(afetada.id), sigla: afetada.siglaTipo || null, titulo: tituloProp(afetada), ementa: afetada.ementa || null };
+  const objMat = (det.objetosPossiveis || []).find(ehMateria);
+  if (objMat) return { id: String(objMat.id), sigla: objMat.siglaTipo || null, titulo: tituloProp(objMat), ementa: objMat.ementa || null };
+  const textos = [det.descricao, ...(det.objetosPossiveis || []).map((o) => o && o.ementa)].filter(Boolean).join('  ');
+  const titulo = materiaDeTexto(textos);
+  if (titulo) return { id: null, sigla: titulo.split(' ')[0], titulo, ementa: null };
+  return null;
+}
+
+// Papel de uma votação dentro do processo (derivado da descrição) — rótulo da etapa.
+export function papelVotacao(descricao) {
+  const d = (descricao || '').toLowerCase();
+  if (/reda[çc][ãa]o final/.test(d)) return 'Redação final';
+  if (/urg[êe]ncia/.test(d)) return 'Urgência';
+  if (/retirada de (mat[ée]ria|pauta)/.test(d)) return 'Retirada de pauta';
+  if (/adiamento/.test(d)) return 'Adiamento';
+  if (/proposta de emenda/.test(d)) return 'Texto principal'; // a PEC em si (não uma emenda avulsa)
+  if (/emenda/.test(d)) return 'Emenda';
+  if (/destaque|mantido o texto|mantida/.test(d)) return 'Destaque';
+  if (/substitutivo/.test(d)) return 'Substitutivo';
+  if (/prefer[êe]ncia/.test(d)) return 'Preferência';
+  if (/recurso/.test(d)) return 'Recurso';
+  if (/veto/.test(d)) return 'Veto';
+  if (/projeto de lei|proposta de emenda|medida provis|decreto legislativo/.test(d)) return 'Texto principal';
+  if (/requerimento/.test(d)) return 'Requerimento';
+  return 'Votação';
+}
+
+// Agrupa linhas de `votacoes` por matéria (proposicao_titulo). Órfãs (sem título) viram card próprio.
+// Devolve grupos ordenados do mais recente ao mais antigo, com as votações em ordem cronológica.
+export function agruparPorMateria(votacoes) {
+  const grupos = new Map();
+  for (const v of votacoes || []) {
+    const tituloV = v.proposicao_titulo && String(v.proposicao_titulo).trim();
+    const chave = tituloV || `__solo__${v.votacao_id_externa}`;
+    if (!grupos.has(chave)) grupos.set(chave, { chave, titulo: tituloV || null, ementa: null, votacoes: [] });
+    const g = grupos.get(chave);
+    g.votacoes.push(v);
+    if (!g.ementa && v.ementa) g.ementa = v.ementa;
+    if (!g.titulo && tituloV) g.titulo = tituloV;
+  }
+  const lista = [...grupos.values()].map((g) => {
+    g.votacoes.sort((a, b) => new Date(a.data_voto || 0) - new Date(b.data_voto || 0));
+    g.data_recente = g.votacoes.reduce((mx, v) => Math.max(mx, v.data_voto ? new Date(v.data_voto).getTime() : 0), 0);
+    g.n = g.votacoes.length;
+    return g;
+  });
+  lista.sort((a, b) => b.data_recente - a.data_recente);
+  return lista;
+}
