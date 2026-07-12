@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { t } from '../src/estilo/tokens';
 import Avatar from './Avatar';
 import { pctDoTeto } from '../src/lib/cotas';
-import { explicarTipo } from '../src/lib/votacao';
+import { explicarTipo, agruparPorMateria, papelVotacao, situacaoCidada } from '../src/lib/votacao';
 
 const brl = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v || 0);
 const brlExato = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
@@ -680,102 +680,47 @@ export default function PerfilPolitico({ dados }) {
                 );
               })()}
 
-              {/* Cards de votos com expansão */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {votos.filter((v) => isVotoReal(v.voto_tipo)).slice(0, 20).map((v, i) => {
-                  const aberto = votoAberto === i;
-                  const { ementa: ementaSubvoto, sim, nao, abs } = parsearVoto(v.ementa_resumida_voto);
-                  // Pula ementa genérica tipo "Votação nominal do PLP X nos termos dos pareceres"
-                  const ehEmentaGenerica = !v.ementa_votacao || /^Votação nominal/i.test(v.ementa_votacao);
-                  const tituloBruto = (ehEmentaGenerica ? null : v.ementa_votacao)
-                    || ementaSubvoto
-                    || v.ementa_resumida_voto;
-                  // Para senadores: limpa "Votação nominal do … nos termos dos pareceres" → só o identificador da proposta
-                  const tituloPrincipal = /^Votação nominal/i.test(tituloBruto || '')
-                    ? limparEmentaNominal(tituloBruto)
-                    : tituloBruto;
-                  const resultadoPlenario = typeof v.aprovacao === 'number'
-                    ? (v.aprovacao === 1 ? 'Aprovado' : 'Rejeitado')
-                    : (sim != null && nao != null ? (sim > nao ? 'Aprovado' : 'Rejeitado') : null);
-
+              {/* Votos agrupados por matéria — como ele votou em cada etapa do processo */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {agruparPorMateria(votos.filter((v) => isVotoReal(v.voto_tipo))).slice(0, 12).map((g) => {
+                  const sit = situacaoCidada(g.situacao);
+                  const virouLei = /virou lei/i.test(sit || '');
+                  const urgencia = /urg[êe]ncia/i.test(g.regime || '');
+                  const tituloExib = g.ementa || g.votacoes[0]?.ementa_resumida_voto || g.titulo || 'Votação';
                   return (
-                    <div key={i} style={{ background: t.cor.papelQuente, borderRadius: t.raio.md, overflow: 'hidden', boxShadow: t.sombra.sutil }}>
-                      {/* Linha clicável */}
-                      <div
-                        onClick={() => setVotoAberto(aberto ? null : i)}
-                        style={{ display: 'flex', gap: '14px', alignItems: 'flex-start', padding: '14px 16px', cursor: 'pointer' }}
-                      >
-                        {/* Badge Sim/Não */}
-                        <span style={{
-                          flexShrink: 0, fontSize: '0.85rem', fontWeight: 800,
-                          padding: '6px 14px', borderRadius: '8px',
-                          background: corVoto(v.voto_tipo).bg, color: corVoto(v.voto_tipo).fg,
-                          minWidth: '62px', textAlign: 'center', lineHeight: 1.2,
-                        }}>{v.voto_tipo}</span>
-
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          {/* Proposição identificadora */}
-                          {v.proposicao_titulo && (
-                            <span style={{ display: 'inline-block', fontSize: '0.72rem', fontWeight: 700, color: t.cor.ouroTexto, marginBottom: '3px' }}>
-                              {v.proposicao_titulo}
-                            </span>
-                          )}
-                          {/* O que está sendo decidido */}
-                          <p style={{ margin: '0 0 4px', fontSize: '0.9rem', fontWeight: 600, lineHeight: 1.45, color: t.cor.tinta }}>
-                            {tituloPrincipal}
-                          </p>
-                          <span style={{ fontSize: '0.75rem', color: t.cor.cinza }}>
-                            {v.data_voto ? new Date(v.data_voto).toLocaleDateString('pt-BR') : ''}
-                            {resultadoPlenario && (
-                              <> · <span style={{ color: resultadoPlenario === 'Aprovado' ? t.cor.sim : t.cor.nao, fontWeight: 600 }}>
-                                {resultadoPlenario} no plenário
-                              </span></>
-                            )}
-                          </span>
-                        </div>
-
-                        <span style={{ flexShrink: 0, fontSize: '0.75rem', color: t.cor.cinza, paddingTop: '4px' }}>{aberto ? '▲' : '▼'}</span>
+                    <div key={g.chave} style={{ background: t.cor.papelQuente, borderRadius: t.raio.md, padding: '14px 16px', boxShadow: t.sombra.sutil }}>
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '6px' }}>
+                        {g.titulo && <span style={{ fontSize: '0.72rem', fontWeight: 700, color: t.cor.ouroTexto }}>{g.titulo}</span>}
+                        {sit && <span style={{ fontSize: '0.7rem', fontWeight: 700, padding: '2px 8px', borderRadius: '6px', background: virouLei ? '#E7F3EC' : t.cor.papelQuente2, color: virouLei ? t.cor.sim : t.cor.tinta }}>{sit}</span>}
+                        {urgencia && <span style={{ fontSize: '0.7rem', fontWeight: 700, color: t.cor.ouroTexto }}>⚡ urgência</span>}
+                        {g.n > 1 && <span style={{ fontSize: '0.7rem', color: t.cor.cinza, fontWeight: 600 }}>{g.n} etapas</span>}
                       </div>
-
-                      {/* Painel expandido */}
-                      {aberto && (
-                        <div style={{ padding: '0 16px 16px', borderTop: `1px solid ${t.cor.papelQuente2}` }}>
-
-                          {/* O que especificamente foi votado nesta sessão (só exibe se não for texto genérico "Votação nominal") */}
-                          {ementaSubvoto && ementaSubvoto !== tituloPrincipal && !/^Votação nominal/i.test(ementaSubvoto) && (
-                            <div style={{ margin: '14px 0 0', padding: '12px 14px', background: '#fff', borderRadius: t.raio.sm }}>
-                              <p style={{ margin: '0 0 2px', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', color: t.cor.cinza }}>O que foi votado nesta sessão</p>
-                              <p style={{ margin: 0, fontSize: '0.88rem', lineHeight: 1.5, color: t.cor.tinta }}>{ementaSubvoto}</p>
-                            </div>
-                          )}
-
-                          {/* Placar do plenário */}
-                          {(sim != null || nao != null) && (
-                            <p style={{ margin: '12px 0 0', fontSize: '0.82rem', color: t.cor.cinza }}>
-                              Placar no plenário:{' '}
-                              {sim != null && <><strong style={{ color: t.cor.sim }}>{sim} a favor</strong>{' '}</>}
-                              {nao != null && <>· <strong style={{ color: t.cor.nao }}>{nao} contra</strong>{' '}</>}
-                              {abs != null && <>· {abs} abstenções</>}
-                            </p>
-                          )}
-
-                          {/* Botão para a página da votação — só exibe quando existe registro na tabela votacoes (senadores usam SF-XXXX que não têm página) */}
-                          {v.votacao_id_externa && v.ementa_votacao && (
-                            <div style={{ marginTop: '16px' }}>
-                              <Link href={`/votacao/${v.votacao_id_externa}`}
-                                style={{
-                                  display: 'inline-flex', alignItems: 'center', gap: '8px',
-                                  padding: '10px 20px', borderRadius: t.raio.pill,
-                                  background: t.cor.verde, color: t.cor.ouro,
-                                  fontWeight: 700, fontSize: '0.88rem', textDecoration: 'none',
-                                  boxShadow: t.sombra.clicavel,
-                                }}>
-                                Ver votação completa →
-                              </Link>
-                            </div>
-                          )}
-                        </div>
+                      <p style={{ margin: '0 0 8px', fontSize: '0.9rem', fontWeight: 600, lineHeight: 1.45, color: t.cor.tinta }}>{tituloExib}</p>
+                      {g.keywords && g.keywords.trim() && (
+                        <p style={{ margin: '0 0 8px', fontSize: '0.76rem', color: t.cor.cinza, lineHeight: 1.5 }}>
+                          <strong style={{ color: t.cor.tinta, fontWeight: 600 }}>Assuntos:</strong> {g.keywords.split(',').map((k) => k.trim()).filter(Boolean).slice(0, 6).join(' · ')}
+                        </p>
                       )}
+                      <div style={{ display: 'grid', gap: '4px' }}>
+                        {g.votacoes.map((v, j) => {
+                          const papel = papelVotacao(v.descricao);
+                          const res = typeof v.aprovacao === 'number' ? (v.aprovacao === 1 ? 'Aprovado' : 'Rejeitado') : null;
+                          const linkavel = v.votacao_id_externa && v.ementa_votacao;
+                          const conteudo = (
+                            <>
+                              <span style={{ flexShrink: 0, fontSize: '0.78rem', fontWeight: 800, padding: '4px 10px', borderRadius: '6px', background: corVoto(v.voto_tipo).bg, color: corVoto(v.voto_tipo).fg, minWidth: '54px', textAlign: 'center' }}>{v.voto_tipo}</span>
+                              <span style={{ flex: 1, minWidth: 0, fontSize: '0.8rem', fontWeight: 600, color: t.cor.tinta }}>{papel}</span>
+                              {res && <span style={{ flexShrink: 0, fontSize: '0.74rem', color: res === 'Aprovado' ? t.cor.sim : t.cor.nao, fontWeight: 600 }}>{res} no plenário</span>}
+                              <span style={{ flexShrink: 0, fontSize: '0.72rem', color: t.cor.cinza }}>{v.data_voto ? new Date(v.data_voto).toLocaleDateString('pt-BR') : ''}</span>
+                              {linkavel && <span style={{ flexShrink: 0, fontSize: '0.72rem', fontWeight: 700, color: t.cor.ouroTexto }}>ver →</span>}
+                            </>
+                          );
+                          const rowStyle = { display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 10px', borderRadius: t.raio.sm, background: '#fff', textDecoration: 'none', color: 'inherit' };
+                          return linkavel
+                            ? <Link key={j} href={`/votacao/${v.votacao_id_externa}`} style={rowStyle}>{conteudo}</Link>
+                            : <div key={j} style={rowStyle}>{conteudo}</div>;
+                        })}
+                      </div>
                     </div>
                   );
                 })}

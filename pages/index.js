@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import ServicoAPI from '../src/servicos/servico_api';
-import { humanizarVotacao, explicarTipo } from '../src/lib/votacao';
+import { humanizarVotacao, explicarTipo, papelVotacao, situacaoCidada } from '../src/lib/votacao';
 import Termo from '../components/Termo';
 import CampoSelect from '../components/CampoSelect';
 import BuscaMunicipio from '../components/BuscaMunicipio';
@@ -37,6 +37,13 @@ function NumHero({ rotulo, valor, destaque }) {
     </div>
   );
 }
+
+// Voto "principal" de uma matéria (texto/redação final; senão o último) e seu status.
+const votoPrincipal = (g) => [...g.votacoes].reverse().find((v) => /texto principal|reda/i.test(papelVotacao(v.descricao))) || g.votacoes[g.votacoes.length - 1];
+const statusMateria = (g) => {
+  const p = votoPrincipal(g);
+  return p ? humanizarVotacao({ descricao_votacao: p.descricao, aprovacao: p.aprovacao }).status : null;
+};
 
 export default function Home({ votacoes, parlamentares = [], uniao = null, estados = [] }) {
   const router = useRouter();
@@ -165,25 +172,35 @@ export default function Home({ votacoes, parlamentares = [], uniao = null, estad
         <p style={{ color: t.cor.cinza, fontSize: '0.92rem', margin: '0 0 18px' }}>Votações recentes no plenário da Câmara — o assunto, quem propôs e o que foi decidido. Fonte: Câmara dos Deputados.</p>
         {votacoes && votacoes.length > 0 ? (
           <div style={{ display: 'grid', gap: '10px' }}>
-            {votacoes.slice(0, 6).map((v, i) => {
-              const h = humanizarVotacao(v);
-              const aprovado = h.status === 'Aprovado';
-              const exp = explicarTipo(`${v.descricao_votacao || ''} ${v.proposicao_titulo || ''}`);
+            {votacoes.slice(0, 6).map((g) => {
+              const status = statusMateria(g);
+              const aprovado = status === 'Aprovado';
+              const exp = explicarTipo(`${g.titulo || ''} ${g.ementa || ''}`);
+              const sit = situacaoCidada(g.situacao);
+              const urgencia = /urg[êe]ncia/i.test(g.regime || '');
+              const p = votoPrincipal(g);
+              const h = humanizarVotacao({ descricao_votacao: p?.descricao, aprovacao: p?.aprovacao });
+              const dataTxt = p?.data_voto ? new Date(p.data_voto).toLocaleDateString('pt-BR') : '';
               return (
-                <Link key={i} href={`/votacao/${v.votacao_id_externa}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                <Link key={g.chave} href={`/votacao/${p?.votacao_id_externa}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                   <div style={{ background: t.cor.papelCartao, borderRadius: t.raio.md, padding: '16px 18px', cursor: 'pointer', boxShadow: t.sombra.clicavel, transition: 'transform .15s, box-shadow .15s' }}
                     onMouseOver={(e) => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = t.sombra.hover; }}
                     onMouseOut={(e) => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = t.sombra.clicavel; }}>
-                    <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: '0.72rem', fontWeight: 800, padding: '4px 10px', borderRadius: '6px', background: h.status ? (aprovado ? '#E7F3EC' : '#FBEAE7') : '#EEEDE8', color: h.status ? (aprovado ? t.cor.sim : t.cor.nao) : t.cor.cinza, textTransform: 'uppercase', letterSpacing: '0.03em' }}>
-                        {h.status || 'Sem resultado'}
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '0.72rem', fontWeight: 800, padding: '4px 10px', borderRadius: '6px', background: status ? (aprovado ? '#E7F3EC' : '#FBEAE7') : '#EEEDE8', color: status ? (aprovado ? t.cor.sim : t.cor.nao) : t.cor.cinza, textTransform: 'uppercase', letterSpacing: '0.03em' }}>
+                        {status || 'Sem resultado'}
                       </span>
-                      {v.proposicao_titulo && <span style={{ fontSize: '0.72rem', fontWeight: 700, color: t.cor.cinza, background: t.cor.papelQuente2, padding: '3px 8px', borderRadius: '6px' }}>{v.proposicao_titulo}</span>}
-                      <span style={{ fontSize: '0.78rem', color: t.cor.cinza }}>{v.data_voto ? new Date(v.data_voto).toLocaleDateString('pt-BR') : ''}</span>
+                      {g.titulo && <span style={{ fontSize: '0.72rem', fontWeight: 700, color: t.cor.cinza, background: t.cor.papelQuente2, padding: '3px 8px', borderRadius: '6px' }}>{g.titulo}</span>}
+                      <span style={{ fontSize: '0.78rem', color: t.cor.cinza }}>{dataTxt}</span>
+                      {g.n > 1 && <span style={{ fontSize: '0.72rem', color: t.cor.ouroTexto, fontWeight: 700 }}>{g.n} votações no processo</span>}
                     </div>
-                    <p style={{ margin: '0 0 4px', fontSize: '1rem', fontWeight: 600, lineHeight: 1.4, color: t.cor.tinta }}>{v.ementa || h.limpo || v.descricao_votacao}</p>
+                    <p style={{ margin: '0 0 4px', fontSize: '1rem', fontWeight: 600, lineHeight: 1.4, color: t.cor.tinta }}>{g.ementa || h.limpo || p?.descricao}</p>
                     <p style={{ margin: '0 0 6px', fontSize: '0.85rem', color: t.cor.cinza, lineHeight: 1.45 }}><strong style={{ color: t.cor.tinta, fontWeight: 700 }}>{exp.termo}:</strong> {exp.texto}</p>
-                    {v.autor_nome && <p style={{ margin: '0 0 10px', fontSize: '0.78rem', color: t.cor.cinza }}>Proposta por <strong style={{ fontWeight: 600 }}>{v.autor_nome}</strong></p>}
+                    <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center', marginBottom: '6px' }}>
+                      {sit && <span style={{ fontSize: '0.74rem', fontWeight: 700, padding: '3px 10px', borderRadius: '6px', background: /virou lei/i.test(sit) ? '#E7F3EC' : t.cor.papelQuente2, color: /virou lei/i.test(sit) ? t.cor.sim : t.cor.tinta }}>Situação: {sit}</span>}
+                      {urgencia && <span style={{ fontSize: '0.74rem', color: t.cor.ouroTexto, fontWeight: 700 }}>⚡ Urgência</span>}
+                      {g.autor_nome && <span style={{ fontSize: '0.78rem', color: t.cor.cinza }}>Proposta por <strong style={{ fontWeight: 600, color: t.cor.tinta }}>{g.autor_nome}</strong></span>}
+                    </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                       {h.sim != null ? (
                         <span style={{ fontSize: '0.82rem', color: t.cor.cinza }}>

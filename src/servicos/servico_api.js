@@ -1,5 +1,6 @@
 import supabase from '../supabase_cliente.js';
 import { garantirResumo } from '../lib/siconfi.js';
+import { agruparPorMateria } from '../lib/votacao.js';
 
 const ServicoAPI = {
     // Busca o ranking de maiores gastadores
@@ -165,18 +166,28 @@ const ServicoAPI = {
         if (idsVotacoes.length > 0) {
             const { data: votacoesData } = await supabase
                 .from('votacoes')
-                .select('votacao_id_externa, ementa, proposicao_titulo')
+                .select('votacao_id_externa, ementa, proposicao_titulo, descricao, situacao, keywords, ementa_detalhada, regime, url_inteiro_teor')
                 .in('votacao_id_externa', idsVotacoes);
             for (const v of votacoesData || []) {
-                metaVotacoes[v.votacao_id_externa] = { ementa: v.ementa, proposicao_titulo: v.proposicao_titulo };
+                metaVotacoes[v.votacao_id_externa] = v;
             }
         }
 
-        const votos = (votosTodos || []).slice(0, 40).map((v) => ({
-            ...v,
-            ementa_votacao: metaVotacoes[v.votacao_id_externa]?.ementa || null,
-            proposicao_titulo: metaVotacoes[v.votacao_id_externa]?.proposicao_titulo || null,
-        }));
+        const votos = (votosTodos || []).slice(0, 40).map((v) => {
+            const m = metaVotacoes[v.votacao_id_externa] || {};
+            return {
+                ...v,
+                ementa_votacao: m.ementa || null,
+                ementa: m.ementa || null,            // p/ agruparPorMateria
+                descricao: m.descricao || null,       // p/ papelVotacao (etapa do processo)
+                proposicao_titulo: m.proposicao_titulo || null,
+                situacao: m.situacao || null,
+                keywords: m.keywords || null,
+                ementa_detalhada: m.ementa_detalhada || null,
+                regime: m.regime || null,
+                url_inteiro_teor: m.url_inteiro_teor || null,
+            };
+        });
         const resumo_votos = (votosTodos || []).reduce((acc, v) => {
             const t = v.voto_tipo || 'Outro';
             acc[t] = (acc[t] || 0) + 1;
@@ -282,49 +293,13 @@ const ServicoAPI = {
 
     // Votações nominais mais recentes (deduplicadas) para a home
     getVotacoesRecentes: async (limite = 6) => {
-        // Tabela enriquecida, AGRUPADA por proposta (1 card por assunto, não por sub-voto)
+        // Votações recentes AGRUPADAS por matéria (1 card por proposta, com a linha do tempo + contexto).
         const { data } = await supabase
             .from('votacoes')
-            .select('votacao_id_externa, descricao, aprovacao, data_voto, proposicao_id, proposicao_titulo, ementa, descricao_tipo, resultado, autor_nome')
+            .select('votacao_id_externa, descricao, aprovacao, data_voto, proposicao_id, proposicao_titulo, ementa, descricao_tipo, resultado, autor_nome, keywords, situacao, ementa_detalhada, regime, url_inteiro_teor')
             .order('data_voto', { ascending: false })
-            .limit(150);
-        if (data && data.length) {
-            const vistos = new Set();
-            const out = [];
-            for (const v of data) {
-                const chave = v.proposicao_id || v.votacao_id_externa;
-                if (vistos.has(chave)) continue;
-                vistos.add(chave);
-                out.push({
-                    votacao_id_externa: v.votacao_id_externa,
-                    descricao_votacao: v.descricao,
-                    aprovacao: v.aprovacao,
-                    data_voto: v.data_voto,
-                    proposicao_titulo: v.proposicao_titulo,
-                    ementa: v.ementa,
-                    descricao_tipo: v.descricao_tipo,
-                    resultado: v.resultado,
-                    autor_nome: v.autor_nome,
-                });
-                if (out.length >= limite) break;
-            }
-            return out;
-        }
-        // Fallback (antes do coletor enriquecer): deriva de votos_parlamentares
-        const { data: vd } = await supabase
-            .from('votos_parlamentares')
-            .select('votacao_id_externa, descricao_votacao, aprovacao, data_voto')
-            .order('data_voto', { ascending: false })
-            .limit(2000);
-        const vistos = new Set();
-        const out = [];
-        for (const v of vd || []) {
-            if (vistos.has(v.votacao_id_externa)) continue;
-            vistos.add(v.votacao_id_externa);
-            out.push(v);
-            if (out.length >= limite) break;
-        }
-        return out;
+            .limit(250);
+        return agruparPorMateria(data || []).slice(0, limite);
     },
 
     // Todas as votações (para a página de lista, com busca por assunto/autor/data)
