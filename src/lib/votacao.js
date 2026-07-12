@@ -119,6 +119,10 @@ export function agruparPorMateria(votacoes) {
     if (!g.titulo && tituloV) g.titulo = tituloV;
   }
   const lista = [...grupos.values()].map((g) => {
+    // Prefere a ementa "real" da matéria (descarta ecos "Votação nominal do..."); pega a mais descritiva.
+    const ementas = g.votacoes.map((v) => v.ementa).filter(Boolean);
+    const limpas = ementas.filter((e) => !/^vota[çc][ãa]o nominal/i.test(e));
+    g.ementa = (limpas.sort((a, b) => b.length - a.length)[0]) || ementas[0] || null;
     g.votacoes.sort((a, b) => new Date(a.data_voto || 0) - new Date(b.data_voto || 0));
     g.data_recente = g.votacoes.reduce((mx, v) => Math.max(mx, v.data_voto ? new Date(v.data_voto).getTime() : 0), 0);
     g.n = g.votacoes.length;
