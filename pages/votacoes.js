@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import Head from 'next/head';
 import ServicoAPI from '../src/servicos/servico_api';
-import { humanizarVotacao, explicarTipo, agruparPorMateria, papelVotacao } from '../src/lib/votacao';
+import { humanizarVotacao, explicarTipo, agruparPorMateria, papelVotacao, situacaoCidada } from '../src/lib/votacao';
 import CampoBusca from '../components/CampoBusca';
 import CampoSelect from '../components/CampoSelect';
 import { t } from '../src/estilo/tokens';
@@ -126,6 +126,9 @@ export default function Votacoes({ votacoes, temas = [] }) {
               const status = statusGrupo(g);
               const exp = explicarTipo(`${g.titulo || ''} ${g.ementa || ''}`);
               const varias = g.votacoes.length > 1;
+              const urgencia = /urg[êe]ncia/i.test(g.regime || '') || g.votacoes.some((v) => /urg[êe]ncia/i.test(papelVotacao(v.descricao)));
+              const sitCidada = situacaoCidada(g.situacao);
+              const virouLei = /virou lei/i.test(sitCidada || '');
               const inicio = dataBR(g.votacoes[0]?.data_voto);
               const fim = dataBR(g.votacoes[g.votacoes.length - 1]?.data_voto);
               const periodoTxt = inicio === fim ? fim : `${inicio} – ${fim}`;
@@ -140,8 +143,21 @@ export default function Votacoes({ votacoes, temas = [] }) {
                   </div>
 
                   <p style={{ margin: '0 0 6px', fontSize: '1.02rem', fontWeight: 600, lineHeight: 1.4, color: t.cor.tinta }}>{tituloExib}</p>
-                  <p style={{ margin: '0 0 4px', fontSize: '0.84rem', color: t.cor.cinza, lineHeight: 1.45 }}><strong style={{ color: t.cor.tinta, fontWeight: 700 }}>{exp.termo}:</strong> {exp.texto}</p>
-                  {g.votacoes[0]?.autor_nome && <p style={{ margin: '0 0 10px', fontSize: '0.78rem', color: t.cor.cinza }}>Proposta por <strong style={{ fontWeight: 600 }}>{g.votacoes[0].autor_nome}</strong></p>}
+                  <p style={{ margin: '0 0 6px', fontSize: '0.84rem', color: t.cor.cinza, lineHeight: 1.45 }}><strong style={{ color: t.cor.tinta, fontWeight: 700 }}>{exp.termo}:</strong> {exp.texto}</p>
+                  {g.ementa_detalhada && <p style={{ margin: '0 0 6px', fontSize: '0.82rem', color: t.cor.tinta, lineHeight: 1.45 }}>{g.ementa_detalhada}</p>}
+                  {g.keywords && g.keywords.trim() && (
+                    <p style={{ margin: '0 0 6px', fontSize: '0.8rem', color: t.cor.cinza, lineHeight: 1.5 }}>
+                      <strong style={{ color: t.cor.tinta, fontWeight: 600 }}>Assuntos:</strong> {g.keywords.split(',').map((k) => k.trim()).filter(Boolean).slice(0, 8).join(' · ')}
+                    </p>
+                  )}
+                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center', margin: '0 0 8px' }}>
+                    {sitCidada && (
+                      <span style={{ fontSize: '0.75rem', fontWeight: 700, padding: '3px 10px', borderRadius: '6px', background: virouLei ? '#E7F3EC' : t.cor.papelQuente2, color: virouLei ? t.cor.sim : t.cor.tinta }}>Situação: {sitCidada}</span>
+                    )}
+                    {urgencia && <span style={{ fontSize: '0.75rem', color: t.cor.ouroTexto, fontWeight: 700 }}>⚡ Tramitou em urgência</span>}
+                    {g.autor_nome && <span style={{ fontSize: '0.78rem', color: t.cor.cinza }}>Proposta por <strong style={{ fontWeight: 600, color: t.cor.tinta }}>{g.autor_nome}</strong></span>}
+                    {g.url_inteiro_teor && <a href={g.url_inteiro_teor} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.76rem', color: t.cor.ouroTexto, fontWeight: 700, textDecoration: 'underline dotted' }}>texto completo →</a>}
+                  </div>
 
                   {/* Linha do tempo do processo */}
                   <div style={{ marginTop: '10px', borderTop: `1px solid ${t.cor.papelQuente2}`, paddingTop: '10px', display: 'grid', gap: '4px' }}>

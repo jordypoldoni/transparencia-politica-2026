@@ -331,7 +331,7 @@ const ServicoAPI = {
     listarVotacoes: async () => {
         const { data, error } = await supabase
             .from('votacoes')
-            .select('votacao_id_externa, descricao, aprovacao, data_voto, proposicao_titulo, ementa, descricao_tipo, resultado, autor_nome')
+            .select('votacao_id_externa, descricao, aprovacao, data_voto, proposicao_titulo, ementa, descricao_tipo, resultado, autor_nome, keywords, situacao, ementa_detalhada, regime, url_inteiro_teor')
             .order('data_voto', { ascending: false });
         if (error) { console.error('listarVotacoes:', error.message); return []; }
         return data || [];

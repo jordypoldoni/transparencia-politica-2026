@@ -105,6 +105,22 @@ export function papelVotacao(descricao) {
   return 'Votação';
 }
 
+// Traduz a situação da tramitação (descricaoSituacao da Câmara) para linguagem cidadã.
+export function situacaoCidada(situacao) {
+  const s = (situacao || '').toLowerCase();
+  if (!s) return null;
+  if (s.includes('transformad') && s.includes('norma')) return 'Virou lei';
+  if (s.includes('vetad') || s.includes('veto')) return 'Vetada';
+  if (s.includes('arquivad')) return 'Arquivada';
+  if (s.includes('sanç') || s.includes('sanc')) return 'Aguardando sanção';
+  if (s.includes('senado')) return 'Enviada ao Senado';
+  if (s.includes('câmara dos deputados') || s.includes('camara dos deputados')) return 'De volta à Câmara';
+  if (s.includes('pronta') && s.includes('pauta')) return 'Pronta para votar';
+  if (s.includes('devolvid')) return 'Devolvida ao autor';
+  if (s.includes('retirad')) return 'Retirada';
+  return situacao; // as demais já costumam ser legíveis
+}
+
 // Agrupa linhas de `votacoes` por matéria (proposicao_titulo). Órfãs (sem título) viram card próprio.
 // Devolve grupos ordenados do mais recente ao mais antigo, com as votações em ordem cronológica.
 export function agruparPorMateria(votacoes) {
@@ -123,6 +139,15 @@ export function agruparPorMateria(votacoes) {
     const ementas = g.votacoes.map((v) => v.ementa).filter(Boolean);
     const limpas = ementas.filter((e) => !/^vota[çc][ãa]o nominal/i.test(e));
     g.ementa = (limpas.sort((a, b) => b.length - a.length)[0]) || ementas[0] || null;
+    // Contexto da matéria (primeiro valor não-nulo entre as votações do grupo).
+    const pega = (campo) => { const v = g.votacoes.find((x) => x[campo]); return v ? v[campo] : null; };
+    g.keywords = pega('keywords');
+    g.situacao = pega('situacao');
+    g.regime = pega('regime');
+    g.url_inteiro_teor = pega('url_inteiro_teor');
+    g.ementa_detalhada = pega('ementa_detalhada');
+    g.autor_nome = pega('autor_nome');
+    g.proposicao_id = pega('proposicao_id');
     g.votacoes.sort((a, b) => new Date(a.data_voto || 0) - new Date(b.data_voto || 0));
     g.data_recente = g.votacoes.reduce((mx, v) => Math.max(mx, v.data_voto ? new Date(v.data_voto).getTime() : 0), 0);
     g.n = g.votacoes.length;
