@@ -118,8 +118,14 @@ export function situacaoCidada(situacao) {
   if (s.includes('remetida') || s.includes('remessa')) return 'Enviada para revisão';
   if (s.includes('pronta') && s.includes('pauta')) return 'Pronta para votar';
   if (s.includes('devolvid')) return 'Devolvida ao autor';
+  if (s.includes('delibera') && s.includes('plen')) return 'Pronta para votar';
   if (s.includes('retirad')) return 'Retirada';
-  return situacao; // as demais já costumam ser legíveis
+  // Senado manda tudo em CAIXA ALTA → deixa em caixa normal (Câmara já vem legível).
+  if (situacao === situacao.toUpperCase()) {
+    const t = situacao.toLowerCase().trim();
+    return t.charAt(0).toUpperCase() + t.slice(1);
+  }
+  return situacao;
 }
 
 // Agrupa linhas de `votacoes` por matéria (proposicao_titulo). Órfãs (sem título) viram card próprio.

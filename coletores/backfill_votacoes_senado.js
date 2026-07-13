@@ -83,7 +83,7 @@ async function main() {
         try {
           const det = await getJson(`${API}/processo/${proc.id}`);
           const d = Array.isArray(det) ? det[0] : det;
-          const kw = limparIndexacao(d && d.indexacao);
+          const kw = limparIndexacao(d && d.documento && d.documento.indexacao);
           if (kw) { upd.keywords = kw; comKw++; }
         } catch (e) { /* keywords é best-effort */ }
       }
