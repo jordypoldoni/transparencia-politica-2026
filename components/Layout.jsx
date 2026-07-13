@@ -14,22 +14,32 @@ const navItens = [
   { href: '/sobre', rotulo: 'Sobre & Fontes' },
 ];
 
-function ehAtivo(href, pathname, asPath) {
+function ehAtivo(href, pathname, asPath, perfilSenado) {
   const [hp, hq] = href.split('?');
   const casaAtual = new URLSearchParams((asPath.split('?')[1] || '')).get('casa');
   if (hp === '/') return pathname === '/';
   if (hp === '/deputados') {
     if (pathname !== '/deputados' && !pathname.startsWith('/deputado/')) return false;
     const querSenado = hq && new URLSearchParams(hq).get('casa') === 'senado';
-    return querSenado ? casaAtual === 'senado' : casaAtual !== 'senado';
+    // Num perfil (/deputado/[slug]) a URL não diz a casa → usamos a casa do próprio perfil,
+    // para o menu acender "Senadores" quando for senador (federal e estadual ficam em "Deputados").
+    const emPerfil = pathname.startsWith('/deputado/');
+    const ehSenado = emPerfil ? !!perfilSenado : casaAtual === 'senado';
+    return querSenado ? ehSenado : !ehSenado;
   }
   if (hp === '/votacoes') return pathname === '/votacoes' || pathname.startsWith('/votacao');
   return pathname === hp || pathname.startsWith(hp + '/');
 }
 
-export default function Layout({ children }) {
+export default function Layout({ children, pageProps }) {
   const { pathname, asPath } = useRouter();
   const [menu, setMenu] = useState(false);
+  // Casa do perfil aberto (quando estamos numa página de perfil) — para o menu acender certo.
+  const perfil = pageProps && pageProps.dados && pageProps.dados.perfil;
+  const perfilSenado = !!perfil && (
+    String(perfil.casa_legislativa || '').toLowerCase().includes('senado') ||
+    String(perfil.fonte_api || '').toLowerCase().includes('senado')
+  );
   useEffect(() => { setMenu(false); }, [asPath]); // fecha ao navegar
   return (
     <div style={{ minHeight: '100vh', background: t.cor.papel, color: t.cor.tinta, fontFamily: t.fonte.corpo, display: 'flex', flexDirection: 'column' }}>
@@ -42,7 +52,7 @@ export default function Layout({ children }) {
           </Link>
           <nav className="nav-desktop" style={{ gap: '2px' }}>
             {navItens.map((n) => {
-              const ativo = ehAtivo(n.href, pathname, asPath);
+              const ativo = ehAtivo(n.href, pathname, asPath, perfilSenado);
               return (
                 <Link key={n.rotulo} href={n.href} aria-current={ativo ? 'page' : undefined}
                   style={{
@@ -76,7 +86,7 @@ export default function Layout({ children }) {
         {menu && (
           <nav className="menu-mobile" style={{ background: t.cor.papel, padding: '8px 12px 14px', boxShadow: t.sombra.media }}>
             {navItens.map((n) => {
-              const ativo = ehAtivo(n.href, pathname, asPath);
+              const ativo = ehAtivo(n.href, pathname, asPath, perfilSenado);
               return (
                 <Link key={n.rotulo} href={n.href} aria-current={ativo ? 'page' : undefined}
                   style={{

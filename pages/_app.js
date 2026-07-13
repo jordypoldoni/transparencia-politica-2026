@@ -20,7 +20,7 @@ export default function App({ Component, pageProps }) {
   }, [router]);
 
   return (
-    <Layout>
+    <Layout pageProps={pageProps}>
       {carregando && <div className="barra-carregando" aria-hidden />}
       <Component {...pageProps} />
       <style jsx global>{`
