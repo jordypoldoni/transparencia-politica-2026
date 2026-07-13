@@ -22,35 +22,6 @@ const corVoto = (tipo) => {
 };
 const corCoerencia = (p) => (p >= 80 ? t.cor.sim : p >= 50 ? t.cor.ouro : t.cor.nao);
 
-// Remove prefixo "Votação nominal do" e sufixos genéricos (Senado não tem ementa real)
-function limparEmentaNominal(texto) {
-  if (!texto) return texto;
-  return texto
-    .replace(/^Votação nominal d[ao]\s+/i, '')
-    .replace(/,?\s*nos termos d[oa]s?\s+pareceres?\.?\s*$/i, '')
-    .replace(/,?\s*nos termos d[oa]\s+parecer\.?\s*$/i, '')
-    .trim();
-}
-
-// Extrai da string crua da API: ementa limpa + placar do plenário
-function parsearVoto(texto) {
-  if (!texto) return { ementa: '', sim: null, nao: null, abs: null };
-  const mSim = texto.match(/Sim:\s*(\d+)/i);
-  const mNao = texto.match(/N[ãa]o:\s*(\d+)/i);
-  const mAbs = texto.match(/Absten[çc][ãa]o:\s*(\d+)/i);
-  const ementa = texto
-    .replace(/^(Aprovad[ao]|Rejeitad[ao]|Votad[ao]|Retirad[ao])\s+(a|o|em|por)\s+/i, '')
-    .replace(/\.\s*Sim:\s*\d+[^]*\.?\s*$/i, '')
-    .replace(/\s*Sim:\s*\d+[^]*\.?\s*$/i, '')
-    .trim();
-  return {
-    ementa,
-    sim: mSim ? parseInt(mSim[1]) : null,
-    nao: mNao ? parseInt(mNao[1]) : null,
-    abs: mAbs ? parseInt(mAbs[1]) : null,
-  };
-}
-
 const dicionario = {
   'Publicidade e Marketing': 'Divulgação do mandato: redes, sites, impressos.',
   'Escritório e Apoio': 'Aluguel de sala, internet, telefone, correios no estado.',
@@ -140,7 +111,6 @@ function Secao({ id, titulo, aberta, onToggle, children }) {
 export default function PerfilPolitico({ dados }) {
   const router = useRouter();
   const [aberta, setAberta] = useState(null);
-  const [votoAberto, setVotoAberto] = useState(null);
   const [modal, setModal] = useState(false);
   const [explicaCota, setExplicaCota] = useState(false);
   const [bioAberta, setBioAberta] = useState(false);
