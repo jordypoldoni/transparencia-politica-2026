@@ -114,7 +114,8 @@ export function situacaoCidada(situacao) {
   if (s.includes('arquivad')) return 'Arquivada';
   if (s.includes('sanç') || s.includes('sanc')) return 'Aguardando sanção';
   if (s.includes('senado')) return 'Enviada ao Senado';
-  if (s.includes('câmara dos deputados') || s.includes('camara dos deputados')) return 'De volta à Câmara';
+  if (s.includes('câmara dos deputados') || s.includes('camara dos deputados')) return 'Na Câmara dos Deputados';
+  if (s.includes('remetida') || s.includes('remessa')) return 'Enviada para revisão';
   if (s.includes('pronta') && s.includes('pauta')) return 'Pronta para votar';
   if (s.includes('devolvid')) return 'Devolvida ao autor';
   if (s.includes('retirad')) return 'Retirada';
