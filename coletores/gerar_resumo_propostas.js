@@ -23,13 +23,7 @@
 import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
 import OpenAI from 'openai';
-import { createRequire } from 'module';
-
-// pdf-parse é CommonJS e não expõe um default export "estático" o suficiente pro
-// analisador de ESM do Node (`import pdfParse from 'pdf-parse'` quebra com
-// "does not provide an export named 'default'"). createRequire contorna isso.
-const require = createRequire(import.meta.url);
-const pdfParse = require('pdf-parse');
+import { PDFParse } from 'pdf-parse';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -90,8 +84,16 @@ async function baixarTextoPdf(url) {
   const r = await fetch(url);
   if (!r.ok) throw new Error(`HTTP ${r.status} ao baixar PDF`);
   const buf = Buffer.from(await r.arrayBuffer());
-  const { text } = await pdfParse(buf);
-  return (text || '').trim();
+  // pdf-parse v2 reescreveu a API por completo: não é mais uma função, é a classe
+  // PDFParse (construtor recebe { data: buffer }, getText() é assíncrono e devolve
+  // { text, pages, ... }). destroy() libera os recursos internos (worker/canvas).
+  const parser = new PDFParse({ data: buf });
+  try {
+    const { text } = await parser.getText();
+    return (text || '').trim();
+  } finally {
+    await parser.destroy();
+  }
 }
 
 async function resumirComIA(textoPdf, nomeCandidato) {
