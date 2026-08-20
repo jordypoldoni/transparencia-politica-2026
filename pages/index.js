@@ -45,7 +45,7 @@ const statusMateria = (g) => {
   return p ? humanizarVotacao({ descricao_votacao: p.descricao, aprovacao: p.aprovacao }).status : null;
 };
 
-export default function Home({ votacoes, parlamentares = [], uniao = null, estados = [] }) {
+export default function Home({ votacoes, parlamentares = [], uniao = null, estados = [], chapas = [] }) {
   const router = useRouter();
 
   const estadoOpcoes = useMemo(() => estados.map((e) => ({ valor: String(e.cod_ibge), rotulo: e.ente, busca: e.ente })), [estados]);
@@ -109,6 +109,31 @@ export default function Home({ votacoes, parlamentares = [], uniao = null, estad
           </aside>
         </div>
       </section>
+
+      {/* PRESIDENCIÁVEIS 2026 — destaque de temporada (eleição em outubro) */}
+      {chapas.length > 0 && (
+        <section style={{ padding: '8px 24px 16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '12px', flexWrap: 'wrap' }}>
+            <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.7rem', margin: '0 0 4px' }}>Presidenciáveis 2026</h2>
+            <Link href="/presidenciaveis" style={{ fontSize: '0.85rem', fontWeight: 700, color: t.cor.ouroTexto, textDecoration: 'none' }}>Ver todos e as propostas →</Link>
+          </div>
+          <p style={{ color: t.cor.cinza, fontSize: '0.92rem', margin: '0 0 16px' }}>Quem disputa a Presidência, o partido e o plano de governo de cada um — sem opinião, direto da fonte oficial (TSE).</p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '12px' }}>
+            {chapas.slice(0, 8).map((c) => (
+              <Link key={c.nr_candidato || c.presidente.slug} href={`/presidencial/${c.presidente.slug}`}
+                style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '12px', background: t.cor.papelCartao, borderRadius: t.raio.md, padding: '14px', boxShadow: t.sombra.clicavel }}>
+                <span aria-hidden style={{ width: '40px', height: '40px', borderRadius: '50%', background: t.cor.verde, color: t.cor.ouro, display: 'grid', placeItems: 'center', fontFamily: t.fonte.titulo, fontWeight: 700, flexShrink: 0 }}>
+                  {c.presidente.foto_url ? <img src={c.presidente.foto_url} alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /> : (c.nr_candidato || '·')}
+                </span>
+                <div style={{ minWidth: 0 }}>
+                  <p style={{ margin: 0, fontWeight: 700, fontSize: '0.92rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.presidente.nome_urna}</p>
+                  <p style={{ margin: 0, color: t.cor.cinza, fontSize: '0.78rem' }}>{c.presidente.partido_sigla}{c.nr_candidato ? ` · ${c.nr_candidato}` : ''}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* COMO FUNCIONA — logo no topo, para orientar */}
       <section style={{ padding: '8px 24px' }}>
@@ -228,12 +253,14 @@ export async function getServerSideProps() {
     ServicoAPI.listarDeputados(),
     ServicoAPI.getPanoramaUniao(),
     ServicoAPI.listarEstadosFiscais(),
+    ServicoAPI.listarPresidenciaveis(2026),
   ]);
   const get = (i) => (settled[i].status === 'fulfilled' ? settled[i].value : []);
   const votacoes      = get(0);
   const parlamentares = get(1);
   const uniao         = settled[2].status === 'fulfilled' ? settled[2].value : null;
   const estados       = get(3);
+  const chapas        = get(4);
   const parlamentaresSlim = (parlamentares || [])
     .filter((p) => p.slug)
     .map((p) => ({ slug: p.slug, nome: p.nome, partido: p.partido, uf: p.uf }));
@@ -243,6 +270,7 @@ export async function getServerSideProps() {
       parlamentares: JSON.parse(JSON.stringify(parlamentaresSlim)),
       uniao: JSON.parse(JSON.stringify(uniao)),
       estados: JSON.parse(JSON.stringify(estados)),
+      chapas: JSON.parse(JSON.stringify(chapas)),
     },
   };
 }

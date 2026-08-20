@@ -515,6 +515,52 @@ const ServicoAPI = {
             cod_ibge: d.cod_ibge, funcao: d.funcao, valor: Number(d.valor),
             ente: d.entes_fiscais.ente, populacao: d.entes_fiscais.populacao || null,
         }));
+    },
+
+    // ============ PRESIDENCIÁVEIS 2026 (TSE) ============
+
+    // Lista todos os candidatos a Presidente/Vice, agrupados por chapa (nr_candidato).
+    // Sem IA: a "proposta" é o link do PDF oficial coletado do TSE (proposta_pdf_url).
+    listarPresidenciaveis: async (ano = 2026) => {
+        const { data, error } = await supabase
+            .from('candidatos_presidenciais')
+            .select('id, slug, cargo, nr_candidato, nome_urna, nome_completo, partido_sigla, coligacao_nome, situacao_candidatura, foto_url, proposta_pdf_url')
+            .eq('ano_eleicao', ano)
+            .order('nr_candidato', { ascending: true });
+        if (error) { console.error('listarPresidenciaveis:', error.message); return []; }
+
+        const chapas = new Map();
+        for (const c of data || []) {
+            const chave = c.nr_candidato || c.id;
+            if (!chapas.has(chave)) chapas.set(chave, { nr_candidato: c.nr_candidato, presidente: null, vice: null });
+            const chapa = chapas.get(chave);
+            if (c.cargo === 'Presidente') chapa.presidente = c; else chapa.vice = c;
+        }
+        return Array.from(chapas.values())
+            .filter((c) => c.presidente) // sem candidato a presidente, não é uma chapa exibível
+            .sort((a, b) => Number(a.nr_candidato || 0) - Number(b.nr_candidato || 0));
+    },
+
+    // Ficha de um presidenciável pelo slug (URL amigável).
+    getPresidenciavelPorSlug: async (slug) => {
+        const { data, error } = await supabase
+            .from('candidatos_presidenciais')
+            .select('*')
+            .eq('slug', slug)
+            .single();
+        if (error || !data) return null;
+        // Traz o colega de chapa (presidente↔vice) pra linkar na ficha.
+        let colega = null;
+        if (data.nr_candidato) {
+            const { data: chapaData } = await supabase
+                .from('candidatos_presidenciais')
+                .select('slug, nome_urna, cargo')
+                .eq('ano_eleicao', data.ano_eleicao)
+                .eq('nr_candidato', data.nr_candidato)
+                .neq('id', data.id);
+            colega = chapaData && chapaData[0] ? chapaData[0] : null;
+        }
+        return { candidato: data, colega };
     }
 };
 

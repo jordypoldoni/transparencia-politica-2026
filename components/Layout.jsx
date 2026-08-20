@@ -5,6 +5,7 @@ import { t } from '../src/estilo/tokens';
 
 const navItens = [
   { href: '/', rotulo: 'Início' },
+  { href: '/presidenciaveis', rotulo: 'Presidenciáveis' },
   { href: '/comecar', rotulo: 'Pra você' },
   { href: '/deputados', rotulo: 'Deputados' },
   { href: '/deputados?casa=senado', rotulo: 'Senadores' },
@@ -28,6 +29,7 @@ function ehAtivo(href, pathname, asPath, perfilSenado) {
     return querSenado ? ehSenado : !ehSenado;
   }
   if (hp === '/votacoes') return pathname === '/votacoes' || pathname.startsWith('/votacao');
+  if (hp === '/presidenciaveis') return pathname === '/presidenciaveis' || pathname.startsWith('/presidencial/');
   return pathname === hp || pathname.startsWith(hp + '/');
 }
 
