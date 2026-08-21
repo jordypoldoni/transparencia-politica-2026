@@ -47,26 +47,27 @@ export default function PerfilPresidenciavel({ candidato, colega, canonical }) {
       <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
         <Link href="/presidenciaveis" style={{ display: 'inline-block', marginBottom: '20px', color: t.cor.cinza, textDecoration: 'none', fontWeight: 600, fontSize: '0.88rem' }}>← Presidenciáveis</Link>
 
-        <div style={{ display: 'flex', gap: '18px', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap' }}>
-          <Avatar nome={c.nome_urna} foto={c.foto_url} size={88} />
-          <div>
-            <p style={{ margin: '0 0 4px', fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.cor.ouroTexto }}>
-              Candidato(a) a {c.cargo === 'Vice-Presidente' ? 'Vice-Presidente' : 'Presidente'} · 2026
-            </p>
-            <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.5rem,3.4vw,2.1rem)', margin: '0 0 4px' }}>{c.nome_urna}</h1>
-            <p style={{ margin: 0, color: t.cor.cinza, fontSize: '0.95rem' }}>{c.partido_sigla}{c.nr_candidato ? ` · nº ${c.nr_candidato}` : ''}{c.coligacao_nome ? ` · ${c.coligacao_nome}` : ''}</p>
-          </div>
-        </div>
-
-        {colega && (
-          <Link href={`/presidencial/${colega.slug}`} style={{ display: 'block', textDecoration: 'none', color: 'inherit', background: t.cor.papelQuente, borderRadius: t.raio.sm, padding: '12px 16px', marginBottom: '24px', fontSize: '0.88rem' }}>
-            {colega.cargo === 'Vice-Presidente' ? 'Vice na chapa' : 'Cabeça de chapa'}: <strong>{colega.nome_urna}</strong> →
-          </Link>
-        )}
-
-        {/* Duas colunas: bio à esquerda, plano de governo à direita (reaproveita a grade do hero) */}
+        {/* Duas colunas nascendo juntas do topo (cabeçalho dentro da coluna esquerda) — bio à
+            esquerda, plano de governo à direita alinhado com o nome, não só com o card "Quem é". */}
         <div className="hero-grid" style={{ alignItems: 'start', gap: '24px' }}>
           <div>
+            <div style={{ display: 'flex', gap: '18px', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap' }}>
+              <Avatar nome={c.nome_urna} foto={c.foto_url} size={88} />
+              <div>
+                <p style={{ margin: '0 0 4px', fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.cor.ouroTexto }}>
+                  Candidato(a) a {c.cargo === 'Vice-Presidente' ? 'Vice-Presidente' : 'Presidente'} · 2026
+                </p>
+                <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.5rem,3.4vw,2.1rem)', margin: '0 0 4px' }}>{c.nome_urna}</h1>
+                <p style={{ margin: 0, color: t.cor.cinza, fontSize: '0.95rem' }}>{c.partido_sigla}{c.nr_candidato ? ` · nº ${c.nr_candidato}` : ''}{c.coligacao_nome ? ` · ${c.coligacao_nome}` : ''}</p>
+              </div>
+            </div>
+
+            {colega && (
+              <Link href={`/presidencial/${colega.slug}`} style={{ display: 'block', textDecoration: 'none', color: 'inherit', background: t.cor.papelQuente, borderRadius: t.raio.sm, padding: '12px 16px', marginBottom: '24px', fontSize: '0.88rem' }}>
+                {colega.cargo === 'Vice-Presidente' ? 'Vice na chapa' : 'Cabeça de chapa'}: <strong>{colega.nome_urna}</strong> →
+              </Link>
+            )}
+
             <section style={{ background: t.cor.papelCartao, borderRadius: t.raio.md, padding: '20px', boxShadow: t.sombra.sutil, marginBottom: '20px' }}>
               <h2 style={{ fontSize: '1rem', margin: '0 0 14px' }}>Quem é</h2>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: '14px' }}>

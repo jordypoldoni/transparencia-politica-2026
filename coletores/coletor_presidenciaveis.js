@@ -72,6 +72,18 @@ function parseLinhaCsv(linha) {
   return campos.map((c) => c.trim());
 }
 
+// O TSE usa valores "sentinela" pra marcar campo vazio/não aplicável nesses CSVs (ex.: quando
+// um dado ainda não foi definido no processo eleitoral, como a situação da candidatura antes
+// do julgamento). Não achei o dicionário oficial confirmando o significado exato de cada
+// variação (procurei — sem sorte), então, pra não inventar um texto, tratamos como "sem dado"
+// e simplesmente não mostramos — mesmo padrão já usado no resto do site pra campo ausente.
+// GOTCHA (21/08): a 1ª versão comparava com uma lista fechada de strings exatas (`#NULO#`,
+// `#NE#`...) e não pegou — o formato real do TSE pra esse campo aparentemente não fecha com
+// `#` no final (ex.: `#NE` em vez de `#NE#`). Troquei pra um PADRÃO em vez de lista fechada:
+// qualquer valor "curto, começa com #, só letras/números depois" conta como sentinela — pega
+// qualquer variação (com ou sem # de fechamento) sem precisar acertar a grafia exata.
+const REGEX_SENTINELA_TSE = /^#[A-ZÀ-Ú0-9]{1,12}#?$/i;
+
 // Aceita nome de coluna com pequenas variações (case, espaços) e uma lista de aliases conhecidos
 // do layout histórico do TSE, caso o nome mude de um ano para o outro.
 function criarLeitor(headers) {
@@ -81,7 +93,12 @@ function criarLeitor(headers) {
     col(row, ...nomes) {
       for (const n of nomes) {
         const i = idx.get(n.toUpperCase());
-        if (i != null && row[i] !== undefined) return row[i] || null;
+        if (i != null && row[i] !== undefined) {
+          const v = row[i];
+          if (!v) return null;
+          if (REGEX_SENTINELA_TSE.test(v.trim())) return null;
+          return v;
+        }
       }
       faltando.add(nomes[0]);
       return null;

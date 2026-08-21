@@ -47,7 +47,7 @@ const FORCE = process.argv.includes('--force');
 // Ponto de partida generoso — se estourar o limite de tokens/minuto do tier gratuito da
 // Groq (erro 413 "Request too large"), resumirComIA() corta pela metade e tenta de novo
 // sozinho, então não precisa acertar esse número de primeira.
-const MAX_CARACTERES_PDF_INICIAL = 24000; // ~6k tokens de entrada, com folga pro system+ferramenta+saída
+const MAX_CARACTERES_PDF_INICIAL = 16000; // ~4k tokens de entrada — deixa bem mais folga pro max_tokens de saída
 const MIN_CARACTERES_PDF = 3000; // abaixo disso desiste — resumo ficaria vazio de conteúdo
 const PAUSA_ENTRE_CANDIDATOS_MS = 1500; // evita rajada contra o limite por minuto
 
@@ -99,7 +99,7 @@ function ehErroDeTamanho(e) {
 // momentânea do modelo, não do nosso código: vale tentar de novo.
 const MAX_TENTATIVAS_FORMATO = 3;
 function ehErroDeFormato(e) {
-  return /JSON malformado|resposta vazia|campo "temas" ausente|did not call a tool|failed to parse tool call/i.test(e.message || '');
+  return /JSON malformado|resposta vazia|campo "temas" ausente|did not call a tool|failed to parse tool call|failed to validate json|adjust your prompt/i.test(e.message || '');
 }
 
 // Tenta com MAX_CARACTERES_PDF_INICIAL; se a Groq recusar por passar do limite de
@@ -118,7 +118,7 @@ async function resumirComIA(textoPdf, nomeCandidato) {
     try {
       const resp = await grok.chat.completions.create({
         model: MODELO,
-        max_tokens: 1024,
+        max_tokens: 2048,
         response_format: { type: 'json_object' },
         messages: [
           { role: 'system', content: PROMPT_SISTEMA },
