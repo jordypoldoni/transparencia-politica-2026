@@ -102,6 +102,20 @@ function ehErroDeFormato(e) {
   return /JSON malformado|resposta vazia|campo "temas" ausente|did not call a tool|failed to parse tool call|failed to validate json|adjust your prompt/i.test(e.message || '');
 }
 
+// Quando desistimos de um candidato (esgotou as tentativas), a Groq geralmente inclui um
+// campo "failed_generation" no corpo do erro com o texto que a IA realmente gerou (mesmo
+// inválido) — é a pista real de por que travou (refusal, prosa antes/depois do JSON, corte
+// no meio, etc.), bem melhor que continuar chutando. Loga o corpo bruto do erro pra ver.
+function logDiagnosticoErro(e) {
+  try {
+    const corpo = e.error ?? e.response?.data ?? e;
+    console.warn('     🔎 Diagnóstico (corpo do erro, procure "failed_generation"):');
+    console.warn('     ' + JSON.stringify(corpo, null, 2).split('\n').join('\n     ').slice(0, 3000));
+  } catch (erroLog) {
+    console.warn('     🔎 (não consegui serializar o erro pra diagnóstico:', erroLog.message, ')');
+  }
+}
+
 // Tenta com MAX_CARACTERES_PDF_INICIAL; se a Groq recusar por passar do limite de
 // tokens/minuto do tier gratuito (413) ou dar rate limit (429), corta o texto pela
 // metade e tenta de novo — até caber ou bater no MIN_CARACTERES_PDF. Se a falha for de
@@ -152,6 +166,9 @@ async function resumirComIA(textoPdf, nomeCandidato) {
         await dormir(800);
         continue;
       }
+      // Esgotou as tentativas (ou é um erro de outro tipo) — antes de desistir, loga o
+      // diagnóstico completo pra entender a causa real em vez de continuar chutando.
+      logDiagnosticoErro(e);
       throw e;
     }
   }
