@@ -9,7 +9,7 @@ import { Pino } from '../components/icones';
 import { t } from '../src/estilo/tokens';
 
 const brlC = (v) => {
-  if (v == null) return '—';
+  if (v == null) return '-';
   const n = Number(v), a = Math.abs(n);
   if (a >= 1e12) return `R$ ${(n / 1e12).toLocaleString('pt-BR', { maximumFractionDigits: 2 })} tri`;
   if (a >= 1e9) return `R$ ${(n / 1e9).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} bi`;
@@ -45,13 +45,13 @@ export default function GastosPublicos({ uniao, estados = [], gastosFuncao = [] 
   return (
     <div className="pagina">
       <Head>
-        <title>Gastos públicos — União, estados, DF e municípios | Lume</title>
-        <meta name="description" content="Quanto a União, os estados, o DF e os municípios arrecadam e gastam, e para onde vai o dinheiro — por área e por habitante. Fonte: SICONFI/Tesouro Nacional." />
+        <title>Gastos públicos: União, estados, DF e municípios | Lume</title>
+        <meta name="description" content="Quanto a União, os estados, o DF e os municípios arrecadam e gastam, e para onde vai o dinheiro, por área e por habitante. Fonte: SICONFI/Tesouro Nacional." />
       </Head>
 
       <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.8rem,4vw,2.6rem)', margin: '0 0 8px' }}>Gastos públicos</h1>
       <p style={{ color: t.cor.cinza, fontSize: '0.96rem', margin: '0 0 24px', lineHeight: 1.55, maxWidth: '72ch' }}>
-        Quanto a União, os estados, o DF e os municípios <strong>arrecadam e gastam</strong>, e em quais áreas — direto da fonte oficial (<a href="https://siconfi.tesouro.gov.br/" target="_blank" rel="noopener noreferrer" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>SICONFI/Tesouro</a>). São dados <strong>agregados</strong> (quanto e em quais áreas), não contratos individuais. Acumulado de {uniao?.resumo?.ano || '2026'}.
+        Quanto a União, os estados, o DF e os municípios <strong>arrecadam e gastam</strong>, e em quais áreas, direto da fonte oficial (<a href="https://siconfi.tesouro.gov.br/" target="_blank" rel="noopener noreferrer" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>SICONFI/Tesouro</a>). São dados <strong>agregados</strong> (quanto e em quais áreas), não contratos individuais. Acumulado de {uniao?.resumo?.ano || '2026'}.
       </p>
 
       {/* União em destaque */}

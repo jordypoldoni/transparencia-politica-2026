@@ -21,7 +21,7 @@ const botaoPilula = {
 
 // Formatação compacta de reais para os grandes números fiscais (R$ 1,45 tri / R$ 132 bi).
 const brlC = (v) => {
-  if (v == null) return '—';
+  if (v == null) return '-';
   const n = Number(v), a = Math.abs(n);
   if (a >= 1e12) return `R$ ${(n / 1e12).toLocaleString('pt-BR', { maximumFractionDigits: 2 })} tri`;
   if (a >= 1e9) return `R$ ${(n / 1e9).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} bi`;
@@ -69,7 +69,7 @@ export default function Home({ votacoes, parlamentares = [], uniao = null, estad
               Você elegeu.<br />Agora <span style={{ color: t.cor.ouroTexto }}>fiscalize</span>.
             </h1>
             <p style={{ fontSize: '1.1rem', color: t.cor.cinza, maxWidth: '46ch', lineHeight: 1.5, margin: '0 0 24px' }}>
-              Política não se aceita. Se verifica. Votos e gastos dos seus representantes, em português claro, com o documento oficial do lado. Nós trazemos os dados — você decide.
+              Política não se aceita. Se verifica. Votos e gastos dos seus representantes, em português claro, com o documento oficial do lado. Nós trazemos os dados, você decide.
             </p>
             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
               <div style={{ flex: '2 1 320px', minWidth: 0 }}>
@@ -118,7 +118,7 @@ export default function Home({ votacoes, parlamentares = [], uniao = null, estad
             <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.7rem', margin: '0 0 4px' }}>Candidatos 2026</h2>
             <Link href="/candidatos-2026" style={{ fontSize: '0.85rem', fontWeight: 700, color: t.cor.ouroTexto, textDecoration: 'none' }}>Ver Presidente e Deputado Federal →</Link>
           </div>
-          <p style={{ color: t.cor.cinza, fontSize: '0.92rem', margin: '0 0 16px' }}>Quem disputa a Presidência e a Câmara dos Deputados, o partido e a situação da candidatura de cada um — sem opinião, direto da fonte oficial (TSE).</p>
+          <p style={{ color: t.cor.cinza, fontSize: '0.92rem', margin: '0 0 16px' }}>Quem disputa a Presidência e a Câmara dos Deputados, o partido e a situação da candidatura de cada um, sem opinião, direto da fonte oficial (TSE).</p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '12px' }}>
             {chapas.slice(0, 8).map((c) => (
               <Link key={c.nr_candidato || c.presidente.slug} href={`/presidencial/${c.presidente.slug}`}
@@ -141,7 +141,7 @@ export default function Home({ votacoes, parlamentares = [], uniao = null, estad
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
           {[
             { n: '01', tit: 'Busque seu representante', txt: 'Pelo nome ou pelo estado. Sem cadastro.' },
-            { n: '02', tit: 'Entenda em 1 minuto', txt: 'Traduzimos votos e gastos pra qualquer pessoa — sem juridiquês.' },
+            { n: '02', tit: 'Entenda em 1 minuto', txt: 'Traduzimos votos e gastos pra qualquer pessoa, sem juridiquês.' },
             { n: '03', tit: 'Confira na fonte', txt: 'Cada número tem o link do documento oficial. Não confie na gente: confira.' },
           ].map((c) => (
             <div key={c.n} style={{ background: t.cor.papelCartao, borderRadius: t.raio.md, padding: '22px', boxShadow: t.sombra.sutil }}>
@@ -157,7 +157,7 @@ export default function Home({ votacoes, parlamentares = [], uniao = null, estad
       <section style={{ padding: '16px 24px' }}>
         <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.7rem', margin: '0 0 4px' }}>Para onde vai o dinheiro público</h2>
         <p style={{ color: t.cor.cinza, fontSize: '0.92rem', margin: '0 0 18px', lineHeight: 1.5, maxWidth: '70ch' }}>
-          Quanto a União, os estados, o DF e os municípios <strong>arrecadam e gastam</strong> — em linguagem clara, direto da fonte oficial (<a href="https://siconfi.tesouro.gov.br/" target="_blank" rel="noopener noreferrer" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>SICONFI/Tesouro</a>). Números acumulados de {uniao?.resumo?.ano || '2026'}.
+          Quanto a União, os estados, o DF e os municípios <strong>arrecadam e gastam</strong>, em linguagem clara, direto da fonte oficial (<a href="https://siconfi.tesouro.gov.br/" target="_blank" rel="noopener noreferrer" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>SICONFI/Tesouro</a>). Números acumulados de {uniao?.resumo?.ano || '2026'}.
         </p>
 
         {uniao?.resumo && (
@@ -195,7 +195,7 @@ export default function Home({ votacoes, parlamentares = [], uniao = null, estad
           <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.7rem', margin: '0 0 4px' }}>O que os deputados decidiram</h2>
           <Link href="/votacoes" style={{ fontSize: '0.85rem', fontWeight: 700, color: t.cor.ouroTexto, textDecoration: 'none' }}>Ver todas as votações →</Link>
         </div>
-        <p style={{ color: t.cor.cinza, fontSize: '0.92rem', margin: '0 0 18px' }}>Votações recentes no plenário da Câmara — o assunto, quem propôs e o que foi decidido. Fonte: Câmara dos Deputados.</p>
+        <p style={{ color: t.cor.cinza, fontSize: '0.92rem', margin: '0 0 18px' }}>Votações recentes no plenário da Câmara: o assunto, quem propôs e o que foi decidido. Fonte: Câmara dos Deputados.</p>
         {votacoes && votacoes.length > 0 ? (
           <div style={{ display: 'grid', gap: '10px' }}>
             {votacoes.slice(0, 6).map((g) => {

@@ -92,7 +92,7 @@ export default function CampoSelect({
           })}
           {filtradas.length > limite && (
             <p style={{ margin: 0, padding: '10px 16px', color: t.cor.cinza, fontSize: '0.82rem', background: t.cor.papelQuente }}>
-              +{filtradas.length - limite} — digite para refinar.
+              +{filtradas.length - limite}, digite para refinar.
             </p>
           )}
         </div>

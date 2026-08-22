@@ -46,7 +46,7 @@ export default function Votacao({ meta, votos }) {
 
   return (
     <>
-      <Head><title>{`${(assunto || 'Votação').slice(0, 70)} — como votaram | Lume`}</title></Head>
+      <Head><title>{`${(assunto || 'Votação').slice(0, 70)}: como votaram | Lume`}</title></Head>
       <div className="pagina">
         <button onClick={() => router.back()} style={{ ...pilula, marginBottom: '20px' }}>← Voltar</button>
 

@@ -238,7 +238,7 @@ export default function PerfilPolitico({ dados }) {
     }
 
     x.fillStyle = 'rgba(255,255,255,0.5)'; x.font = '400 30px Georgia, serif';
-    x.fillText(`Fonte: ${fonteNome} — confira você mesmo.`, 90, 1010);
+    x.fillText(`Fonte: ${fonteNome}, confira você mesmo.`, 90, 1010);
 
     const blob = await new Promise((r) => c.toBlob(r, 'image/png'));
     const file = new File([blob], `${perfil.slug || 'politico'}.png`, { type: 'image/png' });
@@ -279,16 +279,16 @@ export default function PerfilPolitico({ dados }) {
         <p style={{ fontSize: '1.15rem', lineHeight: 1.6, margin: '24px 0 0', maxWidth: '62ch' }}>
           {nNotasAno > 0 ? (
             <>Em <strong>{anoSel}</strong>, {perfil.nome_urna} usou <strong style={{ color: t.cor.ouro }}>{brl(totalAno)}</strong> da verba pública de mandato
-            {' '}— a <button onClick={() => setExplicaCota(!explicaCota)} style={{ background: 'none', border: 'none', color: t.cor.ouro, fontWeight: 700, cursor: 'pointer', padding: 0, fontSize: 'inherit', textDecoration: 'underline dotted' }}>{rotuloCota}</button> —
+            {' '}(a <button onClick={() => setExplicaCota(!explicaCota)} style={{ background: 'none', border: 'none', color: t.cor.ouro, fontWeight: 700, cursor: 'pointer', padding: 0, fontSize: 'inherit', textDecoration: 'underline dotted' }}>{rotuloCota}</button>)
             {' '}em <strong>{nNotasAno}</strong> notas fiscais, cerca de <strong>{brl(mediaAno || media_mensal)} por mês</strong>{maiorCatAno ? <>, com mais gasto em <strong>{maiorCatAno}</strong></> : null}.</>
           ) : (
-            <>Ainda estamos reunindo os gastos da <button onClick={() => setExplicaCota(!explicaCota)} style={{ background: 'none', border: 'none', color: t.cor.ouro, fontWeight: 700, cursor: 'pointer', padding: 0, fontSize: 'inherit', textDecoration: 'underline dotted' }}>{rotuloCota}</button> de {perfil.nome_urna} — em breve aqui.</>
+            <>Ainda estamos reunindo os gastos da <button onClick={() => setExplicaCota(!explicaCota)} style={{ background: 'none', border: 'none', color: t.cor.ouro, fontWeight: 700, cursor: 'pointer', padding: 0, fontSize: 'inherit', textDecoration: 'underline dotted' }}>{rotuloCota}</button> de {perfil.nome_urna}, em breve aqui.</>
           )}
           {coerencia ? <> Nas votações, acompanhou o próprio partido em <strong style={{ color: t.cor.ouro }}>{coerencia.percentual.toFixed(0)}%</strong> das vezes.</> : null}
         </p>
         {explicaCota && (
           <p style={{ margin: '12px 0 0', fontSize: '0.9rem', background: 'rgba(255,255,255,0.1)', padding: '12px 14px', borderRadius: t.raio.sm, lineHeight: 1.5 }}>
-            <strong>Cota parlamentar:</strong> uma verba mensal, paga com o seu imposto, para o parlamentar tocar o mandato — passagens, aluguel de escritório, combustível, divulgação. O <strong>teto muda conforme o estado</strong> (quem é de estado mais distante de Brasília recebe mais, por causa das passagens) e é <strong>diferente entre Câmara, Senado e as Assembleias estaduais</strong>. Por isso comparamos cada um dentro da própria casa.{' '}
+            <strong>Cota parlamentar:</strong> uma verba mensal, paga com o seu imposto, para o parlamentar tocar o mandato: passagens, aluguel de escritório, combustível, divulgação. O <strong>teto muda conforme o estado</strong> (quem é de estado mais distante de Brasília recebe mais, por causa das passagens) e é <strong>diferente entre Câmara, Senado e as Assembleias estaduais</strong>. Por isso comparamos cada um dentro da própria casa.{' '}
             <a href="/entenda#cotas" style={{ color: t.cor.ouro, fontWeight: 700, textDecoration: 'underline' }}>Ver os valores e tetos por estado →</a>
           </p>
         )}
@@ -374,7 +374,7 @@ export default function PerfilPolitico({ dados }) {
                   {bioAberta && (
                     <div style={{ marginTop: '12px' }}>
                       <p style={{ margin: '0 0 10px', fontSize: '0.78rem', color: t.cor.cinza, fontStyle: 'italic', lineHeight: 1.5 }}>
-                        Texto escrito pelo próprio gabinete do parlamentar. Reproduzimos como está, sem endossar nem revisar — os fatos acima vêm do cadastro oficial.
+                        Texto escrito pelo próprio gabinete do parlamentar. Reproduzimos como está, sem endossar nem revisar, os fatos acima vêm do cadastro oficial.
                       </p>
                       {biografiaTexto.split(/\n{2,}/).map((par, i) => (
                         <p key={i} style={{ margin: '0 0 10px', fontSize: '0.9rem', lineHeight: 1.6, color: t.cor.tinta }}>{par}</p>
@@ -393,7 +393,7 @@ export default function PerfilPolitico({ dados }) {
             </>
           ) : (
             <p style={{ margin: 0, color: t.cor.cinza, fontSize: '0.9rem', lineHeight: 1.5 }}>
-              Ainda estamos reunindo os dados de identificação deste parlamentar (nascimento, formação, profissão e contato). Em breve aqui — sempre a partir da fonte oficial.
+              Ainda estamos reunindo os dados de identificação deste parlamentar (nascimento, formação, profissão e contato). Em breve aqui, sempre a partir da fonte oficial.
             </p>
           )}
         </Secao>
@@ -409,7 +409,7 @@ export default function PerfilPolitico({ dados }) {
               </div>
             )}
             <p style={{ color: t.cor.cinza, fontSize: '0.9rem', margin: '0 0 18px', lineHeight: 1.5 }}>
-              Quanto {perfil.nome_urna} usou da verba em cada mês de <strong>{anoSel}</strong> — cada barra é a soma das notas fiscais daquele mês. Passe o mouse para ver o valor.
+              Quanto {perfil.nome_urna} usou da verba em cada mês de <strong>{anoSel}</strong>: cada barra é a soma das notas fiscais daquele mês. Passe o mouse para ver o valor.
             </p>
 
             <div style={{ display: 'flex', alignItems: 'flex-end', gap: '6px', height: '170px', padding: '0 2px' }}>
@@ -432,7 +432,7 @@ export default function PerfilPolitico({ dados }) {
                 <span style={{ fontSize: '0.9rem', color: t.cor.cinza }}>{dadosAno.meses_com_gasto} {dadosAno.meses_com_gasto === 1 ? 'mês' : 'meses'} com gasto</span>
               </div>
               <p style={{ margin: 0, fontSize: '0.82rem', color: t.cor.cinza, lineHeight: 1.5 }}>
-                <strong style={{ color: t.cor.tinta }}>Como a média é calculada:</strong> somamos todas as notas de {anoSel} e dividimos pelo número de meses com gasto registrado ({dadosAno.meses_com_gasto}). Meses sem nota não entram na conta — por isso a média pode ficar acima do gasto de um mês isolado. Fonte: {fonteNome}.
+                <strong style={{ color: t.cor.tinta }}>Como a média é calculada:</strong> somamos todas as notas de {anoSel} e dividimos pelo número de meses com gasto registrado ({dadosAno.meses_com_gasto}). Meses sem nota não entram na conta, por isso a média pode ficar acima do gasto de um mês isolado. Fonte: {fonteNome}.
               </p>
             </div>
           </Secao>
@@ -457,7 +457,7 @@ export default function PerfilPolitico({ dados }) {
                       <div key={i} style={{ padding: '10px 0' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px', alignItems: 'flex-start' }}>
                           <span style={{ color: t.cor.tinta, fontSize: '0.86rem', fontWeight: 600 }}>
-                            {it.data_emissao ? new Date(it.data_emissao).toLocaleDateString('pt-BR') : ''} · {it.fornecedor_nome || '—'}
+                            {it.data_emissao ? new Date(it.data_emissao).toLocaleDateString('pt-BR') : ''} · {it.fornecedor_nome || '-'}
                           </span>
                           <span style={{ display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0 }}>
                             <strong style={{ fontSize: '0.88rem' }}>{brlExato(it.valor_liquido)}</strong>
@@ -465,8 +465,8 @@ export default function PerfilPolitico({ dados }) {
                           </span>
                         </div>
                         <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginTop: '3px', fontSize: '0.72rem', color: t.cor.cinza }}>
-                          <span><strong style={{ color: t.cor.tinta }}>Tipo:</strong> {it.tipo_despesa || '—'}</span>
-                          <span><strong style={{ color: t.cor.tinta }}>Período:</strong> {it.mes ? `${String(it.mes).padStart(2, '0')}/2026` : '—'}</span>
+                          <span><strong style={{ color: t.cor.tinta }}>Tipo:</strong> {it.tipo_despesa || '-'}</span>
+                          <span><strong style={{ color: t.cor.tinta }}>Período:</strong> {it.mes ? `${String(it.mes).padStart(2, '0')}/2026` : '-'}</span>
                           {it.id_externo_documento && <span><strong style={{ color: t.cor.tinta }}>Doc:</strong> {String(it.id_externo_documento).split('-')[0]}</span>}
                           {it.fornecedor_cnpj_cpf && <span><strong style={{ color: t.cor.tinta }}>CNPJ/CPF:</strong> {it.fornecedor_cnpj_cpf}</span>}
                         </div>
@@ -557,7 +557,7 @@ export default function PerfilPolitico({ dados }) {
                   {cargosAnteriores.slice(0, 10).map((c, i) => (
                     <div key={i} style={{ fontSize: '0.88rem', color: t.cor.tinta }}>
                       <strong>{c.cargo}</strong>
-                      {(c.municipio || c.uf) ? <span style={{ color: t.cor.cinza }}> — {[c.municipio, c.uf].filter(Boolean).join('/')}</span> : null}
+                      {(c.municipio || c.uf) ? <span style={{ color: t.cor.cinza }}>, {[c.municipio, c.uf].filter(Boolean).join('/')}</span> : null}
                       {c.ano ? <span style={{ color: t.cor.cinza }}> · {c.ano}{c.partido ? ` (${c.partido})` : ''}</span> : null}
                     </div>
                   ))}
@@ -572,7 +572,7 @@ export default function PerfilPolitico({ dados }) {
                   {filiacoes.slice(0, 8).map((f, i) => (
                     <div key={i} style={{ fontSize: '0.86rem', color: t.cor.tinta }}>
                       <strong>{f.sigla}</strong>
-                      {f.inicio ? <span style={{ color: t.cor.cinza }}> — {String(f.inicio).slice(0, 4)}{f.fim ? ` a ${String(f.fim).slice(0, 4)}` : ' (atual)'}</span> : null}
+                      {f.inicio ? <span style={{ color: t.cor.cinza }}> ({f.fim ? `${String(f.inicio).slice(0, 4)} a ${String(f.fim).slice(0, 4)}` : `desde ${String(f.inicio).slice(0, 4)}`})</span> : null}
                     </div>
                   ))}
                 </div>
@@ -587,7 +587,7 @@ export default function PerfilPolitico({ dados }) {
             <>
               <p style={{ color: t.cor.cinza, fontSize: '0.9rem', margin: '0 0 18px', lineHeight: 1.5 }}>
                 Projetos de lei, emendas e outras propostas que {perfil.nome_urna} apresentou neste mandato
-                {typeof perfil.n_proposicoes === 'number' ? <> — <strong style={{ color: t.cor.tinta }}>{perfil.n_proposicoes}</strong> no total{perfil.n_proposicoes > proposicoes.length ? ` (mostrando as ${proposicoes.length} mais recentes)` : ''}</> : null}. Propor não é o mesmo que aprovar. Fonte: {fonteNome}.
+                {typeof perfil.n_proposicoes === 'number' ? <>, <strong style={{ color: t.cor.tinta }}>{perfil.n_proposicoes}</strong> no total{perfil.n_proposicoes > proposicoes.length ? ` (mostrando as ${proposicoes.length} mais recentes)` : ''}</> : null}. Propor não é o mesmo que aprovar. Fonte: {fonteNome}.
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {proposicoes.map((p, i) => (

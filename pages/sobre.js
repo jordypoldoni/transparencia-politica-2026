@@ -2,7 +2,7 @@ import { t } from '../src/estilo/tokens';
 
 const principios = [
   { tit: 'Linguagem de gente', txt: 'Traduzimos o "politiquês" e o "juridiquês" para o português do dia a dia. Se a sua avó não entende, a gente reescreve.' },
-  { tit: 'Sem lado', txt: 'Não torcemos por partido nenhum. Mostramos o fato — quem votou o quê, quem gastou quanto — e deixamos você decidir.' },
+  { tit: 'Sem lado', txt: 'Não torcemos por partido nenhum. Mostramos o fato (quem votou o quê, quem gastou quanto) e deixamos você decidir.' },
   { tit: 'Tudo com fonte', txt: 'Cada número tem o link do documento oficial. Você não precisa confiar na gente: pode conferir na fonte.' },
   { tit: 'Dados públicos', txt: 'Usamos apenas dados abertos e oficiais do governo. Nada de bastidor, nada de boato.' },
 ];
@@ -18,7 +18,7 @@ export default function Sobre() {
       <p style={{ fontSize: '1.15rem', color: t.cor.cinza, lineHeight: 1.6, margin: '0 0 40px' }}>
         O Lume existe para responder, de forma simples, uma pergunta que todo cidadão tem direito de fazer:
         <strong style={{ color: t.cor.tinta }}> o político que eu elegi está me representando?</strong> Reunimos dados oficiais
-        espalhados e confusos, e entregamos mastigado — para você acompanhar e cobrar com base em fato, não em achismo.
+        espalhados e confusos, e entregamos mastigado, para você acompanhar e cobrar com base em fato, não em achismo.
       </p>
 
       <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.5rem', margin: '0 0 16px' }}>Nossos princípios</h2>
@@ -36,9 +36,9 @@ export default function Sobre() {
         Atualizamos automaticamente, todos os dias, a partir das bases oficiais:
       </p>
       <ul style={{ color: t.cor.cinza, lineHeight: 1.8, margin: '0 0 24px', paddingLeft: '20px' }}>
-        <li><strong style={{ color: t.cor.tinta }}>Câmara dos Deputados</strong> — votações nominais e gastos da cota parlamentar.</li>
-        <li><strong style={{ color: t.cor.tinta }}>Senado Federal</strong> — parlamentares e matérias.</li>
-        <li><strong style={{ color: t.cor.tinta }}>Portal da Transparência</strong> — gastos do Executivo.</li>
+        <li><strong style={{ color: t.cor.tinta }}>Câmara dos Deputados</strong>: votações nominais e gastos da cota parlamentar.</li>
+        <li><strong style={{ color: t.cor.tinta }}>Senado Federal</strong>: parlamentares e matérias.</li>
+        <li><strong style={{ color: t.cor.tinta }}>Portal da Transparência</strong>: gastos do Executivo.</li>
       </ul>
 
       <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.5rem', margin: '40px 0 16px' }}>O que é a cota parlamentar?</h2>
@@ -50,7 +50,7 @@ export default function Sobre() {
         <li><strong style={{ color: t.cor.tinta }}>Câmara e Senado são diferentes.</strong> A cota do Senado (chamada CEAPS) tem regras e valores próprios.</li>
       </ul>
       <p style={{ color: t.cor.cinza, lineHeight: 1.6, margin: '0 0 28px' }}>
-        Por isso, no nosso ranking, <strong style={{ color: t.cor.tinta }}>comparamos cada parlamentar dentro da própria casa</strong> — comparar um deputado com um senador seria injusto, porque os tetos não são iguais.
+        Por isso, no nosso ranking, <strong style={{ color: t.cor.tinta }}>comparamos cada parlamentar dentro da própria casa</strong>: comparar um deputado com um senador seria injusto, porque os tetos não são iguais.
       </p>
 
       <div style={{ background: t.cor.alertaBg, borderRadius: t.raio.md, padding: '20px 22px', boxShadow: t.sombra.sutil }}>

@@ -7,7 +7,7 @@ const brl = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency:
 export default function DeputadoSEO({ dados, canonical }) {
   const p = dados.perfil;
   const ufp = `${p.partido_atual || ''}-${p.uf_sede || 'BR'}`;
-  const titulo = `${p.nome_urna} (${ufp}) — gastos e votos | Lume`;
+  const titulo = `${p.nome_urna} (${ufp}): gastos e votos | Lume`;
   const desc = `Quanto ${p.nome_urna} usou da cota parlamentar em 2026 (${brl(dados.total_geral)}), como votou e a fidelidade ao ${p.partido_atual || 'partido'}. Em linguagem clara, com a fonte oficial da Câmara.`;
 
   const jsonLd = {

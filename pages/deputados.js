@@ -47,7 +47,7 @@ export default function Parlamentares({ deputados, qInicial, ufInicial, casaInic
   return (
     <div className="pagina">
       <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.8rem,4vw,2.6rem)', margin: '0 0 16px' }}>
-        {casa === 'Senado' ? 'Senadores' : casa === 'Assembleia (SP)' ? 'Deputados Estaduais — São Paulo' : 'Deputados Federais'}
+        {casa === 'Senado' ? 'Senadores' : casa === 'Assembleia (SP)' ? 'Deputados Estaduais de São Paulo' : 'Deputados Federais'}
       </h1>
 
       {/* Alternância só entre deputados (federais x estaduais). Senadores é página própria. */}
@@ -140,7 +140,7 @@ export default function Parlamentares({ deputados, qInicial, ufInicial, casaInic
                 <Avatar nome={d.nome} foto={d.foto_url} size={56} />
                 <div style={{ minWidth: 0 }}>
                   <p style={{ margin: '0 0 2px', fontWeight: 700, fontSize: '0.98rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.nome}</p>
-                  <p style={{ margin: '0 0 6px', color: t.cor.cinza, fontSize: '0.82rem' }}>{d.partido} · {d.uf || '—'}</p>
+                  <p style={{ margin: '0 0 6px', color: t.cor.cinza, fontSize: '0.82rem' }}>{d.partido} · {d.uf || '-'}</p>
                   <span style={{ color: t.cor.ouroTexto, fontWeight: 700, fontSize: '0.8rem' }}>Ver perfil →</span>
                 </div>
               </div>

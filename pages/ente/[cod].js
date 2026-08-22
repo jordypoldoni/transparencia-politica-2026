@@ -5,7 +5,7 @@ import ServicoAPI from '../../src/servicos/servico_api';
 import { t } from '../../src/estilo/tokens';
 
 const brlCompacto = (v) => {
-  if (v == null) return '—';
+  if (v == null) return '-';
   const n = Number(v), abs = Math.abs(n);
   if (abs >= 1e12) return `R$ ${(n / 1e12).toLocaleString('pt-BR', { maximumFractionDigits: 2 })} tri`;
   if (abs >= 1e9) return `R$ ${(n / 1e9).toLocaleString('pt-BR', { maximumFractionDigits: 2 })} bi`;
@@ -35,8 +35,8 @@ export default function EntePanorama({ dados }) {
   return (
     <div className="pagina">
       <Head>
-        <title>{`${nome} — arrecadação e gastos | Lume`}</title>
-        <meta name="description" content={`Quanto ${nome} arrecadou e gastou em ${resumo?.ano || ''}, e para onde foi o dinheiro público — por função e por habitante. Fonte: SICONFI/Tesouro Nacional.`} />
+        <title>{`${nome}: arrecadação e gastos | Lume`}</title>
+        <meta name="description" content={`Quanto ${nome} arrecadou e gastou em ${resumo?.ano || ''}, e para onde foi o dinheiro público, por função e por habitante. Fonte: SICONFI/Tesouro Nacional.`} />
       </Head>
 
       <button onClick={() => router.back()} style={{ ...pilula, background: '#fff', color: t.cor.tinta, marginBottom: '16px', boxShadow: t.sombra.clicavel }}>← Voltar</button>
@@ -64,7 +64,7 @@ export default function EntePanorama({ dados }) {
             />
           </div>
           <p style={{ color: t.cor.cinza, fontSize: '0.86rem', margin: '0 0 24px', lineHeight: 1.5 }}>
-            Valores <strong>acumulados no ano de {resumo.ano}</strong>{ateMes ? `, até ${ateMes} (${resumo.periodo}º bimestre)` : ''} — receita realizada e despesa liquidada. A diferença reflete o <strong>momento do ano</strong> (a receita entra ao longo do exercício e a despesa é liquidada aos poucos), não é o resultado fiscal fechado. Fonte oficial: SICONFI / Tesouro Nacional.
+            Valores <strong>acumulados no ano de {resumo.ano}</strong>{ateMes ? `, até ${ateMes} (${resumo.periodo}º bimestre)` : ''}: receita realizada e despesa liquidada. A diferença reflete o <strong>momento do ano</strong> (a receita entra ao longo do exercício e a despesa é liquidada aos poucos), não é o resultado fiscal fechado. Fonte oficial: SICONFI / Tesouro Nacional.
           </p>
 
           {/* Para onde foi — despesa por função */}
@@ -72,7 +72,7 @@ export default function EntePanorama({ dados }) {
             <div style={{ background: t.cor.papelCartao, borderRadius: t.raio.lg, padding: 'clamp(20px,3vw,32px)', boxShadow: t.sombra.sutil, marginBottom: '20px' }}>
               <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.4rem', margin: '0 0 6px' }}>Para onde foi o dinheiro</h2>
               <p style={{ color: t.cor.cinza, fontSize: '0.9rem', margin: '0 0 20px', lineHeight: 1.5 }}>
-                Despesa por <strong>função de governo</strong> — as grandes áreas em que o gasto foi aplicado. Ao lado, o valor por habitante.
+                Despesa por <strong>função de governo</strong>: as grandes áreas em que o gasto foi aplicado. Ao lado, o valor por habitante.
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 {funcoes.map((f, i) => {
@@ -97,7 +97,7 @@ export default function EntePanorama({ dados }) {
 
           {/* Fonte */}
           <div style={{ background: t.cor.alertaBg, borderRadius: t.raio.md, padding: '14px 18px', fontSize: '0.86rem', color: t.cor.tinta, lineHeight: 1.5 }}>
-            Estes números são <strong>agregados oficiais</strong> do Relatório Resumido da Execução Orçamentária (RREO), declarados pelo próprio ente ao <a href="https://siconfi.tesouro.gov.br/" target="_blank" rel="noopener noreferrer" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>SICONFI / Tesouro Nacional</a>. Eles mostram <em>quanto</em> e <em>em quais áreas</em> — não contratos individuais.
+            Estes números são <strong>agregados oficiais</strong> do Relatório Resumido da Execução Orçamentária (RREO), declarados pelo próprio ente ao <a href="https://siconfi.tesouro.gov.br/" target="_blank" rel="noopener noreferrer" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>SICONFI / Tesouro Nacional</a>. Eles mostram <em>quanto</em> e <em>em quais áreas</em>, não contratos individuais.
           </div>
         </>
       ) : (

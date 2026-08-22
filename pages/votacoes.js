@@ -85,11 +85,11 @@ export default function Votacoes({ votacoes, temas = [] }) {
 
   return (
     <>
-      <Head><title>Votações da Câmara e do Senado — agrupadas por matéria | Lume</title></Head>
+      <Head><title>Votações da Câmara e do Senado: agrupadas por matéria | Lume</title></Head>
       <div className="pagina">
         <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.6rem,4vw,2.2rem)', margin: '0 0 6px' }}>Votações por matéria</h1>
         <p style={{ color: t.cor.cinza, margin: '0 0 22px', maxWidth: '660px' }}>
-          Cada matéria (um PL, PEC ou MP) reúne <strong>todas as votações do seu processo</strong> — urgência, destaques, texto, redação final — em ordem. Busque por <strong>assunto</strong>, pela proposta (ex.: "PEC 6") ou por <strong>quem propôs</strong>. Câmara e Senado.
+          Cada matéria (um PL, PEC ou MP) reúne <strong>todas as votações do seu processo</strong> (urgência, destaques, texto, redação final) em ordem. Busque por <strong>assunto</strong>, pela proposta (ex.: "PEC 6") ou por <strong>quem propôs</strong>. Câmara e Senado.
         </p>
 
         <div style={{ marginBottom: '12px' }}>
@@ -172,7 +172,7 @@ export default function Votacoes({ votacoes, temas = [] }) {
                           <span style={{ flexShrink: 0, width: '8px', height: '8px', borderRadius: '50%', background: h.status ? (aprov ? t.cor.sim : t.cor.nao) : t.cor.cinza }} />
                           <span style={{ flexShrink: 0, fontSize: '0.8rem', fontWeight: 700, color: t.cor.tinta, minWidth: '96px' }}>{papel}</span>
                           <span style={{ flex: 1, minWidth: 0, fontSize: '0.8rem', color: h.status ? (aprov ? t.cor.sim : t.cor.nao) : t.cor.cinza, fontWeight: 600 }}>
-                            {h.status || '—'}{h.sim != null ? ` · ${h.sim}×${h.nao}` : ''}
+                            {h.status || 'Sem resultado'}{h.sim != null ? ` · ${h.sim}×${h.nao}` : ''}
                           </span>
                           <span style={{ flexShrink: 0, fontSize: '0.74rem', color: t.cor.cinza }}>{dataBR(v.data_voto)}</span>
                           <span style={{ flexShrink: 0, fontSize: '0.74rem', fontWeight: 700, color: t.cor.ouroTexto }}>quem votou →</span>

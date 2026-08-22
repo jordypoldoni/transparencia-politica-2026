@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import ServicoAPI from '../src/servicos/servico_api';
 import Avatar from '../components/Avatar';
+import CampoBusca from '../components/CampoBusca';
 import CampoSelect from '../components/CampoSelect';
 import { NOMES_UF } from '../src/lib/cotas';
 import { t } from '../src/estilo/tokens';
@@ -78,17 +79,23 @@ function CardDeputadoFederal({ d }) {
   );
 }
 
-function CampoBusca({ valorInicial, aoBuscar }) {
+// Busca de candidato a Deputado Federal: mesmo campo padrão do site (pílula, ícone de lupa,
+// linha âmbar ao focar), só que com debounce, porque aqui a busca é paginada no servidor,
+// não filtrada na hora como em /deputados.
+function CampoBuscaDeputadoFederal({ valorInicial, aoBuscar }) {
   const [valor, setValor] = useState(valorInicial || '');
+  useEffect(() => { setValor(valorInicial || ''); }, [valorInicial]);
+  useEffect(() => {
+    const id = setTimeout(() => {
+      if (valor !== (valorInicial || '')) aoBuscar(valor);
+    }, 450);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [valor]);
   return (
-    <form onSubmit={(e) => { e.preventDefault(); aoBuscar(valor); }} style={{ flex: '2 1 240px', minWidth: 0 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '0 6px 0 16px', borderRadius: t.raio.pill, background: '#fff', boxShadow: t.sombra.clicavel }}>
-        <input
-          value={valor} onChange={(e) => setValor(e.target.value)} placeholder="Buscar por nome…" aria-label="Buscar candidato a Deputado Federal por nome"
-          style={{ flex: 1, minWidth: 0, padding: '14px 0', border: 'none', outline: 'none', fontSize: '1rem', fontFamily: t.fonte.corpo, background: 'transparent', color: t.cor.tinta }} />
-        <button type="submit" style={{ border: 'none', background: t.cor.verde, color: '#fff', fontWeight: 700, fontSize: '0.85rem', padding: '10px 16px', borderRadius: t.raio.pill, cursor: 'pointer' }}>Buscar</button>
-      </div>
-    </form>
+    <div style={{ flex: '2 1 240px', minWidth: 0 }}>
+      <CampoBusca valor={valor} aoMudar={setValor} placeholder="Buscar por nome…" aoLabel="Buscar candidato a Deputado Federal por nome" />
+    </div>
   );
 }
 
@@ -116,7 +123,7 @@ function ListaDeputadoFederal({ deputados, resumo, filtros, pagina, totalPaginas
           <CampoSelect opcoes={opcoesUf} valor={filtros.uf} placeholder="Todos os estados" aoLabel="Filtrar por estado"
             aoSelecionar={(uf) => irPara({ uf, pagina: '' })} />
         </div>
-        <CampoBusca valorInicial={filtros.busca} aoBuscar={(busca) => irPara({ busca, pagina: '' })} />
+        <CampoBuscaDeputadoFederal valorInicial={filtros.busca} aoBuscar={(busca) => irPara({ busca, pagina: '' })} />
         {temFiltro && (
           <Link href="/candidatos-2026?cargo=deputado-federal" style={{ display: 'flex', alignItems: 'center', fontSize: '0.85rem', fontWeight: 700, color: t.cor.ouroTexto, textDecoration: 'none', padding: '0 6px' }}>
             Limpar filtros ✕
@@ -130,7 +137,7 @@ function ListaDeputadoFederal({ deputados, resumo, filtros, pagina, totalPaginas
       </p>
 
       {deputados.itens.length === 0 ? (
-        <p style={{ color: t.cor.cinza }}>Nenhum candidato encontrado com esses filtros — tente limpar a busca ou trocar de estado.</p>
+        <p style={{ color: t.cor.cinza }}>Nenhum candidato encontrado com esses filtros, tente limpar a busca ou trocar de estado.</p>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '12px' }}>
           {deputados.itens.map((d) => <CardDeputadoFederal key={d.id} d={d} />)}
@@ -159,16 +166,16 @@ export default function Candidatos2026({ cargo, chapas, deputados, resumo, filtr
   return (
     <div className="pagina">
       <Head>
-        <title>Candidatos 2026 — Presidente e Deputado Federal | Lume</title>
-        <meta name="description" content="Todos os candidatos à Presidência e à Câmara dos Deputados em 2026: partido, coligação e situação da candidatura de cada um — sem análise ou opinião, direto da fonte oficial (TSE)." />
+        <title>Candidatos 2026: Presidente e Deputado Federal | Lume</title>
+        <meta name="description" content="Todos os candidatos à Presidência e à Câmara dos Deputados em 2026: partido, coligação e situação da candidatura de cada um, sem análise ou opinião, direto da fonte oficial (TSE)." />
       </Head>
 
       <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.8rem,4vw,2.6rem)', margin: '0 0 10px' }}>
         Candidatos 2026
       </h1>
       <p style={{ color: t.cor.cinza, margin: '0 0 22px', maxWidth: '70ch', lineHeight: 1.5 }}>
-        Quem disputa a Presidência e a Câmara dos Deputados em 2026 — partido, coligação e a situação da candidatura de cada um(a). Dados oficiais do{' '}
-        <a href="https://www.tse.jus.br/" target="_blank" rel="noopener noreferrer" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>TSE</a>, sem análise ou opinião — tire suas próprias conclusões com base nos dados.
+        Quem disputa a Presidência e a Câmara dos Deputados em 2026: partido, coligação e a situação da candidatura de cada um(a). Dados oficiais do{' '}
+        <a href="https://www.tse.jus.br/" target="_blank" rel="noopener noreferrer" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>TSE</a>, sem análise ou opinião, tire suas próprias conclusões com base nos dados.
       </p>
 
       <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap' }}>

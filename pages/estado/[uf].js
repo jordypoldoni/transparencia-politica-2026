@@ -7,7 +7,7 @@ const NOMES = { AC:'Acre', AL:'Alagoas', AP:'Amapá', AM:'Amazonas', BA:'Bahia',
 const brl = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v || 0);
 
 export default function Estado({ uf, nome, deputados, canonical }) {
-  const titulo = `Deputados de ${nome} (${uf}) — gastos e votos | Lume`;
+  const titulo = `Deputados de ${nome} (${uf}): gastos e votos | Lume`;
   const desc = `Veja os deputados federais de ${nome}, quanto cada um usou da cota parlamentar em 2026 e como votaram. Em linguagem clara, com a fonte oficial da Câmara.`;
   return (
     <>
@@ -24,7 +24,7 @@ export default function Estado({ uf, nome, deputados, canonical }) {
           Deputados de {nome}
         </h1>
         <p style={{ color: t.cor.cinza, margin: '0 0 28px', maxWidth: '60ch', lineHeight: 1.5 }}>
-          {deputados.length} deputados federais representam {nome} na Câmara. Veja quanto cada um usou da verba pública este ano — toque para ver em quê e como votaram.
+          {deputados.length} deputados federais representam {nome} na Câmara. Veja quanto cada um usou da verba pública este ano, toque para ver em quê e como votaram.
         </p>
 
         <ol style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: '10px' }}>

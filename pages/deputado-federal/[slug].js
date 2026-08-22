@@ -29,8 +29,8 @@ function DadoBio({ rotulo, valor }) {
 export default function PerfilDeputadoFederal({ candidato, canonical }) {
   const c = candidato;
   const nomeUf = NOMES_UF[c.uf] || c.uf;
-  const titulo = `${c.nome_urna} (${c.partido_sigla || ''}) — candidato(a) a Deputado(a) Federal por ${c.uf} 2026`;
-  const desc = `Ficha oficial de ${c.nome_urna}: partido, coligação e situação da candidatura${c.reeleicao ? ', buscando reeleição' : ''} — candidato(a) a Deputado(a) Federal por ${nomeUf}, direto da fonte (TSE).`;
+  const titulo = `${c.nome_urna} (${c.partido_sigla || ''}), candidato(a) a Deputado(a) Federal por ${c.uf} 2026`;
+  const desc = `Ficha oficial de ${c.nome_urna}: partido, coligação e situação da candidatura${c.reeleicao ? ', buscando reeleição' : ''}, candidato(a) a Deputado(a) Federal por ${nomeUf}, direto da fonte (TSE).`;
 
   return (
     <div className="pagina">
@@ -82,17 +82,17 @@ export default function PerfilDeputadoFederal({ candidato, canonical }) {
 
         {c.situacao_candidatura && (
           <section style={{ background: t.cor.papelQuente, borderRadius: t.raio.sm, padding: '14px 18px', marginBottom: '20px', fontSize: '0.85rem', color: t.cor.tinta }}>
-            <strong>Situação da candidatura:</strong> {c.situacao_candidatura}{c.situacao_detalhe ? ` — ${c.situacao_detalhe}` : ''}
+            <strong>Situação da candidatura:</strong> {c.situacao_candidatura}{c.situacao_detalhe ? `, ${c.situacao_detalhe}` : ''}
           </section>
         )}
 
         <section style={{ background: t.cor.papel, border: `1px solid ${t.cor.papelQuente2}`, borderRadius: t.raio.sm, padding: '14px 18px', marginBottom: '20px', fontSize: '0.85rem', color: t.cor.cinza }}>
-          Deputado(a) Federal não é obrigado(a) por lei a apresentar um plano de governo na Justiça Eleitoral — essa exigência vale só para cargos majoritários (Presidente, Governador, Prefeito). Por isso não há um documento de propostas aqui.
+          Deputado(a) Federal não é obrigado(a) por lei a apresentar um plano de governo na Justiça Eleitoral: essa exigência vale só para cargos majoritários (Presidente, Governador, Prefeito). Por isso não há um documento de propostas aqui.
           {' '}Quer ver o desempenho de quem já está no cargo hoje (votos e gastos)? Veja a lista de <Link href="/deputados" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>Deputados</Link>.
         </section>
 
         <p style={{ fontSize: '0.78rem', color: t.cor.cinza }}>
-          Fonte: <a href={c.fonte_api || 'https://divulgacandcontas.tse.jus.br/'} target="_blank" rel="noopener noreferrer" style={{ color: t.cor.ouroTexto }}>DivulgaCandContas / TSE</a>. Sem juízo de valor — só os dados oficiais.
+          Fonte: <a href={c.fonte_api || 'https://divulgacandcontas.tse.jus.br/'} target="_blank" rel="noopener noreferrer" style={{ color: t.cor.ouroTexto }}>DivulgaCandContas / TSE</a>. Sem juízo de valor, só os dados oficiais.
         </p>
       </div>
     </div>

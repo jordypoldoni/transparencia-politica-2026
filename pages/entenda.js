@@ -16,24 +16,24 @@ const SUBLIMITES = [
 
 const CARGOS = [
   {
-    nome: 'Vereador', onde: 'Câmara Municipal — sua cidade', quantos: 'varia por cidade', mandato: '4 anos',
+    nome: 'Vereador', onde: 'Câmara Municipal, sua cidade', quantos: 'varia por cidade', mandato: '4 anos',
     faz: 'Faz as leis da sua cidade (transporte, zoneamento, IPTU, uso do solo), fiscaliza o prefeito e aprova o orçamento municipal. É o político mais perto do seu dia a dia.',
     naofaz: 'Não vota leis estaduais nem federais.',
   },
   {
-    nome: 'Deputado Estadual', onde: 'Assembleia Legislativa — seu estado', quantos: 'varia por estado', mandato: '4 anos',
+    nome: 'Deputado Estadual', onde: 'Assembleia Legislativa, seu estado', quantos: 'varia por estado', mandato: '4 anos',
     faz: 'Faz as leis do estado, fiscaliza o governador e aprova o orçamento estadual (ex.: segurança, educação e saúde sob responsabilidade do estado).',
     naofaz: 'Não vota leis federais.',
   },
   {
-    nome: 'Deputado Federal', onde: 'Câmara dos Deputados — Brasília', quantos: '513 no total', mandato: '4 anos',
+    nome: 'Deputado Federal', onde: 'Câmara dos Deputados, Brasília', quantos: '513 no total', mandato: '4 anos',
     faz: 'Representa o povo do seu estado (quanto mais população, mais deputados). Cria e muda leis nacionais, fiscaliza o governo federal, vota o Orçamento da União e pode abrir processo de impeachment.',
     naofaz: 'Sozinho não aprova uma lei: a proposta ainda passa pelo Senado.',
   },
   {
-    nome: 'Senador', onde: 'Senado Federal — Brasília', quantos: '81 (3 por estado)', mandato: '8 anos',
-    faz: 'Representa o estado em si — por isso todo estado tem o mesmo número (3), independentemente do tamanho. Também cria leis nacionais, revisa o que a Câmara aprova, aprova autoridades (como ministros do STF) e julga o impeachment.',
-    naofaz: 'Senador também vota e legisla — não fica parado.',
+    nome: 'Senador', onde: 'Senado Federal, Brasília', quantos: '81 (3 por estado)', mandato: '8 anos',
+    faz: 'Representa o estado em si, por isso todo estado tem o mesmo número (3), independentemente do tamanho. Também cria leis nacionais, revisa o que a Câmara aprova, aprova autoridades (como ministros do STF) e julga o impeachment.',
+    naofaz: 'Senador também vota e legisla, não fica parado.',
   },
 ];
 
@@ -51,7 +51,7 @@ export default function Entenda() {
       <div className="pagina">
         <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.8rem,4.5vw,2.6rem)', lineHeight: 1.15, margin: '0 0 10px' }}>Entenda quem é quem</h1>
         <p style={{ color: t.cor.cinza, fontSize: '1.05rem', maxWidth: '680px', margin: '0 0 12px' }}>
-          Antes de cobrar, é bom saber o que cada um faz. Aqui explicamos cada cargo sem juridiquês — e mostramos quanto dinheiro público eles podem gastar.
+          Antes de cobrar, é bom saber o que cada um faz. Aqui explicamos cada cargo sem juridiquês, e mostramos quanto dinheiro público eles podem gastar.
         </p>
 
         {/* Legislativo x Executivo */}
@@ -87,16 +87,16 @@ export default function Entenda() {
         {/* COTAS */}
         <h2 id="cotas" style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.6rem', margin: '0 0 8px', scrollMarginTop: '90px' }}>Quanto eles podem gastar? A cota parlamentar</h2>
         <p style={{ color: t.cor.cinza, fontSize: '1rem', maxWidth: '720px', margin: '0 0 8px', lineHeight: 1.6 }}>
-          Além do salário, cada parlamentar tem uma <strong>verba mensal</strong> para custear o mandato (passagens, aluguel de escritório, combustível, divulgação etc.). Não é dinheiro no bolso: é <strong>reembolso</strong> mediante nota fiscal — e tudo fica público.
+          Além do salário, cada parlamentar tem uma <strong>verba mensal</strong> para custear o mandato (passagens, aluguel de escritório, combustível, divulgação etc.). Não é dinheiro no bolso: é <strong>reembolso</strong> mediante nota fiscal, e tudo fica público.
         </p>
         <p style={{ color: t.cor.cinza, fontSize: '0.95rem', maxWidth: '720px', margin: '0 0 22px', lineHeight: 1.6 }}>
-          O <strong>teto muda de estado para estado</strong> porque a maior parte é gasto com passagens aéreas até Brasília — quanto mais longe, maior a cota.
+          O <strong>teto muda de estado para estado</strong> porque a maior parte é gasto com passagens aéreas até Brasília: quanto mais longe, maior a cota.
         </p>
 
         {/* Câmara */}
         <div style={{ ...cartao, marginBottom: '20px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', flexWrap: 'wrap', gap: '8px', marginBottom: '6px' }}>
-            <h3 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.15rem', margin: 0 }}>Câmara dos Deputados — CEAP</h3>
+            <h3 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.15rem', margin: 0 }}>Câmara dos Deputados (CEAP)</h3>
             <span style={{ fontSize: '0.8rem', color: t.cor.cinza }}>teto mensal por deputado</span>
           </div>
           <p style={{ margin: '0 0 14px', fontSize: '0.9rem', color: t.cor.tinta }}>
@@ -129,9 +129,9 @@ export default function Entenda() {
 
         {/* Senado */}
         <div style={{ ...cartao, marginBottom: '20px' }}>
-          <h3 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.15rem', margin: '0 0 6px' }}>Senado Federal — CEAPS</h3>
+          <h3 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.15rem', margin: '0 0 6px' }}>Senado Federal (CEAPS)</h3>
           <p style={{ margin: '0 0 10px', fontSize: '0.95rem', lineHeight: 1.6, color: t.cor.tinta }}>
-            No Senado a conta é montada diferente: uma parte <strong>fixa de R$ 15.000/mês</strong> + uma parte <strong>variável</strong> para transporte aéreo (até 5 trechos entre o estado e Brasília). Por isso o total também <strong>varia por estado</strong> — por exemplo, para Goiás e o DF fica em torno de <strong>R$ 25.000/mês</strong>.
+            No Senado a conta é montada diferente: uma parte <strong>fixa de R$ 15.000/mês</strong> + uma parte <strong>variável</strong> para transporte aéreo (até 5 trechos entre o estado e Brasília). Por isso o total também <strong>varia por estado</strong>, por exemplo, para Goiás e o DF fica em torno de <strong>R$ 25.000/mês</strong>.
           </p>
           <a href="https://www12.senado.leg.br/transparencia/perguntas-frequentes-1/sobre-os-senadores/o-que-e-ceaps" target="_blank" rel="noopener noreferrer" style={fonte}>Ver na fonte oficial (Senado) ↗</a>
         </div>

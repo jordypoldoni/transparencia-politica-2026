@@ -88,7 +88,7 @@ export default function Comecar({ modo, temasDisponiveis, ufSel, temasSel, deput
                 {votacoes.map((v, i) => (
                   <div key={i} style={{ background: '#fff', borderRadius: t.raio.md, padding: '16px 18px', display: 'flex', gap: '14px', alignItems: 'flex-start', boxShadow: t.sombra.sutil }}>
                     <span style={{ flexShrink: 0, fontSize: '0.72rem', fontWeight: 800, padding: '4px 12px', borderRadius: '6px', background: v.aprovacao === 1 ? '#E7F3EC' : '#FBEAE7', color: v.aprovacao === 1 ? t.cor.sim : t.cor.nao }}>
-                      {v.aprovacao === 1 ? 'Aprovado' : v.aprovacao === 0 ? 'Rejeitado' : '—'}
+                      {v.aprovacao === 1 ? 'Aprovado' : v.aprovacao === 0 ? 'Rejeitado' : 'Sem resultado'}
                     </span>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <p style={{ margin: '0 0 4px', fontSize: '0.95rem', lineHeight: 1.45 }}>{v.descricao_votacao}</p>
@@ -112,7 +112,7 @@ export default function Comecar({ modo, temasDisponiveis, ufSel, temasSel, deput
         Vamos mostrar o que importa <span style={{ color: t.cor.ouroTexto }}>pra você</span>.
       </h1>
       <p style={{ color: t.cor.cinza, fontSize: '1.05rem', margin: '0 0 36px', lineHeight: 1.5 }}>
-        Sem cadastro, sem IA te vigiando. Você escolhe — a gente direciona. Dá pra mudar quando quiser.
+        Sem cadastro, sem IA te vigiando. Você escolhe, a gente direciona. Dá pra mudar quando quiser.
       </p>
 
       <div style={{ marginBottom: '32px' }}>
