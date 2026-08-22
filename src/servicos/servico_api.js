@@ -571,20 +571,29 @@ const ServicoAPI = {
     // Total geral + quantos buscam reeleição + contagem por UF — pra montar o seletor de estado
     // (com contagem) e os números do topo da página sem precisar de RPC/view: a tabela só tem
     // ~7,6 mil linhas, então trazer 2 colunas de todo mundo e agrupar aqui é barato.
+    // Total nacional + contagem por UF. Usa consultas HEAD (count:'exact', sem baixar linhas) em vez
+    // de trazer os registros e contar em JS — o PostgREST limita a resposta padrão a 1000 linhas, e
+    // contar em JS a partir de um `.select()` sem `count` batia nesse teto (mostrava sempre "1.000",
+    // tanto no total quanto no seletor de estado, mesmo com 7.703 candidatos no banco).
     resumoCandidatosDeputadoFederal: async (ano = 2026) => {
-        const { data, error } = await supabase
+        const { count: total, error: erroTotal } = await supabase
             .from('candidatos_deputado_federal')
-            .select('uf, reeleicao')
+            .select('id', { count: 'exact', head: true })
             .eq('ano_eleicao', ano);
-        if (error) { console.error('resumoCandidatosDeputadoFederal:', error.message); return { total: 0, reeleicao: 0, porUf: {} }; }
-        const porUf = {};
-        let reeleicaoTotal = 0;
-        for (const c of data || []) {
-            const uf = c.uf || '??';
-            porUf[uf] = (porUf[uf] || 0) + 1;
-            if (c.reeleicao) reeleicaoTotal++;
-        }
-        return { total: (data || []).length, reeleicao: reeleicaoTotal, porUf };
+        if (erroTotal) { console.error('resumoCandidatosDeputadoFederal (total):', erroTotal.message); return { total: 0, porUf: {} }; }
+
+        const UFS = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
+        const porUfEntradas = await Promise.all(UFS.map(async (uf) => {
+            const { count, error } = await supabase
+                .from('candidatos_deputado_federal')
+                .select('id', { count: 'exact', head: true })
+                .eq('ano_eleicao', ano)
+                .eq('uf', uf);
+            if (error) { console.error(`resumoCandidatosDeputadoFederal (${uf}):`, error.message); return [uf, 0]; }
+            return [uf, count || 0];
+        }));
+
+        return { total: total || 0, porUf: Object.fromEntries(porUfEntradas) };
     },
 
     // Lista paginada de candidatos a Deputado Federal, com filtros (uf, partido, busca por nome,

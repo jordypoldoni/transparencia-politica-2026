@@ -201,7 +201,7 @@ export async function getServerSideProps({ query }) {
 
   const [chapas, resumo] = await Promise.all([
     ServicoAPI.listarPresidenciaveis(2026).catch(() => []),
-    ServicoAPI.resumoCandidatosDeputadoFederal(2026).catch(() => ({ total: 0, reeleicao: 0, porUf: {} })),
+    ServicoAPI.resumoCandidatosDeputadoFederal(2026).catch(() => ({ total: 0, porUf: {} })),
   ]);
 
   let deputados = { itens: [], total: 0 };
