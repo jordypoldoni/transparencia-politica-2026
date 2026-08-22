@@ -177,7 +177,10 @@ function extrairCandidatosDeArquivo(entry) {
       estado_civil: leitor.col(row, 'DS_ESTADO_CIVIL'),
       cor_raca: leitor.col(row, 'DS_COR_RACA'),
       ocupacao: leitor.col(row, 'DS_OCUPACAO'),
-      slug: `${slugify(nomeUrna)}-${nrCandidato || sqCandidato}-${(uf || 'xx').toLowerCase()}-deputado-federal-${ANO}`,
+      // Inclui sq_candidato SEMPRE (não só como fallback) — é o identificador único do TSE, então
+      // garante slug único mesmo nos raros casos de duas candidaturas com mesmo nome+número no
+      // mesmo estado (ex.: candidatura cancelada/substituída onde o número é reaproveitado).
+      slug: `${slugify(nomeUrna)}-${nrCandidato || 's'}-${sqCandidato}-${(uf || 'xx').toLowerCase()}-deputado-federal-${ANO}`,
       fonte_api: 'https://divulgacandcontas.tse.jus.br/',
     });
   }

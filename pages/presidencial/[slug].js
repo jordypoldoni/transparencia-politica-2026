@@ -33,7 +33,7 @@ export default function PerfilPresidenciavel({ candidato, colega, canonical }) {
   return (
     <div className="pagina">
       <Head>
-        <title>{titulo} | Transparência</title>
+        <title>{titulo} | Lume</title>
         <meta name="description" content={desc} />
         <link rel="canonical" href={canonical} />
         <meta name="robots" content="index, follow" />

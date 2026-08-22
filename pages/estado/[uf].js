@@ -7,7 +7,7 @@ const NOMES = { AC:'Acre', AL:'Alagoas', AP:'Amapá', AM:'Amazonas', BA:'Bahia',
 const brl = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v || 0);
 
 export default function Estado({ uf, nome, deputados, canonical }) {
-  const titulo = `Deputados de ${nome} (${uf}) — gastos e votos | Transparência`;
+  const titulo = `Deputados de ${nome} (${uf}) — gastos e votos | Lume`;
   const desc = `Veja os deputados federais de ${nome}, quanto cada um usou da cota parlamentar em 2026 e como votaram. Em linguagem clara, com a fonte oficial da Câmara.`;
   return (
     <>

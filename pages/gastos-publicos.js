@@ -45,7 +45,7 @@ export default function GastosPublicos({ uniao, estados = [], gastosFuncao = [] 
   return (
     <div className="pagina">
       <Head>
-        <title>Gastos públicos — União, estados, DF e municípios | Transparência</title>
+        <title>Gastos públicos — União, estados, DF e municípios | Lume</title>
         <meta name="description" content="Quanto a União, os estados, o DF e os municípios arrecadam e gastam, e para onde vai o dinheiro — por área e por habitante. Fonte: SICONFI/Tesouro Nacional." />
       </Head>
 

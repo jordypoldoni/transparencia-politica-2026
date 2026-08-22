@@ -159,7 +159,7 @@ export default function Candidatos2026({ cargo, chapas, deputados, resumo, filtr
   return (
     <div className="pagina">
       <Head>
-        <title>Candidatos 2026 — Presidente e Deputado Federal | Transparência</title>
+        <title>Candidatos 2026 — Presidente e Deputado Federal | Lume</title>
         <meta name="description" content="Todos os candidatos à Presidência e à Câmara dos Deputados em 2026: partido, coligação e situação da candidatura de cada um — sem análise ou opinião, direto da fonte oficial (TSE)." />
       </Head>
 

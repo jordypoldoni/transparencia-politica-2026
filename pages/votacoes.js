@@ -85,7 +85,7 @@ export default function Votacoes({ votacoes, temas = [] }) {
 
   return (
     <>
-      <Head><title>Votações da Câmara e do Senado — agrupadas por matéria | Transparência</title></Head>
+      <Head><title>Votações da Câmara e do Senado — agrupadas por matéria | Lume</title></Head>
       <div className="pagina">
         <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.6rem,4vw,2.2rem)', margin: '0 0 6px' }}>Votações por matéria</h1>
         <p style={{ color: t.cor.cinza, margin: '0 0 22px', maxWidth: '660px' }}>

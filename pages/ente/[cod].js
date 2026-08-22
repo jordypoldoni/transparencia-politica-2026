@@ -35,7 +35,7 @@ export default function EntePanorama({ dados }) {
   return (
     <div className="pagina">
       <Head>
-        <title>{`${nome} — arrecadação e gastos | Transparência`}</title>
+        <title>{`${nome} — arrecadação e gastos | Lume`}</title>
         <meta name="description" content={`Quanto ${nome} arrecadou e gastou em ${resumo?.ano || ''}, e para onde foi o dinheiro público — por função e por habitante. Fonte: SICONFI/Tesouro Nacional.`} />
       </Head>
 

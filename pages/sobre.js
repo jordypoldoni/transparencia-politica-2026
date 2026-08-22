@@ -16,7 +16,7 @@ export default function Sobre() {
         Política não precisa ser confusa.
       </h1>
       <p style={{ fontSize: '1.15rem', color: t.cor.cinza, lineHeight: 1.6, margin: '0 0 40px' }}>
-        O Olho Público existe para responder, de forma simples, uma pergunta que todo cidadão tem direito de fazer:
+        O Lume existe para responder, de forma simples, uma pergunta que todo cidadão tem direito de fazer:
         <strong style={{ color: t.cor.tinta }}> o político que eu elegi está me representando?</strong> Reunimos dados oficiais
         espalhados e confusos, e entregamos mastigado — para você acompanhar e cobrar com base em fato, não em achismo.
       </p>
