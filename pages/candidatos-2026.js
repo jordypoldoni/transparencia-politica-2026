@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -80,78 +80,110 @@ function CardDeputadoFederal({ d }) {
 }
 
 // Busca de candidato a Deputado Federal: mesmo campo padrão do site (pílula, ícone de lupa,
-// linha âmbar ao focar), só que com debounce, porque aqui a busca é paginada no servidor,
-// não filtrada na hora como em /deputados.
-function CampoBuscaDeputadoFederal({ valorInicial, aoBuscar }) {
-  const [valor, setValor] = useState(valorInicial || '');
-  useEffect(() => { setValor(valorInicial || ''); }, [valorInicial]);
-  useEffect(() => {
-    const id = setTimeout(() => {
-      if (valor !== (valorInicial || '')) aoBuscar(valor);
-    }, 450);
-    return () => clearTimeout(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [valor]);
-  return (
-    <div style={{ flex: '2 1 240px', minWidth: 0 }}>
-      <CampoBusca valor={valor} aoMudar={setValor} placeholder="Buscar por nome…" aoLabel="Buscar candidato a Deputado Federal por nome" />
-    </div>
-  );
-}
-
-function ListaDeputadoFederal({ deputados, resumo, filtros, pagina, totalPaginas }) {
+// linha âmbar ao focar) e o MESMO comportamento de /deputados — digita e a lista já vai
+// atualizando sozinha, sem botão "Buscar" e sem recarregar a página. A diferença é só por
+// baixo dos panos: são 7.703 candidatos, não dá pra carregar tudo no cliente como em
+// /deputados (~600 parlamentares), então cada busca vai a um endpoint fino
+// (/api/candidatos-deputado-federal, mesmo padrão do /api/buscar-ente.js que já existia
+// pra busca de município) em vez de filtrar um array já carregado.
+function ListaDeputadoFederal({ dadosIniciais, resumo, filtrosIniciais, paginaInicial }) {
   const router = useRouter();
+  const [uf, setUf] = useState(filtrosIniciais.uf || '');
+  const [busca, setBusca] = useState(filtrosIniciais.busca || '');
+  const partidoRef = useRef(filtrosIniciais.partido || ''); // sem controle na UI, só preserva se veio na URL
+  const [pagina, setPagina] = useState(paginaInicial);
+  const [dados, setDados] = useState(dadosIniciais);
+  const [carregando, setCarregando] = useState(false);
+  const debounceRef = useRef(null);
+  const pedidoRef = useRef(0);
 
-  const irPara = (overrides) => {
-    const q = { cargo: 'deputado-federal', uf: filtros.uf, partido: filtros.partido, busca: filtros.busca, pagina: String(pagina), ...overrides };
+  const buscar = (ufAlvo, buscaAlvo, paginaAlvo) => {
+    const id = ++pedidoRef.current;
+    setCarregando(true);
+    const partido = partidoRef.current;
     const params = new URLSearchParams();
-    for (const [k, v] of Object.entries(q)) { if (v) params.set(k, String(v)); }
-    router.push(`/candidatos-2026?${params.toString()}`);
+    if (ufAlvo) params.set('uf', ufAlvo);
+    if (partido) params.set('partido', partido);
+    if (buscaAlvo) params.set('busca', buscaAlvo);
+    if (paginaAlvo > 1) params.set('pagina', String(paginaAlvo));
+    fetch(`/api/candidatos-deputado-federal?${params.toString()}`)
+      .then((r) => r.json())
+      .then((data) => { if (id === pedidoRef.current) setDados(data); })
+      .catch(() => { if (id === pedidoRef.current) setDados({ itens: [], total: 0 }); })
+      .finally(() => { if (id === pedidoRef.current) setCarregando(false); });
+
+    // Mantém a URL em dia (link compartilhável, botão voltar do navegador) sem recarregar a página.
+    const q = new URLSearchParams({ cargo: 'deputado-federal' });
+    if (ufAlvo) q.set('uf', ufAlvo);
+    if (partido) q.set('partido', partido);
+    if (buscaAlvo) q.set('busca', buscaAlvo);
+    if (paginaAlvo > 1) q.set('pagina', String(paginaAlvo));
+    router.replace(`/candidatos-2026?${q.toString()}`, undefined, { shallow: true });
+  };
+
+  const aoMudarBusca = (valor) => {
+    setBusca(valor);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => { setPagina(1); buscar(uf, valor, 1); }, 250);
+  };
+  const aoMudarUf = (novaUf) => { setUf(novaUf); setPagina(1); buscar(novaUf, busca, 1); };
+  const aoMudarPagina = (novaPagina) => { setPagina(novaPagina); buscar(uf, busca, novaPagina); };
+  const limparFiltros = () => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    partidoRef.current = '';
+    setUf(''); setBusca(''); setPagina(1); buscar('', '', 1);
   };
 
   const opcoesUf = [
     { valor: '', rotulo: `Todos os estados (${resumo.total})`, busca: 'todos brasil nacional' },
-    ...UFS.map((uf) => ({ valor: uf, rotulo: `${uf} · ${NOMES_UF[uf] || uf} (${resumo.porUf[uf] || 0})`, busca: `${uf} ${NOMES_UF[uf] || ''}` })),
+    ...UFS.map((u) => ({ valor: u, rotulo: `${u} · ${NOMES_UF[u] || u} (${resumo.porUf[u] || 0})`, busca: `${u} ${NOMES_UF[u] || ''}` })),
   ];
 
-  const temFiltro = !!(filtros.uf || filtros.partido || filtros.busca);
+  const temFiltro = !!(uf || busca);
+  const totalPaginas = Math.max(1, Math.ceil((dados.total || 0) / PORPAGINA));
 
   return (
     <div>
       <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'flex-start', marginBottom: '16px' }}>
         <div style={{ flex: '1 1 220px', minWidth: '200px' }}>
-          <CampoSelect opcoes={opcoesUf} valor={filtros.uf} placeholder="Todos os estados" aoLabel="Filtrar por estado"
-            aoSelecionar={(uf) => irPara({ uf, pagina: '' })} />
+          <CampoSelect opcoes={opcoesUf} valor={uf} placeholder="Todos os estados" aoLabel="Filtrar por estado" aoSelecionar={aoMudarUf} />
         </div>
-        <CampoBuscaDeputadoFederal valorInicial={filtros.busca} aoBuscar={(busca) => irPara({ busca, pagina: '' })} />
+        <div style={{ flex: '2 1 240px', minWidth: 0 }}>
+          <CampoBusca valor={busca} aoMudar={aoMudarBusca} placeholder="Buscar por nome…" aoLabel="Buscar candidato a Deputado Federal por nome" />
+        </div>
         {temFiltro && (
-          <Link href="/candidatos-2026?cargo=deputado-federal" style={{ display: 'flex', alignItems: 'center', fontSize: '0.85rem', fontWeight: 700, color: t.cor.ouroTexto, textDecoration: 'none', padding: '0 6px' }}>
+          <button type="button" onClick={limparFiltros}
+            style={{ display: 'flex', alignItems: 'center', fontSize: '0.85rem', fontWeight: 700, color: t.cor.ouroTexto, background: 'none', border: 'none', cursor: 'pointer', padding: '0 6px', fontFamily: t.fonte.corpo }}>
             Limpar filtros ✕
-          </Link>
+          </button>
         )}
       </div>
 
       <p style={{ color: t.cor.cinza, fontSize: '0.86rem', margin: '0 0 14px' }}>
-        {deputados.total.toLocaleString('pt-BR')} candidato{deputados.total === 1 ? '' : 's'} encontrado{deputados.total === 1 ? '' : 's'}
-        {filtros.uf ? ` em ${filtros.uf} · ${NOMES_UF[filtros.uf] || ''}` : ' em todo o Brasil'}.
+        {carregando ? 'Buscando…' : (
+          <>
+            {(dados.total || 0).toLocaleString('pt-BR')} candidato{dados.total === 1 ? '' : 's'} encontrado{dados.total === 1 ? '' : 's'}
+            {uf ? ` em ${uf} · ${NOMES_UF[uf] || ''}` : ' em todo o Brasil'}.
+          </>
+        )}
       </p>
 
-      {deputados.itens.length === 0 ? (
+      {!carregando && dados.itens.length === 0 ? (
         <p style={{ color: t.cor.cinza }}>Nenhum candidato encontrado com esses filtros, tente limpar a busca ou trocar de estado.</p>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '12px' }}>
-          {deputados.itens.map((d) => <CardDeputadoFederal key={d.id} d={d} />)}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '12px', opacity: carregando ? 0.5 : 1, transition: 'opacity .15s' }}>
+          {dados.itens.map((d) => <CardDeputadoFederal key={d.id} d={d} />)}
         </div>
       )}
 
       {totalPaginas > 1 && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '14px', marginTop: '28px', flexWrap: 'wrap' }}>
-          <button type="button" disabled={pagina <= 1} onClick={() => irPara({ pagina: String(pagina - 1) })}
+          <button type="button" disabled={pagina <= 1} onClick={() => aoMudarPagina(pagina - 1)}
             style={{ border: 'none', cursor: pagina <= 1 ? 'default' : 'pointer', opacity: pagina <= 1 ? 0.4 : 1, background: t.cor.papelQuente2, color: t.cor.tinta, fontWeight: 700, fontSize: '0.85rem', padding: '10px 18px', borderRadius: t.raio.pill }}>
             ← Anterior
           </button>
           <span style={{ fontSize: '0.85rem', color: t.cor.cinza, fontWeight: 600 }}>Página {pagina} de {totalPaginas.toLocaleString('pt-BR')}</span>
-          <button type="button" disabled={pagina >= totalPaginas} onClick={() => irPara({ pagina: String(pagina + 1) })}
+          <button type="button" disabled={pagina >= totalPaginas} onClick={() => aoMudarPagina(pagina + 1)}
             style={{ border: 'none', cursor: pagina >= totalPaginas ? 'default' : 'pointer', opacity: pagina >= totalPaginas ? 0.4 : 1, background: t.cor.verde, color: '#fff', fontWeight: 700, fontSize: '0.85rem', padding: '10px 18px', borderRadius: t.raio.pill }}>
             Próxima →
           </button>
@@ -161,7 +193,7 @@ function ListaDeputadoFederal({ deputados, resumo, filtros, pagina, totalPaginas
   );
 }
 
-export default function Candidatos2026({ cargo, chapas, deputados, resumo, filtros, pagina, totalPaginas }) {
+export default function Candidatos2026({ cargo, chapas, deputados, resumo, filtros, pagina }) {
   const totalPresidente = chapas.length;
   return (
     <div className="pagina">
@@ -190,7 +222,7 @@ export default function Candidatos2026({ cargo, chapas, deputados, resumo, filtr
       {cargo === 'presidente' ? (
         <ListaPresidente chapas={chapas} />
       ) : (
-        <ListaDeputadoFederal deputados={deputados} resumo={resumo} filtros={filtros} pagina={pagina} totalPaginas={totalPaginas} />
+        <ListaDeputadoFederal dadosIniciais={deputados} resumo={resumo} filtrosIniciais={filtros} paginaInicial={pagina} />
       )}
     </div>
   );
