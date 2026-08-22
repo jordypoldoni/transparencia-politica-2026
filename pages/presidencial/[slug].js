@@ -45,7 +45,7 @@ export default function PerfilPresidenciavel({ candidato, colega, canonical }) {
 
       {/* Coluna de leitura centralizada dentro da página full-width (mesmo padrão do .leitura) */}
       <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
-        <Link href="/presidenciaveis" style={{ display: 'inline-block', marginBottom: '20px', color: t.cor.cinza, textDecoration: 'none', fontWeight: 600, fontSize: '0.88rem' }}>← Presidenciáveis</Link>
+        <Link href="/candidatos-2026?cargo=presidente" style={{ display: 'inline-block', marginBottom: '20px', color: t.cor.cinza, textDecoration: 'none', fontWeight: 600, fontSize: '0.88rem' }}>← Candidatos 2026</Link>
 
         {/* Duas colunas nascendo juntas do topo (cabeçalho dentro da coluna esquerda) — bio à
             esquerda, plano de governo à direita alinhado com o nome, não só com o card "Quem é". */}

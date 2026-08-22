@@ -110,14 +110,15 @@ export default function Home({ votacoes, parlamentares = [], uniao = null, estad
         </div>
       </section>
 
-      {/* PRESIDENCIÁVEIS 2026 — destaque de temporada (eleição em outubro) */}
+      {/* CANDIDATOS 2026 — destaque de temporada (eleição em outubro). Mostra Presidenciáveis
+          aqui na home (teaser); a página unificada /candidatos-2026 também traz Deputado Federal. */}
       {chapas.length > 0 && (
         <section style={{ padding: '8px 24px 16px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '12px', flexWrap: 'wrap' }}>
-            <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.7rem', margin: '0 0 4px' }}>Presidenciáveis 2026</h2>
-            <Link href="/presidenciaveis" style={{ fontSize: '0.85rem', fontWeight: 700, color: t.cor.ouroTexto, textDecoration: 'none' }}>Ver todos e as propostas →</Link>
+            <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.7rem', margin: '0 0 4px' }}>Candidatos 2026</h2>
+            <Link href="/candidatos-2026" style={{ fontSize: '0.85rem', fontWeight: 700, color: t.cor.ouroTexto, textDecoration: 'none' }}>Ver Presidente e Deputado Federal →</Link>
           </div>
-          <p style={{ color: t.cor.cinza, fontSize: '0.92rem', margin: '0 0 16px' }}>Quem disputa a Presidência, o partido e o plano de governo de cada um — sem opinião, direto da fonte oficial (TSE).</p>
+          <p style={{ color: t.cor.cinza, fontSize: '0.92rem', margin: '0 0 16px' }}>Quem disputa a Presidência e a Câmara dos Deputados, o partido e a situação da candidatura de cada um — sem opinião, direto da fonte oficial (TSE).</p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '12px' }}>
             {chapas.slice(0, 8).map((c) => (
               <Link key={c.nr_candidato || c.presidente.slug} href={`/presidencial/${c.presidente.slug}`}

@@ -6,7 +6,7 @@ const ServicoAPI = {
     // Busca o ranking de maiores gastadores
     getRankingGeral: async (ano) => {
         console.log(`📊 Buscando ranking de ${ano}...`);
-        
+
         const { data, error } = await supabase
             .from('despesas_parlamentares')
             .select(`
@@ -14,9 +14,9 @@ const ServicoAPI = {
                 ano,
                 agentes_politicos (
                     id,
-                    nome_urna, 
-                    partido_atual, 
-                    foto_url, 
+                    nome_urna,
+                    partido_atual,
+                    foto_url,
                     casa_legislativa,
                     cargo_atual
                 )
@@ -32,14 +32,14 @@ const ServicoAPI = {
         const rankingMap = data.reduce((acc, item) => {
             const p = item.agentes_politicos;
             const nomeFinal = p?.nome_urna || 'Parlamentar Sem Nome';
-            
+
             if (!acc[nomeFinal]) {
-                acc[nomeFinal] = { 
+                acc[nomeFinal] = {
                     id: p?.id, // Importante para o link clicável
-                    nome: nomeFinal, 
-                    total: 0, 
+                    nome: nomeFinal,
+                    total: 0,
                     partido: p?.partido_atual || 'S/P',
-                    foto_url: p?.foto_url || '', 
+                    foto_url: p?.foto_url || '',
                     casa: p?.casa_legislativa || 'Câmara',
                     cargo: p?.cargo_atual || 'Parlamentar' // Para o badge de cargo
                 };
@@ -74,7 +74,7 @@ const ServicoAPI = {
             .from('despesas_parlamentares')
             .select('categoria_normalizada, valor_liquido')
             .eq('ano', parseInt(ano));
-            
+
         if (error) return [];
         return data;
     },
@@ -99,9 +99,9 @@ const ServicoAPI = {
         const { data: gastos, error: errorGastos } = await supabase
             .from('despesas_parlamentares')
             .select(`
-                valor_liquido, 
-                categoria_normalizada, 
-                data_emissao, 
+                valor_liquido,
+                categoria_normalizada,
+                data_emissao,
                 id_externo_documento,
                 tipo_despesa,
                 fornecedor_nome,
@@ -561,6 +561,64 @@ const ServicoAPI = {
             colega = chapaData && chapaData[0] ? chapaData[0] : null;
         }
         return { candidato: data, colega };
+    },
+
+    // ============ CANDIDATOS A DEPUTADO FEDERAL 2026 (TSE) ============
+    // Diferente de Presidenciáveis: não existe "proposta de governo" nesse cargo — só cargos
+    // majoritários (Presidente, Governador, Prefeito) são obrigados a apresentar plano de governo
+    // no registro de candidatura. Também é por UF: cada deputado concorre num estado só.
+
+    // Total geral + quantos buscam reeleição + contagem por UF — pra montar o seletor de estado
+    // (com contagem) e os números do topo da página sem precisar de RPC/view: a tabela só tem
+    // ~7,6 mil linhas, então trazer 2 colunas de todo mundo e agrupar aqui é barato.
+    resumoCandidatosDeputadoFederal: async (ano = 2026) => {
+        const { data, error } = await supabase
+            .from('candidatos_deputado_federal')
+            .select('uf, reeleicao')
+            .eq('ano_eleicao', ano);
+        if (error) { console.error('resumoCandidatosDeputadoFederal:', error.message); return { total: 0, reeleicao: 0, porUf: {} }; }
+        const porUf = {};
+        let reeleicaoTotal = 0;
+        for (const c of data || []) {
+            const uf = c.uf || '??';
+            porUf[uf] = (porUf[uf] || 0) + 1;
+            if (c.reeleicao) reeleicaoTotal++;
+        }
+        return { total: (data || []).length, reeleicao: reeleicaoTotal, porUf };
+    },
+
+    // Lista paginada de candidatos a Deputado Federal, com filtros (uf, partido, busca por nome,
+    // só quem busca reeleição). Ordenado por partido e depois nome, pra navegação previsível.
+    listarCandidatosDeputadoFederal: async ({ ano = 2026, uf = null, partido = null, busca = null, reeleicao = false, pagina = 1, porPagina = 24 } = {}) => {
+        let q = supabase
+            .from('candidatos_deputado_federal')
+            .select('id, slug, uf, nr_candidato, nome_urna, partido_sigla, coligacao_nome, situacao_candidatura, reeleicao, foto_url', { count: 'exact' })
+            .eq('ano_eleicao', ano);
+        if (uf) q = q.eq('uf', uf.toUpperCase());
+        if (partido) q = q.eq('partido_sigla', partido.toUpperCase());
+        if (reeleicao) q = q.eq('reeleicao', true);
+        if (busca && busca.trim()) {
+            const termo = busca.trim().replace(/[%,]/g, '');
+            q = q.or(`nome_urna.ilike.%${termo}%,nome_completo.ilike.%${termo}%`);
+        }
+        const paginaSegura = Math.max(1, Number(pagina) || 1);
+        const de = (paginaSegura - 1) * porPagina;
+        const ate = de + porPagina - 1;
+        q = q.order('partido_sigla', { ascending: true }).order('nome_urna', { ascending: true }).range(de, ate);
+        const { data, error, count } = await q;
+        if (error) { console.error('listarCandidatosDeputadoFederal:', error.message); return { itens: [], total: 0 }; }
+        return { itens: data || [], total: count || 0 };
+    },
+
+    // Ficha de um candidato a Deputado Federal pelo slug.
+    getCandidatoDeputadoFederalPorSlug: async (slug) => {
+        const { data, error } = await supabase
+            .from('candidatos_deputado_federal')
+            .select('*')
+            .eq('slug', slug)
+            .single();
+        if (error || !data) return null;
+        return data;
     }
 };
 
