@@ -209,15 +209,15 @@ export default function PerfilPolitico({ dados }) {
     const c = document.createElement('canvas');
     c.width = 1080; c.height = 1080;
     const x = c.getContext('2d');
-    x.fillStyle = '#23272E'; x.fillRect(0, 0, 1080, 1080);
-    x.fillStyle = '#E8930C'; x.fillRect(0, 0, 1080, 18);
+    x.fillStyle = '#241E52'; x.fillRect(0, 0, 1080, 1080);
+    x.fillStyle = '#FF8A00'; x.fillRect(0, 0, 1080, 18);
 
     x.fillStyle = 'rgba(255,255,255,0.6)'; x.font = '700 30px Georgia, serif';
     x.fillText('DADOS OFICIAIS · 2026', 90, 150);
 
     const ini = (perfil.nome_urna || '?').trim().split(/\s+/).map((s) => s[0]).slice(0, 2).join('').toUpperCase();
-    x.fillStyle = '#E8930C'; x.beginPath(); x.arc(170, 320, 80, 0, Math.PI * 2); x.fill();
-    x.fillStyle = '#23272E'; x.font = '700 64px Georgia, serif'; x.textAlign = 'center';
+    x.fillStyle = '#FF8A00'; x.beginPath(); x.arc(170, 320, 80, 0, Math.PI * 2); x.fill();
+    x.fillStyle = '#241E52'; x.font = '700 64px Georgia, serif'; x.textAlign = 'center';
     x.fillText(ini, 170, 342); x.textAlign = 'left';
 
     x.fillStyle = '#fff'; x.font = '600 76px Georgia, serif';
@@ -227,7 +227,7 @@ export default function PerfilPolitico({ dados }) {
 
     x.fillStyle = 'rgba(255,255,255,0.55)'; x.font = '600 34px Georgia, serif';
     x.fillText('USOU DA COTA PARLAMENTAR', 90, 580);
-    x.fillStyle = '#E8930C'; x.font = '700 92px Georgia, serif';
+    x.fillStyle = '#FF8A00'; x.font = '700 92px Georgia, serif';
     x.fillText(brl(total_geral), 90, 678);
 
     if (coerencia) {

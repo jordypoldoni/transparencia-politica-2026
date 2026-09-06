@@ -4,11 +4,11 @@ export const t = {
     tinta: '#191C20',        // texto principal (quase preto)
     papel: '#F7F6F3',        // fundo (off-white neutro)
     papelCartao: '#FFFFFF',  // cartões
-    // Direção: GRAFITE dominante + ÂMBAR vivo de acento (não-pastel, memorável)
-    verde: '#23272E',        // [primária] grafite — botões/estrutura
-    verdeEscuro: '#13161A',  // grafite escuro
-    ouro: '#E8930C',         // [acento vivo] âmbar — fills, ícones, bordas, texto sobre fundo ESCURO
-    ouroTexto: '#9A5B00',    // âmbar escuro p/ TEXTO sobre fundo claro (contraste >= 4.5:1, WCAG)
+    // Direção: ÍNDIGO dominante + ÂMBAR vivo de acento (não-pastel, memorável, sem cor de partido)
+    verde: '#241E52',        // [primária] índigo profundo — botões/estrutura
+    verdeEscuro: '#171238',  // índigo escuro
+    ouro: '#FF8A00',         // [acento vivo] âmbar — fills, ícones, bordas, texto sobre fundo ESCURO
+    ouroTexto: '#A85B00',    // âmbar escuro p/ TEXTO sobre fundo claro (contraste >= 4.5:1, WCAG)
     cinza: '#6B7280',        // texto secundário
     linha: '#E6E3DC',        // (legado) — NÃO usar como borda de container; só divisores muito sutis se preciso
     papelQuente: '#FAF5EE',  // tom quente p/ separar superfícies internas sem borda
@@ -29,7 +29,7 @@ export const t = {
     media: '0 8px 30px rgba(74,52,30,0.12)',
     clicavel: '0 1px 2px rgba(74,52,30,0.05), 0 2px 10px rgba(74,52,30,0.07)',
     hover: '0 12px 30px rgba(74,52,30,0.16)',
-    anelFoco: '0 0 0 3px rgba(232,147,12,0.28)', // anel âmbar p/ foco/ativo (no lugar de borda)
+    anelFoco: '0 0 0 3px rgba(255,138,0,0.28)', // anel âmbar p/ foco/ativo (no lugar de borda)
   },
   larguraMax: '1080px',
 };

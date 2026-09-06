@@ -1,12 +1,20 @@
 {
-  "name": "Lume",
+  "name": "Lume Cidadão",
   "short_name": "Lume",
-  "description": "Política pública em linguagem clara, sem lado — direto da fonte oficial.",
+  "description": "Política pública em linguagem clara, sem lado, direto da fonte oficial.",
   "icons": [
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
   ],
-  "theme_color": "#23272E",
+  "theme_color": "#241E52",
   "background_color": "#F7F6F3",
   "display": "standalone",
   "start_url": "/"

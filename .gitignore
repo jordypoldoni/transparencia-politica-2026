@@ -18,3 +18,6 @@ yarn-error.log*
 # Arquivos de diagnóstico e testes temporários
 teste_raiz.js
 agentes_politicos_rows.csv
+
+# Material de exploração de marca (fica só na máquina, não vai pro deploy)
+public/logos/

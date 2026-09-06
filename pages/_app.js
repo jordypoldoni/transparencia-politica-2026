@@ -32,10 +32,10 @@ export default function App({ Component, pageProps }) {
           text-rendering: optimizeLegibility;
         }
         a { transition: color .15s ease, opacity .15s ease; }
-        ::selection { background: #E8930C; color: #1A1A1A; }
+        ::selection { background: #FF8A00; color: #1A1A1A; }
         img { max-width: 100%; }
 
-        :focus-visible { outline: 3px solid #E8930C; outline-offset: 2px; border-radius: 3px; }
+        :focus-visible { outline: 3px solid #FF8A00; outline-offset: 2px; border-radius: 3px; }
         @media (prefers-reduced-motion: reduce) {
           *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
         }
@@ -69,7 +69,7 @@ export default function App({ Component, pageProps }) {
 
         .barra-carregando {
           position: fixed; top: 0; left: 0; height: 3px; z-index: 9999;
-          background: #E8930C; box-shadow: 0 0 8px #E8930C;
+          background: #FF8A00; box-shadow: 0 0 8px #FF8A00;
           animation: progresso 1.2s ease-in-out infinite;
         }
         @keyframes progresso {

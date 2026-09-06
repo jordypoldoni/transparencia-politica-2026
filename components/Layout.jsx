@@ -48,21 +48,11 @@ export default function Layout({ children, pageProps }) {
       {/* Cabeçalho */}
       <header style={{ boxShadow: '0 1px 14px rgba(74,52,30,0.06)', background: 'rgba(251,248,242,0.9)', backdropFilter: 'blur(8px)', position: 'sticky', top: 0, zIndex: 50 }}>
         <div style={{ width: '100%', padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
-          <Link href="/" style={{ textDecoration: 'none', color: t.cor.tinta, display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span aria-hidden style={{ width: '28px', height: '28px', borderRadius: '8px', background: t.cor.verde, display: 'grid', placeItems: 'center', flexShrink: 0 }}>
-              <svg width="18" height="18" viewBox="0 0 100 100">
-                <g stroke={t.cor.ouro} strokeWidth="9" strokeLinecap="round">
-                  <line x1="72" y1="50" x2="84" y2="50" />
-                  <line x1="61" y1="30.97" x2="67" y2="20.56" />
-                  <line x1="39" y1="30.97" x2="33" y2="20.56" />
-                  <line x1="28" y1="50" x2="16" y2="50" />
-                  <line x1="39" y1="69.03" x2="33" y2="79.44" />
-                  <line x1="61" y1="69.03" x2="67" y2="79.44" />
-                </g>
-                <circle cx="50" cy="50" r="17" fill={t.cor.ouro} />
-              </svg>
-            </span>
-            <span style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.15rem', letterSpacing: '-0.01em' }}>Lume</span>
+          <Link href="/" aria-label="Lume Cidadão, ir para a página inicial"
+            style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
+            {/* Marca em SVG de contorno: símbolo + logotipo (Plus Jakarta Sans 700/500 vetorizada),
+                sem dependência de fonte e sem perda em qualquer tamanho. */}
+            <img src="/marca-lume.svg" alt="Lume Cidadão" style={{ height: '30px', width: 'auto', display: 'block' }} />
           </Link>
           <nav className="nav-desktop" style={{ gap: '2px' }}>
             {navItens.map((n) => {
@@ -123,7 +113,7 @@ export default function Layout({ children, pageProps }) {
       <footer style={{ marginTop: '64px', background: t.cor.papelQuente }}>
         <div style={{ width: '100%', padding: '32px 24px', color: t.cor.cinza, fontSize: '0.85rem', display: 'flex', flexWrap: 'wrap', gap: '24px', justifyContent: 'space-between' }}>
           <div style={{ maxWidth: '420px' }}>
-            <p style={{ margin: '0 0 6px', fontFamily: t.fonte.titulo, fontSize: '1rem', color: t.cor.tinta }}>Lume</p>
+            <img src="/marca-lume.svg" alt="Lume Cidadão" style={{ height: '24px', width: 'auto', display: 'block', marginBottom: '10px' }} />
             <p style={{ margin: 0, lineHeight: 1.5 }}>
               Informação política em linguagem clara, sem lado. Todos os dados vêm de fontes oficiais e podem ser conferidos por você.
             </p>
