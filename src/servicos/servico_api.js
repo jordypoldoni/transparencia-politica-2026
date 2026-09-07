@@ -330,6 +330,37 @@ const ServicoAPI = {
         return data || [];
     },
 
+    // Rankings de TODAS as casas e TODOS os anos de uma vez, para o seletor de ano da página
+    // /deputados trocar na hora, sem nova requisição. A radar_gastos e uma view materializada
+    // pequena (uma linha por parlamentar/ano, ~1,5 mil linhas), entao trazer tudo sai mais barato
+    // do que uma consulta por combinacao. Mesmo padrao do ranking de /gastos-publicos.
+    //
+    // Retorna { [casa]: { anos: [desc], porAno: { [ano]: [top N] }, totais: { [ano]: quantos } } }
+    // `totais` conta TODOS os parlamentares do ano, nao so os do top N: e o que permite a tela
+    // saber que um ano esta incompleto (a lista cortada em 10 nunca revelaria isso).
+    getRadaresPorCasaEAno: async (limite = 10) => {
+        const { data, error } = await supabase
+            .from('radar_gastos')
+            .select('id, slug, nome_urna, partido_atual, uf_sede, foto_url, casa, ano, total, n_notas')
+            .order('total', { ascending: false });
+        if (error) { console.error('getRadaresPorCasaEAno:', error.message); return {}; }
+
+        const fora = {};
+        for (const linha of data || []) {
+            if (!linha.casa || !linha.ano) continue;
+            fora[linha.casa] = fora[linha.casa] || { anos: [], porAno: {}, totais: {} };
+            const balde = fora[linha.casa];
+            balde.porAno[linha.ano] = balde.porAno[linha.ano] || [];
+            balde.totais[linha.ano] = (balde.totais[linha.ano] || 0) + 1;
+            // ja vem ordenado por total desc; so corta no limite
+            if (balde.porAno[linha.ano].length < limite) balde.porAno[linha.ano].push(linha);
+        }
+        for (const casa of Object.keys(fora)) {
+            fora[casa].anos = Object.keys(fora[casa].porAno).map(Number).sort((a, b) => b - a);
+        }
+        return fora;
+    },
+
     // Ranking de gastos dos deputados de um estado (página /estado/[uf])
     getRadarPorEstado: async (uf, ano = 2026) => {
         const { data, error } = await supabase
