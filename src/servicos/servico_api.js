@@ -271,13 +271,19 @@ const ServicoAPI = {
         const { data, error } = await supabase
             .from('agentes_politicos')
             .select('id, slug, nome_urna, partido_atual, uf_sede, foto_url, cargo_atual, fonte_api')
-            .or('fonte_api.ilike.%camara%,fonte_api.ilike.%senado%,fonte_api.ilike.%alesp%')
+            .or('fonte_api.ilike.%camara%,fonte_api.ilike.%senado%,fonte_api.ilike.%alesp%,fonte_api.ilike.%alergs%')
             .order('nome_urna', { ascending: true });
         if (error) { console.error('listarDeputados:', error.message); return []; }
         return (data || []).map((d) => {
             const fonte = (d.fonte_api || '').toLowerCase();
-            const casa = fonte.includes('senado') ? 'Senado' : fonte.includes('alesp') ? 'Assembleia (SP)' : 'Câmara';
-            const cargo = d.cargo_atual || (casa === 'Senado' ? 'Senador(a)' : casa === 'Assembleia (SP)' ? 'Deputado(a) Estadual' : 'Deputado(a) Federal');
+            // Cada assembleia é uma casa própria ('Assembleia (SP)', 'Assembleia (RS)'...), porque
+            // cada uma publica coisas diferentes e a página as trata como abas separadas.
+            const casa = fonte.includes('senado') ? 'Senado'
+                : fonte.includes('alesp') ? 'Assembleia (SP)'
+                : fonte.includes('alergs') ? 'Assembleia (RS)'
+                : 'Câmara';
+            const ehEstadual = casa.startsWith('Assembleia');
+            const cargo = d.cargo_atual || (casa === 'Senado' ? 'Senador(a)' : ehEstadual ? 'Deputado(a) Estadual' : 'Deputado(a) Federal');
             return {
                 id: d.id,
                 slug: d.slug,

@@ -9,16 +9,30 @@ import { t } from '../src/estilo/tokens';
 
 const brl = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v || 0);
 
+// Uma aba por assembleia. Cada casa publica uma coisa diferente, e a página diz isso na cara do
+// usuário em vez de deixar parecer que falta dado por descuido: SP abre gasto de gabinete e NÃO
+// divulga voto nominal; o RS abre o voto e não expõe o gasto por deputado no mesmo formato.
+// Para entrar com um novo estado, acrescente uma linha aqui (e o mapeamento no servico_api).
+const ASSEMBLEIAS = [
+  { casa: 'Assembleia (SP)', uf: 'SP', sigla: 'ALESP', gastos: true, votos: false },
+  { casa: 'Assembleia (RS)', uf: 'RS', sigla: 'ALERGS', gastos: false, votos: true },
+];
+const assembleiaDe = (casa) => ASSEMBLEIAS.find((a) => a.casa === casa) || null;
+
 export default function Parlamentares({ deputados, qInicial, ufInicial, casaInicial, radarCamara = [], radarSenado = [], radarEstadual = [] }) {
   const [busca, setBusca] = useState(qInicial || '');
   const [uf, setUf] = useState(ufInicial || '');
   const [casa, setCasa] = useState(casaInicial || 'Câmara');
   // Sincroniza ao navegar entre Deputados/Senadores (mesma rota, props mudam no cliente).
-  useEffect(() => { setCasa(casaInicial || 'Câmara'); setUf(''); }, [casaInicial]);
+  useEffect(() => { setCasa(casaInicial || 'Câmara'); setUf(ufInicial || ''); }, [casaInicial, ufInicial]);
   // "Senadores" é uma página própria; "Deputados" agrupa federais + estaduais.
   const grupo = casa === 'Senado' ? 'senador' : 'deputado';
-  // Ranking de gastos da casa ativa (troca junto com o toggle Federais/Estaduais e a rota Senadores).
+  const assembleia = assembleiaDe(casa); // null quando a aba é federal ou Senado
+  // Ranking de gastos da casa ativa (troca junto com as abas e com a rota Senadores).
   const radar = casa === 'Senado' ? radarSenado : casa === 'Assembleia (SP)' ? radarEstadual : radarCamara;
+  // Assembleia sem gasto coletado (RS hoje) não mostra ranking: sairia um bloco vazio parecendo
+  // erro. O aviso da aba explica o que existe e o que não existe ali.
+  const mostraRanking = !assembleia || assembleia.gastos;
 
   const ufs = useMemo(
     () => Array.from(new Set(deputados.filter((d) => d.casa === casa).map((d) => d.uf).filter(Boolean))).sort(),
@@ -47,7 +61,11 @@ export default function Parlamentares({ deputados, qInicial, ufInicial, casaInic
   return (
     <div className="pagina">
       <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.8rem,4vw,2.6rem)', margin: '0 0 16px' }}>
-        {casa === 'Senado' ? 'Senadores' : casa === 'Assembleia (SP)' ? 'Deputados Estaduais de São Paulo' : 'Deputados Federais'}
+        {casa === 'Senado'
+          ? 'Senadores'
+          : assembleia
+          ? `Deputados Estaduais de ${NOMES_UF[assembleia.uf] || assembleia.uf}`
+          : 'Deputados Federais'}
       </h1>
 
       {/* Alternância só entre deputados (federais x estaduais). Senadores é página própria. */}
@@ -56,23 +74,41 @@ export default function Parlamentares({ deputados, qInicial, ufInicial, casaInic
           <button onClick={() => { setCasa('Câmara'); setUf(''); }} style={pilulaCasa(casa === 'Câmara')} role="tab" aria-selected={casa === 'Câmara'}>
             Federais ({totalCasa('Câmara')})
           </button>
-          <button onClick={() => { setCasa('Assembleia (SP)'); setUf(''); }} style={pilulaCasa(casa === 'Assembleia (SP)')} role="tab" aria-selected={casa === 'Assembleia (SP)'}>
-            Estaduais · SP ({totalCasa('Assembleia (SP)')})
-          </button>
+          {ASSEMBLEIAS.filter((a) => totalCasa(a.casa) > 0).map((a) => (
+            <button key={a.casa} onClick={() => { setCasa(a.casa); setUf(''); }} style={pilulaCasa(casa === a.casa)} role="tab" aria-selected={casa === a.casa}>
+              Estaduais · {a.uf} ({totalCasa(a.casa)})
+            </button>
+          ))}
         </div>
       )}
 
       <p style={{ color: t.cor.cinza, margin: '0 0 24px' }}>
-        {filtrados.length} {casa === 'Senado' ? 'senadores' : casa === 'Assembleia (SP)' ? 'deputados estaduais de SP' : 'deputados federais'}. Clique para ver {casa === 'Assembleia (SP)' ? 'os gastos de gabinete' : 'gastos, votos e coerência'}.
+        {filtrados.length}{' '}
+        {casa === 'Senado'
+          ? 'senadores'
+          : assembleia
+          ? `deputados estaduais de ${assembleia.uf}`
+          : 'deputados federais'}
+        . Clique para ver {assembleia
+          ? (assembleia.votos ? 'como cada um votou' : 'os gastos de gabinete')
+          : 'gastos, votos e coerência'}.
       </p>
 
-      {casa === 'Assembleia (SP)' && (
+      {assembleia && (
         <div style={{ background: t.cor.alertaBg, borderRadius: t.raio.sm, padding: '12px 16px', margin: '0 0 20px', fontSize: '0.88rem', color: t.cor.tinta, lineHeight: 1.5 }}>
-          <strong>Piloto estadual.</strong> Começamos pela Assembleia de São Paulo (ALESP), que tem dados abertos. Por ora mostramos os <strong>gastos de gabinete</strong>; votações estaduais ainda não entram. Fonte: ALESP.
+          <strong>{NOMES_UF[assembleia.uf] || assembleia.uf} ({assembleia.sigla}).</strong>{' '}
+          {assembleia.votos
+            ? 'A assembleia publica o voto de cada deputado, matéria por matéria, e é isso que mostramos aqui. '
+            : 'A assembleia não divulga votação nominal, então não há como mostrar como cada deputado votou. '}
+          {assembleia.gastos
+            ? 'Os gastos de gabinete também estão no ar.'
+            : 'Os gastos de gabinete ainda não entraram.'}
+          {' '}Fonte: {assembleia.sigla}.
         </div>
       )}
 
       {/* Ranking de gastos — quem mais usou a verba (casa ativa) */}
+      {mostraRanking && (
       <section style={{ margin: '0 0 28px' }}>
         <div style={{ background: t.cor.verde, borderRadius: t.raio.lg, padding: 'clamp(20px,3.5vw,32px)', color: '#fff' }}>
           <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.3rem,2.6vw,1.7rem)', margin: '0 0 6px' }}>
@@ -81,9 +117,9 @@ export default function Parlamentares({ deputados, qInicial, ufInicial, casaInic
           <p style={{ color: 'rgba(255,255,255,0.82)', maxWidth: '64ch', lineHeight: 1.5, margin: '0 0 18px', fontSize: '0.92rem' }}>
             {casa === 'Senado'
               ? 'Senadores que mais usaram a cota (CEAPS) em 2026.'
-              : casa === 'Assembleia (SP)'
-              ? 'Deputados estaduais de SP que mais usaram a verba de gabinete em 2026.'
-              : 'Deputados federais que mais usaram a cota parlamentar em 2026.'}{' '}Toque para ver <em>em quê</em>. Fonte: {casa === 'Senado' ? 'Senado Federal' : casa === 'Assembleia (SP)' ? 'ALESP' : 'Câmara dos Deputados'}.
+              : assembleia
+              ? `Deputados estaduais de ${assembleia.uf} que mais usaram a verba de gabinete em 2026.`
+              : 'Deputados federais que mais usaram a cota parlamentar em 2026.'}{' '}Toque para ver <em>em quê</em>. Fonte: {casa === 'Senado' ? 'Senado Federal' : assembleia ? assembleia.sigla : 'Câmara dos Deputados'}.
           </p>
           {radar.length === 0 ? (
             <p style={{ color: 'rgba(255,255,255,0.55)', margin: 0, fontSize: '0.95rem' }}>
@@ -111,13 +147,15 @@ export default function Parlamentares({ deputados, qInicial, ufInicial, casaInic
           )}
         </div>
       </section>
+      )}
 
       {/* Busca + estado */}
       <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '28px', position: 'sticky', top: '70px', zIndex: 10 }}>
         <div style={{ flex: 1, minWidth: '240px' }}>
           <CampoBusca valor={busca} aoMudar={setBusca} placeholder="Buscar por nome ou partido…" aoLabel="Buscar parlamentar" />
         </div>
-        {casa !== 'Assembleia (SP)' && (
+        {/* Nas abas estaduais só existe uma UF, então o seletor some sozinho. */}
+        {ufs.length > 1 && (
           <div style={{ flex: '0 1 240px', minWidth: '180px' }}>
             <CampoSelect
               valor={uf}
@@ -159,12 +197,19 @@ export async function getServerSideProps({ query }) {
     ServicoAPI.listarDeputados(),
     ServicoAPI.getRadarGastos(2026, 10, 'Câmara'),
     ServicoAPI.getRadarGastos(2026, 10, 'Senado'),
+    // 'Assembleia (SP)' aqui NÃO é o rótulo da aba: é a chave gravada na view radar_gastos.
+    // Só SP tem gasto de gabinete coletado, então o ranking estadual continua sendo o de SP.
     ServicoAPI.getRadarGastos(2026, 10, 'Assembleia (SP)'),
   ]);
   const get = (i) => (settled[i].status === 'fulfilled' ? settled[i].value : []);
   const deputados = get(0);
   const c = String(query.casa || '').toLowerCase();
-  const casaInicial = c.includes('sen') ? 'Senado' : (c.includes('sp') || c.includes('estad') || c.includes('alesp')) ? 'Assembleia (SP)' : 'Câmara';
+  // Links antigos (?casa=sp, ?casa=alesp, ?casa=estaduais) continuam caindo em São Paulo;
+  // ?casa=rs / ?casa=alergs abrem a aba do Rio Grande do Sul.
+  const casaInicial = c.includes('sen') ? 'Senado'
+    : (c.includes('alergs') || c === 'rs') ? 'Assembleia (RS)'
+    : (c.includes('alesp') || c === 'sp' || c.includes('estad') || c.includes('assembleia')) ? 'Assembleia (SP)'
+    : 'Câmara';
   return {
     props: {
       deputados: JSON.parse(JSON.stringify(deputados)),
