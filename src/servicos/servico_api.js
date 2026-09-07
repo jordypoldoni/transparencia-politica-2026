@@ -625,7 +625,90 @@ const ServicoAPI = {
         return { itens: data || [], total: count || 0 };
     },
 
+    // Resumo do MANDATO de quem ja e parlamentar, para a ficha de candidato.
+    // Deliberadamente leve: só os agregados que a ficha mostra. O perfil completo continua
+    // sendo getPoliticoCompleto, que baixa todas as despesas e votos (pesado demais aqui).
+    getResumoMandato: async (agenteId) => {
+        if (!agenteId) return null;
+
+        const { data: perfil } = await supabase
+            .from('agentes_politicos')
+            .select('id, slug, nome_urna, partido_atual, uf_sede, fonte_api, cargo_atual, mandato, n_proposicoes, comissoes, cargos_anteriores')
+            .eq('id', agenteId)
+            .single();
+        if (!perfil) return null;
+
+        // Ano de referencia dos gastos: o ultimo ano FECHADO. O ano corrente nao serve de
+        // vitrine porque so tem parte do periodo (e, em 2026, a API da Camara esta devolvendo
+        // vazio — ver coletor_gastos.js). Se o ano fechado nao tiver nada, cai para o mais
+        // recente que tiver, e a tela informa qual ano esta mostrando.
+        const anoFechado = new Date().getFullYear() - 1;
+        const { data: linhasGasto } = await supabase
+            .from('despesas_parlamentares')
+            .select('valor_liquido, mes, ano')
+            .eq('agente_id', agenteId);
+
+        const porAno = {};
+        for (const g of linhasGasto || []) {
+            if (!g.ano) continue;
+            porAno[g.ano] = porAno[g.ano] || { total: 0, meses: new Set(), n: 0 };
+            porAno[g.ano].total += parseFloat(g.valor_liquido || 0);
+            porAno[g.ano].n += 1;
+            if (g.mes) porAno[g.ano].meses.add(g.mes);
+        }
+        const anosComDado = Object.keys(porAno).map(Number).sort((a, b) => b - a);
+        const anoGasto = porAno[anoFechado] ? anoFechado : (anosComDado[0] ?? null);
+        const bloco = anoGasto ? porAno[anoGasto] : null;
+        const mesesComGasto = bloco ? bloco.meses.size : 0;
+
+        // Votos: contagem simples por tipo. Só Sim/Não entram no que a tela mostra como
+        // "votações em que registrou voto" — ausência não é voto.
+        const { data: votos } = await supabase
+            .from('votos_parlamentares')
+            .select('voto_tipo')
+            .eq('agente_id', agenteId);
+        const totalVotos = (votos || []).length;
+        const contaVoto = (t) => (votos || []).filter((v) => (v.voto_tipo || '').toLowerCase() === t).length;
+
+        let presenca = null;
+        try {
+            const { data: pres } = await supabase.rpc('presenca_votacoes', { p_agente: agenteId });
+            if (pres && pres.total > 0) {
+                presenca = { compareceu: pres.compareceu, total: pres.total, percentual: (pres.compareceu / pres.total) * 100 };
+            }
+        } catch (e) { console.error('presenca_votacoes:', e.message); }
+
+        const comissoes = Array.isArray(perfil.comissoes) ? perfil.comissoes.length : 0;
+        const cargosAnteriores = Array.isArray(perfil.cargos_anteriores) ? perfil.cargos_anteriores.length : 0;
+
+        return {
+            slug: perfil.slug,
+            nome_urna: perfil.nome_urna,
+            partido_mandato: perfil.partido_atual || null,
+            uf_sede: perfil.uf_sede || null,
+            fonte_api: perfil.fonte_api || null,
+            cargo_atual: perfil.cargo_atual || null,
+            mandato: perfil.mandato || null,
+            n_proposicoes: perfil.n_proposicoes ?? null,
+            n_comissoes: comissoes,
+            n_cargos_anteriores: cargosAnteriores,
+            gasto: anoGasto ? {
+                ano: anoGasto,
+                total: bloco.total,
+                n_notas: bloco.n,
+                // media mensal sobre os meses QUE TIVERAM gasto, nao sobre 12: nao inventa
+                // meses de mandato que talvez nao existam.
+                media_mensal: mesesComGasto ? bloco.total / mesesComGasto : null,
+                meses_com_gasto: mesesComGasto,
+            } : null,
+            votos: { total: totalVotos, sim: contaVoto('sim'), nao: contaVoto('não') },
+            presenca,
+        };
+    },
+
     // Ficha de um candidato a Deputado Federal pelo slug.
+    // Quando o candidato JA tem mandato (agente_id preenchido pelo cruzamento nome+UF), a ficha
+    // vem com `mandato`: o historico real de quem esta pedindo o voto de novo.
     getCandidatoDeputadoFederalPorSlug: async (slug) => {
         const { data, error } = await supabase
             .from('candidatos_deputado_federal')
@@ -633,7 +716,9 @@ const ServicoAPI = {
             .eq('slug', slug)
             .single();
         if (error || !data) return null;
-        return data;
+
+        const mandato = data.agente_id ? await ServicoAPI.getResumoMandato(data.agente_id) : null;
+        return { ...data, mandato };
     }
 };
 
