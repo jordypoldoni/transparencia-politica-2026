@@ -2,7 +2,11 @@ name: Coletar dados (votos)
 
 on:
   schedule:
-    - cron: '0 9 * * *'   # todo dia 09:00 UTC (06:00 Brasília)
+    # 06:17 Brasília. O minuto quebrado é de proposito: o GitHub enfileira os agendamentos e
+    # os horarios "redondos" (minuto 0) sao os mais disputados. Ainda assim o horario e um
+    # PEDIDO, nao uma promessa — no historico deste repo o atraso tipico foi de 3 a 6 horas,
+    # com um caso de 10h. Nao dependa da hora exata para nada.
+    - cron: '17 9 * * *'
   workflow_dispatch:        # permite rodar manualmente pelo botão "Run workflow"
 
 jobs:
@@ -66,3 +70,19 @@ jobs:
           ANO_ALESP: '2026'
         continue-on-error: true
         run: node coletores/coletor_alesp.js
+
+      # Rio Grande do Sul (ALERGS). O ano vai por $(date -u +%Y) em vez de fixo: assim a virada
+      # de ano nao deixa o coletor preso em 2026, como aconteceu com os outros passos daqui.
+      - name: Estadual RS — votos em plenário (ALERGS)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        continue-on-error: true
+        run: node coletores/coletor_votos_alergs.js $(date -u +%Y)
+
+      - name: Estadual RS — gastos de gabinete (ALERGS)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        continue-on-error: true
+        run: node coletores/coletor_gastos_alergs.js $(date -u +%Y)
