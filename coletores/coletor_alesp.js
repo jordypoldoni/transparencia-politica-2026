@@ -104,9 +104,9 @@ async function main() {
   }
   console.log(`${linhasAg.length} deputados sincronizados (${novos.length} novos).`);
 
-  // Despesas: apaga só o ANO coletado (multi-ano seguro) e reinsere
-  await supabase.from('despesas_parlamentares').delete().eq('casa_legislativa', 'estadual').eq('ano', ANO);
-
+  // ⚠️ ORDEM IMPORTA: baixa PRIMEIRO, apaga depois.
+  // Antes o delete vinha antes do download. Se o XML da ALESP faltasse ou viesse vazio, o ano
+  // era apagado e nada era reposto (mesma armadilha que zerou os gastos da Câmara em 2026).
   const despXml = await getXml(`${BASE}/despesas_gabinetes_${ANO}.xml`);
   const despesas = coletarItens(despXml, 'Valor');
   console.log(`${despesas.length} linhas de despesa no arquivo de ${ANO}.`);
@@ -132,6 +132,25 @@ async function main() {
     });
   }
   console.log(`${linhasDesp.length} despesas a gravar (${semMatch} sem deputado correspondente).`);
+
+  // Trava: fonte vazia não vira exclusão. Sem linha nova, o ano fica como está.
+  if (linhasDesp.length === 0) {
+    console.error(
+      `ABORTADO: o XML de ${ANO} da ALESP não rendeu nenhuma despesa reconhecida.\n` +
+      `   Isso indica fonte fora do ar ou mudança de formato, não ausência de gastos. NADA foi apagado.`
+    );
+    process.exit(1);
+  }
+
+  // ⚠️ ESCOPO DO DELETE: apaga só os deputados DESTE coletor (fonte_api='alesp'), nunca
+  // 'casa_legislativa=estadual' inteiro. O Rio Grande do Sul (ALERGS) também é 'estadual':
+  // apagar pela casa faria o coletor de SP zerar os dados gaúchos a cada execução.
+  const idsAlesp = [...idPorMatricula.values()];
+  for (let i = 0; i < idsAlesp.length; i += 100) {
+    const { error: errDel } = await supabase.from('despesas_parlamentares')
+      .delete().eq('ano', ANO).in('agente_id', idsAlesp.slice(i, i + 100));
+    if (errDel) throw errDel;
+  }
 
   for (let i = 0; i < linhasDesp.length; i += 500) {
     const { error } = await supabase.from('despesas_parlamentares').insert(linhasDesp.slice(i, i + 500));
