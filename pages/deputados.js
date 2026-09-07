@@ -13,13 +13,17 @@ const brl = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency:
 // usuário em vez de deixar parecer que falta dado por descuido: SP abre gasto de gabinete e NÃO
 // divulga voto nominal; o RS abre o voto e não expõe o gasto por deputado no mesmo formato.
 // Para entrar com um novo estado, acrescente uma linha aqui (e o mapeamento no servico_api).
+// `gastoDetalhado` separa DUAS coisas que parecem uma só: ter o gasto e ter a NOTA.
+// SP publica nota a nota, com fornecedor e CNPJ. O RS publica só o total do mês por categoria —
+// dá pra dizer quanto e em quê, nunca para quem. A tela precisa falar isso, senão o usuário
+// clica esperando a nota e conclui que o site escondeu.
 const ASSEMBLEIAS = [
-  { casa: 'Assembleia (SP)', uf: 'SP', sigla: 'ALESP', gastos: true, votos: false },
-  { casa: 'Assembleia (RS)', uf: 'RS', sigla: 'ALERGS', gastos: false, votos: true },
+  { casa: 'Assembleia (SP)', uf: 'SP', sigla: 'ALESP', gastos: true, gastoDetalhado: true, votos: false },
+  { casa: 'Assembleia (RS)', uf: 'RS', sigla: 'ALERGS', gastos: true, gastoDetalhado: false, votos: true },
 ];
 const assembleiaDe = (casa) => ASSEMBLEIAS.find((a) => a.casa === casa) || null;
 
-export default function Parlamentares({ deputados, qInicial, ufInicial, casaInicial, radarCamara = [], radarSenado = [], radarEstadual = [] }) {
+export default function Parlamentares({ deputados, qInicial, ufInicial, casaInicial, radarCamara = [], radarSenado = [], radaresEstaduais = {} }) {
   const [busca, setBusca] = useState(qInicial || '');
   const [uf, setUf] = useState(ufInicial || '');
   const [casa, setCasa] = useState(casaInicial || 'Câmara');
@@ -29,9 +33,9 @@ export default function Parlamentares({ deputados, qInicial, ufInicial, casaInic
   const grupo = casa === 'Senado' ? 'senador' : 'deputado';
   const assembleia = assembleiaDe(casa); // null quando a aba é federal ou Senado
   // Ranking de gastos da casa ativa (troca junto com as abas e com a rota Senadores).
-  const radar = casa === 'Senado' ? radarSenado : casa === 'Assembleia (SP)' ? radarEstadual : radarCamara;
-  // Assembleia sem gasto coletado (RS hoje) não mostra ranking: sairia um bloco vazio parecendo
-  // erro. O aviso da aba explica o que existe e o que não existe ali.
+  const radar = casa === 'Senado' ? radarSenado : assembleia ? (radaresEstaduais[casa] || []) : radarCamara;
+  // Assembleia sem gasto coletado não mostra ranking: sairia um bloco vazio parecendo erro.
+  // O aviso da aba explica o que existe e o que não existe ali.
   const mostraRanking = !assembleia || assembleia.gastos;
 
   const ufs = useMemo(
@@ -100,9 +104,11 @@ export default function Parlamentares({ deputados, qInicial, ufInicial, casaInic
           {assembleia.votos
             ? 'A assembleia publica o voto de cada deputado, matéria por matéria, e é isso que mostramos aqui. '
             : 'A assembleia não divulga votação nominal, então não há como mostrar como cada deputado votou. '}
-          {assembleia.gastos
-            ? 'Os gastos de gabinete também estão no ar.'
-            : 'Os gastos de gabinete ainda não entraram.'}
+          {!assembleia.gastos
+            ? 'Os gastos de gabinete ainda não entraram.'
+            : assembleia.gastoDetalhado
+            ? 'Os gastos de gabinete estão no ar, nota a nota, com fornecedor e CNPJ.'
+            : 'Os gastos de gabinete estão no ar, mas a assembleia publica apenas o total de cada mês por categoria: dá para ver quanto e em quê, não para quem o dinheiro foi.'}
           {' '}Fonte: {assembleia.sigla}.
         </div>
       )}
@@ -119,7 +125,11 @@ export default function Parlamentares({ deputados, qInicial, ufInicial, casaInic
               ? 'Senadores que mais usaram a cota (CEAPS) em 2026.'
               : assembleia
               ? `Deputados estaduais de ${assembleia.uf} que mais usaram a verba de gabinete em 2026.`
-              : 'Deputados federais que mais usaram a cota parlamentar em 2026.'}{' '}Toque para ver <em>em quê</em>. Fonte: {casa === 'Senado' ? 'Senado Federal' : assembleia ? assembleia.sigla : 'Câmara dos Deputados'}.
+              : 'Deputados federais que mais usaram a cota parlamentar em 2026.'}{' '}
+            {assembleia && !assembleia.gastoDetalhado
+              ? 'Toque para ver em quê — o valor é o somado das categorias que a assembleia publica a cada mês, sem detalhe de nota.'
+              : <>Toque para ver <em>em quê</em>.</>}{' '}
+            Fonte: {casa === 'Senado' ? 'Senado Federal' : assembleia ? assembleia.sigla : 'Câmara dos Deputados'}.
           </p>
           {radar.length === 0 ? (
             <p style={{ color: 'rgba(255,255,255,0.55)', margin: 0, fontSize: '0.95rem' }}>
@@ -134,7 +144,7 @@ export default function Parlamentares({ deputados, qInicial, ufInicial, casaInic
                     <Avatar nome={p.nome_urna} foto={p.foto_url} size={44} />
                     <span style={{ flex: 1, minWidth: 0 }}>
                       <span style={{ display: 'block', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.nome_urna}</span>
-                      <span style={{ fontSize: '0.82rem', opacity: 0.75 }}>{p.partido_atual} · {p.uf_sede} · em {p.n_notas} notas</span>
+                      <span style={{ fontSize: '0.82rem', opacity: 0.75 }}>{p.partido_atual} · {p.uf_sede} · em {p.n_notas} {assembleia && !assembleia.gastoDetalhado ? 'lançamentos' : 'notas'}</span>
                     </span>
                     <span style={{ flexShrink: 0, textAlign: 'right' }}>
                       <span style={{ display: 'block', fontWeight: 800, fontSize: '1.05rem' }}>{brl(p.total)}</span>
@@ -197,9 +207,10 @@ export async function getServerSideProps({ query }) {
     ServicoAPI.listarDeputados(),
     ServicoAPI.getRadarGastos(2026, 10, 'Câmara'),
     ServicoAPI.getRadarGastos(2026, 10, 'Senado'),
-    // 'Assembleia (SP)' aqui NÃO é o rótulo da aba: é a chave gravada na view radar_gastos.
-    // Só SP tem gasto de gabinete coletado, então o ranking estadual continua sendo o de SP.
+    // Um ranking por assembleia. A string é a chave gravada na view radar_gastos (que classifica
+    // pela fonte_api do parlamentar), não o rótulo da aba — as duas coisas coincidem de propósito.
     ServicoAPI.getRadarGastos(2026, 10, 'Assembleia (SP)'),
+    ServicoAPI.getRadarGastos(2026, 10, 'Assembleia (RS)'),
   ]);
   const get = (i) => (settled[i].status === 'fulfilled' ? settled[i].value : []);
   const deputados = get(0);
@@ -218,7 +229,10 @@ export async function getServerSideProps({ query }) {
       casaInicial,
       radarCamara: JSON.parse(JSON.stringify(get(1))),
       radarSenado: JSON.parse(JSON.stringify(get(2))),
-      radarEstadual: JSON.parse(JSON.stringify(get(3))),
+      radaresEstaduais: JSON.parse(JSON.stringify({
+        'Assembleia (SP)': get(3),
+        'Assembleia (RS)': get(4),
+      })),
     },
   };
 }
