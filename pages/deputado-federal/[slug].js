@@ -115,10 +115,18 @@ export default function PerfilDeputadoFederal({ candidato, canonical }) {
                 fonte="Câmara dos Deputados"
               />
             )}
+            {/* A conta TEM que fechar: total = sim + não + o resto (abstenção, obstrução,
+                Art. 17). Se o resto ficar de fora do texto, o leitor soma 59 e 21, vê 81 no
+                título e conclui, com razão, que o site errou. */}
             <Numero
               valor={m.votos.total}
               rotulo="Votações em que registrou voto"
-              contexto={`${m.votos.sim} vezes Sim e ${m.votos.nao} vezes Não, nas votações nominais do mandato.`}
+              contexto={(() => {
+                const outros = m.votos.total - m.votos.sim - m.votos.nao;
+                const base = `${m.votos.sim} vezes Sim e ${m.votos.nao} vezes Não`;
+                if (outros > 0) return `${base}, mais ${outros} ${outros === 1 ? 'registro' : 'registros'} de abstenção ou obstrução, nas votações nominais do mandato.`;
+                return `${base}, nas votações nominais do mandato.`;
+              })()}
               fonte="Câmara dos Deputados"
             />
             {m.presenca && (
