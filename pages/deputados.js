@@ -17,9 +17,11 @@ const brl = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency:
 // SP publica nota a nota, com fornecedor e CNPJ. O RS publica só o total do mês por categoria —
 // dá pra dizer quanto e em quê, nunca para quem. A tela precisa falar isso, senão o usuário
 // clica esperando a nota e conclui que o site escondeu.
+// `nomeCom` carrega a preposição junto com o nome do estado ("de São Paulo", "do Rio Grande
+// do Sul"): o artigo varia por estado e montar isso na mão dá "de Rio Grande do Sul".
 const ASSEMBLEIAS = [
-  { casa: 'Assembleia (SP)', uf: 'SP', sigla: 'ALESP', gastos: true, gastoDetalhado: true, votos: false },
-  { casa: 'Assembleia (RS)', uf: 'RS', sigla: 'ALERGS', gastos: true, gastoDetalhado: false, votos: true },
+  { casa: 'Assembleia (SP)', uf: 'SP', sigla: 'ALESP', nomeCom: 'de São Paulo', gastos: true, gastoDetalhado: true, votos: false },
+  { casa: 'Assembleia (RS)', uf: 'RS', sigla: 'ALERGS', nomeCom: 'do Rio Grande do Sul', gastos: true, gastoDetalhado: false, votos: true },
 ];
 const assembleiaDe = (casa) => ASSEMBLEIAS.find((a) => a.casa === casa) || null;
 
@@ -68,7 +70,7 @@ export default function Parlamentares({ deputados, qInicial, ufInicial, casaInic
         {casa === 'Senado'
           ? 'Senadores'
           : assembleia
-          ? `Deputados Estaduais de ${NOMES_UF[assembleia.uf] || assembleia.uf}`
+          ? `Deputados Estaduais ${assembleia.nomeCom}`
           : 'Deputados Federais'}
       </h1>
 
@@ -101,6 +103,7 @@ export default function Parlamentares({ deputados, qInicial, ufInicial, casaInic
       {assembleia && (
         <div style={{ background: t.cor.alertaBg, borderRadius: t.raio.sm, padding: '12px 16px', margin: '0 0 20px', fontSize: '0.88rem', color: t.cor.tinta, lineHeight: 1.5 }}>
           <strong>{NOMES_UF[assembleia.uf] || assembleia.uf} ({assembleia.sigla}).</strong>{' '}
+          {/* o nome do estado aqui abre a frase, então vai sem preposição */}
           {assembleia.votos
             ? 'A assembleia publica o voto de cada deputado, matéria por matéria, e é isso que mostramos aqui. '
             : 'A assembleia não divulga votação nominal, então não há como mostrar como cada deputado votou. '}
