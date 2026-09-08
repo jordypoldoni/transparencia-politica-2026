@@ -61,6 +61,31 @@ export default function App({ Component, pageProps }) {
           .hero-grid { grid-template-columns: 1fr; gap: 28px; align-items: stretch; }
         }
 
+        /* Grafico de gastos mes a mes (PerfilPolitico). Fica AQUI, e nao num <style jsx> dentro
+           do componente: o compilador do Next quebra ("Option::unwrap() on a None") quando o CSS
+           do componente interpola valores dos tokens. Por isso as cores vao em hex, iguais as de
+           src/estilo/tokens.js: tinta #191C20, cinza #6B7280, papelQuente2 #F4ECE1.
+           Comentarios sem acento aqui de proposito, para nao arriscar o parser de CSS. */
+        .grafico-mes--colunas { display: flex; align-items: flex-end; gap: 6px; min-height: 180px; padding: 0 2px; }
+        .grafico-mes__col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; justify-content: flex-end; }
+        .grafico-mes__valor { font-size: 0.62rem; font-weight: 700; color: #191C20; white-space: nowrap; line-height: 1; }
+        .grafico-mes__barra { width: 100%; max-width: 34px; border-radius: 6px 6px 0 0; transition: height .3s ease; }
+        .grafico-mes__rotulo { font-size: 0.62rem; color: #6B7280; font-weight: 700; }
+
+        .grafico-mes--lista { display: none; }
+        .grafico-mes__linha { display: grid; grid-template-columns: 4.4rem 1fr auto; align-items: center; gap: 10px; padding: 7px 0; }
+        .grafico-mes__mes { font-size: 0.8rem; font-weight: 700; color: #6B7280; }
+        .grafico-mes__trilho { display: block; height: 10px; background: #F4ECE1; border-radius: 999px; overflow: hidden; }
+        .grafico-mes__preenchido { display: block; height: 100%; border-radius: 999px; }
+        .grafico-mes__cifra { font-size: 0.85rem; font-weight: 700; white-space: nowrap; }
+        .grafico-mes__vazios { margin: 10px 0 0; font-size: 0.8rem; color: #6B7280; line-height: 1.5; }
+
+        /* No celular as 12 colunas ficariam com ~28px e nenhum valor caberia: vira lista. */
+        @media (max-width: 640px) {
+          .grafico-mes--colunas { display: none; }
+          .grafico-mes--lista { display: block; }
+        }
+
         @keyframes surgir {
           from { opacity: 0; transform: translateY(10px); }
           to { opacity: 1; transform: translateY(0); }
