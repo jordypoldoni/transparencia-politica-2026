@@ -127,6 +127,15 @@ export default function Layout({ children, pageProps }) {
             </ul>
           </div>
         </div>
+
+        {/* Assinatura do rodapé. O ano vem do relógio, não fixo: um "© 2026" congelado em 2028
+            é o tipo de detalhe que faz o leitor duvidar de quão atual é o resto da página. */}
+        <div style={{ borderTop: `1px solid ${t.cor.papelQuente2}` }}>
+          <div style={{ width: '100%', padding: '18px 24px', display: 'flex', flexWrap: 'wrap', gap: '6px 20px', justifyContent: 'space-between', color: t.cor.cinza, fontSize: '0.8rem' }}>
+            <p style={{ margin: 0 }}>© {new Date().getFullYear()} Lume Cidadão. Todos os direitos reservados.</p>
+            <p style={{ margin: 0 }}>Desenvolvido por Jordy Oldoni</p>
+          </div>
+        </div>
       </footer>
     </div>
   );
