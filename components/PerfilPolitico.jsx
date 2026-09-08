@@ -8,6 +8,19 @@ import { explicarTipo, agruparPorMateria, papelVotacao, situacaoCidada } from '.
 
 const brl = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v || 0);
 const brlExato = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
+// Valor curto para caber EM CIMA da barra: são 12 colunas, e "R$ 30.124" não cabe em ~34px.
+// Acima de mil vira "30,1 mil"; abaixo, o valor inteiro. O valor exato continua no título
+// (hover) e aparece por extenso na lista do celular.
+const brlCurto = (v) => {
+  const n = Number(v || 0);
+  if (n <= 0) return '';
+  if (n >= 1000000) return `${(n / 1000000).toFixed(1).replace('.', ',')} mi`;
+  if (n >= 1000) {
+    const mil = n / 1000;
+    return `${mil >= 100 ? Math.round(mil) : mil.toFixed(1).replace('.', ',')} mil`;
+  }
+  return new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 }).format(n);
+};
 
 const VOTOS_REAIS = new Set(['sim', 'não', 'nao', 'obstrução', 'abstenção', 'abstencao']);
 const isVotoReal = (tipo) => VOTOS_REAIS.has((tipo || '').toLowerCase());
@@ -409,21 +422,121 @@ export default function PerfilPolitico({ dados }) {
               </div>
             )}
             <p style={{ color: t.cor.cinza, fontSize: '0.9rem', margin: '0 0 18px', lineHeight: 1.5 }}>
-              Quanto {perfil.nome_urna} usou da verba em cada mês de <strong>{anoSel}</strong>: cada barra é a soma das notas fiscais daquele mês. Passe o mouse para ver o valor.
+              Quanto {perfil.nome_urna} usou da verba em cada mês de <strong>{anoSel}</strong>: cada barra é a soma das notas fiscais daquele mês.
             </p>
 
-            <div style={{ display: 'flex', alignItems: 'flex-end', gap: '6px', height: '170px', padding: '0 2px' }}>
+            {/* O valor de cada mês fica SEMPRE visível. Antes só aparecia no hover, o que
+                escondia o número no celular (onde não existe hover) e obrigava a parar o mouse
+                em cada barra no desktop. São dois layouts do mesmo dado:
+                  colunas verticais no desktop, com o valor abreviado em cima da barra;
+                  lista horizontal no celular, onde o valor cabe por extenso.
+                A troca é por media query, não por JavaScript, para não depender de medir a tela. */}
+            <div className="grafico-mes grafico-mes--colunas">
               {dadosAno.meses.map((m) => {
-                const h = Math.max(4, Math.round((m.valor / maxMes) * 150));
+                const h = Math.max(4, Math.round((m.valor / maxMes) * 130));
                 return (
-                  <div key={m.mes} title={`${MES_NOME[m.mes - 1]}/${anoSel}: ${brlExato(m.valor)}`}
-                    style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', justifyContent: 'flex-end' }}>
-                    <div style={{ width: '100%', maxWidth: '34px', height: `${h}px`, background: m.valor > 0 ? t.cor.ouro : t.cor.papelQuente2, borderRadius: '6px 6px 0 0', transition: 'height .3s ease' }} />
-                    <span style={{ fontSize: '0.62rem', color: t.cor.cinza, fontWeight: 700 }}>{MES_LETRA[m.mes - 1]}</span>
+                  <div key={m.mes} title={`${MES_NOME[m.mes - 1]}/${anoSel}: ${brlExato(m.valor)}`} className="grafico-mes__col">
+                    <span className="grafico-mes__valor">{brlCurto(m.valor)}</span>
+                    <div className="grafico-mes__barra" style={{ height: `${h}px`, background: m.valor > 0 ? t.cor.ouro : t.cor.papelQuente2 }} />
+                    <span className="grafico-mes__rotulo">{MES_LETRA[m.mes - 1]}</span>
                   </div>
                 );
               })}
             </div>
+
+            <div className="grafico-mes grafico-mes--lista">
+              {dadosAno.meses.filter((m) => m.valor > 0).map((m) => (
+                <div key={m.mes} className="grafico-mes__linha">
+                  <span className="grafico-mes__mes">{MES_NOME[m.mes - 1]}</span>
+                  <span className="grafico-mes__trilho">
+                    <span className="grafico-mes__preenchido" style={{ width: `${Math.max(2, Math.round((m.valor / maxMes) * 100))}%`, background: t.cor.ouro }} />
+                  </span>
+                  <span className="grafico-mes__cifra">{brlExato(m.valor)}</span>
+                </div>
+              ))}
+              {dadosAno.meses.some((m) => !m.valor) && (
+                <p className="grafico-mes__vazios">
+                  Sem gasto registrado em {dadosAno.meses.filter((m) => !m.valor).map((m) => MES_NOME[m.mes - 1]).join(', ')}.
+                </p>
+              )}
+            </div>
+
+            <style jsx>{`
+              .grafico-mes--colunas {
+                display: flex;
+                align-items: flex-end;
+                gap: 6px;
+                min-height: 180px;
+                padding: 0 2px;
+              }
+              .grafico-mes__col {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 5px;
+                justify-content: flex-end;
+              }
+              .grafico-mes__valor {
+                font-size: 0.62rem;
+                font-weight: 700;
+                color: ${t.cor.tinta};
+                white-space: nowrap;
+                line-height: 1;
+              }
+              .grafico-mes__barra {
+                width: 100%;
+                max-width: 34px;
+                border-radius: 6px 6px 0 0;
+                transition: height 0.3s ease;
+              }
+              .grafico-mes__rotulo {
+                font-size: 0.62rem;
+                color: ${t.cor.cinza};
+                font-weight: 700;
+              }
+              .grafico-mes--lista { display: none; }
+              .grafico-mes__linha {
+                display: grid;
+                grid-template-columns: 4.4rem 1fr auto;
+                align-items: center;
+                gap: 10px;
+                padding: 7px 0;
+              }
+              .grafico-mes__mes {
+                font-size: 0.8rem;
+                font-weight: 700;
+                color: ${t.cor.cinza};
+              }
+              .grafico-mes__trilho {
+                display: block;
+                height: 10px;
+                background: ${t.cor.papelQuente2};
+                border-radius: 999px;
+                overflow: hidden;
+              }
+              .grafico-mes__preenchido {
+                display: block;
+                height: 100%;
+                border-radius: 999px;
+              }
+              .grafico-mes__cifra {
+                font-size: 0.85rem;
+                font-weight: 700;
+                white-space: nowrap;
+              }
+              .grafico-mes__vazios {
+                margin: 10px 0 0;
+                font-size: 0.8rem;
+                color: ${t.cor.cinza};
+                line-height: 1.5;
+              }
+              /* No celular as 12 colunas ficam com ~28px cada e nenhum valor cabe. */
+              @media (max-width: 640px) {
+                .grafico-mes--colunas { display: none; }
+                .grafico-mes--lista { display: block; }
+              }
+            `}</style>
 
             <div style={{ marginTop: '18px', background: t.cor.papelQuente, borderRadius: t.raio.md, padding: '14px 16px' }}>
               <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', marginBottom: '8px' }}>
