@@ -339,14 +339,27 @@ const ServicoAPI = {
     // `totais` conta TODOS os parlamentares do ano, nao so os do top N: e o que permite a tela
     // saber que um ano esta incompleto (a lista cortada em 10 nunca revelaria isso).
     getRadaresPorCasaEAno: async (limite = 10) => {
-        const { data, error } = await supabase
-            .from('radar_gastos')
-            .select('id, slug, nome_urna, partido_atual, uf_sede, foto_url, casa, ano, total, n_notas')
-            .order('total', { ascending: false });
-        if (error) { console.error('getRadaresPorCasaEAno:', error.message); return {}; }
+        // ⚠️ O Supabase corta em 1.000 linhas por requisicao. A radar_gastos ja tem ~1.560,
+        // e ordenada por valor as primeiras mil sao todas Camara/Senado/SP: os gastos estaduais
+        // do RS sao menores (cota mensal ~R$27 mil contra ~R$54 mil da federal) e ficavam TODOS
+        // abaixo do corte. Resultado: a aba do RS aparecia sem ranking como se nao houvesse dado.
+        // Por isso paginamos ate acabar, em vez de confiar numa consulta unica.
+        const PAGINA = 1000;
+        const todas = [];
+        for (let inicio = 0; ; inicio += PAGINA) {
+            const { data: pagina, error } = await supabase
+                .from('radar_gastos')
+                .select('id, slug, nome_urna, partido_atual, uf_sede, foto_url, casa, ano, total, n_notas')
+                .order('total', { ascending: false })
+                .range(inicio, inicio + PAGINA - 1);
+            if (error) { console.error('getRadaresPorCasaEAno:', error.message); break; }
+            todas.push(...(pagina || []));
+            if (!pagina || pagina.length < PAGINA) break;
+        }
+        if (!todas.length) return {};
 
         const fora = {};
-        for (const linha of data || []) {
+        for (const linha of todas) {
             if (!linha.casa || !linha.ano) continue;
             fora[linha.casa] = fora[linha.casa] || { anos: [], porAno: {}, totais: {} };
             const balde = fora[linha.casa];
