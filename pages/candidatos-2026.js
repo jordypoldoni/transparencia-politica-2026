@@ -36,7 +36,7 @@ function CardCandidatoPresidencial({ pessoa, papel }) {
 function ListaPresidente({ chapas }) {
   if (chapas.length === 0) return <p style={{ color: t.cor.cinza }}>Nenhum candidato coletado ainda.</p>;
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '14px' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(300px, 100%), 1fr))', gap: '14px' }}>
       {chapas.map((c) => (
         <Link key={c.nr_candidato || c.presidente.slug} href={`/presidencial/${c.presidente.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
           <div style={{ background: t.cor.papelCartao, borderRadius: t.raio.md, padding: '18px', height: '100%', minWidth: 0, overflow: 'hidden', boxShadow: t.sombra.clicavel, transition: 'box-shadow .15s ease, transform .15s ease' }}
@@ -171,7 +171,7 @@ function ListaDeputadoFederal({ dadosIniciais, resumo, filtrosIniciais, paginaIn
       {!carregando && dados.itens.length === 0 ? (
         <p style={{ color: t.cor.cinza }}>Nenhum candidato encontrado com esses filtros, tente limpar a busca ou trocar de estado.</p>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '12px', opacity: carregando ? 0.5 : 1, transition: 'opacity .15s' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(280px, 100%), 1fr))', gap: '12px', opacity: carregando ? 0.5 : 1, transition: 'opacity .15s' }}>
           {dados.itens.map((d) => <CardDeputadoFederal key={d.id} d={d} />)}
         </div>
       )}

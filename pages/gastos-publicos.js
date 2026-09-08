@@ -75,7 +75,7 @@ export default function GastosPublicos({ uniao, estados = [], gastosFuncao = [] 
       )}
 
       {/* Explorar um ente */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px,1fr))', gap: '12px', marginBottom: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(260px, 100%),1fr))', gap: '12px', marginBottom: '24px' }}>
         <div style={{ background: t.cor.papelCartao, borderRadius: t.raio.md, padding: '18px', boxShadow: t.sombra.sutil }}>
           <p style={{ margin: '0 0 10px', fontWeight: 700, fontSize: '0.9rem' }}>Ver um estado ou o DF</p>
           <CampoSelect opcoes={estadoOpcoes} placeholder="Escolha o estado" aoLabel="Estado" icone={<Pino />} aoSelecionar={(cod) => router.push(`/ente/${cod}`)} />

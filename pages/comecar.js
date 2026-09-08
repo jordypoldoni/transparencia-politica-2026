@@ -60,7 +60,7 @@ export default function Comecar({ modo, temasDisponiveis, ufSel, temasSel, deput
           <section style={{ marginBottom: '40px' }}>
             <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.5rem', margin: '0 0 16px' }}>Seus deputados ({ufSel})</h2>
             {deputados.length > 0 ? (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px,1fr))', gap: '12px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(240px, 100%),1fr))', gap: '12px' }}>
                 {deputados.map((d) => (
                   <Link key={d.id} href={`/deputado/${d.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                     <div style={{ background: '#fff', borderRadius: t.raio.md, padding: '14px', display: 'flex', gap: '12px', alignItems: 'center', boxShadow: t.sombra.clicavel, transition: 'box-shadow .15s, transform .15s' }}

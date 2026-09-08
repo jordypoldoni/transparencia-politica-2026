@@ -86,6 +86,22 @@ export default function App({ Component, pageProps }) {
           .grafico-mes--lista { display: block; }
         }
 
+        /* Linhas de ranking e de etapas de votacao.
+           Nas duas o problema era o mesmo: varias colunas de largura fixa numa linha que nao
+           quebra. Em ~327px de area util no celular a soma nao cabe, e em vez de quebrar a linha
+           empurrava o conteudo para fora da tela (a pagina ficava com rolagem horizontal e o
+           valor cortado). Aqui elas passam a quebrar. */
+        .radar-linha { display: flex; align-items: center; gap: 14px; min-width: 0; }
+        .radar-nome { min-width: 0; }
+        .etapa-linha { display: flex; align-items: center; gap: 10px; min-width: 0; }
+
+        @media (max-width: 520px) {
+          .radar-linha { flex-wrap: wrap; gap: 10px 12px; }
+          .radar-linha .radar-valor { width: 100%; text-align: left; padding-left: 40px; }
+          .etapa-linha { flex-wrap: wrap; gap: 6px 10px; }
+          .etapa-linha .etapa-papel { min-width: 0; }
+        }
+
         @keyframes surgir {
           from { opacity: 0; transform: translateY(10px); }
           to { opacity: 1; transform: translateY(0); }

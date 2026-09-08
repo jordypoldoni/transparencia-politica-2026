@@ -165,12 +165,15 @@ export default function Votacoes({ votacoes, temas = [] }) {
                       const h = hv(v);
                       const papel = papelVotacao(v.descricao);
                       const aprov = h.status === 'Aprovado';
+                      // .etapa-linha (CSS em _app.js): as quatro colunas nao cabem nos ~327px
+                      // de tela util do celular; a linha quebra em vez de empurrar o cartao
+                      // para fora da viewport.
                       return (
-                        <Link key={i} href={`/votacao/${v.votacao_id_externa}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 10px', borderRadius: t.raio.sm, background: t.cor.papelQuente, transition: 'background .12s' }}
+                        <Link key={i} href={`/votacao/${v.votacao_id_externa}`} className="etapa-linha" style={{ textDecoration: 'none', color: 'inherit', padding: '8px 10px', borderRadius: t.raio.sm, background: t.cor.papelQuente, transition: 'background .12s' }}
                           onMouseOver={(e) => { e.currentTarget.style.background = t.cor.papelQuente2; }}
                           onMouseOut={(e) => { e.currentTarget.style.background = t.cor.papelQuente; }}>
                           <span style={{ flexShrink: 0, width: '8px', height: '8px', borderRadius: '50%', background: h.status ? (aprov ? t.cor.sim : t.cor.nao) : t.cor.cinza }} />
-                          <span style={{ flexShrink: 0, fontSize: '0.8rem', fontWeight: 700, color: t.cor.tinta, minWidth: '96px' }}>{papel}</span>
+                          <span style={{ flexShrink: 0, fontSize: '0.8rem', fontWeight: 700, color: t.cor.tinta, minWidth: '96px' }} className="etapa-papel">{papel}</span>
                           <span style={{ flex: 1, minWidth: 0, fontSize: '0.8rem', color: h.status ? (aprov ? t.cor.sim : t.cor.nao) : t.cor.cinza, fontWeight: 600 }}>
                             {h.status || 'Sem resultado'}{h.sim != null ? ` · ${h.sim}×${h.nao}` : ''}
                           </span>

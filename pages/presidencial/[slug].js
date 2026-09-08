@@ -64,7 +64,7 @@ export default function PerfilPresidenciavel({ candidato, colega, canonical }) {
 
       <section style={{ background: t.cor.papelCartao, borderRadius: t.raio.md, padding: 'clamp(18px,3vw,26px)', boxShadow: t.sombra.sutil, marginBottom: '20px' }}>
         <h2 style={{ fontSize: '1rem', margin: '0 0 16px' }}>Quem é</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '18px 24px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(180px, 100%), 1fr))', gap: '18px 24px' }}>
           <DadoBio rotulo="Nome completo" valor={c.nome_completo} />
           <DadoBio rotulo="Idade" valor={idade(c.data_nascimento) ? `${idade(c.data_nascimento)} anos` : null} />
           <DadoBio rotulo="Naturalidade" valor={c.naturalidade_uf} />
@@ -91,7 +91,7 @@ export default function PerfilPresidenciavel({ candidato, colega, canonical }) {
           <>
             {Array.isArray(c.resumo_proposta) && c.resumo_proposta.length > 0 ? (
               <>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '20px 28px', marginBottom: '18px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(260px, 100%), 1fr))', gap: '20px 28px', marginBottom: '18px' }}>
                   {c.resumo_proposta.map((bloco) => (
                     <div key={bloco.tema}>
                       <p style={{ margin: '0 0 6px', fontWeight: 700, fontSize: '0.9rem', color: t.cor.ouro }}>{bloco.tema}</p>

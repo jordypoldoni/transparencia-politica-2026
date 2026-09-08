@@ -104,7 +104,7 @@ export default function Votacao({ meta, votos }) {
                 <span style={{ color: t.cor.cinza }}>{aberto ? '▲' : '▼'}</span>
               </button>
               {aberto && (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '6px', padding: '6px', background: t.cor.papelQuente }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(240px, 100%), 1fr))', gap: '6px', padding: '6px', background: t.cor.papelQuente }}>
                   {doTipo.map((v, i) => (
                     <Link key={i} href={v.slug ? `/deputado/${v.slug}` : '#'} style={{ textDecoration: 'none', color: 'inherit', padding: '10px 14px', background: '#fff', borderRadius: t.raio.sm, display: 'block' }}>
                       <span style={{ display: 'block', fontWeight: 600, fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{v.nome}</span>

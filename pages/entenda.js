@@ -63,7 +63,7 @@ export default function Entenda() {
 
         {/* O QUE FAZ CADA UM */}
         <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.6rem', margin: '0 0 16px' }}>O que faz cada um?</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '14px', marginBottom: '20px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px, 100%), 1fr))', gap: '14px', marginBottom: '20px' }}>
           {CARGOS.map((c) => (
             <div key={c.nome} style={cartao}>
               <h3 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.2rem', margin: '0 0 4px' }}>{c.nome}</h3>
@@ -102,7 +102,7 @@ export default function Entenda() {
           <p style={{ margin: '0 0 14px', fontSize: '0.9rem', color: t.cor.tinta }}>
             Vai de <strong>R$ 41.612,55</strong> (Distrito Federal, o mais perto) a <strong>R$ 58.474,70</strong> (Roraima, o mais longe).
           </p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '8px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(200px, 100%), 1fr))', gap: '8px' }}>
             {CEAP_LISTA.map(({ uf, nome, valor }) => (
               <div key={uf} style={{ background: t.cor.papelQuente, padding: '10px 14px', borderRadius: t.raio.sm, boxShadow: t.sombra.sutil, display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '8px' }}>
                 <span style={{ fontSize: '0.85rem', color: t.cor.tinta }}><strong>{uf}</strong> <span style={{ color: t.cor.cinza, fontSize: '0.78rem' }}>{nome}</span></span>
@@ -117,7 +117,7 @@ export default function Entenda() {
         <div style={{ ...cartao, marginBottom: '20px' }}>
           <h3 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.1rem', margin: '0 0 4px' }}>Dentro da cota, há tetos por tipo de gasto</h3>
           <p style={{ margin: '0 0 14px', fontSize: '0.9rem', color: t.cor.cinza }}>Mesmo dentro do valor total, alguns gastos têm limite próprio:</p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '10px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(240px, 100%), 1fr))', gap: '10px' }}>
             {SUBLIMITES.map(([item, lim]) => (
               <div key={item} style={{ background: t.cor.papelQuente, borderRadius: '8px', padding: '12px 14px', boxShadow: t.sombra.sutil }}>
                 <p style={{ margin: 0, fontSize: '0.88rem', color: t.cor.tinta }}>{item}</p>

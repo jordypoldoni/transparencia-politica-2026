@@ -201,17 +201,19 @@ export default function Parlamentares({ deputados, qInicial, ufInicial, casaInic
               Dados temporariamente indisponíveis. Tente recarregar a página.
             </p>
           ) : (
-            <ol style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: '8px' }}>
+            <ol style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: '8px' }}>
               {radar.map((p, i) => (
                 <li key={p.id}>
-                  <Link href={`/deputado/${p.slug}`} style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '14px', background: 'rgba(255,255,255,0.07)', borderRadius: '6px', padding: '12px 16px' }}>
+                  {/* .radar-linha (CSS em _app.js): no celular a linha quebra e o valor desce
+                      para a linha de baixo. Sem isso o valor era empurrado para fora da tela. */}
+                  <Link href={`/deputado/${p.slug}`} className="radar-linha" style={{ textDecoration: 'none', color: 'inherit', background: 'rgba(255,255,255,0.07)', borderRadius: '6px', padding: '12px 16px' }}>
                     <span style={{ flexShrink: 0, width: '26px', fontFamily: t.fonte.titulo, fontWeight: 600, color: t.cor.ouro, fontSize: '1.2rem' }}>{i + 1}</span>
                     <Avatar nome={p.nome_urna} foto={p.foto_url} size={44} />
-                    <span style={{ flex: 1, minWidth: 0 }}>
+                    <span className="radar-nome" style={{ flex: 1, minWidth: 0 }}>
                       <span style={{ display: 'block', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.nome_urna}</span>
                       <span style={{ fontSize: '0.82rem', opacity: 0.75 }}>{p.partido_atual} · {p.uf_sede} · em {p.n_notas} {assembleia && !assembleia.gastoDetalhado ? 'lançamentos' : 'notas'}</span>
                     </span>
-                    <span style={{ flexShrink: 0, textAlign: 'right' }}>
+                    <span className="radar-valor" style={{ flexShrink: 0, textAlign: 'right' }}>
                       <span style={{ display: 'block', fontWeight: 800, fontSize: '1.05rem' }}>{brl(p.total)}</span>
                       <span style={{ fontSize: '0.72rem', opacity: 0.7 }}>ver no quê →</span>
                     </span>
@@ -244,7 +246,7 @@ export default function Parlamentares({ deputados, qInicial, ufInicial, casaInic
       </div>
 
       {filtrados.length > 0 ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '14px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(260px, 100%), 1fr))', gap: '14px' }}>
           {filtrados.map((d) => (
             <Link key={d.id} href={`/deputado/${d.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
               <div style={{ background: t.cor.papelCartao, borderRadius: t.raio.md, padding: '16px', display: 'flex', gap: '14px', alignItems: 'center', height: '100%', boxShadow: t.sombra.clicavel, transition: 'box-shadow .15s ease, transform .15s ease' }}

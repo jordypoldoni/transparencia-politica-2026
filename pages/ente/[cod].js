@@ -53,7 +53,7 @@ export default function EntePanorama({ dados }) {
       {resumo ? (
         <>
           {/* Arrecadação vs. despesa */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px', marginBottom: '14px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(220px, 100%), 1fr))', gap: '14px', marginBottom: '14px' }}>
             <CardNum rotulo="Arrecadou (receita)" valor={brlCompacto(resumo.receita_total)} sub={porHab(resumo.receita_total, pop)} cor={t.cor.sim} />
             <CardNum rotulo="Gastou (despesa)" valor={brlCompacto(resumo.despesa_total)} sub={porHab(resumo.despesa_total, pop)} cor={t.cor.ouroTexto} />
             <CardNum

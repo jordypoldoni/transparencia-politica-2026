@@ -119,7 +119,7 @@ export default function Home({ votacoes, parlamentares = [], uniao = null, estad
             <Link href="/candidatos-2026" style={{ fontSize: '0.85rem', fontWeight: 700, color: t.cor.ouroTexto, textDecoration: 'none' }}>Ver Presidente e Deputado Federal →</Link>
           </div>
           <p style={{ color: t.cor.cinza, fontSize: '0.92rem', margin: '0 0 16px' }}>Quem disputa a Presidência e a Câmara dos Deputados, o partido e a situação da candidatura de cada um, sem opinião, direto da fonte oficial (TSE).</p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '12px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(220px, 100%), 1fr))', gap: '12px' }}>
             {chapas.slice(0, 8).map((c) => (
               <Link key={c.nr_candidato || c.presidente.slug} href={`/presidencial/${c.presidente.slug}`}
                 style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '12px', background: t.cor.papelCartao, borderRadius: t.raio.md, padding: '14px', boxShadow: t.sombra.clicavel }}>
@@ -138,7 +138,7 @@ export default function Home({ votacoes, parlamentares = [], uniao = null, estad
 
       {/* COMO FUNCIONA — logo no topo, para orientar */}
       <section style={{ padding: '8px 24px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(240px, 100%), 1fr))', gap: '16px' }}>
           {[
             { n: '01', tit: 'Busque seu representante', txt: 'Pelo nome ou pelo estado. Sem cadastro.' },
             { n: '02', tit: 'Entenda em 1 minuto', txt: 'Traduzimos votos e gastos pra qualquer pessoa, sem juridiquês.' },
@@ -173,7 +173,7 @@ export default function Home({ votacoes, parlamentares = [], uniao = null, estad
           </Link>
         )}
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px,1fr))', gap: '12px', marginBottom: '16px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(260px, 100%),1fr))', gap: '12px', marginBottom: '16px' }}>
           <div style={{ background: t.cor.papelCartao, borderRadius: t.raio.md, padding: '18px', boxShadow: t.sombra.sutil }}>
             <p style={{ margin: '0 0 10px', fontWeight: 700, fontSize: '0.9rem' }}>Orçamento do seu estado</p>
             <CampoSelect opcoes={estadoOpcoes} placeholder="Escolha o estado" aoLabel="Estado" icone={<Pino />} aoSelecionar={(cod) => router.push(`/ente/${cod}`)} />

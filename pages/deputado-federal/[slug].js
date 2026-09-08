@@ -104,7 +104,7 @@ export default function PerfilDeputadoFederal({ candidato, canonical }) {
           sobre um mandato que não existe. */}
       {m && (
         <section style={{ marginBottom: '26px' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(230px, 1fr))', gap: '14px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(230px, 100%), 1fr))', gap: '14px' }}>
             {m.gasto && (
               <Numero
                 valor={brl(m.gasto.total)}
@@ -169,7 +169,7 @@ export default function PerfilDeputadoFederal({ candidato, canonical }) {
 
       <section style={{ background: t.cor.papelCartao, borderRadius: t.raio.md, padding: 'clamp(18px,3vw,26px)', boxShadow: t.sombra.sutil, marginBottom: '20px' }}>
         <h2 style={{ fontSize: '1rem', margin: '0 0 16px' }}>Quem é</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '18px 24px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(200px, 100%), 1fr))', gap: '18px 24px' }}>
           <DadoBio rotulo="Nome completo" valor={c.nome_completo} />
           <DadoBio rotulo="Concorre por" valor={nomeUf ? `${nomeUf} (${c.uf})` : c.uf} />
           <DadoBio rotulo="Idade" valor={idade(c.data_nascimento) ? `${idade(c.data_nascimento)} anos` : null} />
