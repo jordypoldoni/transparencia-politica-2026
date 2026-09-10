@@ -188,9 +188,27 @@ export default function PerfilPolitico({ dados }) {
   ].filter(Boolean);
   const ancora = { scrollMarginTop: '112px' }; // compensa header + barra fixa ao rolar até a âncora
 
-  const ehEstadual = perfil.casa_legislativa === 'estadual' || (perfil.fonte_api || '').includes('alesp');
+  // A casa do parlamentar sai do fonte_api ('alesp' | 'alergs' | url da camara | url do senado).
+  // BUG CORRIGIDO EM 10/09/2026: fonteNome era fixo em 'ALESP' para qualquer estadual, entao
+  // todo perfil de deputado do RS creditava o dado a assembleia de Sao Paulo - inclusive na
+  // imagem de compartilhamento. Num site de transparencia isso e erro factual, nao cosmetico.
+  const fonteApi = (perfil.fonte_api || '').toLowerCase();
+  const ehAlesp = fonteApi.includes('alesp');
+  const ehAlergs = fonteApi.includes('alergs');
+  const ehEstadual = perfil.casa_legislativa === 'estadual' || ehAlesp || ehAlergs;
+  const ehSenado = fonteApi.includes('senado');
   const rotuloCota = ehEstadual ? 'cota (verba de gabinete) ?' : 'cota parlamentar ?';
-  const fonteNome = ehEstadual ? 'ALESP' : (perfil.fonte_api || '').includes('senado') ? 'Senado Federal' : 'Câmara dos Deputados';
+  const fonteNome = ehAlergs ? 'ALERGS'
+    : ehAlesp ? 'ALESP'
+    : ehEstadual ? 'Assembleia Legislativa'
+    : ehSenado ? 'Senado Federal'
+    : 'Câmara dos Deputados';
+  // Versão com preposição, para frases do tipo "cadastro oficial da ...".
+  const fonteNomeCom = ehSenado ? `do ${fonteNome}` : `da ${fonteNome}`;
+  // A ALERGS publica APENAS o agregado mensal por categoria - nao ha nota fiscal nem
+  // fornecedor (ver coletores/coletor_gastos_alergs.js). Falar em "notas fiscais" no perfil
+  // de um deputado gaucho descreve um dado que nao existe, entao o vocabulario muda por casa.
+  const temNotaFiscal = !ehAlergs;
   // % do teto mensal da cota — federal (CEAP), senador (CEAPS) e estadual-SP (verba ALESP)
   const tetoInfo = pctDoTeto({ fonteApi: perfil.fonte_api, casa: perfil.casa_legislativa, uf: perfil.uf_sede }, mediaAno || media_mensal);
   // Valores do ANO SELECIONADO (reativo ao seletor de ano)
@@ -201,10 +219,12 @@ export default function PerfilPolitico({ dados }) {
 
   const linkOficial = () => {
     const id = (perfil.id_externo_api || '').split('-').pop();
-    if ((perfil.fonte_api || '').includes('camara')) return `https://www.camara.leg.br/deputados/${id}`;
-    if ((perfil.fonte_api || '').includes('senado')) return `https://www25.senado.leg.br/web/senadores/senador/-/perfil/${id}`;
-    if ((perfil.fonte_api || '').includes('alesp')) return `https://www.al.sp.gov.br/deputado/?matricula=${id}`;
-    return '#';
+    if (fonteApi.includes('camara')) return `https://www.camara.leg.br/deputados/${id}`;
+    if (ehSenado) return `https://www25.senado.leg.br/web/senadores/senador/-/perfil/${id}`;
+    if (ehAlesp) return `https://www.al.sp.gov.br/deputado/?matricula=${id}`;
+    // ALERGS: ainda nao temos o formato verificado da URL de perfil individual. Preferimos
+    // NAO ter link a mandar o leitor para uma pagina inventada que pode nao existir.
+    return null;
   };
 
   const compartilhar = async () => {
@@ -338,7 +358,7 @@ export default function PerfilPolitico({ dados }) {
           {temBio ? (
             <>
               <p style={{ color: t.cor.cinza, fontSize: '0.9rem', margin: '0 0 20px' }}>
-                Dados de identificação do parlamentar, direto do cadastro oficial da {fonteNome}.
+                Dados de identificação do parlamentar, direto do cadastro oficial {fonteNomeCom}.
               </p>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px 32px' }}>
                 <DadoBio rotulo="Nome civil" valor={perfil.nome_completo && perfil.nome_completo !== perfil.nome_urna ? perfil.nome_completo : null} />
@@ -422,7 +442,7 @@ export default function PerfilPolitico({ dados }) {
               </div>
             )}
             <p style={{ color: t.cor.cinza, fontSize: '0.9rem', margin: '0 0 18px', lineHeight: 1.5 }}>
-              Quanto {perfil.nome_urna} usou da verba em cada mês de <strong>{anoSel}</strong>: cada barra é a soma das notas fiscais daquele mês.
+              Quanto {perfil.nome_urna} usou da verba em cada mês de <strong>{anoSel}</strong>: cada barra é a soma {temNotaFiscal ? 'das notas fiscais' : 'das despesas publicadas'} daquele mês.
             </p>
 
             {/* O valor de cada mês fica SEMPRE visível. Antes só aparecia no hover, o que
@@ -469,7 +489,7 @@ export default function PerfilPolitico({ dados }) {
                 <span style={{ fontSize: '0.9rem', color: t.cor.cinza }}>{dadosAno.meses_com_gasto} {dadosAno.meses_com_gasto === 1 ? 'mês' : 'meses'} com gasto</span>
               </div>
               <p style={{ margin: 0, fontSize: '0.82rem', color: t.cor.cinza, lineHeight: 1.5 }}>
-                <strong style={{ color: t.cor.tinta }}>Como a média é calculada:</strong> somamos todas as notas de {anoSel} e dividimos pelo número de meses com gasto registrado ({dadosAno.meses_com_gasto}). Meses sem nota não entram na conta, por isso a média pode ficar acima do gasto de um mês isolado. Fonte: {fonteNome}.
+                <strong style={{ color: t.cor.tinta }}>Como a média é calculada:</strong> somamos {temNotaFiscal ? 'todas as notas' : 'todas as despesas publicadas'} de {anoSel} e dividimos pelo número de meses com gasto registrado ({dadosAno.meses_com_gasto}). Meses sem {temNotaFiscal ? 'nota' : 'despesa'} não entram na conta, por isso a média pode ficar acima do gasto de um mês isolado. Fonte: {fonteNome}.
               </p>
             </div>
           </Secao>
@@ -735,7 +755,7 @@ export default function PerfilPolitico({ dados }) {
             </>
           ) : (
             <div style={{ padding: '16px', background: t.cor.papelQuente, borderRadius: t.raio.md }}>
-              {ehEstadual ? (
+              {ehAlesp ? (
                 <>
                   <p style={{ margin: '0 0 6px', fontWeight: 600, color: t.cor.tinta, fontSize: '0.92rem' }}>Votações da ALESP ainda não disponíveis</p>
                   <p style={{ margin: 0, color: t.cor.cinza, fontSize: '0.86rem', lineHeight: 1.5 }}>
@@ -759,7 +779,9 @@ export default function PerfilPolitico({ dados }) {
             </p>
             <div style={{ display: 'flex', gap: '10px' }}>
               <button onClick={() => setModal(false)} style={{ ...pilula, flex: 1, justifyContent: 'center', background: '#fff', color: t.cor.tinta, boxShadow: t.sombra.clicavel }}>Cancelar</button>
-              <a href={linkOficial()} target="_blank" rel="noopener noreferrer" onClick={() => setModal(false)} style={{ ...pilula, flex: 1, justifyContent: 'center', background: t.cor.verde, color: t.cor.ouro }}>Prosseguir →</a>
+              {linkOficial() && (
+                <a href={linkOficial()} target="_blank" rel="noopener noreferrer" onClick={() => setModal(false)} style={{ ...pilula, flex: 1, justifyContent: 'center', background: t.cor.verde, color: t.cor.ouro }}>Prosseguir →</a>
+              )}
             </div>
           </div>
         </div>
