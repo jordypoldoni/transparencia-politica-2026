@@ -198,14 +198,18 @@ export default function PerfilPolitico({ dados }) {
   const ehEstadual = perfil.casa_legislativa === 'estadual' || ehAlesp || ehAlergs;
   const ehSenado = fonteApi.includes('senado');
   const rotuloCota = ehEstadual ? 'cota (verba de gabinete) ?' : 'cota parlamentar ?';
-  const fonteNome = ehAlergs ? 'ALERGS'
+  // A sigla oficial da assembleia gaucha e ALRS (tambem grafada AL-RS); "ALERGS" e forma
+  // corrente mas incorreta, e estava no codigo. Aqui vai o nome por extenso de proposito:
+  // "Fonte: AL-RS" nao diz nada para o leitor comum, e a regra do site e nao pressupor
+  // conhecimento. ALESP fica na sigla porque e amplamente reconhecida.
+  const fonteNome = ehAlergs ? 'Assembleia Legislativa do RS'
     : ehAlesp ? 'ALESP'
     : ehEstadual ? 'Assembleia Legislativa'
     : ehSenado ? 'Senado Federal'
     : 'Câmara dos Deputados';
   // Versão com preposição, para frases do tipo "cadastro oficial da ...".
   const fonteNomeCom = ehSenado ? `do ${fonteNome}` : `da ${fonteNome}`;
-  // A ALERGS publica APENAS o agregado mensal por categoria - nao ha nota fiscal nem
+  // A assembleia gaucha (ALRS) publica APENAS o agregado mensal por categoria - nao ha nota fiscal nem
   // fornecedor (ver coletores/coletor_gastos_alergs.js). Falar em "notas fiscais" no perfil
   // de um deputado gaucho descreve um dado que nao existe, entao o vocabulario muda por casa.
   const temNotaFiscal = !ehAlergs;
@@ -222,7 +226,7 @@ export default function PerfilPolitico({ dados }) {
     if (fonteApi.includes('camara')) return `https://www.camara.leg.br/deputados/${id}`;
     if (ehSenado) return `https://www25.senado.leg.br/web/senadores/senador/-/perfil/${id}`;
     if (ehAlesp) return `https://www.al.sp.gov.br/deputado/?matricula=${id}`;
-    // ALERGS: ainda nao temos o formato verificado da URL de perfil individual. Preferimos
+    // ALRS: ainda nao temos o formato verificado da URL de perfil individual. Preferimos
     // NAO ter link a mandar o leitor para uma pagina inventada que pode nao existir.
     return null;
   };

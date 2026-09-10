@@ -21,7 +21,7 @@ const brl = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency:
 // do Sul"): o artigo varia por estado e montar isso na mão dá "de Rio Grande do Sul".
 const ASSEMBLEIAS = [
   { casa: 'Assembleia (SP)', uf: 'SP', sigla: 'ALESP', nomeCom: 'de São Paulo', gastos: true, gastoDetalhado: true, votos: false },
-  { casa: 'Assembleia (RS)', uf: 'RS', sigla: 'ALERGS', nomeCom: 'do Rio Grande do Sul', gastos: true, gastoDetalhado: false, votos: true },
+  { casa: 'Assembleia (RS)', uf: 'RS', sigla: 'AL-RS', nomeCom: 'do Rio Grande do Sul', gastos: true, gastoDetalhado: false, votos: true },
 ];
 const assembleiaDe = (casa) => ASSEMBLEIAS.find((a) => a.casa === casa) || null;
 
