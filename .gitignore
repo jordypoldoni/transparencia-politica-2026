@@ -21,3 +21,8 @@ agentes_politicos_rows.csv
 
 # Material de exploração de marca (fica só na máquina, não vai pro deploy)
 public/logos/
+
+# Estado local do gerador de resumos (contador diario de tokens da Groq) - nao versionar
+coletores/_orcamento_resumos.json
+# Backup da versao anterior do gerador, guardado so na maquina - o historico do git ja cobre
+coletores/_gerar_resumo_propostas.ANTIGO.js
