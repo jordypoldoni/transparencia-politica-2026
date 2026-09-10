@@ -226,8 +226,9 @@ export default function PerfilPolitico({ dados }) {
     if (fonteApi.includes('camara')) return `https://www.camara.leg.br/deputados/${id}`;
     if (ehSenado) return `https://www25.senado.leg.br/web/senadores/senador/-/perfil/${id}`;
     if (ehAlesp) return `https://www.al.sp.gov.br/deputado/?matricula=${id}`;
-    // ALRS: ainda nao temos o formato verificado da URL de perfil individual. Preferimos
-    // NAO ter link a mandar o leitor para uma pagina inventada que pode nao existir.
+    // Assembleia do RS: o portal usa /deputados/<id>, e o id e o mesmo numero que guardamos
+    // em id_externo_api ('ALERGS-2144' -> 2144). Formato conferido no portal em 10/09/2026.
+    if (ehAlergs) return `https://ww4.al.rs.gov.br/deputados/${id}`;
     return null;
   };
 
