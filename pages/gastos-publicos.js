@@ -32,15 +32,26 @@ export default function GastosPublicos({ uniao, estados = [], gastosFuncao = [] 
   const [funcaoSel, setFuncaoSel] = useState('Saúde');
   const funcaoAtiva = funcoes.includes(funcaoSel) ? funcaoSel : (funcoes[0] || null);
 
-  const ranking = useMemo(() => (
+  // 'maiores' | 'menores'. Mesma razao do ranking de parlamentares: mostrar so uma ponta
+  // sugere qual e a historia. Com as duas, o leitor tem a referencia e decide sozinho.
+  const [sentido, setSentido] = useState('maiores');
+
+  const rankingBase = useMemo(() => (
     gastosFuncao
       .filter((g) => g.funcao === funcaoAtiva && g.populacao)
       .map((g) => ({ ...g, por_hab: g.valor / g.populacao }))
       .sort((a, b) => b.por_hab - a.por_hab)
   ), [gastosFuncao, funcaoAtiva]);
 
+  const ranking = useMemo(() => (
+    sentido === 'menores' ? [...rankingBase].reverse() : rankingBase
+  ), [rankingBase, sentido]);
+
   const funcaoOpcoes = funcoes.map((f) => ({ valor: f, rotulo: f, busca: f }));
-  const maxHab = ranking.length ? ranking[0].por_hab : 1;
+  // A barra sempre se mede contra o MAIOR gasto da area, nas duas visoes. Se a referencia
+  // virasse o primeiro da lista invertida, o menor gastador apareceria com a barra cheia -
+  // desenho que sugere o oposto do que o numero diz.
+  const maxHab = rankingBase.length ? rankingBase[0].por_hab : 1;
 
   return (
     <div className="pagina">
@@ -88,10 +99,41 @@ export default function GastosPublicos({ uniao, estados = [], gastosFuncao = [] 
 
       {/* Ranking por função */}
       <div style={{ background: t.cor.papelCartao, borderRadius: t.raio.lg, padding: 'clamp(20px,3vw,32px)', boxShadow: t.sombra.sutil }}>
-        <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.4rem', margin: '0 0 6px' }}>Quem mais gasta em cada área</h2>
+        <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.4rem', margin: '0 0 6px' }}>
+          {sentido === 'menores' ? 'Quem menos gasta em cada área' : 'Quem mais gasta em cada área'}
+        </h2>
         <p style={{ color: t.cor.cinza, fontSize: '0.9rem', margin: '0 0 16px', lineHeight: 1.5 }}>
-          Escolha a área e veja os <strong>estados e o DF</strong> que mais gastam nela <strong>por habitante</strong> (despesa liquidada ÷ população). Dividir pela população deixa a comparação justa entre entes de tamanhos diferentes.
+          Escolha a área e veja os <strong>estados e o DF</strong> que {sentido === 'menores' ? 'menos gastam' : 'mais gastam'} nela <strong>por habitante</strong> (despesa liquidada ÷ população). Dividir pela população deixa a comparação justa entre entes de tamanhos diferentes.
         </p>
+
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', margin: '0 0 16px' }} role="group" aria-label="Sentido do ranking">
+          {[{ k: 'maiores', r: 'Quem mais gasta' }, { k: 'menores', r: 'Quem menos gasta' }].map(({ k, r }) => {
+            const ativo = sentido === k;
+            return (
+              <button
+                key={k}
+                onClick={() => setSentido(k)}
+                aria-pressed={ativo}
+                style={{
+                  padding: '7px 16px', fontSize: '0.86rem', fontWeight: 700, fontFamily: t.fonte.corpo,
+                  borderRadius: t.raio.pill, cursor: 'pointer', border: 'none',
+                  background: ativo ? t.cor.ouro : t.cor.papelQuente2,
+                  color: ativo ? t.cor.verde : t.cor.ouroTexto,
+                }}
+              >
+                {r}
+              </button>
+            );
+          })}
+        </div>
+
+        {sentido === 'menores' && (
+          <p style={{ color: t.cor.cinza, fontSize: '0.84rem', margin: '0 0 16px', lineHeight: 1.5, maxWidth: '64ch' }}>
+            Gastar menos por habitante não significa, sozinho, gastar melhor ou pior: pode refletir
+            prioridade orçamentária diferente, população maior diluindo o valor, ou despesa
+            registrada em outra função. Tire suas próprias conclusões com base nos dados.
+          </p>
+        )}
 
         <div style={{ maxWidth: '340px', marginBottom: '18px' }}>
           <CampoSelect opcoes={funcaoOpcoes} valor={funcaoAtiva || ''} placeholder="Escolha a área" aoLabel="Área do gasto" aoSelecionar={setFuncaoSel} />

@@ -349,7 +349,7 @@ const ServicoAPI = {
         for (let inicio = 0; ; inicio += PAGINA) {
             const { data: pagina, error } = await supabase
                 .from('radar_gastos')
-                .select('id, slug, nome_urna, partido_atual, uf_sede, foto_url, casa, ano, total, n_notas')
+                .select('id, slug, nome_urna, partido_atual, uf_sede, foto_url, casa, ano, total, n_notas, meses_com_gasto, situacao_atual, condicao_eleitoral')
                 .order('total', { ascending: false })
                 .range(inicio, inicio + PAGINA - 1);
             if (error) { console.error('getRadaresPorCasaEAno:', error.message); break; }
@@ -358,18 +358,31 @@ const ServicoAPI = {
         }
         if (!todas.length) return {};
 
+        // Guardamos as DUAS pontas. Mostrar so quem mais gastou e, por si, uma escolha
+        // editorial: sugere que gastar mais e a historia. Com as duas pontas o leitor ganha
+        // a regua que falta para julgar se um valor e alto ou baixo, e o site nao precisa
+        // opinar. O custo e zero: as ~1.560 linhas ja foram todas baixadas aqui.
         const fora = {};
         for (const linha of todas) {
             if (!linha.casa || !linha.ano) continue;
-            fora[linha.casa] = fora[linha.casa] || { anos: [], porAno: {}, totais: {} };
+            fora[linha.casa] = fora[linha.casa] || { anos: [], porAno: {}, porAnoMenores: {}, totais: {} };
             const balde = fora[linha.casa];
             balde.porAno[linha.ano] = balde.porAno[linha.ano] || [];
+            balde.porAnoMenores[linha.ano] = balde.porAnoMenores[linha.ano] || [];
             balde.totais[linha.ano] = (balde.totais[linha.ano] || 0) + 1;
             // ja vem ordenado por total desc; so corta no limite
             if (balde.porAno[linha.ano].length < limite) balde.porAno[linha.ano].push(linha);
+            // a outra ponta: mantem uma janela deslizante com os `limite` menores vistos ate aqui
+            const menores = balde.porAnoMenores[linha.ano];
+            menores.push(linha);
+            if (menores.length > limite) menores.shift();
         }
         for (const casa of Object.keys(fora)) {
             fora[casa].anos = Object.keys(fora[casa].porAno).map(Number).sort((a, b) => b - a);
+            // do menor para o maior, que e a leitura natural de "quem menos usou"
+            for (const ano of Object.keys(fora[casa].porAnoMenores)) {
+                fora[casa].porAnoMenores[ano].reverse();
+            }
         }
         return fora;
     },

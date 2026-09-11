@@ -49,13 +49,18 @@ export default function Parlamentares({ deputados, qInicial, ufInicial, casaInic
   const grupo = casa === 'Senado' ? 'senador' : 'deputado';
   const assembleia = assembleiaDe(casa); // null quando a aba é federal ou Senado
   // Ranking de gastos da casa ativa (troca junto com as abas e com a rota Senadores).
-  const radarCasa = radares[casa] || { anos: [], porAno: {}, totais: {} };
+  const radarCasa = radares[casa] || { anos: [], porAno: {}, porAnoMenores: {}, totais: {} };
   const [ano, setAno] = useState(null);
+  // 'maiores' | 'menores'. Mostrar so quem mais gastou sugere que gastar mais e a historia;
+  // as duas pontas dao ao leitor a referencia para julgar sozinho, que e a regra do site.
+  const [sentido, setSentido] = useState('maiores');
   // Ao trocar de aba, volta para o ano padrão daquela casa: cada fonte publica até um ponto
   // diferente, então fixar o ano entre abas mostraria ranking vazio sem motivo aparente.
   useEffect(() => { setAno(anoPadrao(radarCasa.anos, radarCasa.totais)); }, [casa]); // eslint-disable-line react-hooks/exhaustive-deps
   const anoAtivo = ano ?? anoPadrao(radarCasa.anos, radarCasa.totais);
-  const radar = anoAtivo ? (radarCasa.porAno[anoAtivo] || []) : [];
+  const radar = anoAtivo
+    ? (sentido === 'menores' ? (radarCasa.porAnoMenores?.[anoAtivo] || []) : (radarCasa.porAno[anoAtivo] || []))
+    : [];
   const anoMaisNovo = radarCasa.anos[0] ?? null;
   // O ano corrente ficou de fora do padrão por estar incompleto? A tela explica, em vez de
   // deixar o leitor achar que o site está desatualizado.
@@ -146,19 +151,44 @@ export default function Parlamentares({ deputados, qInicial, ufInicial, casaInic
       <section style={{ margin: '0 0 28px' }}>
         <div style={{ background: t.cor.verde, borderRadius: t.raio.lg, padding: 'clamp(20px,3.5vw,32px)', color: '#fff' }}>
           <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.3rem,2.6vw,1.7rem)', margin: '0 0 6px' }}>
-            Quem mais usou a verba pública
+            {sentido === 'menores' ? 'Quem menos usou a verba pública' : 'Quem mais usou a verba pública'}
           </h2>
           <p style={{ color: 'rgba(255,255,255,0.82)', maxWidth: '64ch', lineHeight: 1.5, margin: '0 0 18px', fontSize: '0.92rem' }}>
-            {casa === 'Senado'
-              ? `Senadores que mais usaram a cota (CEAPS) em ${anoAtivo}.`
-              : assembleia
-              ? `Deputados estaduais de ${assembleia.uf} que mais usaram a verba de gabinete em ${anoAtivo}.`
-              : `Deputados federais que mais usaram a cota parlamentar em ${anoAtivo}.`}{' '}
+            {(() => {
+              const verbo = sentido === 'menores' ? 'menos usaram' : 'mais usaram';
+              if (casa === 'Senado') return `Senadores que ${verbo} a cota (CEAPS) em ${anoAtivo}.`;
+              if (assembleia) return `Deputados estaduais de ${assembleia.uf} que ${verbo} a verba de gabinete em ${anoAtivo}.`;
+              return `Deputados federais que ${verbo} a cota parlamentar em ${anoAtivo}.`;
+            })()}{' '}
             {assembleia && !assembleia.gastoDetalhado
               ? 'Toque para ver em quê: o valor é o somado das categorias que a assembleia publica a cada mês, sem detalhe de nota.'
               : <>Toque para ver <em>em quê</em>.</>}{' '}
             Fonte: {casa === 'Senado' ? 'Senado Federal' : assembleia ? assembleia.sigla : 'Câmara dos Deputados'}.
           </p>
+
+          {/* As duas pontas do ranking. Os dados de ambas ja vieram juntos (a consulta baixa
+              todas as linhas), entao a troca e instantanea, sem nova requisicao. */}
+          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', margin: '0 0 14px' }} role="group" aria-label="Sentido do ranking">
+            {[{ k: 'maiores', r: 'Quem mais usou' }, { k: 'menores', r: 'Quem menos usou' }].map(({ k, r }) => {
+              const ativo = sentido === k;
+              return (
+                <button
+                  key={k}
+                  onClick={() => setSentido(k)}
+                  aria-pressed={ativo}
+                  style={{
+                    padding: '7px 16px', fontSize: '0.86rem', fontWeight: 700, fontFamily: t.fonte.corpo,
+                    borderRadius: t.raio.pill, cursor: 'pointer',
+                    border: ativo ? 'none' : '1px solid rgba(255,255,255,0.35)',
+                    background: ativo ? t.cor.ouro : 'transparent',
+                    color: ativo ? t.cor.verde : 'rgba(255,255,255,0.9)',
+                  }}
+                >
+                  {r}
+                </button>
+              );
+            })}
+          </div>
 
           {/* Seletor de ano. Os dados de todos os anos já vieram juntos, então a troca é
               instantânea, sem nova requisição. */}
@@ -196,6 +226,14 @@ export default function Parlamentares({ deputados, qInicial, ufInicial, casaInic
               ainda não publicou o ano inteiro. Por isso o padrão é {anoAtivo}. O ano segue disponível acima.
             </p>
           )}
+          {sentido === 'menores' && (
+            <p style={{ color: 'rgba(255,255,255,0.78)', fontSize: '0.84rem', lineHeight: 1.5, margin: '0 0 16px', maxWidth: '64ch' }}>
+              Gasto baixo nem sempre quer dizer economia: pode ser parlamentar que assumiu no meio
+              do ano, ficou licenciado, ou cuja prestação de contas ainda não foi publicada. Por
+              isso cada linha mostra em quantos dos 12 meses houve lançamento, e a situação atual
+              de quem não está em exercício. Tire suas próprias conclusões com base nos dados.
+            </p>
+          )}
           {radar.length === 0 ? (
             <p style={{ color: 'rgba(255,255,255,0.55)', margin: 0, fontSize: '0.95rem' }}>
               Dados temporariamente indisponíveis. Tente recarregar a página.
@@ -211,7 +249,22 @@ export default function Parlamentares({ deputados, qInicial, ufInicial, casaInic
                     <Avatar nome={p.nome_urna} foto={p.foto_url} size={44} />
                     <span className="radar-nome" style={{ flex: 1, minWidth: 0 }}>
                       <span style={{ display: 'block', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.nome_urna}</span>
-                      <span style={{ fontSize: '0.82rem', opacity: 0.75 }}>{p.partido_atual} · {p.uf_sede} · em {p.n_notas} {assembleia && !assembleia.gastoDetalhado ? 'lançamentos' : 'notas'}</span>
+                      <span style={{ fontSize: '0.82rem', opacity: 0.75 }}>
+                        {p.partido_atual} · {p.uf_sede} · em {p.n_notas} {assembleia && !assembleia.gastoDetalhado ? 'lançamentos' : 'notas'}
+                        {/* Meses com lançamento distingue quem gastou pouco de quem esteve pouco
+                            tempo em exercício. Só aparece na ponta de baixo, que é onde a dúvida
+                            existe; no topo seria ruído. */}
+                        {sentido === 'menores' && p.meses_com_gasto ? ` · ${p.meses_com_gasto} de 12 meses` : ''}
+                      </span>
+                      {/* "Situação atual" com todas as letras, de propósito: o cadastro guarda o
+                          estado de HOJE, não o daquele ano. Escrever só "Licença" faria o leitor
+                          atribuir a um ano passado uma condição que pode ser recente. */}
+                      {sentido === 'menores' && p.situacao_atual && p.situacao_atual !== 'Exercício' && (
+                        <span style={{ display: 'block', fontSize: '0.78rem', marginTop: '2px', color: t.cor.ouro }}>
+                          Situação atual: {p.situacao_atual}
+                          {p.condicao_eleitoral && p.condicao_eleitoral !== 'Titular' ? ` (${p.condicao_eleitoral})` : ''}
+                        </span>
+                      )}
                     </span>
                     <span className="radar-valor" style={{ flexShrink: 0, textAlign: 'right' }}>
                       <span style={{ display: 'block', fontWeight: 800, fontSize: '1.05rem' }}>{brl(p.total)}</span>
