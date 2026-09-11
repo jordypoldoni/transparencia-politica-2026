@@ -86,3 +86,17 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         continue-on-error: true
         run: node coletores/coletor_gastos_alergs.js $(date -u +%Y)
+
+      # Proposicoes dos federais e senadores. Ate 11/09/2026 isso so era atualizado quando
+      # alguem rodava coletor_biografia.js a mao — e esse nunca esteve neste agendamento, entao
+      # as proposicoes ficavam congeladas por meses. O coletor_proposicoes existe separado
+      # justamente para caber aqui: faz uma coisa so, e proposicao muda toda semana enquanto
+      # biografia quase nunca muda.
+      # continue-on-error: se a API da Camara estiver fora do ar, os outros passos ja rodaram
+      # e nao faz sentido marcar a execucao inteira como falha.
+      - name: Proposições mais recentes (Câmara e Senado)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        continue-on-error: true
+        run: node coletores/coletor_proposicoes.js
