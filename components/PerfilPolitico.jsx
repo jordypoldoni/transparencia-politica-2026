@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { t } from '../src/estilo/tokens';
 import Avatar from './Avatar';
 import { pctDoTeto } from '../src/lib/cotas';
+import { nomeTipoProposicao } from '../src/lib/proposicoes';
 import { explicarTipo, agruparPorMateria, papelVotacao, situacaoCidada } from '../src/lib/votacao';
 
 const brl = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v || 0);
@@ -150,7 +151,57 @@ export default function PerfilPolitico({ dados }) {
   const comissoes = Array.isArray(perfil.comissoes) ? perfil.comissoes : [];
   const frentes = Array.isArray(perfil.frentes) ? perfil.frentes : [];
   // Só proposições com conteúdo exibível — evita "cards fantasma" se algum campo vier vazio.
-  const proposicoes = (Array.isArray(perfil.proposicoes) ? perfil.proposicoes : []).filter((p) => p && (p.ementa || p.tipo || p.numero));
+  const proposicoes = (Array.isArray(perfil.proposicoes) ? perfil.proposicoes : [])
+    .filter((p) => p && (p.ementa || p.tipo || p.numero))
+    // Mais recentes primeiro. A ALRS manda data por proposicao; a Camara nao. Quando nao ha
+    // data, mantem a ordem da fonte - inventar ordenacao seria pior que respeitar a origem.
+    .sort((a, b) => {
+      const da = a.data || `${a.ano || ''}`, db = b.data || `${b.ano || ''}`;
+      if (!da || !db) return 0;
+      return db.localeCompare(da);
+    });
+  // ATENCAO A ORDEM: estes estados precisam vir ANTES de `proposicoesExibidas`, que os le.
+  // Declarar depois causa TDZ ("Cannot access before initialization") no build de producao -
+  // a mesma armadilha ja documentada mais abaixo para `dadosAno`/`secoes`.
+  const PROPOSICOES_INICIAIS = 20;
+  const [verTodasProposicoes, setVerTodasProposicoes] = useState(false);
+  // Lista completa buscada na hora na fonte oficial (federais e senadores). Fica null ate o
+  // leitor pedir: guardar as 258 mil proposicoes deles no banco custaria ~112 MB.
+  const [proposicoesCompletas, setProposicoesCompletas] = useState(null);
+  const [carregandoProposicoes, setCarregandoProposicoes] = useState(false);
+  const [erroProposicoes, setErroProposicoes] = useState(null);
+
+  // Subconjunto que cria ou altera norma. Null quando a fonte nao permite separar.
+  const nProjetos = typeof perfil.n_projetos === 'number' ? perfil.n_projetos : null;
+  // Total declarado pela fonte; cai para o tamanho da lista quando a fonte nao informa.
+  const totalProposicoes = typeof perfil.n_proposicoes === 'number' && perfil.n_proposicoes >= proposicoes.length
+    ? perfil.n_proposicoes
+    : proposicoes.length;
+  // Temos tudo no banco? (caso dos estaduais, cujo volume e pequeno)
+  const listaCompletaNoBanco = proposicoes.length >= totalProposicoes;
+  const proposicoesExibidas = verTodasProposicoes
+    ? (proposicoesCompletas || proposicoes)
+    : proposicoes.slice(0, PROPOSICOES_INICIAIS);
+
+  async function alternarTodasProposicoes() {
+    if (verTodasProposicoes) { setVerTodasProposicoes(false); return; }
+    // Ja temos tudo (no banco ou de uma busca anterior): so expande, sem ir na rede de novo.
+    if (listaCompletaNoBanco || proposicoesCompletas) { setVerTodasProposicoes(true); return; }
+    setCarregandoProposicoes(true);
+    setErroProposicoes(null);
+    try {
+      const r = await fetch(`/api/proposicoes?id=${perfil.id}`);
+      const j = await r.json();
+      if (!r.ok || j.erro) throw new Error(j.erro || 'falha');
+      setProposicoesCompletas(Array.isArray(j.proposicoes) ? j.proposicoes : []);
+      setVerTodasProposicoes(true);
+    } catch (e) {
+      // Erro honesto: lista vazia seria lida como "nao propos nada", o que e diferente.
+      setErroProposicoes('Não foi possível carregar a lista completa agora. A fonte oficial não respondeu.');
+    } finally {
+      setCarregandoProposicoes(false);
+    }
+  }
   const ocupacoes = Array.isArray(perfil.ocupacoes) ? perfil.ocupacoes : [];
   const cargosAnteriores = Array.isArray(perfil.cargos_anteriores) ? perfil.cargos_anteriores : [];
   const areasAtuacao = Array.isArray(perfil.areas_atuacao) ? perfil.areas_atuacao.filter(Boolean) : [];
@@ -170,6 +221,11 @@ export default function PerfilPolitico({ dados }) {
   const temBio = !!(idade || naturalidade || perfil.escolaridade || perfil.profissao || perfil.email_oficial || redes.length || perfil.situacao || ocupacoes.length || cargosAnteriores.length || telContato || areasAtuacao.length || filiacoes.length || mandatoResumo || baseEleitoral || biografiaTexto);
   const temTrajetoria = ocupacoes.length > 0 || cargosAnteriores.length > 0 || filiacoes.length > 1;
 
+  // Quantas proposicoes aparecem antes de o leitor pedir o resto.
+  // CONTEXTO (11/09/2026): os deputados federais tem ~16 proposicoes, mas os estaduais do RS
+  // passaram a ter ~151 depois do coletor da ALRS, e a lista era renderizada inteira - 151
+  // cartoes de uma vez. O corte resolve os dois lados do problema: nao despeja tudo, e o
+  // botao da acesso a lista COMPLETA, que antes nao existia em lugar nenhum.
   const [anoSel, setAnoSel] = useState(ano_referencia);
   const dadosAno = serie_mensal.find((s) => s.ano === anoSel) || serie_mensal[0] || null;
   const maxMes = dadosAno ? Math.max(...dadosAno.meses.map((m) => m.valor), 1) : 1;
@@ -648,21 +704,84 @@ export default function PerfilPolitico({ dados }) {
           {proposicoes.length > 0 ? (
             <>
               <p style={{ color: t.cor.cinza, fontSize: '0.9rem', margin: '0 0 18px', lineHeight: 1.5 }}>
-                Projetos de lei, emendas e outras propostas que {perfil.nome_urna} apresentou neste mandato
-                {typeof perfil.n_proposicoes === 'number' ? <>, <strong style={{ color: t.cor.tinta }}>{perfil.n_proposicoes}</strong> no total{perfil.n_proposicoes > proposicoes.length ? ` (mostrando as ${proposicoes.length} mais recentes)` : ''}</> : null}. Propor não é o mesmo que aprovar. Fonte: {fonteNome}.
+                O que {perfil.nome_urna} apresentou neste mandato.
+                {/* TRES numeros que nao podem ser confundidos:
+                    - n_projetos: só o que cria ou altera norma (projeto de lei, PEC...);
+                    - n_proposicoes: TUDO, incluindo requerimento, parecer de relator e emenda;
+                    - proposicoes.length: quanto disso esta guardado aqui.
+                    Exibir so o total fazia a tela dizer "13.782 proposições" embaixo de um
+                    titulo que o leitor entende como projetos de lei. Correto na contagem,
+                    enganoso na leitura - e enganar sem mentir continua sendo enganar. */}
+                {nProjetos != null && totalProposicoes > nProjetos ? (
+                  <> <strong style={{ color: t.cor.tinta }}>{nProjetos.toLocaleString('pt-BR')}</strong> {nProjetos === 1 ? 'projeto de lei ou proposta de emenda' : 'projetos de lei e propostas de emenda'}, e mais <strong style={{ color: t.cor.tinta }}>{(totalProposicoes - nProjetos).toLocaleString('pt-BR')}</strong> requerimentos, pareceres e emendas.</>
+                ) : totalProposicoes ? (
+                  <> <strong style={{ color: t.cor.tinta }}>{totalProposicoes.toLocaleString('pt-BR')}</strong> no total.</>
+                ) : null}
+                {totalProposicoes > proposicoes.length
+                  ? <> Abaixo, as {proposicoes.length} mais recentes{!verTodasProposicoes && proposicoes.length > PROPOSICOES_INICIAIS ? ` (exibindo ${PROPOSICOES_INICIAIS})` : ''}.</>
+                  : !verTodasProposicoes && proposicoes.length > PROPOSICOES_INICIAIS
+                    ? <> Abaixo, as {PROPOSICOES_INICIAIS} mais recentes.</>
+                    : null}
+                {' '}Propor não é o mesmo que aprovar. Fonte: {fonteNome}.
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                {proposicoes.map((p, i) => (
+                {proposicoesExibidas.map((p, i) => (
                   <div key={i} style={{ background: t.cor.papelQuente, borderRadius: t.raio.md, padding: '12px 14px' }}>
                     {(p.tipo || p.numero || p.ano) && (
                       <span style={{ display: 'inline-block', fontSize: '0.72rem', fontWeight: 700, color: t.cor.ouroTexto, marginBottom: '3px' }}>
-                        {[p.tipo, p.numero].filter(Boolean).join(' ')}{p.ano ? `/${p.ano}` : ''}
+                        {/* Por extenso primeiro: "Requerimento de Informação" diz ao leitor
+                            comum o que "RIC" esconde. A sigla e o numero ficam ao lado, para
+                            quem ja conhece e para quem for procurar na fonte. */}
+                        {nomeTipoProposicao(p.tipo) || p.tipo}
+                        {(p.tipo || p.numero) && (
+                          <span style={{ fontWeight: 500, opacity: 0.75 }}>
+                            {' · '}{[p.tipo, p.numero].filter(Boolean).join(' ')}{p.ano ? `/${p.ano}` : ''}
+                          </span>
+                        )}
                       </span>
                     )}
                     {p.ementa && <p style={{ margin: 0, fontSize: '0.88rem', lineHeight: 1.45, color: t.cor.tinta }}>{p.ementa}</p>}
+                    {/* Situacao, local e data so existem em fontes que publicam isso (a ALRS publica,
+                        a Camara nao). Nada aparece quando o campo nao vem - sem caixa vazia. */}
+                    {(p.situacao || p.local || p.data || p.link) && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px', marginTop: '8px', fontSize: '0.78rem', color: t.cor.cinza }}>
+                        {p.situacao && <span><strong style={{ color: t.cor.tinta, fontWeight: 600 }}>Situação:</strong> {p.situacao}</span>}
+                        {p.local && <span>· {p.local}</span>}
+                        {p.data && <span>· {String(p.data).split('-').reverse().join('/')}</span>}
+                        {p.link && (
+                          <a href={p.link} target="_blank" rel="noopener noreferrer" style={{ color: t.cor.ouroTexto, fontWeight: 600, textDecoration: 'none' }}>
+                            ver na fonte
+                          </a>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
+              {totalProposicoes > PROPOSICOES_INICIAIS && (
+                <div style={{ marginTop: '14px' }}>
+                  <button
+                    type="button"
+                    onClick={alternarTodasProposicoes}
+                    disabled={carregandoProposicoes}
+                    style={{ padding: '10px 20px', borderRadius: t.raio.pill, border: 'none', background: t.cor.papelQuente2 || t.cor.papelQuente, color: t.cor.ouroTexto, fontWeight: 700, fontSize: '0.86rem', cursor: carregandoProposicoes ? 'progress' : 'pointer', boxShadow: t.sombra.clicavel, opacity: carregandoProposicoes ? 0.7 : 1 }}
+                  >
+                    {carregandoProposicoes
+                      ? 'Buscando na fonte oficial…'
+                      : verTodasProposicoes
+                        ? `Mostrar só as ${PROPOSICOES_INICIAIS} mais recentes`
+                        : `Ver todas as ${totalProposicoes} proposições`}
+                  </button>
+                  {!listaCompletaNoBanco && !verTodasProposicoes && !carregandoProposicoes && (
+                    <p style={{ margin: '8px 0 0', fontSize: '0.78rem', color: t.cor.cinza }}>
+                      A lista completa é buscada na hora, direto {fonteNomeCom}.
+                    </p>
+                  )}
+                  {erroProposicoes && (
+                    <p style={{ margin: '8px 0 0', fontSize: '0.82rem', color: t.cor.tinta }}>{erroProposicoes}</p>
+                  )}
+                </div>
+              )}
             </>
           ) : (
             <p style={{ margin: '6px 0 0', color: t.cor.cinza, fontSize: '0.9rem', lineHeight: 1.5 }}>
