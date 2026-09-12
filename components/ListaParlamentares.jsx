@@ -53,14 +53,20 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
   // Ao trocar de aba, volta para o ano padrão daquela casa: cada fonte publica até um ponto
   // diferente, então fixar o ano entre abas mostraria ranking vazio sem motivo aparente.
   useEffect(() => { setAno(anoPadrao(radarCasa.anos, radarCasa.totais)); }, [casa]); // eslint-disable-line react-hooks/exhaustive-deps
-  const anoAtivo = ano ?? anoPadrao(radarCasa.anos, radarCasa.totais);
+  const padraoDaCasa = anoPadrao(radarCasa.anos, radarCasa.totais);
+  const anoAtivo = ano ?? padraoDaCasa;
   const radar = anoAtivo
     ? (sentido === 'menores' ? (radarCasa.porAnoMenores?.[anoAtivo] || []) : (radarCasa.porAno[anoAtivo] || []))
     : [];
   const anoMaisNovo = radarCasa.anos[0] ?? null;
-  // O ano corrente ficou de fora do padrão por estar incompleto? A tela explica, em vez de
-  // deixar o leitor achar que o site está desatualizado.
-  const anoIncompleto = anoMaisNovo && anoAtivo !== anoMaisNovo ? anoMaisNovo : null;
+  // 🐛 CORRIGIDO EM 12/09/2026. A conta era `anoAtivo !== anoMaisNovo`, ou seja: bastava o
+  // leitor CLICAR num ano mais antigo para a tela anunciar que o ano corrente estava
+  // incompleto e que o ano clicado "e o padrao". Nas abas estaduais, onde 2026 esta mais
+  // completo que 2025, isso fazia a tela afirmar duas coisas falsas ao mesmo tempo.
+  // O aviso e sobre A FONTE estar incompleta, e quem sabe disso e o anoPadrao(): se ele
+  // recuou para tras do ano mais novo, o ano mais novo esta incompleto - independente do
+  // que o leitor escolheu depois.
+  const anoIncompleto = (padraoDaCasa && anoMaisNovo && padraoDaCasa !== anoMaisNovo) ? anoMaisNovo : null;
 
   // ---- Expansao do ranking, de 10 em 10 -------------------------------------------------
   // Os 10 primeiros vem no payload da pagina; o resto e buscado em /api/radar quando o
@@ -361,10 +367,13 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
               si sendo sobre coisas diferentes. */}
           {anoIncompleto && (
             <p className="nota-ano">
-              <strong>{anoAtivo}</strong> é o padrão porque {anoIncompleto} ainda tem só{' '}
+              <strong>{anoIncompleto} ainda está incompleto:</strong> a fonte publicou{' '}
               {radarCasa.totais[anoIncompleto]}{' '}
-              {radarCasa.totais[anoIncompleto] === 1 ? 'parlamentar publicado' : 'parlamentares publicados'}{' '}
-              pela fonte.
+              {radarCasa.totais[anoIncompleto] === 1 ? 'parlamentar' : 'parlamentares'}, contra{' '}
+              {radarCasa.totais[padraoDaCasa]} em {padraoDaCasa}.
+              {/* So diz "por isso o padrao e X" quando o leitor esta MESMO no padrao: se ele
+                  trocou de ano na mao, a frase seria falsa. */}
+              {anoAtivo === padraoDaCasa ? ` Por isso o padrão é ${padraoDaCasa}.` : ''}
             </p>
           )}
 
