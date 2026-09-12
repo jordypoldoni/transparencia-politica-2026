@@ -156,7 +156,12 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
   // pedem isso ("diferenciacao sem bordas coloridas"); a versao anterior deste botao usava
   // uma linha cinza de contorno e destoava do resto.
   const pilulaPagina = (desativado) => ({
-    padding: '9px 18px', fontSize: '0.86rem', fontWeight: 700, fontFamily: t.fonte.corpo,
+    // inline-flex + justify/align center + minWidth igual nos dois: com padding simetrico e
+    // texto de larguras diferentes ("Anterior" x "Proxima"), a capsula muda de tamanho e o
+    // texto parece descentralizado. lineHeight 1 tira a folga que a fonte deixa em cima.
+    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+    minWidth: '124px', lineHeight: 1, textAlign: 'center',
+    padding: '12px 20px', fontSize: '0.86rem', fontWeight: 700, fontFamily: t.fonte.corpo,
     borderRadius: t.raio.pill, cursor: desativado ? 'default' : 'pointer',
     border: 'none', background: t.cor.verde, color: t.cor.ouro,
     boxShadow: desativado ? 'none' : t.sombra.clicavel,
@@ -480,11 +485,11 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
           <div style={{ marginTop: '16px', display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
             <button onClick={() => irPara(paginaAtual - 1)} disabled={paginaAtual === 1} style={pilulaPagina(paginaAtual === 1)}
               onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}>
-              ← Anterior
+              Anterior
             </button>
             <button onClick={() => irPara(paginaAtual + 1)} disabled={paginaAtual === totalPaginas} style={pilulaPagina(paginaAtual === totalPaginas)}
               onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}>
-              Próxima →
+              Próxima
             </button>
             <span style={{ fontSize: '0.85rem', color: t.cor.cinza }}>
               Página {paginaAtual} de {totalPaginas} · mostrando {(paginaAtual - 1) * POR_PAGINA + 1} a {(paginaAtual - 1) * POR_PAGINA + daPagina.length} de {filtrados.length}
