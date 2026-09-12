@@ -155,25 +155,24 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
   // Botao do site: indigo com texto ambar, SEM borda, com sombra. Os proprios tokens ja
   // pedem isso ("diferenciacao sem bordas coloridas"); a versao anterior deste botao usava
   // uma linha cinza de contorno e destoava do resto.
-  // Botao dentro do cartao escuro do ranking. Indigo sobre indigo nao funciona, entao o
-  // inativo e superficie branca translucida e o ativo e ambar com texto indigo. Sem borda,
-  // com sombra (regra das Diretrizes). Estava repetido em tres lugares antes de 12/09/2026.
-  const SOMBRA_ESCURA = { ativo: '0 2px 10px rgba(0,0,0,0.22)', inativo: '0 1px 4px rgba(0,0,0,0.14)' };
-  const pilulaEscura = (ativo) => ({
-    padding: '7px 16px', fontSize: '0.86rem', fontWeight: 700, fontFamily: t.fonte.corpo,
-    borderRadius: t.raio.pill, cursor: 'pointer', border: 'none',
-    background: ativo ? t.cor.ouro : 'rgba(255,255,255,0.14)',
-    color: ativo ? t.cor.verde : '#fff',
-    boxShadow: ativo ? SOMBRA_ESCURA.ativo : SOMBRA_ESCURA.inativo,
-    transition: 'box-shadow .15s ease, transform .15s ease',
+  // SEGMENTED CONTROL do cartao escuro. As opcoes vivem dentro de um trilho (.trilho no
+  // _app.js): o trilho e a superficie recuada, e a opcao ativa e a pastilha que sobe, com
+  // sombra. E por isso que aqui a opcao inativa NAO leva sombra propria: a regra "todo botao
+  // com sombra" vale para botao solto; dentro de um trilho, sombra em tudo vira ruido e some
+  // com a nocao de qual esta escolhida.
+  const segmento = (ativo) => ({
+    padding: '8px 16px', fontSize: '0.85rem', fontWeight: 700, fontFamily: t.fonte.corpo,
+    borderRadius: t.raio.pill, cursor: 'pointer', border: 'none', lineHeight: 1,
+    background: ativo ? t.cor.ouro : 'transparent',
+    color: ativo ? t.cor.verde : 'rgba(255,255,255,0.82)',
+    boxShadow: ativo ? '0 2px 8px rgba(0,0,0,0.30)' : 'none',
+    transition: 'background .15s ease, color .15s ease, box-shadow .15s ease',
   });
-  const realceEscuro = (e, ligar, ativo) => {
-    e.currentTarget.style.boxShadow = ligar ? '0 8px 20px rgba(0,0,0,0.26)' : (ativo ? SOMBRA_ESCURA.ativo : SOMBRA_ESCURA.inativo);
-    e.currentTarget.style.transform = ligar ? 'translateY(-1px)' : 'none';
+  const realceSegmento = (e, dentro, ativo) => {
+    if (ativo) return; // a pastilha acesa nao muda no hover: ela ja e o estado atual
+    e.currentTarget.style.background = dentro ? 'rgba(255,255,255,0.12)' : 'transparent';
+    e.currentTarget.style.color = dentro ? '#fff' : 'rgba(255,255,255,0.82)';
   };
-  // Ressalva dentro do cartao escuro: menor e mais apagada que o controle, para o olho
-  // separar aviso de escolha.
-  const notaCartao = { color: 'rgba(255,255,255,0.72)', fontSize: '0.82rem', lineHeight: 1.5, margin: '10px 0 0', maxWidth: '52ch' };
 
   const pilulaPagina = (desativado) => ({
     // inline-flex + justify/align center + minWidth igual nos dois: com padding simetrico e
@@ -288,78 +287,92 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
       {mostraRanking && (
       <section style={{ margin: '0 0 28px' }}>
         <div style={{ background: t.cor.verde, borderRadius: t.raio.lg, padding: 'clamp(20px,3.5vw,32px)', color: '#fff' }}>
-          {/* Titulo NEUTRO desde 12/09/2026: ele dizia "Quem mais usou a verba publica" e o
-              botao aceso logo abaixo repetia a mesma frase a 40px de distancia. Quem responde
-              a pergunta agora e o botao; o titulo so nomeia a secao. */}
-          <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.3rem,2.6vw,1.7rem)', margin: '0 0 6px' }}>
-            Uso da verba pública
-          </h2>
-          <p style={{ color: 'rgba(255,255,255,0.82)', maxWidth: '64ch', lineHeight: 1.5, margin: '0 0 18px', fontSize: '0.92rem' }}>
-            {(() => {
-              const verbo = sentido === 'menores' ? 'menos usaram' : 'mais usaram';
-              if (casa === 'Senado') return `Senadores que ${verbo} a cota (CEAPS) em ${anoAtivo}.`;
-              if (assembleia) return `Deputados estaduais de ${assembleia.uf} que ${verbo} a verba de gabinete em ${anoAtivo}.`;
-              return `Deputados federais que ${verbo} a cota parlamentar em ${anoAtivo}.`;
-            })()}{' '}
-            {assembleia && !assembleia.gastoDetalhado
-              ? 'Toque para ver em quê: o valor é o somado das categorias que a assembleia publica a cada mês, sem detalhe de nota.'
-              : <>Toque para ver <em>em quê</em>.</>}{' '}
-            Fonte: {casa === 'Senado' ? 'Senado Federal' : assembleia ? assembleia.sigla : 'Câmara dos Deputados'}.
-          </p>
+          {/* CABECALHO DO PAINEL: identidade a esquerda, numero do conjunto a direita.
+              O contador ("508 com gasto registrado") vivia solto ao lado das pilulas de ano,
+              competindo com elas: ele NAO e controle, e um dado sobre o conjunto, entao subiu
+              para o cabecalho, que e onde se le "o que estou vendo". */}
+          <div className="painel-topo">
+            <div style={{ minWidth: 0 }}>
+              {/* Titulo neutro: ele dizia "Quem mais usou a verba publica" e o botao aceso
+                  repetia a mesma frase 40px abaixo. Quem responde a pergunta e o controle. */}
+              <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.3rem,2.6vw,1.7rem)', margin: '0 0 6px' }}>
+                Uso da verba pública
+              </h2>
+              <p style={{ color: 'rgba(255,255,255,0.78)', maxWidth: '58ch', lineHeight: 1.55, margin: 0, fontSize: '0.92rem' }}>
+                {(() => {
+                  const verbo = sentido === 'menores' ? 'menos usaram' : 'mais usaram';
+                  if (casa === 'Senado') return `Senadores que ${verbo} a cota (CEAPS) em ${anoAtivo}.`;
+                  if (assembleia) return `Deputados estaduais de ${assembleia.uf} que ${verbo} a verba de gabinete em ${anoAtivo}.`;
+                  return `Deputados federais que ${verbo} a cota parlamentar em ${anoAtivo}.`;
+                })()}{' '}
+                {assembleia && !assembleia.gastoDetalhado
+                  ? 'Toque para ver em quê: o valor é o somado das categorias que a assembleia publica a cada mês, sem detalhe de nota.'
+                  : <>Toque para ver <em>em quê</em>.</>}{' '}
+                Fonte: {casa === 'Senado' ? 'Senado Federal' : assembleia ? assembleia.sigla : 'Câmara dos Deputados'}.
+              </p>
+            </div>
+            {radarCasa.totais[anoAtivo] > 0 && (
+              <p className="painel-meta">
+                <strong>{radarCasa.totais[anoAtivo]}</strong>
+                com gasto registrado em {anoAtivo}
+              </p>
+            )}
+          </div>
 
-          {/* Controles em UMA faixa, e cada ressalva embaixo do controle a que ela se refere.
-              Antes os tres blocos (ponta do ranking, ano, e a explicacao do ano incompleto)
-              vinham empilhados e colados a esquerda, com o mesmo peso visual: o olho nao
-              separava o que era escolha do que era aviso, e a metade direita do cartao ficava
-              vazia. Agora: escolha da ponta a esquerda, periodo a direita, e a metade que
-              sobrava passou a carregar as ressalvas. */}
-          <div className="controles-ranking">
-            <div>
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }} role="group" aria-label="Sentido do ranking">
-                {[{ k: 'maiores', r: 'Quem mais usou' }, { k: 'menores', r: 'Quem menos usou' }].map(({ k, r }) => (
-                  <button key={k} onClick={() => setSentido(k)} aria-pressed={sentido === k}
-                    style={pilulaEscura(sentido === k)}
-                    onMouseOver={(e) => realceEscuro(e, true)}
-                    onMouseOut={(e) => realceEscuro(e, false, sentido === k)}>
-                    {r}
+          {/* BARRA DE CONTROLES: os dois seletores como segmented control, cada um no seu
+              trilho, lado a lado e juntos a esquerda.
+              Versao anterior (12/09/2026, rejeitada): as pilulas soltas nas duas pontas de uma
+              linha de 1080px. Empurrar para as pontas nao "aproveita o espaco", abre um buraco
+              no meio e faz dois controles irmaos parecerem coisas sem relacao. O trilho tambem
+              resolve outra coisa: pilula solta com sombra nao diz que as opcoes sao
+              excludentes; um trilho com a opcao acesa deslizando dentro, sim. */}
+          <div className="barra-controles">
+            <div className="trilho" role="group" aria-label="Sentido do ranking">
+              {[{ k: 'maiores', r: 'Quem mais usou' }, { k: 'menores', r: 'Quem menos usou' }].map(({ k, r }) => (
+                <button key={k} onClick={() => setSentido(k)} aria-pressed={sentido === k}
+                  style={segmento(sentido === k)}
+                  onMouseOver={(e) => realceSegmento(e, true, sentido === k)}
+                  onMouseOut={(e) => realceSegmento(e, false, sentido === k)}>
+                  {r}
+                </button>
+              ))}
+            </div>
+            {radarCasa.anos.length > 1 && (
+              <div className="trilho" role="group" aria-label="Ano do ranking">
+                {radarCasa.anos.map((a) => (
+                  <button key={a} onClick={() => setAno(a)} aria-pressed={a === anoAtivo}
+                    style={segmento(a === anoAtivo)}
+                    onMouseOver={(e) => realceSegmento(e, true, a === anoAtivo)}
+                    onMouseOut={(e) => realceSegmento(e, false, a === anoAtivo)}>
+                    {a}
                   </button>
                 ))}
               </div>
+            )}
+          </div>
+
+          {/* RESSALVAS: um lugar so, logo abaixo dos controles, em texto menor e mais apagado.
+              Antes ficavam empilhadas junto dos botoes com o mesmo peso, e o olho nao separava
+              o que era escolha do que era aviso. */}
+          {(anoIncompleto || sentido === 'menores') && (
+            <div className="notas-painel">
+              {anoIncompleto && (
+                <p>
+                  <strong>{anoIncompleto}</strong> aparece com apenas {radarCasa.totais[anoIncompleto]}{' '}
+                  {radarCasa.totais[anoIncompleto] === 1 ? 'parlamentar' : 'parlamentares'}, porque a fonte
+                  ainda não publicou o ano inteiro. Por isso o padrão é {anoAtivo}.
+                </p>
+              )}
               {sentido === 'menores' && (
-                <p style={notaCartao}>
-                  Gasto baixo nem sempre quer dizer economia: pode ser parlamentar que assumiu no meio
-                  do ano, ficou licenciado, ou cuja prestação de contas ainda não foi publicada. Por
-                  isso cada linha mostra em quantos dos 12 meses houve lançamento, e a situação atual
-                  de quem não está em exercício. Tire suas próprias conclusões com base nos dados.
+                <p>
+                  <strong>Gasto baixo nem sempre quer dizer economia.</strong> Pode ser parlamentar que
+                  assumiu no meio do ano, ficou licenciado, ou cuja prestação de contas ainda não foi
+                  publicada. Por isso cada linha mostra em quantos dos 12 meses houve lançamento, e a
+                  situação atual de quem não está em exercício.
                 </p>
               )}
             </div>
-
-            {radarCasa.anos.length > 1 && (
-              <div className="lado-dir">
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }} role="group" aria-label="Ano do ranking">
-                  {radarCasa.anos.map((a) => (
-                    <button key={a} onClick={() => setAno(a)} aria-pressed={a === anoAtivo}
-                      style={pilulaEscura(a === anoAtivo)}
-                      onMouseOver={(e) => realceEscuro(e, true)}
-                      onMouseOut={(e) => realceEscuro(e, false, a === anoAtivo)}>
-                      {a}
-                    </button>
-                  ))}
-                  <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)' }}>
-                    {radarCasa.totais[anoAtivo]} com gasto registrado
-                  </span>
-                </div>
-                {anoIncompleto && (
-                  <p style={notaCartao}>
-                    {anoIncompleto} aparece com apenas {radarCasa.totais[anoIncompleto]}{' '}
-                    {radarCasa.totais[anoIncompleto] === 1 ? 'parlamentar' : 'parlamentares'}, porque a fonte
-                    ainda não publicou o ano inteiro. Por isso o padrão é {anoAtivo}.
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
+          )}
 
           {linhas.length === 0 ? (
             <p style={{ color: 'rgba(255,255,255,0.55)', margin: 0, fontSize: '0.95rem' }}>

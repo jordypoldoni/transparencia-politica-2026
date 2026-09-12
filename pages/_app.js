@@ -94,19 +94,35 @@ export default function App({ Component, pageProps }) {
         /* Grade de parlamentares (/deputados, /deputados/[uf], /senadores). Colunas fixas por
            faixa de largura em vez de auto-fill: o pedido e 5 por linha no desktop, e auto-fill
            entrega 4 ou 6 conforme a largura da janela. */
-        /* Faixa de controles do ranking: escolha da ponta a esquerda, periodo a direita, e
-           cada ressalva embaixo do controle a que se refere. Antes vinha tudo empilhado a
-           esquerda com o mesmo peso, e a metade direita do cartao ficava vazia. */
-        .controles-ranking { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px 28px; flex-wrap: wrap; margin: 0 0 18px; }
-        .controles-ranking > * { min-width: 0; }
-        .controles-ranking .lado-dir { display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
-        /* O BLOCO fica a direita, mas a prosa dentro dele continua alinhada a esquerda:
-           paragrafo de varias linhas alinhado a direita e desconfortavel de ler. */
-        .controles-ranking .lado-dir p { text-align: left; }
-        /* Empilhado, alinhar a direita vira texto solto no meio da tela: volta para a esquerda. */
+        /* ---- Painel do ranking (cartao indigo) ----
+           Cabecalho: identidade a esquerda, numero do conjunto a direita. O contador nao e
+           controle, e um dado sobre o conjunto, entao vive aqui e nao no meio dos botoes. */
+        .painel-topo { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px 32px; flex-wrap: wrap; margin: 0 0 20px; }
+        .painel-meta { flex-shrink: 0; text-align: right; margin: 0; font-size: 0.8rem; line-height: 1.35; color: rgba(255,255,255,0.6); }
+        .painel-meta strong { display: block; color: #fff; font-size: 1.5rem; font-weight: 800; font-family: "Fraunces", Georgia, serif; line-height: 1.1; }
+
+        /* Barra de controles: os dois seletores juntos a esquerda, cada um no seu trilho.
+           Empurrar um para cada ponta da linha abria um buraco de 500px no meio e fazia dois
+           controles irmaos parecerem coisas sem relacao. */
+        .barra-controles { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin: 0 0 14px; }
+        .trilho { display: inline-flex; align-items: center; gap: 4px; padding: 4px; border-radius: 999px; background: rgba(255,255,255,0.09); }
+        /* No dedo, o alvo precisa ser maior que no mouse. 32px passa no minimo da WCAG 2.2
+           (24px), mas erra facil; em tela de toque a pastilha cresce. */
+        @media (pointer: coarse) { .trilho button { min-height: 40px; } }
+
+        /* Ressalvas: um lugar so, menores e mais apagadas que os controles. Em duas colunas
+           quando ha espaco, para nao empurrar a lista para baixo. */
+        .notas-painel { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 6px 28px; margin: 0 0 18px; }
+        .notas-painel p { margin: 0; font-size: 0.82rem; line-height: 1.5; color: rgba(255,255,255,0.66); max-width: 60ch; }
+        .notas-painel strong { color: rgba(255,255,255,0.85); font-weight: 700; }
+
         @media (max-width: 760px) {
-          .controles-ranking .lado-dir { align-items: flex-start; text-align: left; }
+          .painel-meta { text-align: left; }
+          .painel-meta strong { display: inline; font-size: 1rem; margin-right: 6px; }
         }
+        /* Grade de parlamentares (/deputados, /deputados/[uf], /senadores). Colunas fixas por
+           faixa de largura em vez de auto-fill: o pedido e 5 por linha no desktop, e auto-fill
+           entrega 4 ou 6 conforme a largura da janela. */
         .grade-parl { display: grid; gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
         @media (min-width: 620px) { .grade-parl { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
         @media (min-width: 880px) { .grade-parl { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
