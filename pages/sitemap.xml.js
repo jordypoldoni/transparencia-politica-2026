@@ -1,5 +1,6 @@
 import ServicoAPI from '../src/servicos/servico_api';
 import { hrefPerfil } from '../src/lib/casa';
+import { ASSEMBLEIAS } from '../src/lib/assembleias';
 
 // Páginas fixas do site. Até 12/09/2026 faltavam aqui /gastos-publicos, /candidatos-2026
 // e /presidenciaveis, que existem e são públicas.
@@ -12,6 +13,9 @@ const escapar = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').re
 function gerarXml(base, perfis) {
   const caminhos = [
     ...FIXAS,
+    // Uma lista por assembleia. Enquanto as abas dividiam a URL /deputados, estas telas
+    // nao existiam para o Google.
+    ...ASSEMBLEIAS.map((a) => `/deputados/${a.uf.toLowerCase()}`),
     ...UFS.map((uf) => `/estado/${uf}`),
     // hrefPerfil manda senador para /senador/ e o resto para /deputado/. Escrever
     // '/deputado/' na mão aqui era o que colocava senador na URL errada dentro do sitemap.

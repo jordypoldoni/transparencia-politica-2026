@@ -16,24 +16,10 @@ import CampoBusca from './CampoBusca';
 import { NOMES_UF } from '../src/lib/cotas';
 import { t } from '../src/estilo/tokens';
 import { hrefPerfil } from '../src/lib/casa';
+import { ASSEMBLEIAS, assembleiaDe, caminhoDaCasa } from '../src/lib/assembleias';
 
 const brl = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v || 0);
 
-// Uma aba por assembleia. Cada casa publica uma coisa diferente, e a página diz isso na cara do
-// usuário em vez de deixar parecer que falta dado por descuido: SP abre gasto de gabinete e NÃO
-// divulga voto nominal; o RS abre o voto e não expõe o gasto por deputado no mesmo formato.
-// Para entrar com um novo estado, acrescente uma linha aqui (e o mapeamento no servico_api).
-// `gastoDetalhado` separa DUAS coisas que parecem uma só: ter o gasto e ter a NOTA.
-// SP publica nota a nota, com fornecedor e CNPJ. O RS publica só o total do mês por categoria —
-// dá pra dizer quanto e em quê, nunca para quem. A tela precisa falar isso, senão o usuário
-// clica esperando a nota e conclui que o site escondeu.
-// `nomeCom` carrega a preposição junto com o nome do estado ("de São Paulo", "do Rio Grande
-// do Sul"): o artigo varia por estado e montar isso na mão dá "de Rio Grande do Sul".
-const ASSEMBLEIAS = [
-  { casa: 'Assembleia (SP)', uf: 'SP', sigla: 'ALESP', nomeCom: 'de São Paulo', gastos: true, gastoDetalhado: true, votos: false },
-  { casa: 'Assembleia (RS)', uf: 'RS', sigla: 'AL-RS', nomeCom: 'do Rio Grande do Sul', gastos: true, gastoDetalhado: false, votos: true },
-];
-const assembleiaDe = (casa) => ASSEMBLEIAS.find((a) => a.casa === casa) || null;
 
 // Qual ano o ranking abre por padrão.
 // Não é simplesmente o mais recente: quando a fonte para de publicar no meio do caminho, o ano
@@ -49,7 +35,7 @@ function anoPadrao(anos, totais) {
   return maisNovo;
 }
 
-export default function ListaParlamentares({ deputados, qInicial, ufInicial, casaInicial, radares = {}, canonical = null }) {
+export default function ListaParlamentares({ deputados, qInicial, ufInicial, casaInicial, radares = {}, canonical = null, falhaNaLista = false }) {
   const [busca, setBusca] = useState(qInicial || '');
   const [uf, setUf] = useState(ufInicial || '');
   const [casa, setCasa] = useState(casaInicial || 'Câmara');
@@ -180,20 +166,32 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
           : 'Deputados Federais'}
       </h1>
 
-      {/* Alternância só entre deputados (federais x estaduais). Senadores é página própria. */}
+      {/* Alternância só entre deputados (federais x estaduais). Senadores é página própria.
+          Sao LINKS, nao botoes: cada aba e uma rota de verdade desde 12/09/2026, entao o
+          endereco na barra diz qual lista esta aberta, o link pode ser compartilhado, e o
+          Google indexa as tres. O Next pre-carrega ao passar o mouse, entao a troca segue
+          rapida. Ver src/lib/assembleias.js. */}
       {grupo === 'deputado' && (
         <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }} role="tablist" aria-label="Tipo de deputado">
-          <button onClick={() => { setCasa('Câmara'); setUf(''); }} style={pilulaCasa(casa === 'Câmara')} role="tab" aria-selected={casa === 'Câmara'}>
+          <Link href="/deputados" style={{ ...pilulaCasa(casa === 'Câmara'), textDecoration: 'none', display: 'inline-block' }} role="tab" aria-selected={casa === 'Câmara'}>
             Federais ({totalCasa('Câmara')})
-          </button>
+          </Link>
           {ASSEMBLEIAS.filter((a) => totalCasa(a.casa) > 0).map((a) => (
-            <button key={a.casa} onClick={() => { setCasa(a.casa); setUf(''); }} style={pilulaCasa(casa === a.casa)} role="tab" aria-selected={casa === a.casa}>
+            <Link key={a.casa} href={caminhoDaCasa(a.casa)} style={{ ...pilulaCasa(casa === a.casa), textDecoration: 'none', display: 'inline-block' }} role="tab" aria-selected={casa === a.casa}>
               Estaduais · {a.uf} ({totalCasa(a.casa)})
-            </button>
+            </Link>
           ))}
         </div>
       )}
 
+      {/* A pagina carrega duas consultas em paralelo. Quando a da lista falha, dizer
+          "0 deputados federais" e afirmar um numero falso: a verdade e que nao carregou. */}
+      {falhaNaLista ? (
+        <p style={{ color: t.cor.cinza, margin: '0 0 24px' }}>
+          Não foi possível carregar a lista de parlamentares agora. O ranking abaixo continua
+          valendo. Recarregue a página para tentar de novo.
+        </p>
+      ) : (
       <p style={{ color: t.cor.cinza, margin: '0 0 24px' }}>
         {filtrados.length}{' '}
         {casa === 'Senado'
@@ -205,6 +203,7 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
           ? (assembleia.votos ? 'como cada um votou' : 'os gastos de gabinete')
           : 'gastos, votos e coerência'}.
       </p>
+      )}
 
       {assembleia && (
         <div style={{ background: t.cor.alertaBg, borderRadius: t.raio.sm, padding: '12px 16px', margin: '0 0 20px', fontSize: '0.88rem', color: t.cor.tinta, lineHeight: 1.5 }}>
