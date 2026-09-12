@@ -110,11 +110,16 @@ export default function App({ Component, pageProps }) {
            (24px), mas erra facil; em tela de toque a pastilha cresce. */
         @media (pointer: coarse) { .trilho button { min-height: 40px; } }
 
-        /* Ressalvas: um lugar so, menores e mais apagadas que os controles. Em duas colunas
-           quando ha espaco, para nao empurrar a lista para baixo. */
-        .notas-painel { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 6px 28px; margin: 0 0 18px; }
-        .notas-painel p { margin: 0; font-size: 0.82rem; line-height: 1.5; color: rgba(255,255,255,0.66); max-width: 60ch; }
-        .notas-painel strong { color: rgba(255,255,255,0.85); font-weight: 700; }
+        /* Nota do seletor de ano: uma linha, colada na barra de controles, porque e sobre o
+           CONTROLE. Antes dividia uma grade de duas colunas com a ressalva de leitura da
+           lista: coisas de donos diferentes, e uma acabava flutuando no canto direito. */
+        .nota-ano { margin: -4px 0 16px; font-size: 0.82rem; line-height: 1.5; color: rgba(255,255,255,0.62); max-width: 72ch; }
+        .nota-ano strong { color: rgba(255,255,255,0.88); font-weight: 700; }
+
+        /* Faixa de leitura: governa as linhas que vem abaixo, entao ocupa a largura inteira e
+           gruda no topo da lista, com superficie propria. */
+        .faixa-leitura { margin: 0 0 10px; padding: 12px 16px; border-radius: 10px; background: rgba(255,255,255,0.07); font-size: 0.83rem; line-height: 1.55; color: rgba(255,255,255,0.72); }
+        .faixa-leitura strong { color: #fff; font-weight: 700; }
 
         @media (max-width: 760px) {
           .painel-meta { text-align: left; }

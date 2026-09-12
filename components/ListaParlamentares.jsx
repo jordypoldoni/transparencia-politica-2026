@@ -351,27 +351,30 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
             )}
           </div>
 
-          {/* RESSALVAS: um lugar so, logo abaixo dos controles, em texto menor e mais apagado.
-              Antes ficavam empilhadas junto dos botoes com o mesmo peso, e o olho nao separava
-              o que era escolha do que era aviso. */}
-          {(anoIncompleto || sentido === 'menores') && (
-            <div className="notas-painel">
-              {anoIncompleto && (
-                <p>
-                  <strong>{anoIncompleto}</strong> aparece com apenas {radarCasa.totais[anoIncompleto]}{' '}
-                  {radarCasa.totais[anoIncompleto] === 1 ? 'parlamentar' : 'parlamentares'}, porque a fonte
-                  ainda não publicou o ano inteiro. Por isso o padrão é {anoAtivo}.
-                </p>
-              )}
-              {sentido === 'menores' && (
-                <p>
-                  <strong>Gasto baixo nem sempre quer dizer economia.</strong> Pode ser parlamentar que
-                  assumiu no meio do ano, ficou licenciado, ou cuja prestação de contas ainda não foi
-                  publicada. Por isso cada linha mostra em quantos dos 12 meses houve lançamento, e a
-                  situação atual de quem não está em exercício.
-                </p>
-              )}
-            </div>
+          {/* NOTA DO ANO: pertence ao seletor de ano, entao fica colada nele, em uma linha
+              so. Ela e a de leitura da lista estavam juntas numa grade de duas colunas: uma
+              acabava flutuando no canto direito com um vao no meio, e as duas competiam entre
+              si sendo sobre coisas diferentes. */}
+          {anoIncompleto && (
+            <p className="nota-ano">
+              <strong>{anoAtivo}</strong> é o padrão porque {anoIncompleto} ainda tem só{' '}
+              {radarCasa.totais[anoIncompleto]}{' '}
+              {radarCasa.totais[anoIncompleto] === 1 ? 'parlamentar publicado' : 'parlamentares publicados'}{' '}
+              pela fonte.
+            </p>
+          )}
+
+          {/* FAIXA DE LEITURA: nao e um aviso solto, e a instrucao de como ler as linhas que
+              vem logo abaixo. Por isso atravessa a largura inteira e fica grudada no topo da
+              lista, com superficie propria: o leitor entende que ela governa o que vem em
+              seguida, e o espaco do cartao e usado de ponta a ponta em vez de meia coluna. */}
+          {sentido === 'menores' && linhas.length > 0 && (
+            <p className="faixa-leitura">
+              <strong>Gasto baixo nem sempre quer dizer economia.</strong> Pode ser quem assumiu no
+              meio do ano, ficou licenciado, ou ainda não teve a prestação de contas publicada. Por
+              isso cada linha mostra em quantos dos 12 meses houve lançamento, e a situação de quem
+              não está em exercício.
+            </p>
           )}
 
           {linhas.length === 0 ? (
