@@ -3,7 +3,7 @@ import { hrefPerfil } from '../src/lib/casa';
 
 // Páginas fixas do site. Até 12/09/2026 faltavam aqui /gastos-publicos, /candidatos-2026
 // e /presidenciaveis, que existem e são públicas.
-const FIXAS = ['', '/comecar', '/deputados', '/votacoes', '/gastos-publicos', '/candidatos-2026', '/presidenciaveis', '/entenda', '/sobre'];
+const FIXAS = ['', '/comecar', '/deputados', '/senadores', '/votacoes', '/gastos-publicos', '/candidatos-2026', '/presidenciaveis', '/entenda', '/sobre'];
 
 const UFS = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
 

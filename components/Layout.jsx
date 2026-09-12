@@ -8,26 +8,21 @@ const navItens = [
   { href: '/candidatos-2026', rotulo: 'Candidatos 2026' },
   { href: '/comecar', rotulo: 'Pra você' },
   { href: '/deputados', rotulo: 'Deputados' },
-  { href: '/deputados?casa=senado', rotulo: 'Senadores' },
+  { href: '/senadores', rotulo: 'Senadores' },
   { href: '/votacoes', rotulo: 'Votações' },
   { href: '/gastos-publicos', rotulo: 'Gastos públicos' },
   { href: '/entenda', rotulo: 'Entenda' },
   { href: '/sobre', rotulo: 'Sobre & Fontes' },
 ];
 
-function ehAtivo(href, pathname, asPath, perfilSenado) {
-  const [hp, hq] = href.split('?');
-  const casaAtual = new URLSearchParams((asPath.split('?')[1] || '')).get('casa');
+function ehAtivo(href, pathname) {
+  const hp = href.split('?')[0];
   if (hp === '/') return pathname === '/';
-  if (hp === '/deputados') {
-    if (pathname !== '/deputados' && !pathname.startsWith('/deputado/')) return false;
-    const querSenado = hq && new URLSearchParams(hq).get('casa') === 'senado';
-    // Num perfil (/deputado/[slug]) a URL não diz a casa → usamos a casa do próprio perfil,
-    // para o menu acender "Senadores" quando for senador (federal e estadual ficam em "Deputados").
-    const emPerfil = pathname.startsWith('/deputado/');
-    const ehSenado = emPerfil ? !!perfilSenado : casaAtual === 'senado';
-    return querSenado ? ehSenado : !ehSenado;
-  }
+  // Senadores e Deputados sao rotas proprias desde 12/09/2026. Antes a lista de senadores
+  // vivia em /deputados?casa=senado, e esta funcao tinha de deduzir a casa pela query e,
+  // dentro de um perfil, pela casa do proprio parlamentar.
+  if (hp === '/senadores') return pathname === '/senadores' || pathname.startsWith('/senador/');
+  if (hp === '/deputados') return pathname === '/deputados' || pathname.startsWith('/deputado/');
   if (hp === '/votacoes') return pathname === '/votacoes' || pathname.startsWith('/votacao');
   if (hp === '/candidatos-2026') return pathname === '/candidatos-2026' || pathname.startsWith('/presidencial/') || pathname.startsWith('/deputado-federal/');
   return pathname === hp || pathname.startsWith(hp + '/');
@@ -36,12 +31,6 @@ function ehAtivo(href, pathname, asPath, perfilSenado) {
 export default function Layout({ children, pageProps }) {
   const { pathname, asPath } = useRouter();
   const [menu, setMenu] = useState(false);
-  // Casa do perfil aberto (quando estamos numa página de perfil) — para o menu acender certo.
-  const perfil = pageProps && pageProps.dados && pageProps.dados.perfil;
-  const perfilSenado = !!perfil && (
-    String(perfil.casa_legislativa || '').toLowerCase().includes('senado') ||
-    String(perfil.fonte_api || '').toLowerCase().includes('senado')
-  );
   useEffect(() => { setMenu(false); }, [asPath]); // fecha ao navegar
   return (
     <div style={{ minHeight: '100vh', background: t.cor.papel, color: t.cor.tinta, fontFamily: t.fonte.corpo, display: 'flex', flexDirection: 'column' }}>
@@ -56,7 +45,7 @@ export default function Layout({ children, pageProps }) {
           </Link>
           <nav className="nav-desktop" style={{ gap: '2px' }}>
             {navItens.map((n) => {
-              const ativo = ehAtivo(n.href, pathname, asPath, perfilSenado);
+              const ativo = ehAtivo(n.href, pathname);
               return (
                 <Link key={n.rotulo} href={n.href} aria-current={ativo ? 'page' : undefined}
                   style={{
@@ -90,7 +79,7 @@ export default function Layout({ children, pageProps }) {
         {menu && (
           <nav className="menu-mobile" style={{ background: t.cor.papel, padding: '8px 12px 14px', boxShadow: t.sombra.media }}>
             {navItens.map((n) => {
-              const ativo = ehAtivo(n.href, pathname, asPath, perfilSenado);
+              const ativo = ehAtivo(n.href, pathname);
               return (
                 <Link key={n.rotulo} href={n.href} aria-current={ativo ? 'page' : undefined}
                   style={{

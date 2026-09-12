@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
+import Head from 'next/head';
 import Link from 'next/link';
 import ServicoAPI from '../src/servicos/servico_api';
 import Avatar from '../components/Avatar';
@@ -40,7 +41,7 @@ function anoPadrao(anos, totais) {
   return maisNovo;
 }
 
-export default function Parlamentares({ deputados, qInicial, ufInicial, casaInicial, radares = {} }) {
+export default function Parlamentares({ deputados, qInicial, ufInicial, casaInicial, radares = {}, canonical = null }) {
   const [busca, setBusca] = useState(qInicial || '');
   const [uf, setUf] = useState(ufInicial || '');
   const [casa, setCasa] = useState(casaInicial || 'Câmara');
@@ -95,8 +96,25 @@ export default function Parlamentares({ deputados, qInicial, ufInicial, casaInic
     boxShadow: t.sombra.clicavel,
   });
 
+  // Estas duas telas nao tinham <title> nem descricao nenhuma ate 12/09/2026: o Google
+  // indexava a lista principal do site sem titulo.
+  const tituloPagina = casa === 'Senado' ? 'Senadores: quanto cada um gastou e como votou | Lume'
+    : assembleia ? `Deputados estaduais ${assembleia.nomeCom}: gastos e votos | Lume`
+    : 'Deputados federais: quanto cada um gastou e como votou | Lume';
+  const descPagina = casa === 'Senado'
+    ? 'Os 81 senadores e os suplentes em exercicio: quanto cada um usou da cota do Senado, como votou e a fidelidade ao partido. Fonte oficial do Senado Federal.'
+    : assembleia ? `Os deputados estaduais ${assembleia.nomeCom}: quanto cada um usou da verba de gabinete e o que a assembleia publica sobre o mandato. Fonte: ${assembleia.sigla}.`
+    : 'Os 513 deputados federais: quanto cada um usou da cota parlamentar, como votou e a fidelidade ao partido. Fonte oficial da Camara dos Deputados.';
+
   return (
     <div className="pagina">
+      <Head>
+        <title>{tituloPagina}</title>
+        <meta name="description" content={descPagina} />
+        {canonical && <link rel="canonical" href={canonical} />}
+        <meta property="og:title" content={tituloPagina} />
+        <meta property="og:description" content={descPagina} />
+      </Head>
       <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.8rem,4vw,2.6rem)', margin: '0 0 16px' }}>
         {casa === 'Senado'
           ? 'Senadores'
@@ -323,29 +341,40 @@ export default function Parlamentares({ deputados, qInicial, ufInicial, casaInic
   );
 }
 
-export async function getServerSideProps({ query }) {
-  const settled = await Promise.allSettled([
-    ServicoAPI.listarDeputados(),
-    // Uma consulta só traz o top 10 de TODAS as casas e TODOS os anos: a view radar_gastos é
-    // pequena, e assim o seletor de ano troca no cliente, sem ida ao servidor.
-    ServicoAPI.getRadaresPorCasaEAno(10),
-  ]);
-  const get = (i) => (settled[i].status === 'fulfilled' ? settled[i].value : []);
-  const deputados = get(0);
-  const c = String(query.casa || '').toLowerCase();
-  // Links antigos (?casa=sp, ?casa=alesp, ?casa=estaduais) continuam caindo em São Paulo;
-  // ?casa=rs / ?casa=alergs abrem a aba do Rio Grande do Sul.
-  const casaInicial = c.includes('sen') ? 'Senado'
-    : (c.includes('alergs') || c === 'rs') ? 'Assembleia (RS)'
-    : (c.includes('alesp') || c === 'sp' || c.includes('estad') || c.includes('assembleia')) ? 'Assembleia (SP)'
-    : 'Câmara';
-  return {
-    props: {
-      deputados: JSON.parse(JSON.stringify(deputados)),
-      qInicial: query.q || '',
-      ufInicial: query.uf || '',
-      casaInicial,
-      radares: JSON.parse(JSON.stringify(get(1) || {})),
-    },
-  };
+// Carrega os dados das duas listas. Fica aqui, exportado, porque /senadores usa a mesma
+// tela: a unica diferenca e a casa que abre. Ver pages/senadores.js.
+export async function carregarParlamentares(query, casaFixa, req) {
+    const settled = await Promise.allSettled([
+        ServicoAPI.listarDeputados(),
+        // Uma consulta só traz o top 10 de TODAS as casas e TODOS os anos: a view radar_gastos é
+        // pequena, e assim o seletor de ano troca no cliente, sem ida ao servidor.
+        ServicoAPI.getRadaresPorCasaEAno(10),
+    ]);
+    const get = (i) => (settled[i].status === 'fulfilled' ? settled[i].value : []);
+    const c = String(query.casa || '').toLowerCase();
+    // Links antigos (?casa=sp, ?casa=alesp, ?casa=estaduais) continuam caindo em São Paulo;
+    // ?casa=rs / ?casa=alergs abrem a aba do Rio Grande do Sul.
+    const casaInicial = casaFixa
+        || ((c.includes('alergs') || c === 'rs') ? 'Assembleia (RS)'
+        : (c.includes('alesp') || c === 'sp' || c.includes('estad') || c.includes('assembleia')) ? 'Assembleia (SP)'
+        : 'Câmara');
+    const proto = req?.headers?.['x-forwarded-proto'] || 'http';
+    const caminho = casaFixa === 'Senado' ? '/senadores' : '/deputados';
+    return {
+        deputados: JSON.parse(JSON.stringify(get(0))),
+        qInicial: query.q || '',
+        ufInicial: query.uf || '',
+        casaInicial,
+        radares: JSON.parse(JSON.stringify(get(1) || {})),
+        canonical: req?.headers?.host ? `${proto}://${req.headers.host}${caminho}` : null,
+    };
+}
+
+export async function getServerSideProps({ query, req }) {
+    // A lista de senadores tem rota propria. Chamar de "/deputados" uma pagina intitulada
+    // "Senadores" e o mesmo erro que /deputado/ para o perfil de um senador.
+    if (String(query.casa || '').toLowerCase().includes('sen')) {
+        return { redirect: { destination: '/senadores', permanent: true } };
+    }
+    return { props: await carregarParlamentares(query, null, req) };
 }
