@@ -152,12 +152,23 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
 
   const totalCasa = (c) => deputados.filter((d) => d.casa === c).length;
 
+  // Botao do site: indigo com texto ambar, SEM borda, com sombra. Os proprios tokens ja
+  // pedem isso ("diferenciacao sem bordas coloridas"); a versao anterior deste botao usava
+  // uma linha cinza de contorno e destoava do resto.
   const pilulaPagina = (desativado) => ({
-    padding: '8px 16px', fontSize: '0.86rem', fontWeight: 700, fontFamily: t.fonte.corpo,
+    padding: '9px 18px', fontSize: '0.86rem', fontWeight: 700, fontFamily: t.fonte.corpo,
     borderRadius: t.raio.pill, cursor: desativado ? 'default' : 'pointer',
-    border: `1px solid ${t.cor.cinza}`, background: '#fff', color: t.cor.tinta,
-    opacity: desativado ? 0.4 : 1,
+    border: 'none', background: t.cor.verde, color: t.cor.ouro,
+    boxShadow: desativado ? 'none' : t.sombra.clicavel,
+    opacity: desativado ? 0.35 : 1,
+    transition: 'box-shadow .15s ease, transform .15s ease',
   });
+  // Sombra so cresce em botao ativo: em botao desativado seria convite a clicar.
+  const realce = (e, ligar) => {
+    if (e.currentTarget.disabled) return;
+    e.currentTarget.style.boxShadow = ligar ? t.sombra.hover : t.sombra.clicavel;
+    e.currentTarget.style.transform = ligar ? 'translateY(-1px)' : 'none';
+  };
 
   const pilulaCasa = (ativa) => ({
     padding: '11px 22px', fontSize: '0.95rem', fontWeight: 700, fontFamily: t.fonte.corpo,
@@ -281,10 +292,14 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
                   style={{
                     padding: '7px 16px', fontSize: '0.86rem', fontWeight: 700, fontFamily: t.fonte.corpo,
                     borderRadius: t.raio.pill, cursor: 'pointer',
-                    border: ativo ? 'none' : '1px solid rgba(255,255,255,0.35)',
-                    background: ativo ? t.cor.ouro : 'transparent',
-                    color: ativo ? t.cor.verde : 'rgba(255,255,255,0.9)',
+                    border: 'none',
+                    background: ativo ? t.cor.ouro : 'rgba(255,255,255,0.14)',
+                    color: ativo ? t.cor.verde : '#fff',
+                    boxShadow: ativo ? '0 2px 10px rgba(0,0,0,0.22)' : '0 1px 4px rgba(0,0,0,0.14)',
+                    transition: 'box-shadow .15s ease, transform .15s ease',
                   }}
+                  onMouseOver={(e) => { e.currentTarget.style.boxShadow = '0 8px 20px rgba(0,0,0,0.26)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                  onMouseOut={(e) => { e.currentTarget.style.boxShadow = ativo ? '0 2px 10px rgba(0,0,0,0.22)' : '0 1px 4px rgba(0,0,0,0.14)'; e.currentTarget.style.transform = 'none'; }}
                 >
                   {r}
                 </button>
@@ -306,10 +321,14 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
                     style={{
                       padding: '7px 16px', fontSize: '0.86rem', fontWeight: 700, fontFamily: t.fonte.corpo,
                       borderRadius: t.raio.pill, cursor: 'pointer',
-                      border: ativo ? 'none' : '1px solid rgba(255,255,255,0.35)',
-                      background: ativo ? t.cor.ouro : 'transparent',
-                      color: ativo ? t.cor.verde : 'rgba(255,255,255,0.9)',
+                      border: 'none',
+                      background: ativo ? t.cor.ouro : 'rgba(255,255,255,0.14)',
+                      color: ativo ? t.cor.verde : '#fff',
+                      boxShadow: ativo ? '0 2px 10px rgba(0,0,0,0.22)' : '0 1px 4px rgba(0,0,0,0.14)',
+                      transition: 'box-shadow .15s ease, transform .15s ease',
                     }}
+                    onMouseOver={(e) => { e.currentTarget.style.boxShadow = '0 8px 20px rgba(0,0,0,0.26)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                    onMouseOut={(e) => { e.currentTarget.style.boxShadow = ativo ? '0 2px 10px rgba(0,0,0,0.22)' : '0 1px 4px rgba(0,0,0,0.14)'; e.currentTarget.style.transform = 'none'; }}
                   >
                     {a}
                   </button>
@@ -389,9 +408,13 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
                   style={{
                     padding: '9px 20px', fontSize: '0.88rem', fontWeight: 700, fontFamily: t.fonte.corpo,
                     borderRadius: t.raio.pill, cursor: carregandoMais ? 'default' : 'pointer',
-                    border: '1px solid rgba(255,255,255,0.35)', background: 'transparent',
-                    color: 'rgba(255,255,255,0.9)', opacity: carregandoMais ? 0.6 : 1,
+                    border: 'none', background: t.cor.ouro, color: t.cor.verde,
+                    opacity: carregandoMais ? 0.6 : 1,
+                    boxShadow: '0 2px 10px rgba(0,0,0,0.22)',
+                    transition: 'box-shadow .15s ease, transform .15s ease',
                   }}
+                  onMouseOver={(e) => { if (!carregandoMais) { e.currentTarget.style.boxShadow = '0 8px 20px rgba(0,0,0,0.26)'; e.currentTarget.style.transform = 'translateY(-1px)'; } }}
+                  onMouseOut={(e) => { e.currentTarget.style.boxShadow = '0 2px 10px rgba(0,0,0,0.22)'; e.currentTarget.style.transform = 'none'; }}
                 >
                   {carregandoMais ? 'Carregando…' : faltam <= PASSO ? `Ver os últimos ${faltam}` : `Ver mais ${PASSO}`}
                 </button>
@@ -455,10 +478,12 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
         {/* Paginacao. O texto diz o intervalo real, nunca um numero fixo. */}
         {totalPaginas > 1 && (
           <div style={{ marginTop: '16px', display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-            <button onClick={() => irPara(paginaAtual - 1)} disabled={paginaAtual === 1} style={pilulaPagina(paginaAtual === 1)}>
+            <button onClick={() => irPara(paginaAtual - 1)} disabled={paginaAtual === 1} style={pilulaPagina(paginaAtual === 1)}
+              onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}>
               ← Anterior
             </button>
-            <button onClick={() => irPara(paginaAtual + 1)} disabled={paginaAtual === totalPaginas} style={pilulaPagina(paginaAtual === totalPaginas)}>
+            <button onClick={() => irPara(paginaAtual + 1)} disabled={paginaAtual === totalPaginas} style={pilulaPagina(paginaAtual === totalPaginas)}
+              onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}>
               Próxima →
             </button>
             <span style={{ fontSize: '0.85rem', color: t.cor.cinza }}>
