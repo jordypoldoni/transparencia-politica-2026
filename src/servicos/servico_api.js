@@ -388,6 +388,25 @@ const ServicoAPI = {
         return fora;
     },
 
+    // Uma fatia do ranking de uma casa/ano, para o botao "ver mais 10".
+    // Nao reaproveitamos getRadaresPorCasaEAno aqui de proposito: aquela baixa as ~1.560
+    // linhas inteiras para montar todas as abas de uma vez, o que faz sentido uma vez por
+    // pageview e nao a cada clique. Esta e uma consulta direta, com range no banco.
+    // Medido em 12/09/2026: mandar 50 linhas por casa/ano/ponta no payload da pagina levaria
+    // /deputados de 248 kB para ~502 kB para todo leitor, inclusive quem nunca expande.
+    getRadarFatia: async ({ casa, ano, sentido = 'maiores', offset = 0, limite = 10 }) => {
+        const asc = sentido === 'menores';
+        const { data, error } = await supabase
+            .from('radar_gastos')
+            .select('id, slug, nome_urna, partido_atual, uf_sede, foto_url, casa, ano, total, n_notas, meses_com_gasto, situacao_atual, condicao_eleitoral')
+            .eq('casa', casa)
+            .eq('ano', ano)
+            .order('total', { ascending: asc })
+            .range(offset, offset + limite - 1);
+        if (error) { console.error('getRadarFatia:', error.message); return []; }
+        return data || [];
+    },
+
     // Ranking de gastos dos deputados de um estado (página /estado/[uf])
     getRadarPorEstado: async (uf, ano = 2026) => {
         const { data, error } = await supabase

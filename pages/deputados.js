@@ -68,6 +68,55 @@ export default function Parlamentares({ deputados, qInicial, ufInicial, casaInic
   // deixar o leitor achar que o site está desatualizado.
   const anoIncompleto = anoMaisNovo && anoAtivo !== anoMaisNovo ? anoMaisNovo : null;
 
+  // ---- Expansao do ranking, de 10 em 10 -------------------------------------------------
+  // Os 10 primeiros vem no payload da pagina; o resto e buscado em /api/radar quando o
+  // leitor pede. Medido em 12/09/2026: embutir 50 por casa/ano/ponta levaria esta pagina de
+  // 248 kB para ~502 kB para todo mundo, inclusive quem nunca clica no botao.
+  // ATENCAO A ORDEM DAS DECLARACOES: tudo aqui depende de `radar`, `anoAtivo`, `sentido` e
+  // `casa`, que sao definidos acima. Usar antes e TDZ, e TDZ so quebra no build de producao
+  // (mesma armadilha ja documentada neste arquivo para `dadosAno`/`secoes`).
+  const PASSO = 10;
+  const [extras, setExtras] = useState([]);
+  const [carregandoMais, setCarregandoMais] = useState(false);
+  const [erroMais, setErroMais] = useState(false);
+  // Trocar de casa, de ano ou de ponta abre outro ranking: o que ja foi expandido nao vale.
+  useEffect(() => { setExtras([]); setErroMais(false); }, [casa, anoAtivo, sentido]);
+
+  const linhas = useMemo(() => {
+    // Empate no valor pode fazer a mesma pessoa vir nas duas consultas (a do payload e a da
+    // rota). Deduplicar por id e mais barato que tentar garantir ordenacao identica nas duas.
+    const vistos = new Set();
+    return [...radar, ...extras].filter((l) => {
+      if (vistos.has(l.id)) return false;
+      vistos.add(l.id);
+      return true;
+    });
+  }, [radar, extras]);
+
+  const totalDaCasa = radarCasa.totais[anoAtivo] || 0;
+  const faltam = Math.max(0, totalDaCasa - linhas.length);
+
+  const verMais = async () => {
+    setCarregandoMais(true);
+    setErroMais(false);
+    try {
+      // O offset conta o que ja foi BUSCADO, nao o que esta visivel. Se um empate fez a rota
+      // devolver uma linha repetida, `linhas` tem menos itens que o buscado, e usar o tamanho
+      // dela como offset puliria uma pessoa do ranking.
+      const buscados = radar.length + extras.length;
+      const q = new URLSearchParams({ casa, ano: String(anoAtivo), sentido, offset: String(buscados), limite: String(PASSO) });
+      const r = await fetch(`/api/radar?${q.toString()}`);
+      if (!r.ok) throw new Error(`resposta ${r.status}`);
+      const dados = await r.json();
+      setExtras((atuais) => [...atuais, ...(dados.linhas || [])]);
+    } catch (e) {
+      console.error('ver mais do ranking:', e.message);
+      setErroMais(true);
+    } finally {
+      setCarregandoMais(false);
+    }
+  };
+
   // Assembleia sem gasto coletado não mostra ranking: sairia um bloco vazio parecendo erro.
   // O aviso da aba explica o que existe e o que não existe ali.
   const mostraRanking = (!assembleia || assembleia.gastos) && radarCasa.anos.length > 0;
@@ -253,13 +302,13 @@ export default function Parlamentares({ deputados, qInicial, ufInicial, casaInic
               de quem não está em exercício. Tire suas próprias conclusões com base nos dados.
             </p>
           )}
-          {radar.length === 0 ? (
+          {linhas.length === 0 ? (
             <p style={{ color: 'rgba(255,255,255,0.55)', margin: 0, fontSize: '0.95rem' }}>
               Dados temporariamente indisponíveis. Tente recarregar a página.
             </p>
           ) : (
             <ol style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: '8px' }}>
-              {radar.map((p, i) => (
+              {linhas.map((p, i) => (
                 <li key={p.id}>
                   {/* .radar-linha (CSS em _app.js): no celular a linha quebra e o valor desce
                       para a linha de baixo. Sem isso o valor era empurrado para fora da tela. */}
@@ -293,6 +342,35 @@ export default function Parlamentares({ deputados, qInicial, ufInicial, casaInic
                 </li>
               ))}
             </ol>
+          )}
+
+          {/* Expansao de 10 em 10. O numero dito aqui e sempre `linhas.length`, nunca um 10
+              fixo: a tela nao pode dizer "10" mostrando 30. */}
+          {linhas.length > 0 && (
+            <div style={{ marginTop: '14px', display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+              {faltam > 0 && (
+                <button
+                  onClick={verMais}
+                  disabled={carregandoMais}
+                  style={{
+                    padding: '9px 20px', fontSize: '0.88rem', fontWeight: 700, fontFamily: t.fonte.corpo,
+                    borderRadius: t.raio.pill, cursor: carregandoMais ? 'default' : 'pointer',
+                    border: '1px solid rgba(255,255,255,0.35)', background: 'transparent',
+                    color: 'rgba(255,255,255,0.9)', opacity: carregandoMais ? 0.6 : 1,
+                  }}
+                >
+                  {carregandoMais ? 'Carregando…' : faltam <= PASSO ? `Ver os últimos ${faltam}` : `Ver mais ${PASSO}`}
+                </button>
+              )}
+              <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)' }}>
+                Mostrando {linhas.length} de {totalDaCasa}.
+              </span>
+              {erroMais && (
+                <span style={{ fontSize: '0.8rem', color: t.cor.ouro }}>
+                  Não deu para buscar agora. Tente de novo.
+                </span>
+              )}
+            </div>
           )}
         </div>
       </section>
