@@ -94,6 +94,19 @@ export default function App({ Component, pageProps }) {
         /* Grade de parlamentares (/deputados, /deputados/[uf], /senadores). Colunas fixas por
            faixa de largura em vez de auto-fill: o pedido e 5 por linha no desktop, e auto-fill
            entrega 4 ou 6 conforme a largura da janela. */
+        /* Faixa de controles do ranking: escolha da ponta a esquerda, periodo a direita, e
+           cada ressalva embaixo do controle a que se refere. Antes vinha tudo empilhado a
+           esquerda com o mesmo peso, e a metade direita do cartao ficava vazia. */
+        .controles-ranking { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px 28px; flex-wrap: wrap; margin: 0 0 18px; }
+        .controles-ranking > * { min-width: 0; }
+        .controles-ranking .lado-dir { display: flex; flex-direction: column; align-items: flex-end; text-align: right; }
+        /* O BLOCO fica a direita, mas a prosa dentro dele continua alinhada a esquerda:
+           paragrafo de varias linhas alinhado a direita e desconfortavel de ler. */
+        .controles-ranking .lado-dir p { text-align: left; }
+        /* Empilhado, alinhar a direita vira texto solto no meio da tela: volta para a esquerda. */
+        @media (max-width: 760px) {
+          .controles-ranking .lado-dir { align-items: flex-start; text-align: left; }
+        }
         .grade-parl { display: grid; gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
         @media (min-width: 620px) { .grade-parl { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
         @media (min-width: 880px) { .grade-parl { grid-template-columns: repeat(4, minmax(0, 1fr)); } }

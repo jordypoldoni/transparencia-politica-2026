@@ -155,6 +155,26 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
   // Botao do site: indigo com texto ambar, SEM borda, com sombra. Os proprios tokens ja
   // pedem isso ("diferenciacao sem bordas coloridas"); a versao anterior deste botao usava
   // uma linha cinza de contorno e destoava do resto.
+  // Botao dentro do cartao escuro do ranking. Indigo sobre indigo nao funciona, entao o
+  // inativo e superficie branca translucida e o ativo e ambar com texto indigo. Sem borda,
+  // com sombra (regra das Diretrizes). Estava repetido em tres lugares antes de 12/09/2026.
+  const SOMBRA_ESCURA = { ativo: '0 2px 10px rgba(0,0,0,0.22)', inativo: '0 1px 4px rgba(0,0,0,0.14)' };
+  const pilulaEscura = (ativo) => ({
+    padding: '7px 16px', fontSize: '0.86rem', fontWeight: 700, fontFamily: t.fonte.corpo,
+    borderRadius: t.raio.pill, cursor: 'pointer', border: 'none',
+    background: ativo ? t.cor.ouro : 'rgba(255,255,255,0.14)',
+    color: ativo ? t.cor.verde : '#fff',
+    boxShadow: ativo ? SOMBRA_ESCURA.ativo : SOMBRA_ESCURA.inativo,
+    transition: 'box-shadow .15s ease, transform .15s ease',
+  });
+  const realceEscuro = (e, ligar, ativo) => {
+    e.currentTarget.style.boxShadow = ligar ? '0 8px 20px rgba(0,0,0,0.26)' : (ativo ? SOMBRA_ESCURA.ativo : SOMBRA_ESCURA.inativo);
+    e.currentTarget.style.transform = ligar ? 'translateY(-1px)' : 'none';
+  };
+  // Ressalva dentro do cartao escuro: menor e mais apagada que o controle, para o olho
+  // separar aviso de escolha.
+  const notaCartao = { color: 'rgba(255,255,255,0.72)', fontSize: '0.82rem', lineHeight: 1.5, margin: '10px 0 0', maxWidth: '52ch' };
+
   const pilulaPagina = (desativado) => ({
     // inline-flex + justify/align center + minWidth igual nos dois: com padding simetrico e
     // texto de larguras diferentes ("Anterior" x "Proxima"), a capsula muda de tamanho e o
@@ -268,8 +288,11 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
       {mostraRanking && (
       <section style={{ margin: '0 0 28px' }}>
         <div style={{ background: t.cor.verde, borderRadius: t.raio.lg, padding: 'clamp(20px,3.5vw,32px)', color: '#fff' }}>
+          {/* Titulo NEUTRO desde 12/09/2026: ele dizia "Quem mais usou a verba publica" e o
+              botao aceso logo abaixo repetia a mesma frase a 40px de distancia. Quem responde
+              a pergunta agora e o botao; o titulo so nomeia a secao. */}
           <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.3rem,2.6vw,1.7rem)', margin: '0 0 6px' }}>
-            {sentido === 'menores' ? 'Quem menos usou a verba pública' : 'Quem mais usou a verba pública'}
+            Uso da verba pública
           </h2>
           <p style={{ color: 'rgba(255,255,255,0.82)', maxWidth: '64ch', lineHeight: 1.5, margin: '0 0 18px', fontSize: '0.92rem' }}>
             {(() => {
@@ -284,82 +307,60 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
             Fonte: {casa === 'Senado' ? 'Senado Federal' : assembleia ? assembleia.sigla : 'Câmara dos Deputados'}.
           </p>
 
-          {/* As duas pontas do ranking. Os dados de ambas ja vieram juntos (a consulta baixa
-              todas as linhas), entao a troca e instantanea, sem nova requisicao. */}
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', margin: '0 0 14px' }} role="group" aria-label="Sentido do ranking">
-            {[{ k: 'maiores', r: 'Quem mais usou' }, { k: 'menores', r: 'Quem menos usou' }].map(({ k, r }) => {
-              const ativo = sentido === k;
-              return (
-                <button
-                  key={k}
-                  onClick={() => setSentido(k)}
-                  aria-pressed={ativo}
-                  style={{
-                    padding: '7px 16px', fontSize: '0.86rem', fontWeight: 700, fontFamily: t.fonte.corpo,
-                    borderRadius: t.raio.pill, cursor: 'pointer',
-                    border: 'none',
-                    background: ativo ? t.cor.ouro : 'rgba(255,255,255,0.14)',
-                    color: ativo ? t.cor.verde : '#fff',
-                    boxShadow: ativo ? '0 2px 10px rgba(0,0,0,0.22)' : '0 1px 4px rgba(0,0,0,0.14)',
-                    transition: 'box-shadow .15s ease, transform .15s ease',
-                  }}
-                  onMouseOver={(e) => { e.currentTarget.style.boxShadow = '0 8px 20px rgba(0,0,0,0.26)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-                  onMouseOut={(e) => { e.currentTarget.style.boxShadow = ativo ? '0 2px 10px rgba(0,0,0,0.22)' : '0 1px 4px rgba(0,0,0,0.14)'; e.currentTarget.style.transform = 'none'; }}
-                >
-                  {r}
-                </button>
-              );
-            })}
+          {/* Controles em UMA faixa, e cada ressalva embaixo do controle a que ela se refere.
+              Antes os tres blocos (ponta do ranking, ano, e a explicacao do ano incompleto)
+              vinham empilhados e colados a esquerda, com o mesmo peso visual: o olho nao
+              separava o que era escolha do que era aviso, e a metade direita do cartao ficava
+              vazia. Agora: escolha da ponta a esquerda, periodo a direita, e a metade que
+              sobrava passou a carregar as ressalvas. */}
+          <div className="controles-ranking">
+            <div>
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }} role="group" aria-label="Sentido do ranking">
+                {[{ k: 'maiores', r: 'Quem mais usou' }, { k: 'menores', r: 'Quem menos usou' }].map(({ k, r }) => (
+                  <button key={k} onClick={() => setSentido(k)} aria-pressed={sentido === k}
+                    style={pilulaEscura(sentido === k)}
+                    onMouseOver={(e) => realceEscuro(e, true)}
+                    onMouseOut={(e) => realceEscuro(e, false, sentido === k)}>
+                    {r}
+                  </button>
+                ))}
+              </div>
+              {sentido === 'menores' && (
+                <p style={notaCartao}>
+                  Gasto baixo nem sempre quer dizer economia: pode ser parlamentar que assumiu no meio
+                  do ano, ficou licenciado, ou cuja prestação de contas ainda não foi publicada. Por
+                  isso cada linha mostra em quantos dos 12 meses houve lançamento, e a situação atual
+                  de quem não está em exercício. Tire suas próprias conclusões com base nos dados.
+                </p>
+              )}
+            </div>
+
+            {radarCasa.anos.length > 1 && (
+              <div className="lado-dir">
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }} role="group" aria-label="Ano do ranking">
+                  {radarCasa.anos.map((a) => (
+                    <button key={a} onClick={() => setAno(a)} aria-pressed={a === anoAtivo}
+                      style={pilulaEscura(a === anoAtivo)}
+                      onMouseOver={(e) => realceEscuro(e, true)}
+                      onMouseOut={(e) => realceEscuro(e, false, a === anoAtivo)}>
+                      {a}
+                    </button>
+                  ))}
+                  <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)' }}>
+                    {radarCasa.totais[anoAtivo]} com gasto registrado
+                  </span>
+                </div>
+                {anoIncompleto && (
+                  <p style={notaCartao}>
+                    {anoIncompleto} aparece com apenas {radarCasa.totais[anoIncompleto]}{' '}
+                    {radarCasa.totais[anoIncompleto] === 1 ? 'parlamentar' : 'parlamentares'}, porque a fonte
+                    ainda não publicou o ano inteiro. Por isso o padrão é {anoAtivo}.
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
-          {/* Seletor de ano. Os dados de todos os anos já vieram juntos, então a troca é
-              instantânea, sem nova requisição. */}
-          {radarCasa.anos.length > 1 && (
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', margin: '0 0 16px' }} role="group" aria-label="Ano do ranking">
-              {radarCasa.anos.map((a) => {
-                const ativo = a === anoAtivo;
-                return (
-                  <button
-                    key={a}
-                    onClick={() => setAno(a)}
-                    aria-pressed={ativo}
-                    style={{
-                      padding: '7px 16px', fontSize: '0.86rem', fontWeight: 700, fontFamily: t.fonte.corpo,
-                      borderRadius: t.raio.pill, cursor: 'pointer',
-                      border: 'none',
-                      background: ativo ? t.cor.ouro : 'rgba(255,255,255,0.14)',
-                      color: ativo ? t.cor.verde : '#fff',
-                      boxShadow: ativo ? '0 2px 10px rgba(0,0,0,0.22)' : '0 1px 4px rgba(0,0,0,0.14)',
-                      transition: 'box-shadow .15s ease, transform .15s ease',
-                    }}
-                    onMouseOver={(e) => { e.currentTarget.style.boxShadow = '0 8px 20px rgba(0,0,0,0.26)'; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-                    onMouseOut={(e) => { e.currentTarget.style.boxShadow = ativo ? '0 2px 10px rgba(0,0,0,0.22)' : '0 1px 4px rgba(0,0,0,0.14)'; e.currentTarget.style.transform = 'none'; }}
-                  >
-                    {a}
-                  </button>
-                );
-              })}
-              <span style={{ alignSelf: 'center', fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)' }}>
-                {radarCasa.totais[anoAtivo]} com gasto registrado
-              </span>
-            </div>
-          )}
-
-          {anoIncompleto && (
-            <p style={{ color: 'rgba(255,255,255,0.78)', fontSize: '0.84rem', lineHeight: 1.5, margin: '0 0 16px', maxWidth: '64ch' }}>
-              {anoIncompleto} aparece com apenas {radarCasa.totais[anoIncompleto]}{' '}
-              {radarCasa.totais[anoIncompleto] === 1 ? 'parlamentar' : 'parlamentares'}, porque a fonte
-              ainda não publicou o ano inteiro. Por isso o padrão é {anoAtivo}. O ano segue disponível acima.
-            </p>
-          )}
-          {sentido === 'menores' && (
-            <p style={{ color: 'rgba(255,255,255,0.78)', fontSize: '0.84rem', lineHeight: 1.5, margin: '0 0 16px', maxWidth: '64ch' }}>
-              Gasto baixo nem sempre quer dizer economia: pode ser parlamentar que assumiu no meio
-              do ano, ficou licenciado, ou cuja prestação de contas ainda não foi publicada. Por
-              isso cada linha mostra em quantos dos 12 meses houve lançamento, e a situação atual
-              de quem não está em exercício. Tire suas próprias conclusões com base nos dados.
-            </p>
-          )}
           {linhas.length === 0 ? (
             <p style={{ color: 'rgba(255,255,255,0.55)', margin: 0, fontSize: '0.95rem' }}>
               Dados temporariamente indisponíveis. Tente recarregar a página.
