@@ -16,5 +16,11 @@ export async function getServerSideProps({ params, query, req }) {
   if (params.uf !== a.uf.toLowerCase()) {
     return { redirect: { destination: `/deputados/${a.uf.toLowerCase()}`, permanent: true } };
   }
-  return { props: await carregarParlamentares({ query, req, casaFixa: a.casa }) };
+  // COLISAO DE NOMES, custou um bug em producao: o Next entrega o parametro da rota tambem
+  // dentro de `query`, e `uf` ja era o parametro do FILTRO de estado da tela. Sem tirar daqui,
+  // /deputados/rs abria a lista filtrada por "rs" minusculo contra dados em "RS" maiusculo, e
+  // a grade de parlamentares aparecia vazia embaixo do ranking. Numa lista estadual so existe
+  // um estado, entao o filtro nasce limpo.
+  const { uf: _paramDaRota, ...queryLimpa } = query;
+  return { props: await carregarParlamentares({ query: queryLimpa, req, casaFixa: a.casa }) };
 }

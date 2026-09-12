@@ -130,7 +130,34 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
     });
   }, [deputados, busca, uf, casa]);
 
+  // ---- Paginacao da grade -----------------------------------------------------------
+  // 5 por linha x 5 linhas no desktop. Antes a tela despejava os 513 federais de uma vez.
+  // Quem procura alguem especifico usa a busca; quem esta navegando nao rola 513 cartoes.
+  // ORDEM: depende de `filtrados`, `busca`, `uf` e `casa`, todos declarados acima (TDZ).
+  const POR_PAGINA = 25;
+  const [pagina, setPagina] = useState(1);
+  // Qualquer mudanca no recorte volta para a primeira pagina: senao o leitor fica parado
+  // numa pagina 7 que o resultado novo nem tem.
+  useEffect(() => { setPagina(1); }, [busca, uf, casa]);
+  const totalPaginas = Math.max(1, Math.ceil(filtrados.length / POR_PAGINA));
+  const paginaAtual = Math.min(pagina, totalPaginas);
+  const daPagina = filtrados.slice((paginaAtual - 1) * POR_PAGINA, paginaAtual * POR_PAGINA);
+  const irPara = (n) => {
+    setPagina(Math.min(Math.max(1, n), totalPaginas));
+    // Sem isto o leitor troca de pagina e continua olhando o rodape da anterior.
+    if (typeof document !== 'undefined') {
+      document.getElementById('grade-parlamentares')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
   const totalCasa = (c) => deputados.filter((d) => d.casa === c).length;
+
+  const pilulaPagina = (desativado) => ({
+    padding: '8px 16px', fontSize: '0.86rem', fontWeight: 700, fontFamily: t.fonte.corpo,
+    borderRadius: t.raio.pill, cursor: desativado ? 'default' : 'pointer',
+    border: `1px solid ${t.cor.cinza}`, background: '#fff', color: t.cor.tinta,
+    opacity: desativado ? 0.4 : 1,
+  });
 
   const pilulaCasa = (ativa) => ({
     padding: '11px 22px', fontSize: '0.95rem', fontWeight: 700, fontFamily: t.fonte.corpo,
@@ -402,26 +429,48 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
         )}
       </div>
 
+      <div id="grade-parlamentares" style={{ scrollMarginTop: '96px' }}>
       {filtrados.length > 0 ? (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(260px, 100%), 1fr))', gap: '14px' }}>
-          {filtrados.map((d) => (
+        <>
+        {/* .grade-parl (CSS em _app.js): 5 colunas no desktop, caindo para 4, 3 e 2 conforme
+            a largura. O cartao e enxuto de proposito, para caber 5 numa linha sem espremer o
+            nome. O que era a linha "Ver perfil" virou a seta a direita, que nao ocupa altura. */}
+        <div className="grade-parl">
+          {daPagina.map((d) => (
             <Link key={d.id} href={hrefPerfil(d)} style={{ textDecoration: 'none', color: 'inherit' }}>
-              <div style={{ background: t.cor.papelCartao, borderRadius: t.raio.md, padding: '16px', display: 'flex', gap: '14px', alignItems: 'center', height: '100%', boxShadow: t.sombra.clicavel, transition: 'box-shadow .15s ease, transform .15s ease' }}
+              <div style={{ background: t.cor.papelCartao, borderRadius: t.raio.md, padding: '11px 12px', display: 'flex', gap: '10px', alignItems: 'center', height: '100%', boxShadow: t.sombra.clicavel, transition: 'box-shadow .15s ease, transform .15s ease' }}
                 onMouseOver={(e) => { e.currentTarget.style.boxShadow = t.sombra.hover; e.currentTarget.style.transform = 'translateY(-2px)'; }}
                 onMouseOut={(e) => { e.currentTarget.style.boxShadow = t.sombra.clicavel; e.currentTarget.style.transform = 'none'; }}>
-                <Avatar nome={d.nome} foto={d.foto_url} size={56} />
-                <div style={{ minWidth: 0 }}>
-                  <p style={{ margin: '0 0 2px', fontWeight: 700, fontSize: '0.98rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.nome}</p>
-                  <p style={{ margin: '0 0 6px', color: t.cor.cinza, fontSize: '0.82rem' }}>{d.partido} · {d.uf || '-'}</p>
-                  <span style={{ color: t.cor.ouroTexto, fontWeight: 700, fontSize: '0.8rem' }}>Ver perfil →</span>
+                <Avatar nome={d.nome} foto={d.foto_url} size={40} />
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <p style={{ margin: 0, fontWeight: 700, fontSize: '0.88rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.nome}</p>
+                  <p style={{ margin: '2px 0 0', color: t.cor.cinza, fontSize: '0.76rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.partido} · {d.uf || '-'}</p>
                 </div>
+                <span aria-hidden="true" style={{ flexShrink: 0, color: t.cor.ouroTexto, fontWeight: 700, fontSize: '0.9rem' }}>→</span>
               </div>
             </Link>
           ))}
         </div>
+
+        {/* Paginacao. O texto diz o intervalo real, nunca um numero fixo. */}
+        {totalPaginas > 1 && (
+          <div style={{ marginTop: '16px', display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+            <button onClick={() => irPara(paginaAtual - 1)} disabled={paginaAtual === 1} style={pilulaPagina(paginaAtual === 1)}>
+              ← Anterior
+            </button>
+            <button onClick={() => irPara(paginaAtual + 1)} disabled={paginaAtual === totalPaginas} style={pilulaPagina(paginaAtual === totalPaginas)}>
+              Próxima →
+            </button>
+            <span style={{ fontSize: '0.85rem', color: t.cor.cinza }}>
+              Página {paginaAtual} de {totalPaginas} · mostrando {(paginaAtual - 1) * POR_PAGINA + 1} a {(paginaAtual - 1) * POR_PAGINA + daPagina.length} de {filtrados.length}
+            </span>
+          </div>
+        )}
+        </>
       ) : (
         <p style={{ color: t.cor.cinza }}>Nenhum parlamentar encontrado com esse filtro.</p>
       )}
+      </div>
     </div>
   );
 }

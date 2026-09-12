@@ -91,6 +91,13 @@ export default function App({ Component, pageProps }) {
            quebra. Em ~327px de area util no celular a soma nao cabe, e em vez de quebrar a linha
            empurrava o conteudo para fora da tela (a pagina ficava com rolagem horizontal e o
            valor cortado). Aqui elas passam a quebrar. */
+        /* Grade de parlamentares (/deputados, /deputados/[uf], /senadores). Colunas fixas por
+           faixa de largura em vez de auto-fill: o pedido e 5 por linha no desktop, e auto-fill
+           entrega 4 ou 6 conforme a largura da janela. */
+        .grade-parl { display: grid; gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        @media (min-width: 620px) { .grade-parl { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+        @media (min-width: 880px) { .grade-parl { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+        @media (min-width: 1120px) { .grade-parl { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
         .radar-linha { display: flex; align-items: center; gap: 14px; min-width: 0; }
         .radar-nome { min-width: 0; }
         .etapa-linha { display: flex; align-items: center; gap: 10px; min-width: 0; }
