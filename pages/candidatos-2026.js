@@ -8,9 +8,10 @@ import CampoBusca from '../components/CampoBusca';
 import CampoSelect from '../components/CampoSelect';
 import { NOMES_UF } from '../src/lib/cotas';
 import { t } from '../src/estilo/tokens';
+import { pilulaPagina, realcePagina } from '../src/estilo/botoes';
 
 const UFS = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
-const PORPAGINA = 24;
+const PORPAGINA = 25; // 5 colunas x 5 linhas, igual as listas de /deputados e /senadores
 
 function abaEstilo(ativa) {
   return {
@@ -66,14 +67,18 @@ function ListaPresidente({ chapas }) {
 function CardDeputadoFederal({ d }) {
   return (
     <Link href={`/deputado-federal/${d.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-      <div style={{ background: t.cor.papelCartao, borderRadius: t.raio.md, padding: '14px', height: '100%', minWidth: 0, overflow: 'hidden', boxShadow: t.sombra.clicavel, transition: 'box-shadow .15s ease, transform .15s ease', display: 'flex', gap: '12px', alignItems: 'center' }}
+      {/* Mesmo cartao da grade de /deputados: avatar 40, duas linhas e a seta a direita.
+          A linha "ver perfil" nao cabe com 5 por linha, e a seta faz o mesmo papel sem
+          custar altura. */}
+      <div style={{ background: t.cor.papelCartao, borderRadius: t.raio.md, padding: '11px 12px', height: '100%', minWidth: 0, overflow: 'hidden', boxShadow: t.sombra.clicavel, transition: 'box-shadow .15s ease, transform .15s ease', display: 'flex', gap: '10px', alignItems: 'center' }}
         onMouseOver={(e) => { e.currentTarget.style.boxShadow = t.sombra.hover; e.currentTarget.style.transform = 'translateY(-2px)'; }}
         onMouseOut={(e) => { e.currentTarget.style.boxShadow = t.sombra.clicavel; e.currentTarget.style.transform = 'none'; }}>
-        <Avatar nome={d.nome_urna} foto={d.foto_url} size={52} />
-        <div style={{ minWidth: 0, flex: '1 1 auto' }}>
-          <p style={{ margin: 0, fontWeight: 700, fontSize: '0.94rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.nome_urna}</p>
-          <p style={{ margin: '2px 0 0', fontSize: '0.78rem', color: t.cor.cinza }}>{d.partido_sigla || 'S/P'}{d.nr_candidato ? ` · nº ${d.nr_candidato}` : ''} · {d.uf}</p>
+        <Avatar nome={d.nome_urna} foto={d.foto_url} size={40} />
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <p style={{ margin: 0, fontWeight: 700, fontSize: '0.88rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.nome_urna}</p>
+          <p style={{ margin: '2px 0 0', fontSize: '0.76rem', color: t.cor.cinza, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.partido_sigla || 'S/P'}{d.nr_candidato ? ` · nº ${d.nr_candidato}` : ''} · {d.uf}</p>
         </div>
+        <span aria-hidden="true" style={{ flexShrink: 0, color: t.cor.ouroTexto, fontWeight: 700, fontSize: '0.9rem' }}>→</span>
       </div>
     </Link>
   );
@@ -171,21 +176,28 @@ function ListaDeputadoFederal({ dadosIniciais, resumo, filtrosIniciais, paginaIn
       {!carregando && dados.itens.length === 0 ? (
         <p style={{ color: t.cor.cinza }}>Nenhum candidato encontrado com esses filtros, tente limpar a busca ou trocar de estado.</p>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(280px, 100%), 1fr))', gap: '12px', opacity: carregando ? 0.5 : 1, transition: 'opacity .15s' }}>
+        <div className="grade-parl" style={{ opacity: carregando ? 0.5 : 1, transition: 'opacity .15s' }}>
+          {/* .grade-parl (CSS em _app.js): a mesma grade de /deputados e /senadores, 5 colunas
+              no desktop caindo para 4, 3 e 2. Aqui era auto-fill com 280px, que dava 4. */}
           {dados.itens.map((d) => <CardDeputadoFederal key={d.id} d={d} />)}
         </div>
       )}
 
       {totalPaginas > 1 && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '14px', marginTop: '28px', flexWrap: 'wrap' }}>
+          {/* Botao padrao do site (src/estilo/botoes.js). Os dois aqui tinham cores diferentes
+              entre si (um cinza claro, outro indigo com texto branco) e setas, destoando da
+              paginacao de /deputados. */}
           <button type="button" disabled={pagina <= 1} onClick={() => aoMudarPagina(pagina - 1)}
-            style={{ border: 'none', cursor: pagina <= 1 ? 'default' : 'pointer', opacity: pagina <= 1 ? 0.4 : 1, background: t.cor.papelQuente2, color: t.cor.tinta, fontWeight: 700, fontSize: '0.85rem', padding: '10px 18px', borderRadius: t.raio.pill }}>
-            ← Anterior
+            style={pilulaPagina(pagina <= 1)}
+            onMouseOver={(e) => realcePagina(e, true)} onMouseOut={(e) => realcePagina(e, false)}>
+            Anterior
           </button>
           <span style={{ fontSize: '0.85rem', color: t.cor.cinza, fontWeight: 600 }}>Página {pagina} de {totalPaginas.toLocaleString('pt-BR')}</span>
           <button type="button" disabled={pagina >= totalPaginas} onClick={() => aoMudarPagina(pagina + 1)}
-            style={{ border: 'none', cursor: pagina >= totalPaginas ? 'default' : 'pointer', opacity: pagina >= totalPaginas ? 0.4 : 1, background: t.cor.verde, color: '#fff', fontWeight: 700, fontSize: '0.85rem', padding: '10px 18px', borderRadius: t.raio.pill }}>
-            Próxima →
+            style={pilulaPagina(pagina >= totalPaginas)}
+            onMouseOver={(e) => realcePagina(e, true)} onMouseOut={(e) => realcePagina(e, false)}>
+            Próxima
           </button>
         </div>
       )}

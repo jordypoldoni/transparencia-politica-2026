@@ -16,6 +16,7 @@ import CampoBusca from './CampoBusca';
 import { NOMES_UF } from '../src/lib/cotas';
 import { t } from '../src/estilo/tokens';
 import { hrefPerfil } from '../src/lib/casa';
+import { pilulaPagina, realcePagina } from '../src/estilo/botoes';
 import { ASSEMBLEIAS, assembleiaDe, caminhoDaCasa } from '../src/lib/assembleias';
 
 const brl = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v || 0);
@@ -178,26 +179,6 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
     if (ativo) return; // a pastilha acesa nao muda no hover: ela ja e o estado atual
     e.currentTarget.style.background = dentro ? 'rgba(255,255,255,0.12)' : 'transparent';
     e.currentTarget.style.color = dentro ? '#fff' : 'rgba(255,255,255,0.82)';
-  };
-
-  const pilulaPagina = (desativado) => ({
-    // inline-flex + justify/align center + minWidth igual nos dois: com padding simetrico e
-    // texto de larguras diferentes ("Anterior" x "Proxima"), a capsula muda de tamanho e o
-    // texto parece descentralizado. lineHeight 1 tira a folga que a fonte deixa em cima.
-    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-    minWidth: '124px', lineHeight: 1, textAlign: 'center',
-    padding: '12px 20px', fontSize: '0.86rem', fontWeight: 700, fontFamily: t.fonte.corpo,
-    borderRadius: t.raio.pill, cursor: desativado ? 'default' : 'pointer',
-    border: 'none', background: t.cor.verde, color: t.cor.ouro,
-    boxShadow: desativado ? 'none' : t.sombra.clicavel,
-    opacity: desativado ? 0.35 : 1,
-    transition: 'box-shadow .15s ease, transform .15s ease',
-  });
-  // Sombra so cresce em botao ativo: em botao desativado seria convite a clicar.
-  const realce = (e, ligar) => {
-    if (e.currentTarget.disabled) return;
-    e.currentTarget.style.boxShadow = ligar ? t.sombra.hover : t.sombra.clicavel;
-    e.currentTarget.style.transform = ligar ? 'translateY(-1px)' : 'none';
   };
 
   const pilulaCasa = (ativa) => ({
@@ -514,11 +495,11 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
         {totalPaginas > 1 && (
           <div style={{ marginTop: '16px', display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
             <button onClick={() => irPara(paginaAtual - 1)} disabled={paginaAtual === 1} style={pilulaPagina(paginaAtual === 1)}
-              onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}>
+              onMouseOver={(e) => realcePagina(e, true)} onMouseOut={(e) => realcePagina(e, false)}>
               Anterior
             </button>
             <button onClick={() => irPara(paginaAtual + 1)} disabled={paginaAtual === totalPaginas} style={pilulaPagina(paginaAtual === totalPaginas)}
-              onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}>
+              onMouseOver={(e) => realcePagina(e, true)} onMouseOut={(e) => realcePagina(e, false)}>
               Próxima
             </button>
             <span style={{ fontSize: '0.85rem', color: t.cor.cinza }}>
