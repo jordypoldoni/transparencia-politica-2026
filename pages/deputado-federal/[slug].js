@@ -4,6 +4,7 @@ import ServicoAPI from '../../src/servicos/servico_api';
 import Avatar from '../../components/Avatar';
 import { NOMES_UF, pctDoTeto } from '../../src/lib/cotas';
 import { t } from '../../src/estilo/tokens';
+import { hrefPerfil } from '../../src/lib/casa';
 
 const brl = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v || 0);
 
@@ -148,7 +149,7 @@ export default function PerfilDeputadoFederal({ candidato, canonical }) {
           </div>
 
           <div style={{ marginTop: '14px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-            <Link href={`/deputado/${m.slug}`} style={{ background: t.cor.verde, color: t.cor.ouro, padding: '11px 22px', borderRadius: t.raio.pill, textDecoration: 'none', fontWeight: 700, fontSize: '0.92rem', boxShadow: t.sombra.clicavel }}>
+            <Link href={hrefPerfil(m)} style={{ background: t.cor.verde, color: t.cor.ouro, padding: '11px 22px', borderRadius: t.raio.pill, textDecoration: 'none', fontWeight: 700, fontSize: '0.92rem', boxShadow: t.sombra.clicavel }}>
               Ver o mandato em detalhe →
             </Link>
             <span style={{ alignSelf: 'center', fontSize: '0.85rem', color: t.cor.cinza }}>

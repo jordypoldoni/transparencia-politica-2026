@@ -9,6 +9,7 @@ import BuscaMunicipio from '../components/BuscaMunicipio';
 import { Lupa, Pino } from '../components/icones';
 import { NOMES_UF } from '../src/lib/cotas';
 import { t } from '../src/estilo/tokens';
+import { hrefPerfil } from '../src/lib/casa';
 
 const ESTADOS = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
 const ESTADOS_OPCOES = ESTADOS.map((uf) => ({ valor: uf, rotulo: `${uf} · ${NOMES_UF[uf] || uf}`, busca: `${uf} ${NOMES_UF[uf] || ''}` }));
@@ -50,8 +51,10 @@ export default function Home({ votacoes, parlamentares = [], uniao = null, estad
 
   const estadoOpcoes = useMemo(() => estados.map((e) => ({ valor: String(e.cod_ibge), rotulo: e.ente, busca: e.ente })), [estados]);
 
+  // O `valor` e o caminho inteiro, nao o slug: senador e deputado moram em rotas
+  // diferentes e quem sabe disso e o src/lib/casa.js.
   const parlOpcoes = useMemo(() => parlamentares.map((p) => ({
-    valor: p.slug,
+    valor: hrefPerfil(p),
     rotulo: `${p.nome} · ${p.partido}${p.uf ? '-' + p.uf : ''}`,
     busca: `${p.nome} ${p.partido} ${p.uf}`,
   })), [parlamentares]);
@@ -76,7 +79,7 @@ export default function Home({ votacoes, parlamentares = [], uniao = null, estad
                 <CampoSelect
                   opcoes={parlOpcoes} placeholder="Buscar deputado ou senador…" aoLabel="Buscar parlamentar" limite={60}
                   icone={<Lupa />}
-                  aoSelecionar={(slug) => router.push(`/deputado/${slug}`)} />
+                  aoSelecionar={(caminho) => router.push(caminho)} />
               </div>
               <div style={{ flex: '1 1 220px', minWidth: '180px' }}>
                 <CampoSelect

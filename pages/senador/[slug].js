@@ -2,19 +2,19 @@ import PerfilSEO from '../../components/PerfilSEO';
 import ServicoAPI from '../../src/servicos/servico_api';
 import { casaDoPerfil } from '../../src/lib/casa';
 
-export default function PaginaDeputado(props) {
+export default function PaginaSenador(props) {
   return <PerfilSEO {...props} />;
 }
 
 export async function getServerSideProps({ params, req }) {
   const dados = await ServicoAPI.getPoliticoPorSlug(params.slug);
   if (!dados) return { notFound: true };
-  // Senador nao mora aqui. 301 (permanente) e o que o Google entende como "mudou de
-  // endereco": ele transfere a autoridade da URL antiga e passa a indexar /senador/.
-  if (casaDoPerfil(dados.perfil).ehSenado) {
-    return { redirect: { destination: `/senador/${params.slug}`, permanent: true } };
+  // Espelho da regra de /deputado/: quem nao e senador volta para la. Sem isso o mesmo
+  // perfil responderia em dois enderecos, que para o Google e conteudo duplicado.
+  if (!casaDoPerfil(dados.perfil).ehSenado) {
+    return { redirect: { destination: `/deputado/${params.slug}`, permanent: true } };
   }
   const proto = req.headers['x-forwarded-proto'] || 'http';
-  const canonical = `${proto}://${req.headers.host}/deputado/${params.slug}`;
+  const canonical = `${proto}://${req.headers.host}/senador/${params.slug}`;
   return { props: { dados: JSON.parse(JSON.stringify(dados)), canonical } };
 }

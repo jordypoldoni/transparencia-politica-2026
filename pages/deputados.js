@@ -6,6 +6,7 @@ import CampoSelect from '../components/CampoSelect';
 import CampoBusca from '../components/CampoBusca';
 import { NOMES_UF } from '../src/lib/cotas';
 import { t } from '../src/estilo/tokens';
+import { hrefPerfil } from '../src/lib/casa';
 
 const brl = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v || 0);
 
@@ -244,7 +245,7 @@ export default function Parlamentares({ deputados, qInicial, ufInicial, casaInic
                 <li key={p.id}>
                   {/* .radar-linha (CSS em _app.js): no celular a linha quebra e o valor desce
                       para a linha de baixo. Sem isso o valor era empurrado para fora da tela. */}
-                  <Link href={`/deputado/${p.slug}`} className="radar-linha" style={{ textDecoration: 'none', color: 'inherit', background: 'rgba(255,255,255,0.07)', borderRadius: '6px', padding: '12px 16px' }}>
+                  <Link href={hrefPerfil(p)} className="radar-linha" style={{ textDecoration: 'none', color: 'inherit', background: 'rgba(255,255,255,0.07)', borderRadius: '6px', padding: '12px 16px' }}>
                     <span style={{ flexShrink: 0, width: '26px', fontFamily: t.fonte.titulo, fontWeight: 600, color: t.cor.ouro, fontSize: '1.2rem' }}>{i + 1}</span>
                     <Avatar nome={p.nome_urna} foto={p.foto_url} size={44} />
                     <span className="radar-nome" style={{ flex: 1, minWidth: 0 }}>
@@ -301,7 +302,7 @@ export default function Parlamentares({ deputados, qInicial, ufInicial, casaInic
       {filtrados.length > 0 ? (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(260px, 100%), 1fr))', gap: '14px' }}>
           {filtrados.map((d) => (
-            <Link key={d.id} href={`/deputado/${d.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+            <Link key={d.id} href={hrefPerfil(d)} style={{ textDecoration: 'none', color: 'inherit' }}>
               <div style={{ background: t.cor.papelCartao, borderRadius: t.raio.md, padding: '16px', display: 'flex', gap: '14px', alignItems: 'center', height: '100%', boxShadow: t.sombra.clicavel, transition: 'box-shadow .15s ease, transform .15s ease' }}
                 onMouseOver={(e) => { e.currentTarget.style.boxShadow = t.sombra.hover; e.currentTarget.style.transform = 'translateY(-2px)'; }}
                 onMouseOut={(e) => { e.currentTarget.style.boxShadow = t.sombra.clicavel; e.currentTarget.style.transform = 'none'; }}>

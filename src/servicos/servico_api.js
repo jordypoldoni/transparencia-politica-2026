@@ -1,6 +1,7 @@
 import supabase from '../supabase_cliente.js';
 import { garantirResumo } from '../lib/siconfi.js';
 import { agruparPorMateria } from '../lib/votacao.js';
+import { casaDoPerfil } from '../lib/casa.js';
 
 const ServicoAPI = {
     // Busca o ranking de maiores gastadores
@@ -391,7 +392,7 @@ const ServicoAPI = {
     getRadarPorEstado: async (uf, ano = 2026) => {
         const { data, error } = await supabase
             .from('radar_gastos')
-            .select('id, slug, nome_urna, partido_atual, uf_sede, foto_url, total, n_notas')
+            .select('id, slug, nome_urna, partido_atual, uf_sede, foto_url, total, n_notas, casa, meses_com_gasto')
             .eq('ano', ano)
             .eq('uf_sede', uf)
             .order('total', { ascending: false });
@@ -446,7 +447,7 @@ const ServicoAPI = {
         const [votosRes, metaRes] = await Promise.all([
             supabase
                 .from('votos_parlamentares')
-                .select('voto_tipo, descricao_votacao, aprovacao, data_voto, agentes_politicos!inner(nome_urna, partido_atual, uf_sede, slug)')
+                .select('voto_tipo, descricao_votacao, aprovacao, data_voto, agentes_politicos!inner(nome_urna, partido_atual, uf_sede, slug, cargo_atual, fonte_api)')
                 .eq('votacao_id_externa', id),
             supabase.from('votacoes').select('*').eq('votacao_id_externa', id).maybeSingle(),
         ]);
@@ -473,6 +474,9 @@ const ServicoAPI = {
                 partido: r.agentes_politicos?.partido_atual,
                 uf: r.agentes_politicos?.uf_sede,
                 slug: r.agentes_politicos?.slug,
+                // Rota do perfil: numa votacao do Senado a lista e de senadores, e senador
+                // nao mora em /deputado/. Ver src/lib/casa.js.
+                rota: casaDoPerfil(r.agentes_politicos || {}).rota,
             }))
             .sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
         return { meta, votos };
@@ -489,20 +493,35 @@ const ServicoAPI = {
         return ServicoAPI.getPoliticoCompleto(data.id);
     },
 
-    // Slug a partir do id (para redirecionar URLs antigas /politico/[id])
-    slugPorId: async (id) => {
-        const { data } = await supabase.from('agentes_politicos').select('slug').eq('id', id).single();
-        return data?.slug || null;
+    // Slug + casa a partir do id (para redirecionar as URLs antigas /politico/[id] ja
+    // para a rota certa: /deputado/ ou /senador/).
+    perfilBasicoPorId: async (id) => {
+        const { data } = await supabase.from('agentes_politicos')
+            .select('slug, cargo_atual, fonte_api, casa_legislativa').eq('id', id).single();
+        return data || null;
     },
 
-    // Todos os slugs (para o sitemap)
-    listarSlugs: async () => {
-        const { data } = await supabase
-            .from('agentes_politicos')
-            .select('slug')
-            .ilike('fonte_api', '%camara%')
-            .not('slug', 'is', null);
-        return (data || []).map((d) => d.slug);
+    // Todos os perfis para o sitemap, com o que basta para saber a rota de cada um.
+    // Antes de 12/09/2026 esta consulta filtrava por fonte_api ilike '%camara%', entao
+    // senadores e deputados estaduais NUNCA entraram no sitemap: o Google so chegava neles
+    // por link interno. Agora entram todos, cada um na rota da sua casa.
+    // Paginado pelo mesmo motivo do getRadaresPorCasaEAno: o Supabase corta em 1.000 linhas,
+    // e a lista cresce a cada assembleia nova.
+    listarPerfisParaSitemap: async () => {
+        const PAGINA = 1000;
+        const todos = [];
+        for (let inicio = 0; ; inicio += PAGINA) {
+            const { data: pagina, error } = await supabase
+                .from('agentes_politicos')
+                .select('slug, cargo_atual, fonte_api, casa_legislativa')
+                .not('slug', 'is', null)
+                .order('slug', { ascending: true })
+                .range(inicio, inicio + PAGINA - 1);
+            if (error) { console.error('listarPerfisParaSitemap:', error.message); break; }
+            todos.push(...(pagina || []));
+            if (!pagina || pagina.length < PAGINA) break;
+        }
+        return todos;
     },
 
     // ============ PANORAMA FISCAL (SICONFI: União, estados, DF, municípios) ============

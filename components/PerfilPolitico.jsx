@@ -6,6 +6,7 @@ import Avatar from './Avatar';
 import { pctDoTeto } from '../src/lib/cotas';
 import { nomeTipoProposicao } from '../src/lib/proposicoes';
 import { explicarTipo, agruparPorMateria, papelVotacao, situacaoCidada } from '../src/lib/votacao';
+import { casaDoPerfil } from '../src/lib/casa';
 
 const brl = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v || 0);
 const brlExato = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
@@ -248,27 +249,9 @@ export default function PerfilPolitico({ dados }) {
   // BUG CORRIGIDO EM 10/09/2026: fonteNome era fixo em 'ALESP' para qualquer estadual, entao
   // todo perfil de deputado do RS creditava o dado a assembleia de Sao Paulo - inclusive na
   // imagem de compartilhamento. Num site de transparencia isso e erro factual, nao cosmetico.
-  const fonteApi = (perfil.fonte_api || '').toLowerCase();
-  const ehAlesp = fonteApi.includes('alesp');
-  const ehAlergs = fonteApi.includes('alergs');
-  const ehEstadual = perfil.casa_legislativa === 'estadual' || ehAlesp || ehAlergs;
-  const ehSenado = fonteApi.includes('senado');
+  // A regra mora em src/lib/casa.js (fonte unica, tambem usada pelas rotas de perfil).
+  const { fonteApi, ehAlesp, ehAlergs, ehEstadual, ehSenado, fonteNome, fonteNomeCom, temNotaFiscal } = casaDoPerfil(perfil);
   const rotuloCota = ehEstadual ? 'cota (verba de gabinete) ?' : 'cota parlamentar ?';
-  // A sigla oficial da assembleia gaucha e ALRS (tambem grafada AL-RS); "ALERGS" e forma
-  // corrente mas incorreta, e estava no codigo. Aqui vai o nome por extenso de proposito:
-  // "Fonte: AL-RS" nao diz nada para o leitor comum, e a regra do site e nao pressupor
-  // conhecimento. ALESP fica na sigla porque e amplamente reconhecida.
-  const fonteNome = ehAlergs ? 'Assembleia Legislativa do RS'
-    : ehAlesp ? 'ALESP'
-    : ehEstadual ? 'Assembleia Legislativa'
-    : ehSenado ? 'Senado Federal'
-    : 'Câmara dos Deputados';
-  // Versão com preposição, para frases do tipo "cadastro oficial da ...".
-  const fonteNomeCom = ehSenado ? `do ${fonteNome}` : `da ${fonteNome}`;
-  // A assembleia gaucha (ALRS) publica APENAS o agregado mensal por categoria - nao ha nota fiscal nem
-  // fornecedor (ver coletores/coletor_gastos_alergs.js). Falar em "notas fiscais" no perfil
-  // de um deputado gaucho descreve um dado que nao existe, entao o vocabulario muda por casa.
-  const temNotaFiscal = !ehAlergs;
   // % do teto mensal da cota — federal (CEAP), senador (CEAPS) e estadual-SP (verba ALESP)
   const tetoInfo = pctDoTeto({ fonteApi: perfil.fonte_api, casa: perfil.casa_legislativa, uf: perfil.uf_sede }, mediaAno || media_mensal);
   // Valores do ANO SELECIONADO (reativo ao seletor de ano)

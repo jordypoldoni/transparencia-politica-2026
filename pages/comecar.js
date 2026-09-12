@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import Link from 'next/link';
 import ServicoAPI from '../src/servicos/servico_api';
 import { t } from '../src/estilo/tokens';
+import { hrefPerfil } from '../src/lib/casa';
 
 const UFS = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
 
@@ -62,7 +63,7 @@ export default function Comecar({ modo, temasDisponiveis, ufSel, temasSel, deput
             {deputados.length > 0 ? (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(240px, 100%),1fr))', gap: '12px' }}>
                 {deputados.map((d) => (
-                  <Link key={d.id} href={`/deputado/${d.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+                  <Link key={d.id} href={hrefPerfil(d)} style={{ textDecoration: 'none', color: 'inherit' }}>
                     <div style={{ background: '#fff', borderRadius: t.raio.md, padding: '14px', display: 'flex', gap: '12px', alignItems: 'center', boxShadow: t.sombra.clicavel, transition: 'box-shadow .15s, transform .15s' }}
                       onMouseOver={(e) => { e.currentTarget.style.boxShadow = t.sombra.hover; e.currentTarget.style.transform = 'translateY(-1px)'; }}
                       onMouseOut={(e) => { e.currentTarget.style.boxShadow = t.sombra.clicavel; e.currentTarget.style.transform = 'none'; }}>

@@ -106,7 +106,7 @@ export default function Votacao({ meta, votos }) {
               {aberto && (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(240px, 100%), 1fr))', gap: '6px', padding: '6px', background: t.cor.papelQuente }}>
                   {doTipo.map((v, i) => (
-                    <Link key={i} href={v.slug ? `/deputado/${v.slug}` : '#'} style={{ textDecoration: 'none', color: 'inherit', padding: '10px 14px', background: '#fff', borderRadius: t.raio.sm, display: 'block' }}>
+                    <Link key={i} href={v.slug ? `/${v.rota || 'deputado'}/${v.slug}` : '#'} style={{ textDecoration: 'none', color: 'inherit', padding: '10px 14px', background: '#fff', borderRadius: t.raio.sm, display: 'block' }}>
                       <span style={{ display: 'block', fontWeight: 600, fontSize: '0.9rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{v.nome}</span>
                       <span style={{ fontSize: '0.78rem', color: t.cor.cinza }}>{v.partido} · {v.uf}</span>
                     </Link>

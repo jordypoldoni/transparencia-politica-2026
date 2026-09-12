@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# Todos os perfis, votacoes e paginas de estado estao aqui.
+Sitemap: https://lumecidadao.com.br/sitemap.xml
