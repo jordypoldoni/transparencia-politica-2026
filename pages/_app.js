@@ -110,6 +110,12 @@ export default function App({ Component, pageProps }) {
            (24px), mas erra facil; em tela de toque a pastilha cresce. */
         @media (pointer: coarse) { .trilho button { min-height: 40px; } }
 
+        /* O que a assembleia publica e o que nao publica (/deputados/[uf]). Sem container:
+           texto corrido, na mesma margem do paragrafo de cima. A margem negativa aproxima os
+           dois, porque sao a mesma ideia continuada. */
+        .nota-casa { margin: -16px 0 24px; max-width: 88ch; font-size: 0.88rem; line-height: 1.55; color: #6B7280; }
+        .nota-casa strong { color: #191C20; font-weight: 700; }
+
         /* Nota do seletor de ano: uma linha, colada na barra de controles, porque e sobre o
            CONTROLE. Antes dividia uma grade de duas colunas com a ressalva de leitura da
            lista: coisas de donos diferentes, e uma acabava flutuando no canto direito. */

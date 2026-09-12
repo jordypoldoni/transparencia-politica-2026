@@ -267,8 +267,12 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
       </p>
       )}
 
+      {/* O que esta assembleia publica e o que nao publica. Era um cartao com fundo de alerta
+          e padding proprio: o padding empurrava o texto para dentro e desalinhava com a linha
+          de cima, e o fundo dava a essa ressalva mais peso do que a propria descricao da
+          pagina. Agora e texto corrido, na mesma margem do paragrafo anterior. */}
       {assembleia && (
-        <div style={{ background: t.cor.alertaBg, borderRadius: t.raio.sm, padding: '12px 16px', margin: '0 0 20px', fontSize: '0.88rem', color: t.cor.tinta, lineHeight: 1.5 }}>
+        <p className="nota-casa">
           <strong>{NOMES_UF[assembleia.uf] || assembleia.uf} ({assembleia.sigla}).</strong>{' '}
           {/* o nome do estado aqui abre a frase, então vai sem preposição */}
           {assembleia.votos
@@ -280,7 +284,7 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
             ? 'Os gastos de gabinete estão no ar, nota a nota, com fornecedor e CNPJ.'
             : 'Os gastos de gabinete estão no ar, mas a assembleia publica apenas o total de cada mês por categoria: dá para ver quanto e em quê, não para quem o dinheiro foi.'}
           {' '}Fonte: {assembleia.sigla}.
-        </div>
+        </p>
       )}
 
       {/* Ranking de gastos — quem mais usou a verba (casa ativa) */}
