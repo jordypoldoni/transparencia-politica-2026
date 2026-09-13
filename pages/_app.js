@@ -64,21 +64,21 @@ export default function App({ Component, pageProps }) {
         /* Grafico de gastos mes a mes (PerfilPolitico). Fica AQUI, e nao num <style jsx> dentro
            do componente: o compilador do Next quebra ("Option::unwrap() on a None") quando o CSS
            do componente interpola valores dos tokens. Por isso as cores vao em hex, iguais as de
-           src/estilo/tokens.js: tinta #191C20, cinza #6B7280, papelQuente2 #F4ECE1.
+           src/estilo/tokens.js: tinta #191C20, cinza #666E7B, papelQuente2 #F4ECE1.
            Comentarios sem acento aqui de proposito, para nao arriscar o parser de CSS. */
         .grafico-mes--colunas { display: flex; align-items: flex-end; gap: 6px; min-height: 180px; padding: 0 2px; }
         .grafico-mes__col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; justify-content: flex-end; }
         .grafico-mes__valor { font-size: 0.62rem; font-weight: 700; color: #191C20; white-space: nowrap; line-height: 1; }
         .grafico-mes__barra { width: 100%; max-width: 34px; border-radius: 6px 6px 0 0; transition: height .3s ease; }
-        .grafico-mes__rotulo { font-size: 0.62rem; color: #6B7280; font-weight: 700; }
+        .grafico-mes__rotulo { font-size: 0.62rem; color: #666E7B; font-weight: 700; }
 
         .grafico-mes--lista { display: none; }
         .grafico-mes__linha { display: grid; grid-template-columns: 4.4rem 1fr auto; align-items: center; gap: 10px; padding: 7px 0; }
-        .grafico-mes__mes { font-size: 0.8rem; font-weight: 700; color: #6B7280; }
+        .grafico-mes__mes { font-size: 0.8rem; font-weight: 700; color: #666E7B; }
         .grafico-mes__trilho { display: block; height: 10px; background: #F4ECE1; border-radius: 999px; overflow: hidden; }
         .grafico-mes__preenchido { display: block; height: 100%; border-radius: 999px; }
         .grafico-mes__cifra { font-size: 0.85rem; font-weight: 700; white-space: nowrap; }
-        .grafico-mes__vazios { margin: 10px 0 0; font-size: 0.8rem; color: #6B7280; line-height: 1.5; }
+        .grafico-mes__vazios { margin: 10px 0 0; font-size: 0.8rem; color: #666E7B; line-height: 1.5; }
 
         /* No celular as 12 colunas ficariam com ~28px e nenhum valor caberia: vira lista. */
         @media (max-width: 640px) {
@@ -113,7 +113,7 @@ export default function App({ Component, pageProps }) {
         /* O que a assembleia publica e o que nao publica (/deputados/[uf]). Sem container:
            texto corrido, na mesma margem do paragrafo de cima. A margem negativa aproxima os
            dois, porque sao a mesma ideia continuada. */
-        .nota-casa { margin: -16px 0 24px; max-width: 88ch; font-size: 0.88rem; line-height: 1.55; color: #6B7280; }
+        .nota-casa { margin: -16px 0 24px; max-width: 88ch; font-size: 0.88rem; line-height: 1.55; color: #666E7B; }
         .nota-casa strong { color: #191C20; font-weight: 700; }
 
         /* Nota do seletor de ano: uma linha, colada na barra de controles, porque e sobre o

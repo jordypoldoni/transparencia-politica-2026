@@ -111,7 +111,7 @@ export default function CardRanking({ politico, posicao }) {
             <span style={{
               fontSize: '11px',
               fontWeight: 700,
-              color: '#6B7280',
+              color: '#666E7B',
               backgroundColor: '#F1F0EC',
               padding: '3px 10px',
               borderRadius: '999px',

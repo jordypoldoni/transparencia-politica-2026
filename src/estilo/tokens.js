@@ -9,7 +9,7 @@ export const t = {
     verdeEscuro: '#171238',  // índigo escuro
     ouro: '#FF8A00',         // [acento vivo] âmbar — fills, ícones, bordas, texto sobre fundo ESCURO
     ouroTexto: '#A85B00',    // âmbar escuro p/ TEXTO sobre fundo claro (contraste >= 4.5:1, WCAG)
-    cinza: '#6B7280',        // texto secundário
+    cinza: '#666E7B',        // texto secundário — era #6B7280 (4,47:1 sobre o papel, 0,03 abaixo do AA); este dá 4,76:1
     linha: '#E6E3DC',        // (legado) — NÃO usar como borda de container; só divisores muito sutis se preciso
     papelQuente: '#FAF5EE',  // tom quente p/ separar superfícies internas sem borda
     papelQuente2: '#F4ECE1', // tom quente um pouco mais forte (hover/seleção)
