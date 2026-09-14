@@ -485,6 +485,14 @@ const ServicoAPI = {
             resultado: vm?.resultado || null,
             autor_nome: vm?.autor_nome || null,
             autor_tipo: vm?.autor_tipo || null,
+            // ARMADILHA (14/09/2026): a consulta acima usa select('*'), mas ESTE objeto é
+            // remontado campo a campo, então tudo que não estiver listado aqui é descartado
+            // silenciosamente. Colunas novas no banco NÃO chegam na tela só por existirem.
+            url_inteiro_teor: vm?.url_inteiro_teor || null,
+            explicacao_cidada: vm?.explicacao_cidada || null,
+            contexto_extra: vm?.contexto_extra || null,
+            explicacao_modelo: vm?.explicacao_modelo || null,
+            explicacao_gerada_em: vm?.explicacao_gerada_em || null,
         };
         const votos = votosData
             .map((r) => ({

@@ -260,6 +260,24 @@ async function anexarPropostasEFotos(candidatos) {
 
   if (naoCasados.fotos.length) console.warn(`   ⚠️  ${naoCasados.fotos.length} foto(s) sem candidato correspondente: ${naoCasados.fotos.slice(0, 5).join(', ')}${naoCasados.fotos.length > 5 ? '…' : ''}`);
   if (naoCasados.propostas.length) console.warn(`   ⚠️  ${naoCasados.propostas.length} proposta(s) sem candidato correspondente: ${naoCasados.propostas.slice(0, 5).join(', ')}${naoCasados.propostas.length > 5 ? '…' : ''}`);
+
+  // O AVISO QUE FALTAVA (13/09/2026). Os dois avisos acima olham para o lado errado: eles
+  // reclamam quando SOBRA arquivo sem dono. Quando FALTA arquivo para um candidato, ninguém
+  // dizia nada — e foi assim que o Pablo Marçal passou três semanas sem plano de governo no
+  // site. Ele registrou a candidatura depois dos outros, o ZIP do TSE daquele dia ainda não
+  // tinha o PDF dele, e a ausência não deixou rastro em lugar nenhum.
+  //
+  // Só vale para Presidente: VICE não tem plano de governo próprio, então listar vice aqui
+  // encheria a saída de falso alarme todo dia.
+  const semProposta = candidatos.filter((c) => c.cargo === 'Presidente' && !c.proposta_pdf_url);
+  if (semProposta.length) {
+    console.warn(`\n   ⚠️  ${semProposta.length} candidato(s) a Presidente SEM plano de governo no ZIP do TSE:`);
+    for (const c of semProposta) console.warn(`        • ${c.nome_urna} (${c.partido_sigla}, nº ${c.nr_candidato})`);
+    console.warn('        Pode ser candidatura registrada depois da geração do ZIP. Rode de novo em alguns dias;');
+    console.warn('        se continuar faltando, o documento pode estar só no DivulgaCandContas, não no pacote em lote.');
+  } else {
+    console.log(`   ✅ Todos os ${candidatos.filter((c) => c.cargo === 'Presidente').length} candidatos a Presidente têm plano de governo.`);
+  }
 }
 
 async function main() {
