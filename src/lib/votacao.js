@@ -153,6 +153,11 @@ export function agruparPorMateria(votacoes) {
     g.regime = pega('regime');
     g.url_inteiro_teor = pega('url_inteiro_teor');
     g.ementa_detalhada = pega('ementa_detalhada');
+    // A frase em linguagem comum tem que vir da MESMA votação de onde saiu a ementa escolhida
+    // acima. Usar pega() aqui traria a frase de um eco ("Aprova a votação nominal do PLP 74"),
+    // que descreve o rito e não a matéria, e o card da lista anunciaria o rito.
+    const dona = g.votacoes.find((v) => v.ementa && v.ementa === g.ementa);
+    g.explicacao_cidada = (dona && dona.explicacao_cidada) || null;
     g.autor_nome = pega('autor_nome');
     g.proposicao_id = pega('proposicao_id');
     g.votacoes.sort((a, b) => new Date(a.data_voto || 0) - new Date(b.data_voto || 0));

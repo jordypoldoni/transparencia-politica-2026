@@ -122,6 +122,12 @@ export default function Votacoes({ votacoes, temas = [] }) {
           <p style={{ color: t.cor.cinza }}>Nenhuma matéria encontrada{temFiltro ? ' com esses filtros' : ''}. Tente afrouxar a busca, o tema ou o período.</p>
         ) : (
           <div style={{ display: 'grid', gap: '14px' }}>
+            {/* A ressalva que governa a LISTA mora no topo dela, não repetida em cada card
+                (Diretrizes de Design). Um rótulo por cartão em 771 cartões é ruído; aqui a
+                regra de leitura é dita uma vez. */}
+            <p style={{ margin: 0, fontSize: '0.82rem', lineHeight: 1.5, color: t.cor.cinza }}>
+              Os títulos abaixo são resumos em linguagem comum, escritos por inteligência artificial a partir da ementa oficial. A ementa na íntegra está na página de cada votação.
+            </p>
             {grupos.map((g) => {
               const status = statusGrupo(g);
               const exp = explicarTipo(`${g.titulo || ''} ${g.ementa || ''}`);
@@ -132,7 +138,9 @@ export default function Votacoes({ votacoes, temas = [] }) {
               const inicio = dataBR(g.votacoes[0]?.data_voto);
               const fim = dataBR(g.votacoes[g.votacoes.length - 1]?.data_voto);
               const periodoTxt = inicio === fim ? fim : `${inicio} – ${fim}`;
-              const tituloExib = g.ementa || g.votacoes[0]?.descricao || 'Votação';
+              // Mesma regra da página de detalhe: quando existe a frase em linguagem comum,
+              // é ela que titula o card. Sem frase, a ementa (que nesses casos já é legível).
+              const tituloExib = g.explicacao_cidada || g.ementa || g.votacoes[0]?.descricao || 'Votação';
               return (
                 <div key={g.chave} style={{ background: t.cor.papelCartao, borderRadius: t.raio.md, padding: '18px 20px', boxShadow: t.sombra.sutil }}>
                   <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap' }}>

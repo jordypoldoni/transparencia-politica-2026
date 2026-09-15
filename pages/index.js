@@ -198,7 +198,7 @@ export default function Home({ votacoes, parlamentares = [], uniao = null, estad
           <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.7rem', margin: '0 0 4px' }}>O que os deputados decidiram</h2>
           <Link href="/votacoes" style={{ fontSize: '0.85rem', fontWeight: 700, color: t.cor.ouroTexto, textDecoration: 'none' }}>Ver todas as votações →</Link>
         </div>
-        <p style={{ color: t.cor.cinza, fontSize: '0.92rem', margin: '0 0 18px' }}>Votações recentes no plenário da Câmara: o assunto, quem propôs e o que foi decidido. Fonte: Câmara dos Deputados.</p>
+        <p style={{ color: t.cor.cinza, fontSize: '0.92rem', margin: '0 0 18px' }}>Votações recentes no plenário da Câmara: o assunto, quem propôs e o que foi decidido. O título de cada card é um resumo em linguagem comum, escrito por inteligência artificial a partir da ementa oficial, que está na íntegra na página da votação. Fonte: Câmara dos Deputados.</p>
         {votacoes && votacoes.length > 0 ? (
           <div style={{ display: 'grid', gap: '10px' }}>
             {votacoes.slice(0, 6).map((g) => {
@@ -223,7 +223,7 @@ export default function Home({ votacoes, parlamentares = [], uniao = null, estad
                       <span style={{ fontSize: '0.78rem', color: t.cor.cinza }}>{dataTxt}</span>
                       {g.n > 1 && <span style={{ fontSize: '0.72rem', color: t.cor.ouroTexto, fontWeight: 700 }}>{g.n} votações no processo</span>}
                     </div>
-                    <p style={{ margin: '0 0 4px', fontSize: '1rem', fontWeight: 600, lineHeight: 1.4, color: t.cor.tinta }}>{g.ementa || h.limpo || p?.descricao}</p>
+                    <p style={{ margin: '0 0 4px', fontSize: '1rem', fontWeight: 600, lineHeight: 1.4, color: t.cor.tinta }}>{g.explicacao_cidada || g.ementa || h.limpo || p?.descricao}</p>
                     <p style={{ margin: '0 0 6px', fontSize: '0.85rem', color: t.cor.cinza, lineHeight: 1.45 }}><strong style={{ color: t.cor.tinta, fontWeight: 700 }}>{exp.termo}:</strong> {exp.texto}</p>
                     <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center', marginBottom: '6px' }}>
                       {sit && <span style={{ fontSize: '0.74rem', fontWeight: 700, padding: '3px 10px', borderRadius: '6px', background: /virou lei/i.test(sit) ? '#E7F3EC' : t.cor.papelQuente2, color: /virou lei/i.test(sit) ? t.cor.sim : t.cor.tinta }}>Situação: {sit}</span>}

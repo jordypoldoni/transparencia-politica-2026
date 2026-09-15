@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { t } from '../src/estilo/tokens';
 import Avatar from './Avatar';
 import { pctDoTeto } from '../src/lib/cotas';
-import { nomeTipoProposicao } from '../src/lib/proposicoes';
+import { nomeTipoProposicao, legendaDosTipos } from '../src/lib/proposicoes';
 import { explicarTipo, agruparPorMateria, papelVotacao, situacaoCidada } from '../src/lib/votacao';
 import { casaDoPerfil } from '../src/lib/casa';
 
@@ -707,6 +707,25 @@ export default function PerfilPolitico({ dados }) {
                     : null}
                 {' '}Propor não é o mesmo que aprovar. Fonte: {fonteNome}.
               </p>
+              {/* CAMADA ZERO DAS PROPOSIÇÕES, por regra e sem IA (ver src/lib/proposicoes.js).
+                  A ficha já dizia o tipo por extenso, mas não dizia o que cada instrumento é
+                  CAPAZ de fazer: que um requerimento de informação não muda lei nenhuma, que
+                  uma PEC mexe na Constituição. Isso vai aqui, uma vez por tipo presente, em
+                  vez de repetido nos 20 itens (seriam ~40 linhas a mais na tela). */}
+              {(() => {
+                const legenda = legendaDosTipos(proposicoesExibidas);
+                if (!legenda.length) return null;
+                return (
+                  <div style={{ background: t.cor.papelQuente2, borderRadius: t.raio.sm, padding: '12px 14px', marginBottom: '10px' }}>
+                    <p style={{ margin: '0 0 6px', fontSize: '0.72rem', fontWeight: 800, letterSpacing: '0.05em', textTransform: 'uppercase', color: t.cor.ouroTexto }}>O que cada tipo significa</p>
+                    {legenda.map((e) => (
+                      <p key={e.sigla} style={{ margin: '0 0 4px', fontSize: '0.8rem', lineHeight: 1.5, color: t.cor.tinta }}>
+                        <strong style={{ fontWeight: 700 }}>{e.nome}:</strong> {e.oQueFaz}
+                      </p>
+                    ))}
+                  </div>
+                );
+              })()}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {proposicoesExibidas.map((p, i) => (
                   <div key={i} style={{ background: t.cor.papelQuente, borderRadius: t.raio.md, padding: '12px 14px' }}>
@@ -728,7 +747,19 @@ export default function PerfilPolitico({ dados }) {
                         a Camara nao). Nada aparece quando o campo nao vem - sem caixa vazia. */}
                     {(p.situacao || p.local || p.data || p.link) && (
                       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px', marginTop: '8px', fontSize: '0.78rem', color: t.cor.cinza }}>
-                        {p.situacao && <span><strong style={{ color: t.cor.tinta, fontWeight: 600 }}>Situação:</strong> {p.situacao}</span>}
+                        {/* situacaoCidada traduz o jargão ("Transformado em Norma Jurídica"
+                            vira "Virou lei"). O texto oficial continua ao lado quando difere,
+                            para o dado não sumir - só mudar de camada. */}
+                        {p.situacao && (() => {
+                          const sc = situacaoCidada(p.situacao);
+                          const mudou = sc && sc.toLowerCase() !== String(p.situacao).toLowerCase();
+                          return (
+                            <span>
+                              <strong style={{ color: t.cor.tinta, fontWeight: 600 }}>Situação:</strong> {sc || p.situacao}
+                              {mudou && <span style={{ opacity: 0.8 }}> ({p.situacao})</span>}
+                            </span>
+                          );
+                        })()}
                         {p.local && <span>· {p.local}</span>}
                         {p.data && <span>· {String(p.data).split('-').reverse().join('/')}</span>}
                         {p.link && (
@@ -815,12 +846,19 @@ export default function PerfilPolitico({ dados }) {
               })()}
 
               {/* Votos agrupados por matéria — como ele votou em cada etapa do processo */}
+              {/* Ressalva de leitura no topo da lista, dita uma vez, em vez de um rótulo por
+                  cartão (Diretrizes de Design). */}
+              <p style={{ margin: '0 0 10px', fontSize: '0.78rem', lineHeight: 1.5, color: t.cor.cinza }}>
+                O título de cada item é um resumo em linguagem comum, escrito por inteligência artificial a partir da ementa oficial. A ementa na íntegra está na página da votação.
+              </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {agruparPorMateria(votos.filter((v) => isVotoReal(v.voto_tipo))).slice(0, 12).map((g) => {
                   const sit = situacaoCidada(g.situacao);
                   const virouLei = /virou lei/i.test(sit || '');
                   const urgencia = /urg[êe]ncia/i.test(g.regime || '');
-                  const tituloExib = g.ementa || g.votacoes[0]?.ementa_resumida_voto || g.titulo || 'Votação';
+                  // Mesma regra da página de detalhe e da /votacoes: a frase em linguagem
+                  // comum titula; sem ela, a ementa.
+                  const tituloExib = g.explicacao_cidada || g.ementa || g.votacoes[0]?.ementa_resumida_voto || g.titulo || 'Votação';
                   return (
                     <div key={g.chave} style={{ background: t.cor.papelQuente, borderRadius: t.raio.md, padding: '14px 16px', boxShadow: t.sombra.sutil }}>
                       <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '6px' }}>

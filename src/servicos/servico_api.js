@@ -167,7 +167,7 @@ const ServicoAPI = {
         if (idsVotacoes.length > 0) {
             const { data: votacoesData } = await supabase
                 .from('votacoes')
-                .select('votacao_id_externa, ementa, proposicao_titulo, descricao, situacao, keywords, ementa_detalhada, regime, url_inteiro_teor')
+                .select('votacao_id_externa, ementa, proposicao_titulo, descricao, situacao, keywords, ementa_detalhada, regime, url_inteiro_teor, explicacao_cidada')
                 .in('votacao_id_externa', idsVotacoes);
             for (const v of votacoesData || []) {
                 metaVotacoes[v.votacao_id_externa] = v;
@@ -180,6 +180,7 @@ const ServicoAPI = {
                 ...v,
                 ementa_votacao: m.ementa || null,
                 ementa: m.ementa || null,            // p/ agruparPorMateria
+                explicacao_cidada: m.explicacao_cidada || null,
                 descricao: m.descricao || null,       // p/ papelVotacao (etapa do processo)
                 proposicao_titulo: m.proposicao_titulo || null,
                 situacao: m.situacao || null,
@@ -303,7 +304,7 @@ const ServicoAPI = {
         // Votações recentes AGRUPADAS por matéria (1 card por proposta, com a linha do tempo + contexto).
         const { data } = await supabase
             .from('votacoes')
-            .select('votacao_id_externa, descricao, aprovacao, data_voto, proposicao_id, proposicao_titulo, ementa, descricao_tipo, resultado, autor_nome, keywords, situacao, ementa_detalhada, regime, url_inteiro_teor')
+            .select('votacao_id_externa, descricao, aprovacao, data_voto, proposicao_id, proposicao_titulo, ementa, descricao_tipo, resultado, autor_nome, keywords, situacao, ementa_detalhada, regime, url_inteiro_teor, explicacao_cidada')
             .order('data_voto', { ascending: false })
             .limit(250);
         return agruparPorMateria(data || []).slice(0, limite);
@@ -313,7 +314,7 @@ const ServicoAPI = {
     listarVotacoes: async () => {
         const { data, error } = await supabase
             .from('votacoes')
-            .select('votacao_id_externa, descricao, aprovacao, data_voto, proposicao_titulo, ementa, descricao_tipo, resultado, autor_nome, keywords, situacao, ementa_detalhada, regime, url_inteiro_teor')
+            .select('votacao_id_externa, descricao, aprovacao, data_voto, proposicao_titulo, ementa, descricao_tipo, resultado, autor_nome, keywords, situacao, ementa_detalhada, regime, url_inteiro_teor, explicacao_cidada')
             .order('data_voto', { ascending: false });
         if (error) { console.error('listarVotacoes:', error.message); return []; }
         return data || [];

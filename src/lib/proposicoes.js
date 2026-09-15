@@ -57,3 +57,70 @@ export function nomeTipoProposicao(sigla) {
 export function ehProjeto(sigla) {
   return TIPOS_PROJETO.includes(String(sigla || '').trim().toUpperCase());
 }
+
+// ---------------------------------------------------------------------------
+// CAMADA ZERO DAS PROPOSIÇÕES (15/09/2026) - POR REGRA, SEM IA.
+//
+// POR QUE NÃO É IA, como foi nas votações: escala. São 20.184 proposições guardadas no banco e
+// 474.494 no universo declarado, e as que aparecem em "ver todas" são buscadas ao vivo pela
+// /api/proposicoes, então nunca passam pelo banco. Resumir em lote custaria ~2,7 milhões de
+// tokens só para as guardadas, e ainda assim não cobriria as buscadas na hora. Por regra o
+// custo é zero, a latência é zero e vale igual para as 474 mil.
+//
+// O QUE ESTA CAMADA FAZ E O QUE NÃO FAZ: ela explica o INSTRUMENTO, não o conteúdo do projeto.
+// O leitor descobre que um Requerimento de Informação não muda lei nenhuma, e que uma PEC mexe
+// na Constituição. O que aquele projeto específico propõe continua sendo a ementa, que segue
+// na tela. É teto baixo e conhecido, aceito na decisão de 13/09.
+//
+// MESMA REGRA DO NOMES ACIMA: sigla desconhecida devolve null, e a tela simplesmente não mostra
+// a linha. Nunca inventar uma explicação plausível.
+const O_QUE_FAZ = {
+  PL: 'proposta para criar ou mudar uma lei comum. Precisa passar pela Câmara, pelo Senado e pela sanção do presidente.',
+  PLP: 'proposta para criar ou mudar uma lei complementar, exigida pela Constituição em certos temas. Precisa de maioria absoluta.',
+  PEC: 'proposta para mudar o texto da Constituição. Exige três quintos dos votos, em dois turnos, nas duas Casas.',
+  PDL: 'decisão do Congresso que não passa pela sanção do presidente. Usada para sustar atos do Executivo, aprovar tratados e indicações.',
+  PDC: 'decisão do Congresso que não passa pela sanção do presidente. Usada para sustar atos do Executivo, aprovar tratados e indicações.',
+  MPV: 'norma editada pelo presidente que JÁ ESTÁ VALENDO desde que foi publicada. O Congresso decide depois se ela vira lei em definitivo.',
+  PLV: 'versão de uma medida provisória depois de alterada pelo Congresso.',
+  PRC: 'norma interna da Casa legislativa. Não vira lei federal.',
+  PRS: 'norma interna do Senado. Não vira lei federal.',
+  PLS: 'proposta para criar ou mudar uma lei, apresentada no Senado.',
+  PLN: 'proposta de lei sobre orçamento e créditos, votada pelo Congresso reunido.',
+  REQ: 'pedido sobre o andamento dos trabalhos. Não cria nem altera lei.',
+  RQS: 'pedido sobre o andamento dos trabalhos. Não cria nem altera lei.',
+  RIC: 'pedido formal para que um ministério ou órgão do governo preste informação. Não cria nem altera lei.',
+  RPD: 'pedido para adiar a votação de um item da pauta.',
+  REC: 'contestação de uma decisão tomada durante a tramitação.',
+  INC: 'sugestão encaminhada a outro poder ou órgão. Não obriga ninguém a fazer nada.',
+  PRL: 'análise de quem foi designado para examinar a proposta, com voto pela aprovação ou pela rejeição.',
+  PRLP: 'análise preliminar de quem foi designado para examinar a proposta.',
+  EMC: 'proposta de mudança no texto de outra proposição, apresentada em comissão.',
+  EMP: 'proposta de mudança no texto de outra proposição, apresentada em plenário.',
+  EMR: 'proposta de mudança no texto feita pelo relator.',
+  SBT: 'texto alternativo que substitui integralmente a proposta original.',
+  RDF: 'ajuste de forma no texto já aprovado, sem mudar o conteúdo.',
+};
+
+// Devolve { nome, oQueFaz } ou null quando a sigla é desconhecida.
+export function explicarProposicao(sigla) {
+  const s = String(sigla || '').trim().toUpperCase();
+  const nome = NOMES[s];
+  const oQueFaz = O_QUE_FAZ[s];
+  if (!nome || !oQueFaz) return null;
+  return { sigla: s, nome, oQueFaz };
+}
+
+// Legenda dos tipos PRESENTES numa lista, sem repetir.
+//
+// POR QUE LEGENDA E NÃO UMA LINHA POR ITEM: numa ficha com 20 proposições, explicar o
+// instrumento item a item repetiria o mesmo texto várias vezes e acrescentaria ~40 linhas à
+// tela. A legenda diz cada coisa uma vez só. É o mesmo padrão que as Diretrizes de Design já
+// fixaram para ressalva que governa uma lista: faixa no topo, não repetição no corpo.
+export function legendaDosTipos(proposicoes, max = 4) {
+  const vistos = new Map();
+  for (const p of proposicoes || []) {
+    const e = explicarProposicao(p?.tipo);
+    if (e && !vistos.has(e.sigla)) vistos.set(e.sigla, e);
+  }
+  return [...vistos.values()].slice(0, max);
+}
