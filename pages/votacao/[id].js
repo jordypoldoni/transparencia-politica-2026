@@ -113,7 +113,7 @@ export default function Votacao({ meta, votos }) {
                       não só no código). É aqui que explicacao_modelo e explicacao_gerada_em
                       deixam de ser peso morto no banco. */}
                   <p style={{ margin: '12px 0 0', fontSize: '0.78rem', lineHeight: 1.5, opacity: 0.72 }}>
-                    Resumo e contexto escritos por inteligência artificial
+                    {resumo ? 'Resumo e contexto escritos' : 'Contexto escrito'} por inteligência artificial
                     {meta.explicacao_modelo ? ` (modelo ${meta.explicacao_modelo})` : ''}
                     {meta.explicacao_gerada_em ? `, em ${new Date(meta.explicacao_gerada_em).toLocaleDateString('pt-BR')}` : ''}
                     , a partir da ementa oficial. Descrevem o que o texto faz, sem opinar sobre mérito.

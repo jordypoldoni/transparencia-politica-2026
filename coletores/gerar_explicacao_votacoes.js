@@ -90,8 +90,13 @@ const PROVEDORES = {
     nome: 'Gemini',
     chave: process.env.GEMINI_API_KEY,
     baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/',
-    modelo: process.env.GEMINI_MODEL || 'gemini-3.6-flash',
-    reasoning: 'low',
+    // PADRÃO 2.5 (14/09/2026, depois de tomar erro de cota no 3.6). O 3.6-flash é o mais novo
+    // da lista e modelo recém-lançado costuma ficar fora do free tier, ou entrar com cota
+    // diária mínima: ele respondeu no teste e depois recusou a primeira chamada real. O
+    // 2.5-flash é o que tem free tier documentado (500 requisições/dia).
+    // Para tentar outro: GEMINI_MODEL=gemini-3.5-flash no .env.
+    modelo: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
+    reasoning: null,   // resolvido abaixo, porque MUDA POR MODELO
     lote: 12,
     rpm: 10,              // free tier; a espera entre chamadas sai daqui, não do TPM
     limiteDia: 450,       // requisições (teto ~500, com margem)
@@ -112,7 +117,18 @@ const PROVEDORES = {
   },
 };
 
+// MEDIDO em coletores/_testar_gemini.mjs, e é contraintuitivo: a chave que zera o pensamento
+// não é a mesma em todo modelo. No 3.6, 'none' devolve 400 e 'low' zera. No 3.5 e no 2.5 é o
+// contrário: 'none' zera e 'low' ainda gasta ~800 tokens pensando. Errar isso não dá erro
+// visível, só queima orçamento e corta o JSON no meio.
+const RACIOCINIO_POR_MODELO = {
+  'gemini-3.6-flash': 'low',
+  'gemini-3.5-flash': 'none',
+  'gemini-2.5-flash': 'none',
+};
+
 const P = USAR_GROQ ? PROVEDORES.groq : PROVEDORES.gemini;
+if (P.reasoning === null) P.reasoning = RACIOCINIO_POR_MODELO[P.modelo] || 'none';
 if (!P.chave) { console.error(`❌ Falta ${P.variavel} no .env.`); process.exit(1); }
 
 const ia = new OpenAI({ apiKey: P.chave, baseURL: P.baseURL });
@@ -198,6 +214,19 @@ function limparTexto(t) {
 // GUARDA CONTRA INVENÇÃO. O modelo só recebeu a ementa; se a resposta traz um número que não
 // estava na entrada, ele saiu do documento e foi buscar na memória. Isso é exatamente o tipo
 // de erro que o leitor não tem como detectar, então o item é descartado em vez de salvo.
+// GUARDA CONTRA CÓPIA (14/09/2026). Quando a "frase em linguagem comum" é o começo da ementa,
+// ela é PIOR que não existir: na tela ela vira o <h1> no lugar da ementa inteira, então o leitor
+// troca um texto difícil porém completo por um recorte truncado, às vezes só o número da lei.
+// Nesse caso o certo é não gravar nada: sem frase, a página mostra a ementa completa como
+// título, que é estritamente melhor. Medido: 85 das 771 primeiras saíram assim.
+function ehCopiaDaEmenta(frase, ementa) {
+  const limpa = (x) => String(x || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
+  const f = limpa(frase), e = limpa(ementa);
+  if (!f || !e) return false;
+  return e.startsWith(f.slice(0, Math.min(f.length, 60)));
+}
+
 function inventouNumero(resposta, entrada) {
   const numerosDaEntrada = new Set((entrada.match(/\d+/g) || []));
   const numerosDaResposta = (resposta.match(/\d+/g) || []);
@@ -249,7 +278,15 @@ async function chamarIA(usuario) {
       await dormir(Math.max(2000, espera));
       return obj.itens;
     } catch (e) {
-      if (ehLimiteDiario(e)) { const err = new Error('LIMITE_DIARIO'); err.diario = true; throw err; }
+      if (ehLimiteDiario(e)) {
+        // NÃO engolir a mensagem original. A primeira versão levantava um erro genérico e
+        // o Jordy viu "cota atingida" com o contador em 10 de 450, sem nenhuma pista do que
+        // o provedor tinha dito. Erro de diagnóstico é pior que o erro em si.
+        const err = new Error('LIMITE_DIARIO');
+        err.diario = true;
+        err.original = String(e.message || '').slice(0, 500);
+        throw err;
+      }
       if (e.status === 429 || /rate.?limit|too large/i.test(e.message || '')) {
         const s = segundosDoRateLimit(e);
         console.warn(`     ⏳ limite por minuto atingido - aguardando ${s}s…`);
@@ -315,7 +352,12 @@ async function main() {
     .select('votacao_id_externa, proposicao_titulo, ementa, descricao, resultado, aprovacao, data_voto')
     .not('ementa', 'is', null)
     .order('data_voto', { ascending: false });
-  if (!FORCE) q = q.is('explicacao_cidada', null);
+  // O marcador de "já processei esta" é explicacao_gerada_em, NÃO explicacao_cidada.
+  // Motivo (15/09/2026): quando a ementa já está em português comum ("Equipara as pessoas com
+  // fibromialgia às pessoas com deficiência") não existe frase a escrever, e o campo fica nulo
+  // de propósito. Se a fila olhasse explicacao_cidada, essas votações voltariam para a fila
+  // em toda rodada, para sempre, e pagaríamos de novo pelo mesmo trabalho.
+  if (!FORCE) q = q.is('explicacao_gerada_em', null);
   if (LIMITE) q = q.limit(LIMITE);
 
   const { data: votacoes, error } = await q;
@@ -331,14 +373,17 @@ async function main() {
   if (P.unidade === 'requisicoes') console.log(`   Espera de ${(60 / P.rpm).toFixed(0)}s entre chamadas (limite de ${P.rpm} por minuto): ~${Math.ceil(cabem * (60 / P.rpm) / 60)} min de rodada.`);
   console.log();
 
-  let ok = 0, descartados = 0, lotesFeitos = 0;
+  let ok = 0, descartados = 0, lotesFeitos = 0, semFrase = 0;
   for (const lote of lotes) {
     let itens;
     try {
       itens = await chamarIA(lote.map(montarEntrada).join('\n---\n'));
     } catch (e) {
       if (e.diario || e.message === 'LIMITE_DIARIO') {
-        console.log(`\n  ⏸️  Cota diária do ${P.nome} atingida. Nada foi perdido: o script retoma de onde parou.`);
+        console.log(`\n  ⏸️  ${P.nome} recusou por cota. Nada foi perdido: o script retoma de onde parou.`);
+        if (e.original) console.log(`     Resposta do provedor: ${e.original}`);
+        console.log(`     Modelo em uso: ${MODELO}. Se a cota deste modelo acabou, tente outro:`);
+        console.log(`       GEMINI_MODEL=gemini-3.5-flash no .env, ou rode pela Groq com --groq`);
         break;
       }
       console.warn(`  ⚠️  lote falhou: ${e.message}`);
@@ -349,19 +394,28 @@ async function main() {
     for (const item of itens) {
       const v = lote.find((x) => String(x.votacao_id_externa) === String(item.id));
       if (!v) { descartados++; continue; }
-      const frase = limparTexto(item.frase);
+      const fraseBruta = limparTexto(item.frase);
       const contexto = limparTexto(item.contexto);
-      if (frase.length < 15 || contexto.length < 40) { descartados++; continue; }
+      // Sem contexto não há nada a salvar. Sem frase ainda há (ver guarda abaixo).
+      if (fraseBruta.length < 15 || contexto.length < 40) { descartados++; continue; }
+
+      // A guarda derruba A FRASE, não o item inteiro. Corrigido em 15/09/2026: antes eu
+      // descartava tudo, e junto ia embora o contexto_extra, que continuava correto e é o que
+      // alimenta o botão "quero entender melhor". Sem frase a tela usa a ementa como título,
+      // que nesses casos é exatamente o texto certo, e o botão segue aparecendo.
+      let frase = fraseBruta;
+      if (ehCopiaDaEmenta(frase, v.ementa)) { frase = null; semFrase++; }
+      else if (/e d[áa] outras provid[êe]ncias|nos termos do art/i.test(frase)) { frase = null; semFrase++; }
 
       const entrada = montarEntrada(v);
-      if (inventouNumero(frase, entrada) || inventouNumero(contexto, entrada)) {
+      if ((frase && inventouNumero(frase, entrada)) || inventouNumero(contexto, entrada)) {
         console.warn(`     🚫 ${v.votacao_id_externa}: resposta cita número que não está na ementa - descartada.`);
         descartados++;
         continue;
       }
 
       const { error: upErr } = await supabase.from('votacoes').update({
-        explicacao_cidada: frase,
+        explicacao_cidada: frase,   // pode ser null de propósito: ementa já legível
         contexto_extra: contexto,
         explicacao_gerada_em: new Date().toISOString(),
         explicacao_modelo: MODELO,
@@ -375,11 +429,11 @@ async function main() {
 
   const custo = orcamento.entrada * PRECO_ENTRADA + orcamento.saida * PRECO_SAIDA;
   console.log('\n──────────────────────────────────────────────');
-  console.log(`✅ ${ok} votação(ões) explicada(s)${descartados ? ` · 🚫 ${descartados} descartada(s) pela guarda` : ''}`);
+  console.log(`✅ ${ok} votação(ões) processada(s)${semFrase ? ` · ✂️ ${semFrase} sem frase própria (ementa já legível, só contexto)` : ''}${descartados ? ` · 🚫 ${descartados} descartada(s) pela guarda` : ''}`);
   console.log(`📊 Consumo de hoje: ${fmt(orcamento.requisicoes)} requisições e ${fmt(orcamento.tokens)} tokens (${fmt(orcamento.entrada)} entrada + ${fmt(orcamento.saida)} saída). Livres em ${P.unidade}: ${fmt(restante())}`);
   console.log(`💵 Equivalente no tier pago: US$ ${custo.toFixed(4)} - no free, zero.`);
 
-  const { count } = await supabase.from('votacoes').select('*', { count: 'exact', head: true }).is('explicacao_cidada', null);
+  const { count } = await supabase.from('votacoes').select('*', { count: 'exact', head: true }).is('explicacao_gerada_em', null);
   if (count) {
     // Bug da primeira versão: isto dizia "rode amanhã" sempre, mesmo com 48 mil tokens livres.
     // Sobrar fila e acabar orçamento são coisas diferentes.
