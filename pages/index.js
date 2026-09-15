@@ -219,7 +219,7 @@ export default function Home({ votacoes, parlamentares = [], uniao = null, estad
                       <span style={{ fontSize: '0.72rem', fontWeight: 800, padding: '4px 10px', borderRadius: '6px', background: status ? (aprovado ? '#E7F3EC' : '#FBEAE7') : '#EEEDE8', color: status ? (aprovado ? t.cor.sim : t.cor.nao) : t.cor.cinza, textTransform: 'uppercase', letterSpacing: '0.03em' }}>
                         {status || 'Sem resultado'}
                       </span>
-                      {g.titulo && <span style={{ fontSize: '0.72rem', fontWeight: 700, color: t.cor.cinza, background: t.cor.papelQuente2, padding: '3px 8px', borderRadius: '6px' }}>{g.titulo}</span>}
+                      {g.titulo && <span style={{ fontSize: '0.72rem', fontWeight: 700, color: t.cor.tinta, background: t.cor.papelQuente2, padding: '3px 8px', borderRadius: '6px' }}>{g.titulo}</span>}
                       <span style={{ fontSize: '0.78rem', color: t.cor.cinza }}>{dataTxt}</span>
                       {g.n > 1 && <span style={{ fontSize: '0.72rem', color: t.cor.ouroTexto, fontWeight: 700 }}>{g.n} votações no processo</span>}
                     </div>

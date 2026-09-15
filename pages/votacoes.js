@@ -145,7 +145,7 @@ export default function Votacoes({ votacoes, temas = [] }) {
                 <div key={g.chave} style={{ background: t.cor.papelCartao, borderRadius: t.raio.md, padding: '18px 20px', boxShadow: t.sombra.sutil }}>
                   <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap' }}>
                     <span style={badgeStatus(status)}>{status || 'Sem resultado'}</span>
-                    {g.titulo && <span style={{ fontSize: '0.72rem', fontWeight: 700, color: t.cor.cinza, background: t.cor.papelQuente2, padding: '3px 8px', borderRadius: '6px' }}>{g.titulo}</span>}
+                    {g.titulo && <span style={{ fontSize: '0.72rem', fontWeight: 700, color: t.cor.tinta, background: t.cor.papelQuente2, padding: '3px 8px', borderRadius: '6px' }}>{g.titulo}</span>}
                     <span style={{ fontSize: '0.78rem', color: t.cor.cinza }}>{periodoTxt}</span>
                     {varias && <span style={{ fontSize: '0.72rem', color: t.cor.ouroTexto, fontWeight: 700 }}>{g.votacoes.length} votações no processo</span>}
                   </div>
