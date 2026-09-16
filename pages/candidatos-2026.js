@@ -39,7 +39,7 @@ function ListaPresidente({ chapas }) {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(300px, 100%), 1fr))', gap: '14px' }}>
       {chapas.map((c) => (
-        <Link key={c.nr_candidato || c.presidente.slug} href={`/presidencial/${c.presidente.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+        <Link key={c.presidente.slug} href={`/presidencial/${c.presidente.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
           <div style={{ background: t.cor.papelCartao, borderRadius: t.raio.md, padding: '18px', height: '100%', minWidth: 0, overflow: 'hidden', boxShadow: t.sombra.clicavel, transition: 'box-shadow .15s ease, transform .15s ease' }}
             onMouseOver={(e) => { e.currentTarget.style.boxShadow = t.sombra.hover; e.currentTarget.style.transform = 'translateY(-2px)'; }}
             onMouseOut={(e) => { e.currentTarget.style.boxShadow = t.sombra.clicavel; e.currentTarget.style.transform = 'none'; }}>
@@ -53,6 +53,13 @@ function ListaPresidente({ chapas }) {
               <CardCandidatoPresidencial pessoa={c.presidente} papel="Presidente" />
               {c.vice && <CardCandidatoPresidencial pessoa={c.vice} papel="Vice" />}
             </div>
+            {/* Duas chapas com o mesmo número não é erro da tela, é o que está registrado no
+                TSE. Sem esta linha o leitor vê dois cards "28" e acha que o site duplicou. */}
+            {c.chapaAmbigua && (
+              <p style={{ margin: '14px 0 0', fontSize: '0.76rem', lineHeight: 1.5, color: t.cor.tinta, background: t.cor.papelQuente2, borderRadius: t.raio.sm, padding: '10px 12px' }}>
+                Há {c.chapasNoNumero} candidaturas a presidente registradas com o número {c.nr_candidato}. O TSE ainda não publicou a situação de cada uma, então não indicamos aqui quem é o vice desta chapa.
+              </p>
+            )}
             {c.presidente.situacao_candidatura && (
               <p style={{ margin: '14px 0 0', fontSize: '0.76rem', color: t.cor.cinza }}>Situação da candidatura: {c.presidente.situacao_candidatura}</p>
             )}

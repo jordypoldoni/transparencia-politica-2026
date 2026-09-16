@@ -25,7 +25,7 @@ function DadoBio({ rotulo, valor }) {
   );
 }
 
-export default function PerfilPresidenciavel({ candidato, colega, canonical }) {
+export default function PerfilPresidenciavel({ candidato, colega, chapaAmbigua, canonical }) {
   const c = candidato;
   const titulo = `${c.nome_urna} (${c.partido_sigla || ''}), candidato(a) a ${c.cargo === 'Vice-Presidente' ? 'vice-presidente' : 'presidente'} 2026`;
   const desc = `Ficha oficial de ${c.nome_urna}: partido, coligação, situação da candidatura e o plano de governo, direto da fonte (TSE).`;
@@ -56,6 +56,13 @@ export default function PerfilPresidenciavel({ candidato, colega, canonical }) {
         </div>
       </div>
 
+      {/* Sem colega e com mais de uma chapa no mesmo número, o silêncio sozinho pareceria
+          dado faltando. Esta linha diz por que a ficha não nomeia o vice. */}
+      {!colega && chapaAmbigua && (
+        <p style={{ background: t.cor.papelQuente, borderRadius: t.raio.sm, padding: '12px 16px', marginBottom: '24px', fontSize: '0.88rem', lineHeight: 1.5, color: t.cor.tinta }}>
+          Há mais de uma chapa registrada no TSE com o número {candidato.nr_candidato}. Enquanto o TSE não publicar a situação de cada candidatura, não indicamos aqui quem é o vice desta chapa.
+        </p>
+      )}
       {colega && (
         <Link href={`/presidencial/${colega.slug}`} style={{ display: 'block', textDecoration: 'none', color: 'inherit', background: t.cor.papelQuente, borderRadius: t.raio.sm, padding: '12px 16px', marginBottom: '24px', fontSize: '0.88rem' }}>
           {colega.cargo === 'Vice-Presidente' ? 'Vice na chapa' : 'Cabeça de chapa'}: <strong>{colega.nome_urna}</strong> →
@@ -134,5 +141,5 @@ export async function getServerSideProps({ params, req }) {
   if (!dados) return { notFound: true };
   const proto = req.headers['x-forwarded-proto'] || 'http';
   const canonical = `${proto}://${req.headers.host}/presidencial/${params.slug}`;
-  return { props: { candidato: JSON.parse(JSON.stringify(dados.candidato)), colega: JSON.parse(JSON.stringify(dados.colega)), canonical } };
+  return { props: { candidato: JSON.parse(JSON.stringify(dados.candidato)), colega: JSON.parse(JSON.stringify(dados.colega)), chapaAmbigua: !!dados.chapaAmbigua, canonical } };
 }

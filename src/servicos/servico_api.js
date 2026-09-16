@@ -639,16 +639,44 @@ const ServicoAPI = {
             .order('nr_candidato', { ascending: true });
         if (error) { console.error('listarPresidenciaveis:', error.message); return []; }
 
-        const chapas = new Map();
+        // 🐛 CORRIGIDO EM 15/09/2026: este trecho agrupava por nr_candidato e fazia
+        // `chapa.presidente = c`, ou seja SOBRESCREVIA. A premissa era que número de urna
+        // identifica UMA chapa, e ela valeu até o PRTB registrar uma segunda chapa no mesmo
+        // número 28 (Marçal/Avalanche e Avalanche/Silvia, quatro registros, códigos distintos
+        // no TSE). Com o código antigo um dos dois candidatos a presidente SUMIA da lista,
+        // sem erro e sem aviso, e qual deles sumia dependia da ordem que o banco devolveu.
+        //
+        // Agora: um card por CANDIDATO A PRESIDENTE. Ninguém desaparece.
+        //
+        // O vice só é afirmado quando não há dúvida (um presidente e um vice naquele número).
+        // Havendo duas chapas, o que de fato liga presidente e vice é o registro da coligação
+        // no TSE (SQ_COLIGACAO), coluna que ainda NÃO coletamos. Sem ela, parear seria chute:
+        // os sq_candidato do Marçal e do Avalanche-vice são vizinhos, mas vizinhança não é
+        // vínculo. Melhor não afirmar do que afirmar errado.
+        const porNumero = new Map();
         for (const c of data || []) {
-            const chave = c.nr_candidato || c.id;
-            if (!chapas.has(chave)) chapas.set(chave, { nr_candidato: c.nr_candidato, presidente: null, vice: null });
-            const chapa = chapas.get(chave);
-            if (c.cargo === 'Presidente') chapa.presidente = c; else chapa.vice = c;
+            const chave = c.nr_candidato || `sem-numero-${c.id}`;
+            if (!porNumero.has(chave)) porNumero.set(chave, { nr_candidato: c.nr_candidato, presidentes: [], vices: [] });
+            const g = porNumero.get(chave);
+            if (c.cargo === 'Presidente') g.presidentes.push(c); else g.vices.push(c);
         }
-        return Array.from(chapas.values())
-            .filter((c) => c.presidente) // sem candidato a presidente, não é uma chapa exibível
-            .sort((a, b) => Number(a.nr_candidato || 0) - Number(b.nr_candidato || 0));
+
+        const chapas = [];
+        for (const g of porNumero.values()) {
+            const ambigua = g.presidentes.length > 1;
+            for (const presidente of g.presidentes) {
+                chapas.push({
+                    nr_candidato: g.nr_candidato,
+                    presidente,
+                    vice: (!ambigua && g.vices.length === 1) ? g.vices[0] : null,
+                    chapaAmbigua: ambigua,
+                    chapasNoNumero: g.presidentes.length,
+                });
+            }
+        }
+        return chapas.sort((a, b) =>
+            (Number(a.nr_candidato || 0) - Number(b.nr_candidato || 0))
+            || String(a.presidente.nome_urna || '').localeCompare(String(b.presidente.nome_urna || '')));
     },
 
     // Ficha de um presidenciável pelo slug (URL amigável).
@@ -660,7 +688,12 @@ const ServicoAPI = {
             .single();
         if (error || !data) return null;
         // Traz o colega de chapa (presidente↔vice) pra linkar na ficha.
+        // Mesma armadilha da listagem: com duas chapas no mesmo número, `chapaData[0]` pegava
+        // um colega QUALQUER. A ficha do Marçal podia anunciar a vice da outra chapa.
+        // Só afirmamos o colega quando existe exatamente UM candidato do cargo oposto naquele
+        // número. Enquanto não coletarmos SQ_COLIGACAO, o resto é silêncio, não chute.
         let colega = null;
+        let chapaAmbigua = false;
         if (data.nr_candidato) {
             const { data: chapaData } = await supabase
                 .from('candidatos_presidenciais')
@@ -668,9 +701,12 @@ const ServicoAPI = {
                 .eq('ano_eleicao', data.ano_eleicao)
                 .eq('nr_candidato', data.nr_candidato)
                 .neq('id', data.id);
-            colega = chapaData && chapaData[0] ? chapaData[0] : null;
+            const oposto = data.cargo === 'Presidente' ? 'Vice-Presidente' : 'Presidente';
+            const candidatos = (chapaData || []).filter((x) => x.cargo === oposto);
+            chapaAmbigua = candidatos.length > 1;
+            colega = candidatos.length === 1 ? candidatos[0] : null;
         }
-        return { candidato: data, colega };
+        return { candidato: data, colega, chapaAmbigua };
     },
 
     // ============ CANDIDATOS A DEPUTADO FEDERAL 2026 (TSE) ============
