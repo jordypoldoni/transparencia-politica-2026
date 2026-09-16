@@ -1,5 +1,6 @@
 import Head from 'next/head';
 import Link from 'next/link';
+import SituacaoCandidatura from '../../components/SituacaoCandidatura';
 import ServicoAPI from '../../src/servicos/servico_api';
 import Avatar from '../../components/Avatar';
 import { t } from '../../src/estilo/tokens';
@@ -26,6 +27,7 @@ function DadoBio({ rotulo, valor }) {
 }
 
 export default function PerfilPresidenciavel({ candidato, colega, chapaAmbigua, canonical }) {
+
   const c = candidato;
   const titulo = `${c.nome_urna} (${c.partido_sigla || ''}), candidato(a) a ${c.cargo === 'Vice-Presidente' ? 'vice-presidente' : 'presidente'} 2026`;
   const desc = `Ficha oficial de ${c.nome_urna}: partido, coligação, situação da candidatura e o plano de governo, direto da fonte (TSE).`;
@@ -58,11 +60,14 @@ export default function PerfilPresidenciavel({ candidato, colega, chapaAmbigua, 
 
       {/* Sem colega e com mais de uma chapa no mesmo número, o silêncio sozinho pareceria
           dado faltando. Esta linha diz por que a ficha não nomeia o vice. */}
+      {/* TEXTO CORRIGIDO EM 16/09 pelo mesmo motivo da lista: o vice desconhecido não decorre
+          da situação da candidatura. São dois fatos independentes, e o TSE publica a situação. */}
       {!colega && chapaAmbigua && (
         <p style={{ background: t.cor.papelQuente, borderRadius: t.raio.sm, padding: '12px 16px', marginBottom: '24px', fontSize: '0.88rem', lineHeight: 1.5, color: t.cor.tinta }}>
-          Há mais de uma chapa registrada no TSE com o número {candidato.nr_candidato}. Enquanto o TSE não publicar a situação de cada candidatura, não indicamos aqui quem é o vice desta chapa.
+          Há mais de uma chapa registrada no TSE com o número {candidato.nr_candidato}. O TSE não informa, nos dados que publica, qual vice pertence a qual chapa.
         </p>
       )}
+      <SituacaoCandidatura sqCandidato={candidato.sq_candidato} />
       {colega && (
         <Link href={`/presidencial/${colega.slug}`} style={{ display: 'block', textDecoration: 'none', color: 'inherit', background: t.cor.papelQuente, borderRadius: t.raio.sm, padding: '12px 16px', marginBottom: '24px', fontSize: '0.88rem' }}>
           {colega.cargo === 'Vice-Presidente' ? 'Vice na chapa' : 'Cabeça de chapa'}: <strong>{colega.nome_urna}</strong> →

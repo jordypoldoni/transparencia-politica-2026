@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -8,6 +8,7 @@ import CampoBusca from '../components/CampoBusca';
 import CampoSelect from '../components/CampoSelect';
 import { NOMES_UF } from '../src/lib/cotas';
 import { t } from '../src/estilo/tokens';
+import SeloSituacao from '../components/SeloSituacao';
 import { pilulaPagina, realcePagina } from '../src/estilo/botoes';
 
 const UFS = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
@@ -35,6 +36,20 @@ function CardCandidatoPresidencial({ pessoa, papel }) {
 }
 
 function ListaPresidente({ chapas }) {
+  // Situação da candidatura vem AO VIVO (ver pages/api/situacao-candidatura.js). Se a busca
+  // falhar, `situacoes` fica vazio e nenhum selo aparece: a tela volta a ser a de antes, em vez
+  // de mostrar caixa de erro por um dado acessório.
+  const [situacoes, setSituacoes] = useState({});
+  const [consultadoEm, setConsultadoEm] = useState(null);
+  useEffect(() => {
+    let vivo = true;
+    fetch('/api/situacao-candidatura')
+      .then((r) => r.json())
+      .then((d) => { if (vivo) { setSituacoes(d.situacoes || {}); setConsultadoEm(d.consultadoEm || null); } })
+      .catch(() => { });
+    return () => { vivo = false; };
+  }, []);
+
   if (chapas.length === 0) return <p style={{ color: t.cor.cinza }}>Nenhum candidato coletado ainda.</p>;
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(300px, 100%), 1fr))', gap: '14px' }}>
@@ -54,15 +69,18 @@ function ListaPresidente({ chapas }) {
               {c.vice && <CardCandidatoPresidencial pessoa={c.vice} papel="Vice" />}
             </div>
             {/* Duas chapas com o mesmo número não é erro da tela, é o que está registrado no
-                TSE. Sem esta linha o leitor vê dois cards "28" e acha que o site duplicou. */}
+                TSE. Sem esta linha o leitor vê dois cards "28" e acha que o site duplicou.
+                TEXTO CORRIGIDO EM 16/09: a versão anterior dizia que o TSE "ainda não publicou
+                a situação", e disso deduzia o vice desconhecido. Duas coisas erradas: o TSE
+                PUBLICA a situação (só não no arquivo em lote, ver a rota de situação), e o vice
+                não depende dela. Verificado em duas fontes independentes: nem o CSV nem o
+                DivulgaCandContas informam qual vice pertence a qual chapa. */}
             {c.chapaAmbigua && (
               <p style={{ margin: '14px 0 0', fontSize: '0.76rem', lineHeight: 1.5, color: t.cor.tinta, background: t.cor.papelQuente2, borderRadius: t.raio.sm, padding: '10px 12px' }}>
-                Há {c.chapasNoNumero} candidaturas a presidente registradas com o número {c.nr_candidato}. O TSE ainda não publicou a situação de cada uma, então não indicamos aqui quem é o vice desta chapa.
+                Há {c.chapasNoNumero} candidaturas a presidente registradas com o número {c.nr_candidato}. O TSE não informa, nos dados que publica, qual vice pertence a qual chapa.
               </p>
             )}
-            {c.presidente.situacao_candidatura && (
-              <p style={{ margin: '14px 0 0', fontSize: '0.76rem', color: t.cor.cinza }}>Situação da candidatura: {c.presidente.situacao_candidatura}</p>
-            )}
+            <SeloSituacao info={situacoes[String(c.presidente.sq_candidato)]} consultadoEm={consultadoEm} />
             <span style={{ display: 'inline-block', marginTop: '10px', color: t.cor.ouroTexto, fontWeight: 700, fontSize: '0.8rem' }}>Ver ficha e proposta →</span>
           </div>
         </Link>

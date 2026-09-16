@@ -634,7 +634,7 @@ const ServicoAPI = {
     listarPresidenciaveis: async (ano = 2026) => {
         const { data, error } = await supabase
             .from('candidatos_presidenciais')
-            .select('id, slug, cargo, nr_candidato, nome_urna, nome_completo, partido_sigla, coligacao_nome, situacao_candidatura, foto_url, proposta_pdf_url')
+            .select('id, slug, cargo, nr_candidato, sq_candidato, nome_urna, nome_completo, partido_sigla, coligacao_nome, situacao_candidatura, foto_url, proposta_pdf_url')
             .eq('ano_eleicao', ano)
             .order('nr_candidato', { ascending: true });
         if (error) { console.error('listarPresidenciaveis:', error.message); return []; }
