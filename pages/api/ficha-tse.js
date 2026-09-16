@@ -83,6 +83,19 @@ export default async function handler(req, res) {
       // A fonte agrupa vices por NÚMERO DE URNA, não por chapa: os dois presidentes do 28
       // recebem a mesma lista, e sq_CANDIDATO_SUPERIOR vem null. Então devolvemos a lista e
       // NÃO afirmamos de quem é cada vice. Verificado em duas fontes independentes.
+      // PATRIMÔNIO. `st_DIVULGA_BENS` é respeitado: hoje vem true nos 14, mas a flag existe
+      // para o caso de o TSE restringir a divulgação, e ignorá-la seria publicar contra a fonte.
+      //
+      // `totalDeBens` vem do TSE; NÃO recalculamos somando os itens. Se a soma divergir do
+      // total (arredondamento, bem sem valor), o número exibido continua sendo o oficial.
+      divulgaBens: f.st_DIVULGA_BENS !== false,
+      totalDeBens: typeof f.totalDeBens === 'number' ? f.totalDeBens : null,
+      bens: (Array.isArray(f.bens) ? f.bens : []).map((b) => ({
+        descricao: b.descricao || null,
+        tipo: b.descricaoDeTipoDeBem || null,
+        valor: typeof b.valor === 'number' ? b.valor : null,
+      })),
+
       vices: (Array.isArray(f.vices) ? f.vices : []).map((v) => ({
         sq: v.sq_CANDIDATO ? String(v.sq_CANDIDATO) : null,
         nome: v.nm_URNA || v.nm_CANDIDATO || null,
