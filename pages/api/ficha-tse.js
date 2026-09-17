@@ -31,7 +31,7 @@ async function mapaDeNomes() {
   if (nomesCache.mapa && (agora - nomesCache.em) < TTL_MS) return nomesCache.mapa;
   const mapa = {};
   for (const cargo of [1, 2]) {
-    const r = await fetch(`${REST}/listar/${ANO}/BR/${ID_ELEICAO_LISTA}/${cargo}/candidatos`, { headers: UA });
+    const r = await fetch(`${REST}/listar/${ANO}/BR/${ID_ELEICAO_LISTA}/${cargo}/candidatos`, { headers: UA, signal: PRAZO() });
     if (!r.ok) continue;
     const j = await r.json();
     for (const c of j.candidatos || []) if (c?.id) mapa[String(c.id)] = c.nomeUrna || c.nomeCompleto || null;
@@ -39,6 +39,22 @@ async function mapaDeNomes() {
   nomesCache = { em: agora, mapa };
   return mapa;
 }
+
+// Por que uma falha de rede precisa de tratamento próprio aqui (17/09/2026).
+// Em produção as duas rotas do TSE passaram a devolver `indisponivel: true` enquanto em
+// localhost funcionavam. O log não ajudou: quando o fetch do Node falha na conexão, a
+// `message` é literalmente "fetch failed" e o motivo real mora em `e.cause` — que eu não
+// estava lendo. Sem isso não dá para separar DNS, TLS, recusa de conexão e bloqueio por IP,
+// que pedem correções diferentes. Também cortamos a espera em 9s: o limite da função na
+// Vercel é 10s, e estourar ele devolve 504 em vez de uma mensagem legível.
+function porQueFalhou(e) {
+  const causa = e && e.cause;
+  const partes = [e && e.message].filter(Boolean);
+  if (causa) partes.push(causa.code || causa.message || String(causa));
+  if (e && e.name === 'TimeoutError') partes.push('a fonte demorou mais de 9s');
+  return partes.join(' \u00b7 ');
+}
+const PRAZO = () => (typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? AbortSignal.timeout(9000) : undefined);
 
 export default async function handler(req, res) {
   const sq = String(req.query.sq || '').trim();
@@ -52,7 +68,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const r = await fetch(`${REST}/buscar/${ANO}/BR/${ID_ELEICAO}/candidato/${sq}`, { headers: UA });
+    const r = await fetch(`${REST}/buscar/${ANO}/BR/${ID_ELEICAO}/candidato/${sq}`, { headers: UA, signal: PRAZO() });
     if (!r.ok) throw new Error(`TSE respondeu ${r.status}`);
     const texto = await r.text();
     if (!texto) throw new Error('TSE devolveu corpo vazio (id de eleição errado?)');
@@ -142,9 +158,10 @@ export default async function handler(req, res) {
     res.setHeader('X-Cache', 'miss');
     return res.status(200).json(dados);
   } catch (e) {
-    console.error('ficha-tse:', e.message);
-    if (emCache) { res.setHeader('X-Cache', 'stale'); return res.status(200).json({ ...emCache.dados, degradado: true }); }
+    const motivoTecnico = porQueFalhou(e);
+    console.error('ficha-tse:', motivoTecnico);
+    if (emCache) { res.setHeader('X-Cache', 'stale'); return res.status(200).json({ ...emCache.dados, degradado: true, motivoTecnico }); }
     // Indisponível não pode virar caixa de erro na tela: sem dados, a seção não é desenhada.
-    return res.status(200).json({ indisponivel: true, situacao: null, motivos: [], vices: [] });
+    return res.status(200).json({ indisponivel: true, situacao: null, motivos: [], vices: [], motivoTecnico });
   }
 }

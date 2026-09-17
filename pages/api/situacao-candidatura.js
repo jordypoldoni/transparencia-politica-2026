@@ -25,6 +25,22 @@ const TTL_MS = 15 * 60 * 1000;    // 15 min: o TSE não julga de minuto em minut
 
 let cache = { em: 0, dados: null };
 
+// Por que uma falha de rede precisa de tratamento próprio aqui (17/09/2026).
+// Em produção as duas rotas do TSE passaram a devolver `indisponivel: true` enquanto em
+// localhost funcionavam. O log não ajudou: quando o fetch do Node falha na conexão, a
+// `message` é literalmente "fetch failed" e o motivo real mora em `e.cause` — que eu não
+// estava lendo. Sem isso não dá para separar DNS, TLS, recusa de conexão e bloqueio por IP,
+// que pedem correções diferentes. Também cortamos a espera em 9s: o limite da função na
+// Vercel é 10s, e estourar ele devolve 504 em vez de uma mensagem legível.
+function porQueFalhou(e) {
+  const causa = e && e.cause;
+  const partes = [e && e.message].filter(Boolean);
+  if (causa) partes.push(causa.code || causa.message || String(causa));
+  if (e && e.name === 'TimeoutError') partes.push('a fonte demorou mais de 9s');
+  return partes.join(' \u00b7 ');
+}
+const PRAZO = () => (typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? AbortSignal.timeout(9000) : undefined);
+
 export default async function handler(req, res) {
   const agora = Date.now();
   if (cache.dados && (agora - cache.em) < TTL_MS) {
@@ -37,6 +53,7 @@ export default async function handler(req, res) {
     for (const cargo of Object.keys(CARGOS)) {
       const r = await fetch(`${BASE}/${ANO}/BR/${ID_ELEICAO}/${cargo}/candidatos`, {
         headers: { 'User-Agent': 'Mozilla/5.0', Accept: 'application/json' },
+        signal: PRAZO(),
       });
       if (!r.ok) throw new Error(`TSE respondeu ${r.status} no cargo ${cargo}`);
       const j = await r.json();
@@ -62,11 +79,12 @@ export default async function handler(req, res) {
     // Falha do TSE NÃO pode derrubar a tela. Devolvemos o cache velho quando existe, e um
     // objeto vazio quando não: sem situação, a tela simplesmente não mostra o selo, que é o
     // comportamento de antes desta rota existir.
-    console.error('situacao-candidatura:', e.message);
+    const motivoTecnico = porQueFalhou(e);
+    console.error('situacao-candidatura:', motivoTecnico);
     if (cache.dados) {
       res.setHeader('X-Cache', 'stale');
-      return res.status(200).json({ ...cache.dados, degradado: true });
+      return res.status(200).json({ ...cache.dados, degradado: true, motivoTecnico });
     }
-    return res.status(200).json({ consultadoEm: null, situacoes: {}, indisponivel: true });
+    return res.status(200).json({ consultadoEm: null, situacoes: {}, indisponivel: true, motivoTecnico });
   }
 }
