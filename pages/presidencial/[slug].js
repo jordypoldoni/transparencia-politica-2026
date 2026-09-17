@@ -69,14 +69,17 @@ export default function PerfilPresidenciavel({ candidato, colega, chapaAmbigua, 
           Há mais de uma chapa registrada no TSE com o número {candidato.nr_candidato}. O TSE não informa, nos dados que publica, qual vice pertence a qual chapa.
         </p>
       )}
-      <SituacaoCandidatura sqCandidato={candidato.sq_candidato} />
-      <PatrimonioDeclarado sqCandidato={candidato.sq_candidato} />
-      <DocumentosERedes sqCandidato={candidato.sq_candidato} />
+      {/* ORDEM CORRIGIDA EM 17/09. O link para o colega de chapa estava DEPOIS de
+          "Documentos e redes". Na ficha do Lula essa seção rende 85 documentos e 62
+          endereços, então o link do vice caía uns oito mil pixels abaixo: existia, era
+          clicável, e ninguém chegava nele. Identidade da chapa é a informação mais próxima
+          do nome — sobe para junto dele. */}
       {colega && (
         <Link href={`/presidencial/${colega.slug}`} style={{ display: 'block', textDecoration: 'none', color: 'inherit', background: t.cor.papelQuente, borderRadius: t.raio.sm, padding: '12px 16px', marginBottom: '24px', fontSize: '0.88rem' }}>
           {colega.cargo === 'Vice-Presidente' ? 'Vice na chapa' : 'Cabeça de chapa'}: <strong>{colega.nome_urna}</strong> →
         </Link>
       )}
+      <SituacaoCandidatura sqCandidato={candidato.sq_candidato} />
 
       <section style={{ background: t.cor.papelCartao, borderRadius: t.raio.md, padding: 'clamp(18px,3vw,26px)', boxShadow: t.sombra.sutil, marginBottom: '20px' }}>
         <h2 style={{ fontSize: '1rem', margin: '0 0 16px' }}>Quem é</h2>
@@ -97,6 +100,8 @@ export default function PerfilPresidenciavel({ candidato, colega, chapaAmbigua, 
           <strong>Situação da candidatura:</strong> {c.situacao_candidatura}{c.situacao_detalhe ? `, ${c.situacao_detalhe}` : ''}
         </section>
       )}
+
+      <PatrimonioDeclarado sqCandidato={candidato.sq_candidato} />
 
       {/* Proposta de governo — sem resumo por IA por padrão (decisão do Jordy, 2026-08-20): link
           direto pro PDF oficial. Vem ABAIXO do resto (não mais numa coluna lateral); os temas do
@@ -137,6 +142,10 @@ export default function PerfilPresidenciavel({ candidato, colega, chapaAmbigua, 
           <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.9rem', margin: 0 }}>Ainda não coletamos o PDF do plano de governo deste candidato.</p>
         )}
       </section>
+
+      {/* Por último de propósito: é a seção mais volumosa e a menos central. Recolhida
+          por padrão, mostra a contagem no cabeçalho. */}
+      <DocumentosERedes sqCandidato={candidato.sq_candidato} />
 
       <p style={{ fontSize: '0.78rem', color: t.cor.cinza }}>
         Fonte: <a href={c.fonte_api || 'https://divulgacandcontas.tse.jus.br/'} target="_blank" rel="noopener noreferrer" style={{ color: t.cor.ouroTexto }}>DivulgaCandContas / TSE</a>. Sem juízo de valor, só os dados oficiais.
