@@ -2,6 +2,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import SituacaoCandidatura from '../../components/SituacaoCandidatura';
 import PatrimonioDeclarado from '../../components/PatrimonioDeclarado';
+import DocumentosERedes from '../../components/DocumentosERedes';
 import ServicoAPI from '../../src/servicos/servico_api';
 import Avatar from '../../components/Avatar';
 import { t } from '../../src/estilo/tokens';
@@ -70,6 +71,7 @@ export default function PerfilPresidenciavel({ candidato, colega, chapaAmbigua, 
       )}
       <SituacaoCandidatura sqCandidato={candidato.sq_candidato} />
       <PatrimonioDeclarado sqCandidato={candidato.sq_candidato} />
+      <DocumentosERedes sqCandidato={candidato.sq_candidato} />
       {colega && (
         <Link href={`/presidencial/${colega.slug}`} style={{ display: 'block', textDecoration: 'none', color: 'inherit', background: t.cor.papelQuente, borderRadius: t.raio.sm, padding: '12px 16px', marginBottom: '24px', fontSize: '0.88rem' }}>
           {colega.cargo === 'Vice-Presidente' ? 'Vice na chapa' : 'Cabeça de chapa'}: <strong>{colega.nome_urna}</strong> →

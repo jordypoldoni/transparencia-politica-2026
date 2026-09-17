@@ -26,3 +26,5 @@ public/logos/
 coletores/_orcamento_resumos.json
 # Backup da versao anterior do gerador, guardado so na maquina - o historico do git ja cobre
 coletores/_gerar_resumo_propostas.ANTIGO.js
+# Amostras de HTML do portal da ALRS, baixadas so para descobrir seletores
+coletores/_amostras_alrs/

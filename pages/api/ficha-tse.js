@@ -83,6 +83,41 @@ export default async function handler(req, res) {
       // A fonte agrupa vices por NÚMERO DE URNA, não por chapa: os dois presidentes do 28
       // recebem a mesma lista, e sq_CANDIDATO_SUPERIOR vem null. Então devolvemos a lista e
       // NÃO afirmamos de quem é cada vice. Verificado em duas fontes independentes.
+      // Complemento de identidade que o CSV em lote NÃO tem: o arquivo traz só a UF de
+      // nascimento (SG_UF_NASCIMENTO), e o município e a nacionalidade só existem aqui.
+      municipioNascimento: f.nomeMunicipioNascimento || null,
+      ufNascimento: f.sgUfNascimento || null,
+      nacionalidade: f.nacionalidade || null,
+
+      // DOCUMENTOS entregues ao TSE. O campo `url` da fonte vem relativo e inservível
+      // ("candidaturas/oficial/2026/BR/BR/6257/candidatos/21107/"). O caminho que FUNCIONA é
+      // /divulga/rest/arquivo/doc/{idArquivo} - sabemos porque é exatamente a URL de onde
+      // lemos o plano de governo do Marçal em 13/09. Evidência, não palpite.
+      documentos: (Array.isArray(f.arquivos) ? f.arquivos : [])
+        .filter((a) => a?.idArquivo && a?.nome)
+        .map((a) => ({
+          nome: a.nome,
+          tipo: a.tipo || null,
+          url: `https://divulgacandcontas.tse.jus.br/divulga/rest/arquivo/doc/${a.idArquivo}`,
+        })),
+
+      // REDES: a fonte devolve handles com um "https://" colado na frente
+      // ("https://@clarianabarao"). Virar link assim dá 404. Separamos: o que é domínio de
+      // verdade vira link; o que é arroba fica como TEXTO, porque não dá para saber de qual
+      // rede é, e inventar "instagram.com/fulano" seria fabricar informação.
+      redes: (Array.isArray(f.sites) ? f.sites : [])
+        .map((x) => String(x || '').trim())
+        .filter(Boolean)
+        .map((bruto) => {
+          const semProtocolo = bruto.replace(/^https?:\/\//i, '').trim();
+          const ehArroba = semProtocolo.startsWith('@');
+          const temDominio = /^[\w.-]+\.[a-z]{2,}(\/|$)/i.test(semProtocolo);
+          return {
+            texto: semProtocolo,
+            url: (!ehArroba && temDominio) ? `https://${semProtocolo}` : null,
+          };
+        }),
+
       // PATRIMÔNIO. `st_DIVULGA_BENS` é respeitado: hoje vem true nos 14, mas a flag existe
       // para o caso de o TSE restringir a divulgação, e ignorá-la seria publicar contra a fonte.
       //
