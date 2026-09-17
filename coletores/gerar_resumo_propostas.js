@@ -89,7 +89,7 @@ const MAX_TENTATIVAS = 3;
 // requisição perto do teto de 8.000 tokens/minuto, e ela fica apanhando até achar uma
 // janela de minuto vazia (custou 5 minutos parados no Augusto Cury em 09/09). Por isso a
 // fusão é feita em etapas, com cada chamada limitada a este tamanho de entrada.
-const MAX_CHARS_FUSAO = 8000;
+const MAX_CHARS_FUSAO = 6000;
 const PRECO_ENTRADA = 0.15 / 1e6; // USD/token (só para exibir; no free é zero)
 const PRECO_SAIDA = 0.60 / 1e6;
 
@@ -186,7 +186,22 @@ function segundosDoRateLimit(e) {
   return m ? Math.ceil(parseFloat(m[1])) + 1 : 20;
 }
 
+// ARMADILHA QUE CUSTOU UMA RODADA (10/09/2026): a Groq devolve 429 tanto para o limite por
+// MINUTO quanto para o limite por DIA, e a mensagem so difere em "per minute (TPM)" x
+// "per day (TPD)". Tratar os dois como espera fez o script aguardar 20s em looping por uma
+// janela que so abriria no dia seguinte - 13 minutos girando e o orcamento do dia perdido.
+function ehLimiteDiario(e) {
+  return /per day|\bTPD\b|requests per day|\bRPD\b/i.test(e.message || '');
+}
+
 async function chamarIA(sistema, usuario) {
+  // A checagem por candidato nao bastava: o Caiado tem 26 blocos e estourou o teto no meio,
+  // com metade do trabalho feito e nada salvo. Agora cada chamada confere antes de sair.
+  if (restante() <= 0) {
+    const err = new Error('LIMITE_DIARIO');
+    err.diario = true;
+    throw err;
+  }
   let tentativa = 0;
   while (true) {
     try {
@@ -219,6 +234,11 @@ async function chamarIA(sistema, usuario) {
 
       return { temas: obj.temas, usage: u };
     } catch (e) {
+      if (ehLimiteDiario(e)) {
+        const err = new Error('LIMITE_DIARIO');
+        err.diario = true;
+        throw err;
+      }
       const rateLimit = e.status === 429 || /rate.?limit|too large/i.test(e.message || '');
       if (rateLimit) {
         const s = segundosDoRateLimit(e);
@@ -282,40 +302,64 @@ function limparTemas(temas) {
   return saida;
 }
 
-// ---------- fusão em etapas ----------
-function agruparPorTamanho(temas, maxChars) {
-  const grupos = [];
-  let atual = [], tam = 0;
+// ---------- consolidacao ----------
+// LICAO APRENDIDA EM 10/09/2026: a primeira versao fundia os temas chamando a IA em etapas,
+// e nao convergia. Com o Caiado (162 temas vindos de 26 blocos) a sequencia foi 9 grupos,
+// 7, 6, 6, 6, 6 - encolhia um pouco a cada volta e ficava girando, cada volta custando
+// tokens e batendo no teto por minuto da Groq. O erro era de conceito: juntar temas em que
+// "Saude" aparece doze vezes e agrupamento por nome, trabalho de codigo, nao de modelo de
+// linguagem. Agora o grosso e feito localmente, de graca e sem falhar, e a IA entra uma
+// unica vez no fim, com um material ja pequeno.
+
+// "Saúde Pública" e "saude publica" viram a mesma chave.
+function chaveTema(t) {
+  return String(t || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9 ]/g, ' ').replace(/\b(e|de|da|do|das|dos|a|o|as|os|para|em|no|na)\b/g, ' ')
+    .replace(/\s+/g, ' ').trim();
+}
+
+const MAX_TEMAS_ANTES_DA_IA = 12;   // quantos temas sobrevivem ao agrupamento local
+const MAX_PONTOS_POR_TEMA = 8;      // quantas propostas por tema seguem para a fusao final
+
+// Junta os temas repetidos das varias partes do documento, sem IA.
+function agruparLocalmente(temas) {
+  const grupos = new Map();
   for (const t of temas) {
-    const s = JSON.stringify(t).length;
-    if (atual.length && tam + s > maxChars) { grupos.push(atual); atual = []; tam = 0; }
-    atual.push(t); tam += s;
+    const k = chaveTema(t.tema);
+    if (!k) continue;
+    if (!grupos.has(k)) grupos.set(k, { tema: limparTexto(t.tema), pontos: [], mencoes: 0 });
+    const g = grupos.get(k);
+    g.mencoes++;
+    for (const p of t.pontos || []) {
+      const texto = limparTexto(p);
+      if (texto.length < 12) continue;
+      const chave = normalizar(texto);
+      if (g.pontos.some((x) => normalizar(x) === chave || pareceRepetida(normalizar(x), chave))) continue;
+      g.pontos.push(texto);
+    }
   }
-  if (atual.length) grupos.push(atual);
-  return grupos;
+  // Mais mencoes = tema mais presente no documento. E o criterio menos arbitrario que temos,
+  // e nao envolve julgamento sobre qual assunto "importa mais" - o que o site nao deve fazer.
+  return [...grupos.values()]
+    .filter((g) => g.pontos.length)
+    .sort((a, b) => b.mencoes - a.mencoes || b.pontos.length - a.pontos.length)
+    .slice(0, MAX_TEMAS_ANTES_DA_IA)
+    .map((g) => ({ tema: g.tema, pontos: g.pontos.slice(0, MAX_PONTOS_POR_TEMA) }));
 }
 
 async function fundir(temas, nome) {
-  let nivel = temas;
-  let etapa = 0;
-  while (true) {
-    const grupos = agruparPorTamanho(nivel, MAX_CHARS_FUSAO);
-    if (grupos.length === 1) break;
-    etapa++;
-    const proximo = [];
-    for (let g = 0; g < grupos.length; g++) {
-      process.stdout.write(`\r     fusão etapa ${etapa} · grupo ${g + 1}/${grupos.length}          `);
-      const { temas: t } = await chamarIA(PROMPT_FUSAO_PARCIAL,
-        `Listas de partes do plano de governo de ${nome}:\n\n${JSON.stringify(grupos[g])}`);
-      proximo.push(...t);
-    }
-    process.stdout.write('\n');
-    // trava de segurança: se uma etapa não reduziu nada, para de tentar
-    if (JSON.stringify(proximo).length >= JSON.stringify(nivel).length) { nivel = proximo; break; }
-    nivel = proximo;
+  const local = agruparLocalmente(temas);
+  console.log(`     agrupamento local: ${temas.length} temas das partes -> ${local.length} temas, ${local.reduce((a, t) => a + t.pontos.length, 0)} propostas (sem gastar token)`);
+  if (local.length <= 1) return local;
+
+  // Rede de seguranca: se ainda estiver grande, corta pelo tamanho antes de mandar. Uma
+  // requisicao maior que o teto por minuto NUNCA passa, por mais que a gente espere.
+  let entrada = local;
+  while (JSON.stringify(entrada).length > MAX_CHARS_FUSAO && entrada.length > 3) {
+    entrada = entrada.slice(0, entrada.length - 1);
   }
   const { temas: final } = await chamarIA(PROMPT_FUSAO_FINAL,
-    `Listas do plano de governo de ${nome}:\n\n${JSON.stringify(nivel)}`);
+    `Temas e propostas do plano de governo de ${nome}, em JSON, para consolidar:\n\n${JSON.stringify(entrada)}`);
   return final;
 }
 
@@ -401,6 +445,11 @@ async function main() {
       console.log(`     ✅ ${temas.length} tema(s), ${temas.reduce((a, t) => a + t.pontos.length, 0)} propostas\n`);
       ok++;
     } catch (e) {
+      if (e.diario || e.message === 'LIMITE_DIARIO') {
+        console.log(`     ⏸️  teto diário da Groq atingido no meio deste candidato - nada foi salvo para ele.\n`);
+        fila.unshift({ c, blocos, custo: (blocos.length + 2) * CUSTO_MEDIO_BLOCO });
+        break;
+      }
       console.warn(`     ⚠️  ${e.message}\n`);
       falhou++;
     }
