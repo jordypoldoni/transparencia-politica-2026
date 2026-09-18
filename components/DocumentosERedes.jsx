@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { t } from '../src/estilo/tokens';
 
 // Seção "Documentos e redes" da ficha do presidenciável. (16/09/2026)
@@ -18,23 +18,12 @@ import { t } from '../src/estilo/tokens';
 // candidatos (de 6 itens a 147) para ficar aberto sempre. O cabeçalho mostra a contagem, então
 // quem não abrir ainda sabe o que tem ali: a informação de que existem 85 documentos é, ela
 // mesma, um dado. Aberta, a lista longa ganha rolagem própria em vez de esticar a página.
-export default function DocumentosERedes({ sqCandidato }) {
-  const [d, setD] = useState(null);
+export default function DocumentosERedes({ ficha }) {
   const [aberta, setAberta] = useState(false);
 
-  useEffect(() => {
-    if (!sqCandidato) return;
-    let vivo = true;
-    fetch(`/api/ficha-tse?sq=${encodeURIComponent(sqCandidato)}`)
-      .then((r) => r.json())
-      .then((x) => { if (vivo) setD(x); })
-      .catch(() => { });
-    return () => { vivo = false; };
-  }, [sqCandidato]);
-
-  if (!d || d.indisponivel) return null;
-  const docs = Array.isArray(d.documentos) ? d.documentos : [];
-  const redes = Array.isArray(d.redes) ? d.redes : [];
+  const f = ficha || {};
+  const docs = Array.isArray(f.documentos) ? f.documentos : [];
+  const redes = Array.isArray(f.redes) ? f.redes : [];
   if (docs.length === 0 && redes.length === 0) return null;
 
   const rotulo = { margin: 0, fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.05em', textTransform: 'uppercase', color: t.cor.cinza };

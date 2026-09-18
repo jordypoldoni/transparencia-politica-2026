@@ -28,7 +28,7 @@ function DadoBio({ rotulo, valor }) {
   );
 }
 
-export default function PerfilPresidenciavel({ candidato, colega, chapaAmbigua, canonical }) {
+export default function PerfilPresidenciavel({ candidato, colega, canonical }) {
 
   const c = candidato;
   const titulo = `${c.nome_urna} (${c.partido_sigla || ''}), candidato(a) a ${c.cargo === 'Vice-Presidente' ? 'vice-presidente' : 'presidente'} 2026`;
@@ -37,7 +37,11 @@ export default function PerfilPresidenciavel({ candidato, colega, chapaAmbigua, 
   return (
     <div className="pagina">
       <Head>
-        <title>{titulo} | Lume</title>
+        {/* Uma expressão só. Com `{titulo} | Lume` o React insere `<!-- -->` entre os dois
+            filhos de texto, e dentro de <title> comentário não é comentário: vira texto. O
+            título ia para o Google como "... 2026<!-- --> | Lume". Some depois da hidratação,
+            então no navegador parecia certo — e o crawler via a versão quebrada. */}
+        <title>{`${titulo} | Lume`}</title>
         <meta name="description" content={desc} />
         <link rel="canonical" href={canonical} />
         <meta name="robots" content="index, follow" />
@@ -60,26 +64,24 @@ export default function PerfilPresidenciavel({ candidato, colega, chapaAmbigua, 
         </div>
       </div>
 
-      {/* Sem colega e com mais de uma chapa no mesmo número, o silêncio sozinho pareceria
-          dado faltando. Esta linha diz por que a ficha não nomeia o vice. */}
-      {/* TEXTO CORRIGIDO EM 16/09 pelo mesmo motivo da lista: o vice desconhecido não decorre
-          da situação da candidatura. São dois fatos independentes, e o TSE publica a situação. */}
-      {!colega && chapaAmbigua && (
-        <p style={{ background: t.cor.papelQuente, borderRadius: t.raio.sm, padding: '12px 16px', marginBottom: '24px', fontSize: '0.88rem', lineHeight: 1.5, color: t.cor.tinta }}>
-          Há mais de uma chapa registrada no TSE com o número {candidato.nr_candidato}. O TSE não informa, nos dados que publica, qual vice pertence a qual chapa.
-        </p>
-      )}
       {/* ORDEM CORRIGIDA EM 17/09. O link para o colega de chapa estava DEPOIS de
           "Documentos e redes". Na ficha do Lula essa seção rende 85 documentos e 62
           endereços, então o link do vice caía uns oito mil pixels abaixo: existia, era
           clicável, e ninguém chegava nele. Identidade da chapa é a informação mais próxima
           do nome — sobe para junto dele. */}
-      {colega && (
+      {/* Sem slug, o parceiro existe na fonte mas não na nossa tabela: mostramos o nome sem
+          link, em vez de um link quebrado ou de esconder que há parceiro. */}
+      {colega && !colega.slug && (
+        <p style={{ background: t.cor.papelQuente, borderRadius: t.raio.sm, padding: '12px 16px', marginBottom: '24px', fontSize: '0.88rem', color: t.cor.tinta }}>
+          {colega.cargo === 'Vice-Presidente' ? 'Vice na chapa' : 'Cabeça de chapa'}: <strong>{colega.nome_urna}</strong>
+        </p>
+      )}
+      {colega && colega.slug && (
         <Link href={`/presidencial/${colega.slug}`} style={{ display: 'block', textDecoration: 'none', color: 'inherit', background: t.cor.papelQuente, borderRadius: t.raio.sm, padding: '12px 16px', marginBottom: '24px', fontSize: '0.88rem' }}>
           {colega.cargo === 'Vice-Presidente' ? 'Vice na chapa' : 'Cabeça de chapa'}: <strong>{colega.nome_urna}</strong> →
         </Link>
       )}
-      <SituacaoCandidatura sqCandidato={candidato.sq_candidato} />
+      <SituacaoCandidatura ficha={candidato} />
 
       <section style={{ background: t.cor.papelCartao, borderRadius: t.raio.md, padding: 'clamp(18px,3vw,26px)', boxShadow: t.sombra.sutil, marginBottom: '20px' }}>
         <h2 style={{ fontSize: '1rem', margin: '0 0 16px' }}>Quem é</h2>
@@ -101,7 +103,7 @@ export default function PerfilPresidenciavel({ candidato, colega, chapaAmbigua, 
         </section>
       )}
 
-      <PatrimonioDeclarado sqCandidato={candidato.sq_candidato} />
+      <PatrimonioDeclarado ficha={candidato} />
 
       {/* Proposta de governo — sem resumo por IA por padrão (decisão do Jordy, 2026-08-20): link
           direto pro PDF oficial. Vem ABAIXO do resto (não mais numa coluna lateral); os temas do
@@ -145,7 +147,7 @@ export default function PerfilPresidenciavel({ candidato, colega, chapaAmbigua, 
 
       {/* Por último de propósito: é a seção mais volumosa e a menos central. Recolhida
           por padrão, mostra a contagem no cabeçalho. */}
-      <DocumentosERedes sqCandidato={candidato.sq_candidato} />
+      <DocumentosERedes ficha={candidato} />
 
       <p style={{ fontSize: '0.78rem', color: t.cor.cinza }}>
         Fonte: <a href={c.fonte_api || 'https://divulgacandcontas.tse.jus.br/'} target="_blank" rel="noopener noreferrer" style={{ color: t.cor.ouroTexto }}>DivulgaCandContas / TSE</a>. Sem juízo de valor, só os dados oficiais.
@@ -159,5 +161,5 @@ export async function getServerSideProps({ params, req }) {
   if (!dados) return { notFound: true };
   const proto = req.headers['x-forwarded-proto'] || 'http';
   const canonical = `${proto}://${req.headers.host}/presidencial/${params.slug}`;
-  return { props: { candidato: JSON.parse(JSON.stringify(dados.candidato)), colega: JSON.parse(JSON.stringify(dados.colega)), chapaAmbigua: !!dados.chapaAmbigua, canonical } };
+  return { props: { candidato: JSON.parse(JSON.stringify(dados.candidato)), colega: JSON.parse(JSON.stringify(dados.colega)), canonical } };
 }

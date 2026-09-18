@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { t } from '../src/estilo/tokens';
 
 const brl = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
@@ -18,21 +18,21 @@ const brl = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency:
 // NÃO COMPARAMOS com os outros candidatos aqui. Dizer "o maior patrimônio entre os 14" seria
 // o site escolhendo o que é notável, e a régua é fato mais fonte, sem julgamento. Quem quiser
 // comparar tem os 14 na lista.
-export default function PatrimonioDeclarado({ sqCandidato }) {
-  const [d, setD] = useState(null);
+export default function PatrimonioDeclarado({ ficha }) {
   const [aberto, setAberto] = useState(false);
 
-  useEffect(() => {
-    if (!sqCandidato) return;
-    let vivo = true;
-    fetch(`/api/ficha-tse?sq=${encodeURIComponent(sqCandidato)}`)
-      .then((r) => r.json())
-      .then((x) => { if (vivo) setD(x); })
-      .catch(() => { });
-    return () => { vivo = false; };
-  }, [sqCandidato]);
+  const f = ficha || {};
+  const d = {
+    divulgaBens: f.divulga_bens,
+    totalDeBens: f.total_de_bens,
+    bens: Array.isArray(f.bens) ? f.bens : [],
+    consultadoEm: f.ficha_coletada_em || null,
+    fonteUrl: f.ficha_fonte_url || null,
+  };
 
-  if (!d || d.indisponivel || d.divulgaBens === false) return null;
+  // divulga_bens é respeitado: hoje vem true nos 28, mas a flag existe para o caso de o TSE
+  // restringir a divulgação, e ignorá-la seria publicar contra a fonte.
+  if (d.divulgaBens === false) return null;
   if (d.totalDeBens === null || d.totalDeBens === undefined) return null;
 
   const itens = Array.isArray(d.bens) ? d.bens : [];
@@ -96,7 +96,7 @@ export default function PatrimonioDeclarado({ sqCandidato }) {
 
       <p style={{ margin: '14px 0 0', fontSize: '0.76rem', lineHeight: 1.5, color: t.cor.cinza }}>
         Declaração do próprio candidato ao TSE no registro da candidatura, pelo valor de aquisição ou declarado. Não é avaliação de mercado nem auditoria.
-        {data ? ` Consultado ao vivo em ${data}.` : ''}
+        {data ? ` Coletado do TSE em ${data}.` : ''}
         {d.fonteUrl && (
           <>
             {' '}

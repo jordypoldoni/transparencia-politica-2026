@@ -10,6 +10,7 @@ const navItens = [
   { href: '/deputados', rotulo: 'Deputados' },
   { href: '/senadores', rotulo: 'Senadores' },
   { href: '/votacoes', rotulo: 'Votações' },
+  { href: '/indicacoes', rotulo: 'Indicações' },
   { href: '/gastos-publicos', rotulo: 'Gastos públicos' },
   { href: '/entenda', rotulo: 'Entenda' },
   { href: '/sobre', rotulo: 'Sobre & Fontes' },
@@ -36,14 +37,18 @@ export default function Layout({ children, pageProps }) {
     <div style={{ minHeight: '100vh', background: t.cor.papel, color: t.cor.tinta, fontFamily: t.fonte.corpo, display: 'flex', flexDirection: 'column' }}>
       {/* Cabeçalho */}
       <header style={{ boxShadow: '0 1px 14px rgba(74,52,30,0.06)', background: 'rgba(251,248,242,0.9)', backdropFilter: 'blur(8px)', position: 'sticky', top: 0, zIndex: 50 }}>
-        <div style={{ width: '100%', padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
+        {/* nowrap desde 18/09: com `wrap`, o menu que não coubesse na linha CAÍA para baixo do
+            logo em vez de virar hambúrguer. Uma linha extra de menu não é um estado desenhado,
+            é um acidente de layout — e foi o que aconteceu quando o décimo item entrou. Agora
+            ou cabe na linha, ou o hambúrguer assume (ver o ponto de corte em _app.js). */}
+        <div style={{ width: '100%', padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'nowrap' }}>
           <Link href="/" aria-label="Lume Cidadão, ir para a página inicial"
             style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
             {/* Marca em SVG de contorno: símbolo + logotipo (Plus Jakarta Sans 700/500 vetorizada),
                 sem dependência de fonte e sem perda em qualquer tamanho. */}
             <img src="/marca-lume.svg" alt="Lume Cidadão" style={{ height: '30px', width: 'auto', display: 'block' }} />
           </Link>
-          <nav className="nav-desktop" style={{ gap: '2px' }}>
+          <nav className="nav-desktop" style={{ gap: '0' }}>
             {navItens.map((n) => {
               const ativo = ehAtivo(n.href, pathname);
               return (
@@ -52,8 +57,9 @@ export default function Layout({ children, pageProps }) {
                     textDecoration: 'none',
                     color: ativo ? t.cor.tinta : t.cor.cinza,
                     fontWeight: ativo ? 800 : 600,
-                    fontSize: '0.92rem',
-                    padding: '8px 14px',
+                    fontSize: '0.88rem',
+                    padding: '8px 11px',
+                    whiteSpace: 'nowrap',
                     borderRadius: t.raio.pill,
                     background: ativo ? t.cor.papelQuente2 : 'transparent',
                   }}>

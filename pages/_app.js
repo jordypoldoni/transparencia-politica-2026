@@ -46,7 +46,14 @@ export default function App({ Component, pageProps }) {
         .nav-desktop { display: flex; align-items: center; flex-wrap: wrap; }
         .btn-hamburguer { display: none; }
         .menu-mobile { display: none; }
-        @media (max-width: 860px) {
+        /* 860 -> 1240 em 18/09. Com nove itens o menu cabia em qualquer desktop; com o
+           décimo (Indicações) ele passou a estourar a linha e cair para baixo do logo em
+           telas de ~1320px. O hambúrguer é um estado desenhado do site; menu em duas linhas
+           não é. Acima de 1240 o menu inteiro aparece; abaixo, o hambúrguer assume.
+           O custo: notebooks entre 860 e 1240 passam a ver o hambúrguer. Se preferir manter
+           o menu aberto nessas telas, o caminho é tirar um item — "Início" é o candidato
+           natural, já que o logo leva para a home e tem aria-label dizendo isso. */
+        @media (max-width: 1240px) {
           .nav-desktop { display: none; }
           .btn-hamburguer { display: inline-flex; align-items: center; }
           .menu-mobile { display: block; }

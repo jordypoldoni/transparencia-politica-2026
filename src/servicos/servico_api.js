@@ -634,45 +634,41 @@ const ServicoAPI = {
     listarPresidenciaveis: async (ano = 2026) => {
         const { data, error } = await supabase
             .from('candidatos_presidenciais')
-            .select('id, slug, cargo, nr_candidato, sq_candidato, nome_urna, nome_completo, partido_sigla, coligacao_nome, situacao_candidatura, foto_url, proposta_pdf_url')
+            .select('id, slug, cargo, nr_candidato, sq_candidato, nome_urna, nome_completo, partido_sigla, coligacao_nome, situacao_candidatura, situacao_tse, apto_tse, foto_url, proposta_pdf_url, vices')
             .eq('ano_eleicao', ano)
             .order('nr_candidato', { ascending: true });
         if (error) { console.error('listarPresidenciaveis:', error.message); return []; }
 
-        // 🐛 CORRIGIDO EM 15/09/2026: este trecho agrupava por nr_candidato e fazia
-        // `chapa.presidente = c`, ou seja SOBRESCREVIA. A premissa era que número de urna
-        // identifica UMA chapa, e ela valeu até o PRTB registrar uma segunda chapa no mesmo
-        // número 28 (Marçal/Avalanche e Avalanche/Silvia, quatro registros, códigos distintos
-        // no TSE). Com o código antigo um dos dois candidatos a presidente SUMIA da lista,
-        // sem erro e sem aviso, e qual deles sumia dependia da ordem que o banco devolveu.
+        // 🐛 CORRIGIDO EM 15/09: antes isto agrupava por nr_candidato e SOBRESCREVIA, na
+        // premissa de que número de urna identifica uma chapa. O PRTB registrou duas no
+        // número 28 e um candidato a presidente sumia da lista, sem erro e sem aviso.
         //
-        // Agora: um card por CANDIDATO A PRESIDENTE. Ninguém desaparece.
+        // ✅ CORRIGIDO DE VERDADE EM 18/09: naquele conserto eu troquei a sobrescrita por uma
+        // DEDUÇÃO — "só afirmo o vice quando há exatamente um no número" — e escrevi na tela
+        // que o TSE não publica o vínculo. Publica. A ficha individual de cada candidato traz
+        // o parceiro de chapa em `vices`, e conferimos nos 28: todos os pares são recíprocos
+        // (A aponta B, B aponta A) e de cargos opostos. Inclusive no 28, que a fonte separa
+        // corretamente em Marçal↔Avalanche e Avalanche↔Silvia.
         //
-        // O vice só é afirmado quando não há dúvida (um presidente e um vice naquele número).
-        // Havendo duas chapas, o que de fato liga presidente e vice é o registro da coligação
-        // no TSE (SQ_COLIGACAO), coluna que ainda NÃO coletamos. Sem ela, parear seria chute:
-        // os sq_candidato do Marçal e do Avalanche-vice são vizinhos, mas vizinhança não é
-        // vínculo. Melhor não afirmar do que afirmar errado.
-        const porNumero = new Map();
-        for (const c of data || []) {
-            const chave = c.nr_candidato || `sem-numero-${c.id}`;
-            if (!porNumero.has(chave)) porNumero.set(chave, { nr_candidato: c.nr_candidato, presidentes: [], vices: [] });
-            const g = porNumero.get(chave);
-            if (c.cargo === 'Presidente') g.presidentes.push(c); else g.vices.push(c);
-        }
+        // Ou seja: a dedução por número nunca foi necessária, e a ressalva que ela gerou era
+        // uma afirmação FALSA num site de transparência — pior que omitir. Agora o vínculo
+        // vem da fonte, e sem número de urna no meio do caminho.
+        const porSq = new Map();
+        for (const c of data || []) if (c.sq_candidato) porSq.set(String(c.sq_candidato), c);
 
         const chapas = [];
-        for (const g of porNumero.values()) {
-            const ambigua = g.presidentes.length > 1;
-            for (const presidente of g.presidentes) {
-                chapas.push({
-                    nr_candidato: g.nr_candidato,
-                    presidente,
-                    vice: (!ambigua && g.vices.length === 1) ? g.vices[0] : null,
-                    chapaAmbigua: ambigua,
-                    chapasNoNumero: g.presidentes.length,
-                });
-            }
+        for (const c of data || []) {
+            if (c.cargo !== 'Presidente') continue;
+            const parceiro = Array.isArray(c.vices) && c.vices[0] ? c.vices[0] : null;
+            const viceNaBase = parceiro?.sq ? porSq.get(String(parceiro.sq)) : null;
+            chapas.push({
+                nr_candidato: c.nr_candidato,
+                presidente: c,
+                // Se o vice não estiver na nossa tabela, ainda temos o nome que o TSE publica.
+                // Melhor mostrar o nome sem link do que fingir que não há vice.
+                vice: viceNaBase || (parceiro?.nome ? { nome_urna: parceiro.nome, slug: null, sq_candidato: parceiro.sq || null } : null),
+                viceForaDaBase: !viceNaBase && !!parceiro,
+            });
         }
         return chapas.sort((a, b) =>
             (Number(a.nr_candidato || 0) - Number(b.nr_candidato || 0))
@@ -687,26 +683,62 @@ const ServicoAPI = {
             .eq('slug', slug)
             .single();
         if (error || !data) return null;
-        // Traz o colega de chapa (presidente↔vice) pra linkar na ficha.
-        // Mesma armadilha da listagem: com duas chapas no mesmo número, `chapaData[0]` pegava
-        // um colega QUALQUER. A ficha do Marçal podia anunciar a vice da outra chapa.
-        // Só afirmamos o colega quando existe exatamente UM candidato do cargo oposto naquele
-        // número. Enquanto não coletarmos SQ_COLIGACAO, o resto é silêncio, não chute.
+
+        // O parceiro de chapa vem da FICHA DO PRÓPRIO CANDIDATO (campo `vices` do
+        // DivulgaCandContas), não de quem divide o número de urna com ele. Os 28 pares são
+        // recíprocos e de cargos opostos — conferido no banco em 18/09 —, então não há mais
+        // dedução nem ressalva: ou a fonte diz quem é, ou não há parceiro.
         let colega = null;
-        let chapaAmbigua = false;
-        if (data.nr_candidato) {
-            const { data: chapaData } = await supabase
+        const parceiro = Array.isArray(data.vices) && data.vices[0] ? data.vices[0] : null;
+        if (parceiro?.sq) {
+            const { data: p } = await supabase
                 .from('candidatos_presidenciais')
                 .select('slug, nome_urna, cargo')
                 .eq('ano_eleicao', data.ano_eleicao)
-                .eq('nr_candidato', data.nr_candidato)
-                .neq('id', data.id);
-            const oposto = data.cargo === 'Presidente' ? 'Vice-Presidente' : 'Presidente';
-            const candidatos = (chapaData || []).filter((x) => x.cargo === oposto);
-            chapaAmbigua = candidatos.length > 1;
-            colega = candidatos.length === 1 ? candidatos[0] : null;
+                .eq('sq_candidato', String(parceiro.sq))
+                .maybeSingle();
+            colega = p || null;
         }
-        return { candidato: data, colega, chapaAmbigua };
+        if (!colega && parceiro?.nome) {
+            colega = {
+                slug: null,
+                nome_urna: parceiro.nome,
+                cargo: data.cargo === 'Presidente' ? 'Vice-Presidente' : 'Presidente',
+            };
+        }
+        return { candidato: data, colega };
+    },
+
+    // ============ INDICAÇÕES DO EXECUTIVO (art. 52 da Constituição) ============
+    // O presidente indica, o Senado sabatina e decide. Ministro do STF e do STJ, presidente e
+    // diretor do Banco Central e das agências, procurador-geral, defensor público-geral,
+    // embaixador. 183 indicações entre 2023 e 2026, 177 votadas, 2 rejeitadas.
+    //
+    // A votação é SECRETA por determinação constitucional: a fonte publica o placar e quem
+    // estava na sessão, nunca a direção do voto de cada senador. Conferido nas 177 — em todas,
+    // sim + não + abstenção é exatamente o número de senadores marcados "Votou".
+
+    // A LISTA NÃO TRAZ `presencas`. São ~81 nomes por votação, ~14 mil objetos no total: é o
+    // campo mais pesado da tabela e a lista não mostra nenhum deles. Só a ficha carrega.
+    listarIndicacoes: async () => {
+        const { data, error } = await supabase
+            .from('indicacoes_executivo')
+            .select('codigo_materia, identificacao, ano, data_mensagem, ementa, nome_indicado, cargo, orgao, tipo_orgao, votada, data_votacao, resultado, votos_sim, votos_nao, votos_abstencao')
+            .order('data_mensagem', { ascending: false });
+        if (error) { console.error('listarIndicacoes:', error.message); return []; }
+        return data || [];
+    },
+
+    getIndicacaoPorCodigo: async (codigo) => {
+        const n = Number(codigo);
+        if (!Number.isFinite(n)) return null;
+        const { data, error } = await supabase
+            .from('indicacoes_executivo')
+            .select('*')
+            .eq('codigo_materia', n)
+            .maybeSingle();
+        if (error) { console.error('getIndicacaoPorCodigo:', error.message); return null; }
+        return data || null;
     },
 
     // ============ CANDIDATOS A DEPUTADO FEDERAL 2026 (TSE) ============

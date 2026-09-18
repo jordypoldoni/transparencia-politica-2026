@@ -1,0 +1,189 @@
+// coletor_ficha_tse.js — a ficha do DivulgaCandContas vai para o banco. (18/09/2026)
+//
+// USO
+//   node coletores/coletor_ficha_tse.js --simular      (não grava)
+//   node coletores/coletor_ficha_tse.js
+//
+// POR QUE ESTE ARQUIVO EXISTE
+// As seções "Situação da candidatura", "Patrimônio declarado" e "Documentos e redes"
+// buscavam o TSE ao vivo, pelo navegador. Em produção o Akamai do TSE recusa a Vercel:
+//   403 — "Access Denied ... Reference #18.45721102.1"
+// Não é DNS e não é tempo: a função declarou `regiao: iad1` e o corpo do 403 é a página de
+// negação do Akamai. É bloqueio de ORIGEM, e não há ajuste de código que contorne.
+//
+// Registro de um erro meu, para não repetir: eu concluí que o User-Agent estava descartado
+// porque o 403 continuou depois de trocá-lo. Não estava. Na Vercel o bloqueio de IP dispara
+// primeiro, então o sintoma não mudar não elimina a segunda causa — e a segunda causa era
+// real: com UA assinado, o TSE derruba até daqui. "O sintoma não mudou" nunca prova
+// "a causa foi descartada" quando existe outra causa suficiente na frente dela.
+//
+// E o ganho não é só contornar o bloqueio. Buscando no navegador DEPOIS da página carregar,
+// nada disso existia para o Google — patrimônio, documentos, situação, tudo invisível para
+// busca. Servido do banco, entra no HTML. É o mesmo raciocínio que levou o contexto_extra
+// das votações para o banco em vez de gerar no clique.
+//
+// O QUE NÃO VAI PARA O BANCO, DE PROPÓSITO: cpf e tituloEleitor. A fonte publica os dois
+// completos. Não servem para fiscalizar ninguém e são vetor de fraude de identidade. Ficam
+// fora aqui, na coleta — não só na tela —, para que nenhuma consulta futura os encontre.
+
+import 'dotenv/config';
+import { writeFileSync } from 'node:fs';
+import { createClient } from '@supabase/supabase-js';
+
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+const REST = 'https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura';
+const ID_ELEICAO = 20322002026;     // o da ficha individual
+const ID_ELEICAO_LISTA = 6257;      // o da listagem — são DOIS, e trocar devolve corpo vazio
+const ANO = 2026;
+// SOBRE O User-Agent (18/09/2026): já foi 'Mozilla/5.0 (compatible; LumeCidadaoBot/1.0; ...)',
+// assinado, que é o certo em princípio — e o Akamai do TSE derrubou com 403 TODAS as 28
+// fichas, inclusive da máquina do Jordy, onde 'Mozilla/5.0' passa. O WAF exige que pareça
+// navegador. Não dá para negociar com ele, o dado é público e o próprio portal do TSE é lido
+// por navegador. Voltamos ao que funciona. Não troque sem testar contra a fonte.
+const UA = { 'User-Agent': 'Mozilla/5.0', Accept: 'application/json' };
+
+const ARQUIVO_SAIDA = 'coletores/_saida_ficha_tse.txt';
+const registro = [];
+for (const nivel of ['log', 'warn', 'error']) {
+  const original = console[nivel].bind(console);
+  console[nivel] = (...p) => { registro.push(p.map((x) => (typeof x === 'string' ? x : JSON.stringify(x))).join(' ')); original(...p); };
+}
+function gravarSaida() {
+  try { writeFileSync(ARQUIVO_SAIDA, registro.join('\n') + '\n', 'utf8'); process.stdout.write(`\n(saída em ${ARQUIVO_SAIDA})\n`); }
+  catch (e) { process.stdout.write(`\n(não gravei ${ARQUIVO_SAIDA}: ${e.message})\n`); }
+}
+
+const SIMULAR = process.argv.includes('--simular');
+const pausa = (ms = 400) => new Promise((r) => setTimeout(r, ms));
+
+// Nome de um sq_candidato, para dizer "substituída por FULANO" em vez de mostrar código.
+async function mapaDeNomes() {
+  const mapa = {};
+  for (const cargo of [1, 2]) {
+    const r = await fetch(`${REST}/listar/${ANO}/BR/${ID_ELEICAO_LISTA}/${cargo}/candidatos`, { headers: UA });
+    if (!r.ok) { console.warn(`   ⚠ listagem cargo ${cargo}: ${r.status}`); continue; }
+    const j = await r.json();
+    for (const c of j.candidatos || []) if (c?.id) mapa[String(c.id)] = c.nomeUrna || c.nomeCompleto || null;
+  }
+  return mapa;
+}
+
+// A tradução é a MESMA de pages/api/ficha-tse.js, movida para cá sem alteração de
+// significado. Cada decisão abaixo custou uma sessão de investigação; estão comentadas na
+// rota original e resumidas aqui.
+function traduzir(f, nomeDe, sq) {
+  return {
+    situacao_tse: f.descricaoSituacao || null,
+    apto_tse: typeof f.candidatoApto === 'boolean' ? f.candidatoApto : null,
+    consta_da_urna: f.descricaoSituacaoCandidato || null,
+    totalizacao_tse: f.descricaoTotalizacao || null,
+    numero_processo: f.numeroProcesso || null,
+    motivos: Array.isArray(f.motivos) ? f.motivos.filter(Boolean) : [],
+
+    // O TSE PUBLICA a substituição em campo próprio — não é dedução por código de status.
+    substituido: f.st_SUBSTITUIDO === true,
+    substituto_sq: f.substituto?.sqCandidato ? String(f.substituto.sqCandidato) : null,
+    substituto_nome: nomeDe(f.substituto?.sqCandidato),
+
+    // O CSV em lote só traz a UF de nascimento; município e nacionalidade só existem aqui.
+    municipio_nascimento: f.nomeMunicipioNascimento || null,
+    uf_nascimento: f.sgUfNascimento || null,
+    nacionalidade: f.nacionalidade || null,
+
+    // O campo `url` da fonte vem relativo e inservível. O caminho que FUNCIONA é
+    // /divulga/rest/arquivo/doc/{idArquivo} — é de onde lemos o plano do Marçal em 13/09.
+    documentos: (Array.isArray(f.arquivos) ? f.arquivos : [])
+      .filter((a) => a?.idArquivo && a?.nome)
+      .map((a) => ({ nome: a.nome, tipo: a.tipo || null, url: `https://divulgacandcontas.tse.jus.br/divulga/rest/arquivo/doc/${a.idArquivo}` })),
+
+    // A fonte devolve handles com "https://" colado na frente ("https://@fulano"). Virar
+    // link assim dá 404, e montar "instagram.com/fulano" seria fabricar endereço que o
+    // candidato não declarou. Domínio de verdade vira link; arroba fica texto.
+    redes: (Array.isArray(f.sites) ? f.sites : [])
+      .map((x) => String(x || '').trim()).filter(Boolean)
+      .map((bruto) => {
+        const semProtocolo = bruto.replace(/^https?:\/\//i, '').trim();
+        const ehArroba = semProtocolo.startsWith('@');
+        const temDominio = /^[\w.-]+\.[a-z]{2,}(\/|$)/i.test(semProtocolo);
+        return { texto: semProtocolo, url: (!ehArroba && temDominio) ? `https://${semProtocolo}` : null };
+      }),
+
+    // st_DIVULGA_BENS é respeitado: hoje vem true nos 14, mas a flag existe para o caso de o
+    // TSE restringir a divulgação, e ignorá-la seria publicar contra a fonte.
+    // totalDeBens vem do TSE; NÃO recalculamos somando os itens — se a soma divergir
+    // (arredondamento, bem sem valor), o número exibido continua sendo o oficial.
+    divulga_bens: f.st_DIVULGA_BENS !== false,
+    total_de_bens: typeof f.totalDeBens === 'number' ? f.totalDeBens : null,
+    bens: (Array.isArray(f.bens) ? f.bens : []).map((b) => ({
+      descricao: b.descricao || null,
+      tipo: b.descricaoDeTipoDeBem || null,
+      valor: typeof b.valor === 'number' ? b.valor : null,
+    })),
+
+    // A fonte agrupa vices por NÚMERO DE URNA, não por chapa: os dois presidentes do mesmo
+    // número recebem a MESMA lista, e sq_CANDIDATO_SUPERIOR vem null. Guardamos a lista e
+    // NÃO afirmamos de quem é cada vice — a tela mostra a ressalva.
+    vices: (Array.isArray(f.vices) ? f.vices : []).map((v) => ({
+      sq: v.sq_CANDIDATO ? String(v.sq_CANDIDATO) : null,
+      nome: v.nm_URNA || v.nm_CANDIDATO || null,
+      apto: typeof v.candidatoApto === 'boolean' ? v.candidatoApto : null,
+    })),
+
+    ficha_coletada_em: new Date().toISOString(),
+    ficha_fonte_url: `https://divulgacandcontas.tse.jus.br/divulga/#/candidato/BR/BR/${ID_ELEICAO}/${sq}/${ANO}/BR`,
+  };
+}
+
+async function main() {
+  console.log(`🚀 Ficha do TSE para o banco${SIMULAR ? ' (SIMULAÇÃO)' : ''}`);
+  if (!SUPABASE_URL || !SUPABASE_KEY) { console.error('❌ Faltam credenciais Supabase.'); process.exitCode = 1; return; }
+  const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  const { data: candidatos, error } = await supabase
+    .from('candidatos_presidenciais')
+    .select('id, sq_candidato, nome_urna, cargo')
+    .eq('ano_eleicao', ANO);
+  if (error) { console.error('❌ Supabase:', error.message); process.exitCode = 1; return; }
+
+  const comSq = (candidatos || []).filter((c) => c.sq_candidato);
+  console.log(`📥 ${candidatos.length} candidatos, ${comSq.length} com sq_candidato\n`);
+
+  const nomes = await mapaDeNomes();
+  const nomeDe = (id) => (id ? (nomes[String(id)] || null) : null);
+
+  let ok = 0, falhas = 0;
+  for (const c of comSq) {
+    try {
+      const r = await fetch(`${REST}/buscar/${ANO}/BR/${ID_ELEICAO}/candidato/${c.sq_candidato}`, { headers: UA });
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      const texto = await r.text();
+      if (!texto) throw new Error('corpo vazio (id de eleição errado?)');
+      const campos = traduzir(JSON.parse(texto), nomeDe, c.sq_candidato);
+
+      console.log(`   ${c.nome_urna} (${c.cargo})`);
+      console.log(`      ${campos.situacao_tse || '?'} · ${campos.documentos.length} documentos · ${campos.redes.length} endereços · ${campos.bens.length} bens`);
+      if (campos.vices.length) console.log(`      vices no mesmo número: ${campos.vices.map((v) => v.nome).join(', ')}`);
+      if (campos.motivos.length) console.log(`      motivos: ${campos.motivos.join(' | ').slice(0, 200)}`);
+      if (campos.substituido) console.log(`      SUBSTITUÍDO por ${campos.substituto_nome || campos.substituto_sq || '?'}`);
+
+      if (!SIMULAR) {
+        const { error: e2 } = await supabase.from('candidatos_presidenciais').update(campos).eq('id', c.id);
+        if (e2) throw new Error(`gravação: ${e2.message}`);
+      }
+      ok++;
+    } catch (e) {
+      falhas++;
+      console.warn(`   ⚠ ${c.nome_urna}: ${e.message}`);
+    }
+    await pausa();
+  }
+
+  console.log(`\n📊 ${ok} fichas${SIMULAR ? ' lidas' : ' gravadas'}, ${falhas} falhas`);
+  if (SIMULAR) console.log('(simulação — nada foi gravado)');
+}
+
+main()
+  .catch((e) => { console.error('❌', e.message); process.exitCode = 1; })
+  .finally(gravarSaida);

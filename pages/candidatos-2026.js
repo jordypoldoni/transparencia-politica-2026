@@ -36,19 +36,9 @@ function CardCandidatoPresidencial({ pessoa, papel }) {
 }
 
 function ListaPresidente({ chapas }) {
-  // Situação da candidatura vem AO VIVO (ver pages/api/situacao-candidatura.js). Se a busca
-  // falhar, `situacoes` fica vazio e nenhum selo aparece: a tela volta a ser a de antes, em vez
-  // de mostrar caixa de erro por um dado acessório.
-  const [situacoes, setSituacoes] = useState({});
-  const [consultadoEm, setConsultadoEm] = useState(null);
-  useEffect(() => {
-    let vivo = true;
-    fetch('/api/situacao-candidatura')
-      .then((r) => r.json())
-      .then((d) => { if (vivo) { setSituacoes(d.situacoes || {}); setConsultadoEm(d.consultadoEm || null); } })
-      .catch(() => { });
-    return () => { vivo = false; };
-  }, []);
+  // A situação vinha AO VIVO do TSE pelo navegador. Saiu em 18/09: o Akamai do TSE recusa a
+  // Vercel com 403, e além disso o que é buscado depois do carregamento não existe para o
+  // Google. Agora vem do banco, junto com o resto da chapa, e entra no HTML servido.
 
   if (chapas.length === 0) return <p style={{ color: t.cor.cinza }}>Nenhum candidato coletado ainda.</p>;
   return (
@@ -68,19 +58,13 @@ function ListaPresidente({ chapas }) {
               <CardCandidatoPresidencial pessoa={c.presidente} papel="Presidente" />
               {c.vice && <CardCandidatoPresidencial pessoa={c.vice} papel="Vice" />}
             </div>
-            {/* Duas chapas com o mesmo número não é erro da tela, é o que está registrado no
-                TSE. Sem esta linha o leitor vê dois cards "28" e acha que o site duplicou.
-                TEXTO CORRIGIDO EM 16/09: a versão anterior dizia que o TSE "ainda não publicou
-                a situação", e disso deduzia o vice desconhecido. Duas coisas erradas: o TSE
-                PUBLICA a situação (só não no arquivo em lote, ver a rota de situação), e o vice
-                não depende dela. Verificado em duas fontes independentes: nem o CSV nem o
-                DivulgaCandContas informam qual vice pertence a qual chapa. */}
-            {c.chapaAmbigua && (
-              <p style={{ margin: '14px 0 0', fontSize: '0.76rem', lineHeight: 1.5, color: t.cor.tinta, background: t.cor.papelQuente2, borderRadius: t.raio.sm, padding: '10px 12px' }}>
-                Há {c.chapasNoNumero} candidaturas a presidente registradas com o número {c.nr_candidato}. O TSE não informa, nos dados que publica, qual vice pertence a qual chapa.
-              </p>
-            )}
-            <SeloSituacao info={situacoes[String(c.presidente.sq_candidato)]} consultadoEm={consultadoEm} />
+            {/* REMOVIDO EM 18/09 o aviso "o TSE não informa qual vice pertence a qual chapa".
+                Era falso. A ficha individual de cada candidato publica o parceiro de chapa, e
+                os 28 pares são recíprocos e de cargos opostos — inclusive os dois do número 28,
+                que a fonte separa em Marçal↔Avalanche e Avalanche↔Silvia. Dois cards com o
+                mesmo número continuam aparecendo, e agora cada um mostra o vice certo, que é
+                o que explica a duplicidade sem precisar de aviso nenhum. */}
+            <SeloSituacao info={{ situacao: c.presidente.situacao_tse }} consultadoEm={c.presidente.ficha_coletada_em} />
             <span style={{ display: 'inline-block', marginTop: '10px', color: t.cor.ouroTexto, fontWeight: 700, fontSize: '0.8rem' }}>Ver ficha e proposta →</span>
           </div>
         </Link>
