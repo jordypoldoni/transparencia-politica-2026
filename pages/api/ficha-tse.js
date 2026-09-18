@@ -19,7 +19,7 @@ const REST = 'https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura';
 const ID_ELEICAO = 20322002026;
 const ID_ELEICAO_LISTA = 6257;
 const ANO = 2026;
-const UA = { 'User-Agent': 'Mozilla/5.0', Accept: 'application/json' };
+const UA = { 'User-Agent': 'Mozilla/5.0 (compatible; LumeCidadaoBot/1.0; +https://www.lumecidadao.com.br/sobre)', Accept: 'application/json' };
 const TTL_MS = 15 * 60 * 1000;
 
 const cache = new Map();          // sq -> { em, dados }
@@ -56,6 +56,25 @@ function porQueFalhou(e) {
 }
 const PRAZO = () => (typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? AbortSignal.timeout(9000) : undefined);
 
+// PARAR DE DEDUZIR. (18/09/2026)
+// Duas mudanças de região na Vercel e o cabeçalho x-vercel-id continua "gru1::iad1::…".
+// Eu venho LENDO esse cabeçalho como "entrou em São Paulo, executou em Washington" — mas
+// esse formato é suposição minha, e supor formato já me custou quatro diagnósticos nesta
+// semana. A função sabe onde está: process.env.VERCEL_REGION. Então ela passa a dizer.
+//
+// E o 403 do TSE vem com corpo, que eu estava jogando fora ao lançar só o status. Um WAF
+// costuma explicar no corpo o que barrou — ou ao menos deixa a assinatura de quem barrou
+// nos cabeçalhos. Sem isso não dá para separar bloqueio por país de bloqueio por cliente.
+const REGIAO = process.env.VERCEL_REGION || 'local';
+
+async function motivoDaRecusa(r) {
+  let corpo = '';
+  try { corpo = (await r.text()).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 300); } catch { }
+  const pistas = ['server', 'x-cache', 'cf-ray', 'x-akamai-transformed', 'x-iinfo']
+    .map((h) => [h, r.headers.get(h)]).filter(([, v]) => v).map(([h, v]) => `${h}=${v}`);
+  return `TSE respondeu ${r.status}${corpo ? ` — "${corpo}"` : ''}${pistas.length ? ` [${pistas.join(' ')}]` : ''}`;
+}
+
 export default async function handler(req, res) {
   const sq = String(req.query.sq || '').trim();
   if (!/^\d{6,20}$/.test(sq)) return res.status(400).json({ erro: 'parâmetro sq inválido' });
@@ -69,7 +88,7 @@ export default async function handler(req, res) {
 
   try {
     const r = await fetch(`${REST}/buscar/${ANO}/BR/${ID_ELEICAO}/candidato/${sq}`, { headers: UA, signal: PRAZO() });
-    if (!r.ok) throw new Error(`TSE respondeu ${r.status}`);
+    if (!r.ok) throw new Error(await motivoDaRecusa(r));
     const texto = await r.text();
     if (!texto) throw new Error('TSE devolveu corpo vazio (id de eleição errado?)');
     const f = JSON.parse(texto);
@@ -160,8 +179,8 @@ export default async function handler(req, res) {
   } catch (e) {
     const motivoTecnico = porQueFalhou(e);
     console.error('ficha-tse:', motivoTecnico);
-    if (emCache) { res.setHeader('X-Cache', 'stale'); return res.status(200).json({ ...emCache.dados, degradado: true, motivoTecnico }); }
+    if (emCache) { res.setHeader('X-Cache', 'stale'); return res.status(200).json({ ...emCache.dados, degradado: true, motivoTecnico, regiao: REGIAO }); }
     // Indisponível não pode virar caixa de erro na tela: sem dados, a seção não é desenhada.
-    return res.status(200).json({ indisponivel: true, situacao: null, motivos: [], vices: [], motivoTecnico });
+    return res.status(200).json({ indisponivel: true, situacao: null, motivos: [], vices: [], motivoTecnico, regiao: REGIAO });
   }
 }

@@ -41,6 +41,25 @@ function porQueFalhou(e) {
 }
 const PRAZO = () => (typeof AbortSignal !== 'undefined' && AbortSignal.timeout ? AbortSignal.timeout(9000) : undefined);
 
+// PARAR DE DEDUZIR. (18/09/2026)
+// Duas mudanças de região na Vercel e o cabeçalho x-vercel-id continua "gru1::iad1::…".
+// Eu venho LENDO esse cabeçalho como "entrou em São Paulo, executou em Washington" — mas
+// esse formato é suposição minha, e supor formato já me custou quatro diagnósticos nesta
+// semana. A função sabe onde está: process.env.VERCEL_REGION. Então ela passa a dizer.
+//
+// E o 403 do TSE vem com corpo, que eu estava jogando fora ao lançar só o status. Um WAF
+// costuma explicar no corpo o que barrou — ou ao menos deixa a assinatura de quem barrou
+// nos cabeçalhos. Sem isso não dá para separar bloqueio por país de bloqueio por cliente.
+const REGIAO = process.env.VERCEL_REGION || 'local';
+
+async function motivoDaRecusa(r) {
+  let corpo = '';
+  try { corpo = (await r.text()).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 300); } catch { }
+  const pistas = ['server', 'x-cache', 'cf-ray', 'x-akamai-transformed', 'x-iinfo']
+    .map((h) => [h, r.headers.get(h)]).filter(([, v]) => v).map(([h, v]) => `${h}=${v}`);
+  return `TSE respondeu ${r.status}${corpo ? ` — "${corpo}"` : ''}${pistas.length ? ` [${pistas.join(' ')}]` : ''}`;
+}
+
 export default async function handler(req, res) {
   const agora = Date.now();
   if (cache.dados && (agora - cache.em) < TTL_MS) {
@@ -52,10 +71,10 @@ export default async function handler(req, res) {
     const situacoes = {};
     for (const cargo of Object.keys(CARGOS)) {
       const r = await fetch(`${BASE}/${ANO}/BR/${ID_ELEICAO}/${cargo}/candidatos`, {
-        headers: { 'User-Agent': 'Mozilla/5.0', Accept: 'application/json' },
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; LumeCidadaoBot/1.0; +https://www.lumecidadao.com.br/sobre)', Accept: 'application/json' },
         signal: PRAZO(),
       });
-      if (!r.ok) throw new Error(`TSE respondeu ${r.status} no cargo ${cargo}`);
+      if (!r.ok) throw new Error(`${await motivoDaRecusa(r)} (cargo ${cargo})`);
       const j = await r.json();
       for (const c of j.candidatos || []) {
         if (!c?.id) continue;
@@ -83,8 +102,8 @@ export default async function handler(req, res) {
     console.error('situacao-candidatura:', motivoTecnico);
     if (cache.dados) {
       res.setHeader('X-Cache', 'stale');
-      return res.status(200).json({ ...cache.dados, degradado: true, motivoTecnico });
+      return res.status(200).json({ ...cache.dados, degradado: true, motivoTecnico, regiao: REGIAO });
     }
-    return res.status(200).json({ consultadoEm: null, situacoes: {}, indisponivel: true, motivoTecnico });
+    return res.status(200).json({ consultadoEm: null, situacoes: {}, indisponivel: true, motivoTecnico, regiao: REGIAO });
   }
 }
