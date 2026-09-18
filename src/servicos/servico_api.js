@@ -272,11 +272,20 @@ const ServicoAPI = {
     listarDeputados: async () => {
         const { data, error } = await supabase
             .from('agentes_politicos')
-            .select('id, slug, nome_urna, partido_atual, uf_sede, foto_url, cargo_atual, fonte_api')
+            .select('id, slug, nome_urna, partido_atual, uf_sede, foto_url, cargo_atual, fonte_api, em_exercicio')
             .or('fonte_api.ilike.%camara%,fonte_api.ilike.%senado%,fonte_api.ilike.%alesp%,fonte_api.ilike.%alergs%')
             .order('nome_urna', { ascending: true });
         if (error) { console.error('listarDeputados:', error.message); return []; }
-        return (data || []).map((d) => {
+
+        // 🐛 CORRIGIDO EM 18/09: a tela dizia que o Brasil tem 89 senadores. Tem 81.
+        // O coletor de senadores nunca desativava ninguém: quando um titular vira ministro e o
+        // 1º suplente assume, a fonte passa a listar o suplente e o banco ficava com OS DOIS —
+        // e a linha velha continua dizendo "Exercício", porque ninguém a atualizou. Nenhum erro
+        // aparecia; o total foi subindo em silêncio até 90 linhas para 81 cadeiras.
+        //
+        // Filtramos só o `false`, nunca o `null`: deputados federais e estaduais não têm essa
+        // coluna preenchida e não podem sumir por causa de uma correção do Senado.
+        return (data || []).filter((d) => d.em_exercicio !== false).map((d) => {
             const fonte = (d.fonte_api || '').toLowerCase();
             // Cada assembleia é uma casa própria ('Assembleia (SP)', 'Assembleia (RS)'...), porque
             // cada uma publica coisas diferentes e a página as trata como abas separadas.
