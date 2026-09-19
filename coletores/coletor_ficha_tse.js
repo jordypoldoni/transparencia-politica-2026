@@ -33,7 +33,8 @@ import { createClient } from '@supabase/supabase-js';
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-const REST = 'https://divulgacandcontas.tse.jus.br/divulga/rest/v1/candidatura';
+const HOST_TSE = 'https://divulgacandcontas.tse.jus.br';
+const REST = '/divulga/rest/v1/candidatura';   // caminho, nao URL: quem monta a URL e buscarTse()
 const ID_ELEICAO = 20322002026;     // o da ficha individual
 const ID_ELEICAO_LISTA = 6257;      // o da listagem — são DOIS, e trocar devolve corpo vazio
 const ANO = 2026;
@@ -43,6 +44,33 @@ const ANO = 2026;
 // navegador. Não dá para negociar com ele, o dado é público e o próprio portal do TSE é lido
 // por navegador. Voltamos ao que funciona. Não troque sem testar contra a fonte.
 const UA = { 'User-Agent': 'Mozilla/5.0', Accept: 'application/json' };
+
+// A PONTE (19/09/2026). O Akamai do TSE bloqueia por ORIGEM: recusou com 403 a Vercel, o
+// sandbox de nuvem e o runner do GitHub Actions (28 fichas e 2 listagens, todas). A maquina
+// do Jordy passa, e as Edge Functions do Supabase tambem passam, medido no mesmo dia.
+//
+// Entao: sem TSE_PONTE_URL o coletor fala direto com o TSE, que e o caso de rodar daqui.
+// Com a variavel definida (e o workflow coletar_fiscal.yml define), ele pede a mesma coisa
+// pela funcao `tse-ponte` do Supabase, que repassa sem interpretar nada.
+//
+// A configuracao e EXPLICITA, e nao "tenta direto e cai para a ponte se der 403", porque
+// tentar primeiro desperdicaria 30 requisicoes recusadas em toda execucao agendada e, pior,
+// deixaria o log com 30 erros vermelhos numa execucao que deu certo.
+const PONTE = process.env.TSE_PONTE_URL || null;
+
+async function buscarTse(caminho) {
+  if (!PONTE) return fetch(HOST_TSE + caminho, { headers: UA });
+
+  const r = await fetch(`${PONTE}?caminho=${encodeURIComponent(caminho)}`, {
+    headers: { Authorization: `Bearer ${SUPABASE_KEY}` },
+  });
+  // A ponte marca os erros DELA num cabecalho proprio. Sem isso, um 401 de credencial
+  // chegaria aqui como "HTTP 401" e pareceria coisa do TSE, mandando o diagnostico para o
+  // lado errado logo no primeiro passo.
+  const erroDaPonte = r.headers.get('x-ponte-erro');
+  if (erroDaPonte) throw new Error(`ponte: ${erroDaPonte}`);
+  return r;
+}
 
 const ARQUIVO_SAIDA = 'coletores/_saida_ficha_tse.txt';
 const registro = [];
@@ -62,7 +90,7 @@ const pausa = (ms = 400) => new Promise((r) => setTimeout(r, ms));
 async function mapaDeNomes() {
   const mapa = {};
   for (const cargo of [1, 2]) {
-    const r = await fetch(`${REST}/listar/${ANO}/BR/${ID_ELEICAO_LISTA}/${cargo}/candidatos`, { headers: UA });
+    const r = await buscarTse(`${REST}/listar/${ANO}/BR/${ID_ELEICAO_LISTA}/${cargo}/candidatos`);
     if (!r.ok) { console.warn(`   ⚠ listagem cargo ${cargo}: ${r.status}`); continue; }
     const j = await r.json();
     for (const c of j.candidatos || []) if (c?.id) mapa[String(c.id)] = c.nomeUrna || c.nomeCompleto || null;
@@ -138,6 +166,7 @@ function traduzir(f, nomeDe, sq) {
 
 async function main() {
   console.log(`🚀 Ficha do TSE para o banco${SIMULAR ? ' (SIMULAÇÃO)' : ''}`);
+  console.log(PONTE ? `🌉 via ponte: ${PONTE}` : '🔌 direto no TSE (sem ponte)');
   if (!SUPABASE_URL || !SUPABASE_KEY) { console.error('❌ Faltam credenciais Supabase.'); process.exitCode = 1; return; }
   const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -157,7 +186,7 @@ async function main() {
   const falhou = [];
   for (const c of comSq) {
     try {
-      const r = await fetch(`${REST}/buscar/${ANO}/BR/${ID_ELEICAO}/candidato/${c.sq_candidato}`, { headers: UA });
+      const r = await buscarTse(`${REST}/buscar/${ANO}/BR/${ID_ELEICAO}/candidato/${c.sq_candidato}`);
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const texto = await r.text();
       if (!texto) throw new Error('corpo vazio (id de eleição errado?)');
