@@ -56,3 +56,34 @@ export function hrefPerfil(perfil) {
   if (!perfil || !perfil.slug) return '#';
   return `/${casaDoPerfil(perfil).rota}/${perfil.slug}`;
 }
+
+// ---------------------------------------------------------------------------
+// De que casa e esta VOTACAO. (19/09/2026)
+//
+// Mesmo principio do casaDoPerfil acima, e pelo mesmo motivo: a regra mora aqui, uma vez so.
+//
+// O discriminador e o PREFIXO do votacao_id_externa, escrito pelo coletor de cada casa:
+//   'SF-6918'        -> Senado          (coletor_votos_senado.js)
+//   'ALERGS-2023-...'-> Assembleia (RS) (coletor_votos_alergs.js)
+//   '2122125-115'    -> Camara          (coletor_votos.js, id da propria API)
+//
+// NAO existe coluna `casa` em `votacoes`, e isso e deliberado: coluna nova precisaria ser
+// preenchida por tres coletores, e coletor que esquece grava nulo, que vira casa errada em
+// silencio. E o padrao que ja produziu os 89 senadores e o descarte mudo de votos. O prefixo
+// esta sempre no dado, entao a casa e sempre derivavel.
+export const CASAS_VOTACAO = [
+  { chave: 'camara', nome: 'Câmara dos Deputados', curto: 'Câmara', ambito: 'Federal' },
+  { chave: 'senado', nome: 'Senado Federal', curto: 'Senado', ambito: 'Federal' },
+  { chave: 'rs', nome: 'Assembleia Legislativa do RS', curto: 'Assembleia do RS', ambito: 'Estadual' },
+];
+
+export const casaVotacaoPorChave = (chave) => CASAS_VOTACAO.find((c) => c.chave === chave) || null;
+
+export function casaDaVotacao(v) {
+  const id = String((v && (v.votacao_id_externa || v.chave)) || '');
+  if (id.startsWith('SF-')) return casaVotacaoPorChave('senado');
+  if (id.startsWith('ALERGS-')) return casaVotacaoPorChave('rs');
+  return casaVotacaoPorChave('camara');
+}
+
+export const hrefVotacoesDaCasa = (chave) => `/votacoes/${chave}`;

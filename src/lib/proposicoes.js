@@ -101,6 +101,58 @@ const O_QUE_FAZ = {
   RDF: 'ajuste de forma no texto já aprovado, sem mudar o conteúdo.',
 };
 
+// ---------------------------------------------------------------------------
+// O QUE ISSO ALCANÇA NA VIDA DE QUEM LÊ. (19/09/2026)
+//
+// POR QUE ESTA CAMADA EXISTE, SEPARADA DO O_QUE_FAZ ACIMA
+// O `oQueFaz` responde "que instrumento é este e como ele tramita". É a resposta certa numa
+// ficha de parlamentar, onde o leitor já está olhando uma proposição específica. Não é a
+// resposta certa em quem chega à página de votações sem saber o que procura: ali a pergunta
+// é "isso mexe em quê da minha vida?", e taxonomia não responde isso.
+//
+// A LINHA QUE NÃO SE ATRAVESSA: aqui se descreve o ALCANCE DO INSTRUMENTO, com exemplos do
+// TIPO de coisa que se decide por ele. Nunca o que uma votação específica vai causar. Dizer
+// "este PL vai aumentar seu imposto" seria previsão, e previsão é opinião com cara de dado.
+// Dizer "lei comum é o que define imposto, pena de crime e regra de trabalho" é verificável.
+//
+// FEDERAL E ESTADUAL PRECISAM DE TEXTOS DIFERENTES, e isto corrige um erro que foi ao ar hoje:
+// o cartão da Assembleia do RS anunciava que um projeto de lei "precisa passar pela Câmara,
+// pelo Senado e pela sanção do presidente". É a tramitação federal descrevendo uma lei
+// estadual. O texto de 15/09 nasceu numa tela só de federais e nunca tinha sido posto diante
+// de um contexto estadual.
+const NA_SUA_VIDA = {
+  Federal: {
+    PL: 'É por aqui que se decide o que é crime e qual a pena, regra de trabalho e de aposentadoria, o que o plano de saúde é obrigado a cobrir, o que vem escrito no rótulo do que você compra e as regras de trânsito.',
+    PLS: 'É por aqui que se decide o que é crime e qual a pena, regra de trabalho e de aposentadoria, o que o plano de saúde é obrigado a cobrir, o que vem escrito no rótulo do que você compra e as regras de trânsito.',
+    PLP: 'Trata do que a Constituição mandou detalhar, e quase sempre é dinheiro: como cada imposto é cobrado e repartido entre União, estados e municípios, limite de dívida dos governos e as regras do sistema financeiro.',
+    PEC: 'Mexe na regra que está acima de todas as outras, então alcança o que lei comum não pode contrariar: idade e tempo de aposentadoria, quanto e como se cobra imposto, e quais direitos ficam protegidos.',
+    MPV: 'Já está valendo enquanto é votada, por isso costuma tratar do que não espera: programa de transferência de renda, crédito, socorro a um setor em crise, preço administrado. Se o Congresso não aprovar no prazo, ela perde o efeito e o que valeu nesse meio-tempo precisa ser resolvido.',
+    PDL: 'É o Congresso decidindo sem passar pelo presidente: derrubar uma regra que o governo editou, aprovar acordos com outros países e confirmar ou recusar nomes indicados para cargos como ministro de tribunal, diretor de agência e embaixador.',
+    PDC: 'É o Congresso decidindo sem passar pelo presidente: derrubar uma regra que o governo editou, aprovar acordos com outros países e confirmar ou recusar nomes indicados para cargos.',
+    PLV: 'É a medida provisória já com as mudanças que o Congresso fez. O que valia desde a publicação pode sair daqui diferente do que entrou.',
+    PLN: 'Decide para onde vai o dinheiro público do ano: quanto cada área recebe, e de onde sai verba extra quando o governo precisa gastar além do previsto.',
+    PRC: 'Não muda lei nenhuma: define como a própria Casa funciona. Alcança a sua vida de forma indireta, porque é o que determina o ritmo e a ordem com que tudo o mais é votado.',
+    PRS: 'Não muda lei nenhuma: define como o Senado funciona por dentro, o que determina o ritmo e a ordem com que tudo o mais é votado.',
+  },
+  Estadual: {
+    PL: 'Lei estadual alcança o que o estado administra diretamente: escola e hospital da rede estadual, polícia militar e civil, ICMS e IPVA (os impostos estaduais), rodovias sob gestão do estado e concessões de serviço público.',
+    PLC: 'Trata do que a Constituição do estado mandou detalhar, geralmente a organização da administração estadual e as regras de carreira do serviço público do estado.',
+    PEC: 'Muda a Constituição do estado, que está acima das leis estaduais: organiza os poderes do estado e fixa regras que nenhuma lei estadual pode contrariar.',
+    PDL: 'É a Assembleia decidindo sem passar pelo governador, em geral para sustar um ato do Executivo estadual ou julgar as contas do governo.',
+    PRC: 'Não muda lei nenhuma: define como a própria Assembleia funciona por dentro.',
+  },
+};
+
+// Devolve a frase de alcance, ou null quando nao ha texto para aquela sigla NAQUELE ambito.
+// Null faz a tela simplesmente nao mostrar a linha: sigla sem texto proprio nunca herda o
+// texto de outro ambito, porque foi exatamente assim que a tramitacao federal foi parar na
+// descricao de uma lei estadual.
+export function naSuaVida(sigla, ambito = 'Federal') {
+  const s = String(sigla || '').trim().toUpperCase();
+  const mapa = NA_SUA_VIDA[ambito] || NA_SUA_VIDA.Federal;
+  return mapa[s] || null;
+}
+
 // Devolve { nome, oQueFaz } ou null quando a sigla é desconhecida.
 export function explicarProposicao(sigla) {
   const s = String(sigla || '').trim().toUpperCase();

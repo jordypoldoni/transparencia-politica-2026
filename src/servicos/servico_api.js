@@ -320,13 +320,109 @@ const ServicoAPI = {
     },
 
     // Todas as votações (para a página de lista, com busca por assunto/autor/data)
+    // CAMPOS DA LISTA. A pagina de detalhe busca o resto; aqui so vai o que o cartao mostra.
+    _camposVotacaoLista: 'votacao_id_externa, descricao, aprovacao, data_voto, proposicao_titulo, ementa, descricao_tipo, resultado, autor_nome, keywords, situacao, ementa_detalhada, regime, url_inteiro_teor, explicacao_cidada',
+
+    // FILTRO POR CASA, em um lugar so. O discriminador e o prefixo do votacao_id_externa;
+    // a explicacao de por que nao existe coluna `casa` esta em src/lib/casa.js.
+    _filtrarCasa: (q, chave) => {
+        if (chave === 'senado') return q.like('votacao_id_externa', 'SF-%');
+        if (chave === 'rs') return q.like('votacao_id_externa', 'ALERGS-%');
+        if (chave === 'camara') {
+            return q.not('votacao_id_externa', 'like', 'SF-%').not('votacao_id_externa', 'like', 'ALERGS-%');
+        }
+        return q;
+    },
+
+    // ⚠️ O Supabase corta em 1.000 LINHAS por requisicao, sem erro e sem aviso.
+    //
+    // Isto quebrou de verdade em 19/09/2026: a importacao das votacoes historicas do Senado
+    // levou a tabela de 771 para 1.281 linhas, e as 281 mais antigas (todas do Senado, tudo
+    // antes de 29/09/2021) simplesmente sumiram da /votacoes. A pagina carregava normal.
+    // Mesmo padrao ja documentado no getRadaresPorCasaEAno, onde o ranking do RS sumia.
+    //
+    // Por isso: pagina ate acabar, sempre, mesmo quando o total de hoje cabe numa requisicao.
+    // Confiar em "cabe" e assinar o mesmo bug para a proxima vez que a base crescer.
+    _todasAsPaginas: async (montarQuery, nome) => {
+        const PAGINA = 1000;
+        const tudo = [];
+        for (let inicio = 0; ; inicio += PAGINA) {
+            const { data, error } = await montarQuery().range(inicio, inicio + PAGINA - 1);
+            if (error) { console.error(`${nome}:`, error.message); break; }
+            tudo.push(...(data || []));
+            if (!data || data.length < PAGINA) break;
+        }
+        return tudo;
+    },
+
     listarVotacoes: async () => {
-        const { data, error } = await supabase
-            .from('votacoes')
-            .select('votacao_id_externa, descricao, aprovacao, data_voto, proposicao_titulo, ementa, descricao_tipo, resultado, autor_nome, keywords, situacao, ementa_detalhada, regime, url_inteiro_teor, explicacao_cidada')
-            .order('data_voto', { ascending: false });
-        if (error) { console.error('listarVotacoes:', error.message); return []; }
-        return data || [];
+        return ServicoAPI._todasAsPaginas(
+            () => supabase.from('votacoes').select(ServicoAPI._camposVotacaoLista).order('data_voto', { ascending: false }),
+            'listarVotacoes',
+        );
+    },
+
+    // As votacoes de UMA casa, todas, ja paginadas. Hoje a maior casa tem 588 linhas, mas o
+    // laco acima garante que crescer nao volte a truncar em silencio.
+    listarVotacoesDaCasa: async (chave) => {
+        return ServicoAPI._todasAsPaginas(
+            () => ServicoAPI._filtrarCasa(
+                supabase.from('votacoes').select(ServicoAPI._camposVotacaoLista),
+                chave,
+            ).order('data_voto', { ascending: false }),
+            `listarVotacoesDaCasa(${chave})`,
+        );
+    },
+
+    // PAINEL DE ENTRADA da /votacoes: por casa, quantas votacoes, que periodo cobrem e as
+    // ultimas. Nao traz a lista inteira de ninguem: a /votacoes deixou de ser uma lista.
+    //
+    // Antes de 19/09/2026 a /votacoes despejava 1.054 cartoes de uma vez, misturando Camara,
+    // Senado e Assembleia do RS sem dizer qual era qual - e o maior bloco era o RS, numa tela
+    // intitulada "Votacoes da Camara e do Senado".
+    resumoVotacoesPorCasa: async (recentesPorCasa = 40) => {
+        const chaves = ['camara', 'senado', 'rs'];
+        const resultado = {};
+        await Promise.all(chaves.map(async (chave) => {
+            const [contagem, recentes, maisAntiga] = await Promise.all([
+                ServicoAPI._filtrarCasa(
+                    supabase.from('votacoes').select('votacao_id_externa', { count: 'exact', head: true }), chave,
+                ),
+                ServicoAPI._filtrarCasa(
+                    supabase.from('votacoes').select(ServicoAPI._camposVotacaoLista), chave,
+                ).order('data_voto', { ascending: false }).limit(recentesPorCasa),
+                ServicoAPI._filtrarCasa(
+                    supabase.from('votacoes').select('data_voto'), chave,
+                ).order('data_voto', { ascending: true }).limit(1),
+            ]);
+            // O QUE MAIS SE VOTA NESTA CASA. Consulta propria e deliberadamente magra (so o
+            // titulo da proposicao), porque ela varre a casa inteira: sao ~600 strings curtas,
+            // nao os cartoes. Contar pelos `recentes` daria um retrato dos ultimos 40 e a tela
+            // anunciaria isso como se fosse o perfil da casa.
+            const titulos = await ServicoAPI._todasAsPaginas(
+                () => ServicoAPI._filtrarCasa(supabase.from('votacoes').select('proposicao_titulo'), chave),
+                `tiposDaCasa(${chave})`,
+            );
+            const porSigla = {};
+            for (const linha of titulos) {
+                const m = String(linha.proposicao_titulo || '').match(/^([A-Za-z]+)/);
+                if (!m) continue;
+                const s = m[1].toUpperCase();
+                porSigla[s] = (porSigla[s] || 0) + 1;
+            }
+            const tipos = Object.entries(porSigla)
+                .sort((a, b) => b[1] - a[1])
+                .map(([sigla, qtd]) => ({ sigla, qtd }));
+
+            resultado[chave] = {
+                total: contagem.count || 0,
+                recentes: recentes.data || [],
+                primeira: maisAntiga.data?.[0]?.data_voto || null,
+                ultima: recentes.data?.[0]?.data_voto || null,
+                tipos,
+            };
+        }));
+        return resultado;
     },
 
     // Radar da Cota: quem mais usou a verba pública no ano (dado completo)

@@ -1,5 +1,5 @@
 import ServicoAPI from '../src/servicos/servico_api';
-import { hrefPerfil } from '../src/lib/casa';
+import { hrefPerfil, CASAS_VOTACAO } from '../src/lib/casa';
 import { ASSEMBLEIAS } from '../src/lib/assembleias';
 
 // Páginas fixas do site. Até 12/09/2026 faltavam aqui /gastos-publicos, /candidatos-2026
@@ -16,6 +16,11 @@ function gerarXml(base, perfis) {
     // Uma lista por assembleia. Enquanto as abas dividiam a URL /deputados, estas telas
     // nao existiam para o Google.
     ...ASSEMBLEIAS.map((a) => `/deputados/${a.uf.toLowerCase()}`),
+    // Uma lista de votacoes por casa, desde 19/09/2026. Antes /votacoes era uma lista unica
+    // com as tres casas misturadas; agora e um painel, e a lista de cada casa e uma rota
+    // propria. Sem estas linhas, as tres telas novas nao existiriam para o Google, que e
+    // exatamente o que tinha acontecido com /deputados/rs ate 12/09.
+    ...CASAS_VOTACAO.map((c) => `/votacoes/${c.chave}`),
     ...UFS.map((uf) => `/estado/${uf}`),
     // hrefPerfil manda senador para /senador/ e o resto para /deputado/. Escrever
     // '/deputado/' na mão aqui era o que colocava senador na URL errada dentro do sitemap.

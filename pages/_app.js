@@ -157,6 +157,19 @@ export default function App({ Component, pageProps }) {
         .radar-nome { min-width: 0; }
         .etapa-linha { display: flex; align-items: center; gap: 10px; min-width: 0; }
 
+        /* Painel de entrada da /votacoes (19/09/2026): um cartao por casa, em tres colunas,
+           ocupando a largura inteira. Em grade de tres cartoes lado a lado o texto que explica
+           o que cada decisao alcanca virava uma coluna de sete palavras por linha, e e
+           justamente esse texto que serve a quem chega sem saber o que procurar.
+           Abaixo de 900px vira uma coluna, na ordem do codigo: identidade, alcance, recentes. */
+        .painel-casa {
+          display: grid; gap: 26px; align-items: start;
+          grid-template-columns: minmax(200px, 0.85fr) minmax(280px, 1.3fr) minmax(240px, 1fr);
+        }
+        @media (max-width: 900px) {
+          .painel-casa { grid-template-columns: 1fr; gap: 18px; }
+        }
+
         @media (max-width: 520px) {
           .radar-linha { flex-wrap: wrap; gap: 10px 12px; }
           .radar-linha .radar-valor { width: 100%; text-align: left; padding-left: 40px; }
