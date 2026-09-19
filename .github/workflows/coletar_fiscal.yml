@@ -91,16 +91,29 @@ jobs:
       # a situação de ontem sem dizer que é de ontem. O coletor sai com código 1 quando lê
       # zero fichas, então o passo fica vermelho e aparece na caixa de entrada.
       #
-      # RISCO CONHECIDO E NÃO TESTADO: o Akamai do TSE bloqueia por ORIGEM. Derrubou a Vercel
-      # (403 de iad1) e derruba o sandbox de nuvem. Ninguém testou ainda o IP do runner do
-      # GitHub. Se a primeira execução vier vermelha com 403 em todas as 28 fichas, não é
-      # regressão do código: é a mesma parede, e aí a coleta volta a ser manual ou vai para
-      # uma máquina com IP residencial.
+      # TSE_PONTE_URL É O QUE FAZ ISTO FUNCIONAR AQUI, e a história merece ficar escrita.
+      # O Akamai do TSE bloqueia por ORIGEM, faixa de datacenter. Na primeira execução deste
+      # workflow, em 19/09/2026, as 28 fichas e as 2 listagens vieram 403. O mesmo código, com
+      # os mesmos cabeçalhos, traz 28 de 28 da máquina do Jordy. Não era erro de código: era o
+      # IP. Medido no mesmo dia, o Akamai recusa Vercel, sandbox de nuvem e runner do GitHub,
+      # e ACEITA as Edge Functions do Supabase (200, 33.707 bytes, da região sa-east-1).
+      # Então o caminho é GitHub -> função `tse-ponte` no Supabase -> TSE. A ponte só repassa
+      # bytes; toda a tradução dos campos continua no coletor, em um lugar só.
+      #
+      # Se um dia isto voltar a dar 403 em tudo, confira ANTES de mexer no código se a
+      # variável abaixo chegou ao passo: sem ela o coletor fala direto com o TSE e o 403
+      # volta, com a mesma cara de antes. O próprio log diz qual dos dois caminhos ele tomou,
+      # na segunda linha da saída.
+      #
+      # A URL não é segredo (a função exige a chave de serviço no Authorization, e a referência
+      # do projeto já é pública no próprio site). Fica à vista para quem ler o arquivo entender
+      # o desenho sem caçar em Settings.
       - name: Coletar as fichas do DivulgaCandContas
         if: steps.janela.outputs.rodar == 'true'
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          TSE_PONTE_URL: https://fedxytdorrecllugnicu.supabase.co/functions/v1/tse-ponte
         run: node coletores/coletor_ficha_tse.js
 
       # O coletor grava tudo que imprime em coletores/_saida_ficha_tse.txt (hábito que nasceu
