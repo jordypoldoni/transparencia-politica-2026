@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Head from 'next/head';
 import ServicoAPI from '../../src/servicos/servico_api';
 import { humanizarVotacao, explicarTipo } from '../../src/lib/votacao';
+import { casaDaVotacao } from '../../src/lib/casa';
 import Termo from '../../components/Termo';
 import CampoBusca from '../../components/CampoBusca';
 import { t } from '../../src/estilo/tokens';
@@ -30,7 +31,10 @@ export default function Votacao({ meta, votos }) {
   const [verMais, setVerMais] = useState(false);
 
   const h = humanizarVotacao(meta);
-  const explicacao = explicarTipo(`${meta.descricao_votacao || ''} ${meta.proposicao_titulo || ''}`);
+  // A casa entra na explicacao do tipo: sem ela, uma votacao da Assembleia do RS era
+  // descrita como decisao do plenario da Camara. Ver a nota em src/lib/votacao.js.
+  const casaDesta = casaDaVotacao(meta);
+  const explicacao = explicarTipo(`${meta.descricao_votacao || ''} ${meta.proposicao_titulo || ''}`, casaDesta);
   const aprovado = h.status === 'Aprovado';
   const assunto = meta.ementa || h.limpo || meta.descricao_votacao;
 

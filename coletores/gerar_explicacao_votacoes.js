@@ -58,6 +58,7 @@ import { fileURLToPath } from 'node:url';
 // O site já traduz resultado e tipo de votação por REGRA, sem IA. Reaproveitar é obrigatório:
 // se o coletor inventasse a própria tradução, o texto do banco e o texto da tela divergiriam.
 import { humanizarVotacao, explicarTipo } from '../src/lib/votacao.js';
+import { casaDaVotacao } from '../src/lib/casa.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ARQUIVO_ORCAMENTO = path.join(__dirname, '_orcamento_resumos.json');
@@ -142,13 +143,14 @@ const CUSTO_MEDIO_LOTE = 3300;
 const PRECO_ENTRADA = 0.15 / 1e6;
 const PRECO_SAIDA = 0.60 / 1e6;
 
-const PROMPT = `Você traduz textos do Congresso brasileiro para português comum, de forma ESTRITAMENTE factual.
+const PROMPT = `Você traduz textos de casas legislativas brasileiras para português comum, de forma ESTRITAMENTE factual.
 
 Para cada item recebido, escreva duas coisas:
 1. "frase": UMA frase dizendo o que o texto faz. No máximo 200 caracteres. Comece com verbo no presente (cria, altera, aumenta, proíbe, autoriza, revoga).
 2. "contexto": 3 a 4 frases explicando, nesta ordem: que tipo de proposta é essa e o que ela é capaz de mudar; o que a ementa detalha sobre o conteúdo; e o que o resultado da votação significa para o andamento da proposta.
 
 REGRAS INEGOCIÁVEIS:
+- A CASA ESTÁ ESCRITA NA ENTRADA. Use SOMENTE ela. Nem toda votação é da Câmara dos Deputados: há votações do Senado Federal e de assembleias legislativas estaduais. Nunca escreva "Câmara" para uma votação que não seja da Câmara, e nunca chame de lei federal o que é lei estadual. Se a entrada disser que a casa é uma assembleia estadual, o texto alcança apenas aquele estado.
 - NÃO opine. Nada de mérito, vantagem, desvantagem, impacto, elogio, crítica ou urgência.
 - NÃO diga por que foi proposto, nem quem ganha ou perde com isso.
 - NÃO compare partidos, candidatos ou governos.
@@ -320,13 +322,23 @@ function resultadoLegivel(v) {
 
 function montarEntrada(v) {
   const partes = [`id: ${v.votacao_id_externa}`];
+
+  // A CASA VAI PRIMEIRO, E ISSO FOI UM CONSERTO. (19/09/2026)
+  // Até aqui a entrada não dizia de que casa era a votação, e o `explicarTipo` abaixo, que o
+  // modelo recebe rotulado como verdade, tinha texto escrito para a Câmara. Medido no banco:
+  // 17 textos publicados errados, entre eles 7 votações da Assembleia gaúcha descritas como
+  // "decisão tomada no plenário da Câmara", tratando de Defesa Civil estadual e do Balanço
+  // Geral do Estado. O modelo não errou sozinho: ele repetiu o que mandamos tratar como fato.
+  const casa = casaDaVotacao(v);
+  if (casa) partes.push(`casa (use SOMENTE esta, não assuma outra): ${casa.nome} (âmbito ${casa.ambito.toLowerCase()})`);
+
   if (v.proposicao_titulo) partes.push(`proposta: ${v.proposicao_titulo}`);
   if (v.ementa) partes.push(`ementa oficial: ${v.ementa}`);
   if (v.descricao) partes.push(`descrição da votação: ${v.descricao}`);
 
   // Material factual que o site já deriva por regra. Entregar isso pronto tira do modelo a
   // necessidade de deduzir que tipo de proposta é essa - que é onde ele costuma escorregar.
-  const tipo = explicarTipo(`${v.descricao || ''} ${v.proposicao_titulo || ''}`);
+  const tipo = explicarTipo(`${v.descricao || ''} ${v.proposicao_titulo || ''}`, casa);
   if (tipo?.termo) partes.push(`tipo de votação (já apurado, use como verdade): ${tipo.termo} - ${tipo.texto}`);
 
   const resultado = resultadoLegivel(v);

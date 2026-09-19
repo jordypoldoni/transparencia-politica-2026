@@ -179,7 +179,7 @@ export default function VotacoesDaCasa({ casa, votacoes, temas = [] }) {
 
             {visiveis.map((g) => {
               const status = statusGrupo(g);
-              const exp = explicarTipo(`${g.titulo || ''} ${g.ementa || ''}`);
+              const exp = explicarTipo(`${g.titulo || ''} ${g.ementa || ''}`, casa);
               const varias = g.votacoes.length > 1;
               const urgencia = /urg[êe]ncia/i.test(g.regime || '') || g.votacoes.some((v) => /urg[êe]ncia/i.test(papelVotacao(v.descricao)));
               const sitCidada = situacaoCidada(g.situacao);

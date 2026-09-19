@@ -71,10 +71,12 @@ export function hrefPerfil(perfil) {
 // preenchida por tres coletores, e coletor que esquece grava nulo, que vira casa errada em
 // silencio. E o padrao que ja produziu os 89 senadores e o descarte mudo de votos. O prefixo
 // esta sempre no dado, entao a casa e sempre derivavel.
+// `preposicao` existe porque o artigo varia por casa e montar na mao produz "no plenario de
+// Camara". Mesmo motivo do `nomeCom` em assembleias.js.
 export const CASAS_VOTACAO = [
-  { chave: 'camara', nome: 'Câmara dos Deputados', curto: 'Câmara', ambito: 'Federal' },
-  { chave: 'senado', nome: 'Senado Federal', curto: 'Senado', ambito: 'Federal' },
-  { chave: 'rs', nome: 'Assembleia Legislativa do RS', curto: 'Assembleia do RS', ambito: 'Estadual' },
+  { chave: 'camara', nome: 'Câmara dos Deputados', curto: 'Câmara', ambito: 'Federal', preposicao: 'da' },
+  { chave: 'senado', nome: 'Senado Federal', curto: 'Senado', ambito: 'Federal', preposicao: 'do' },
+  { chave: 'rs', nome: 'Assembleia Legislativa do RS', curto: 'Assembleia do RS', ambito: 'Estadual', preposicao: 'da' },
 ];
 
 export const casaVotacaoPorChave = (chave) => CASAS_VOTACAO.find((c) => c.chave === chave) || null;

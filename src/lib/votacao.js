@@ -18,16 +18,39 @@ export function humanizarVotacao(v) {
 
 // Explica o TIPO da votação SEMPRE nomeando o termo primeiro (pra quem "não conhece o azul").
 // Retorna { termo, texto }: o termo é "o que é isso"; o texto é a explicação.
-export function explicarTipo(descricao) {
+// EXPLICAR O TIPO DA VOTACAO, E A CASA IMPORTA. (corrigido em 19/09/2026)
+//
+// POR QUE ESTA FUNCAO GANHOU UM SEGUNDO PARAMETRO
+// Ela nasceu quando o site so tinha a Camara, entao dizia "no plenario da Camara", "3/5 dos
+// deputados", "lei comum do pais". Correto la, falso na Assembleia do RS e no Senado.
+//
+// E o estrago nao ficou na tela: `gerar_explicacao_votacoes.js` entrega o retorno desta
+// funcao ao modelo rotulado como "use como verdade". Resultado medido no banco em 19/09/2026:
+// 17 textos publicados afirmando coisa errada, entre eles 7 votacoes da Assembleia gaucha
+// descritas como "decisao tomada no plenario da Camara", falando de Defesa Civil estadual,
+// AGERGS e Balanco Geral do Estado. O modelo repetiu fielmente a falsidade que mandaram ele
+// tratar como verdade.
+//
+// `casa` e um item de CASAS_VOTACAO (src/lib/casa.js). Sem casa, o texto fica NEUTRO: nunca
+// volta a assumir Camara por omissao, que foi exatamente a origem do erro.
+export function explicarTipo(descricao, casa) {
   const d = (descricao || '').toLowerCase();
+  const estadual = casa?.ambito === 'Estadual';
+  const ondePlenario = casa ? `no plenário ${casa.preposicao} ${casa.curto}` : 'em plenário';
+  const chefeExecutivo = estadual ? 'governador' : 'presidente';
+
   if (d.includes('requerimento de urg') || d.includes('urgência') || d.includes('urgencia'))
     return { termo: 'Requerimento de Urgência', texto: 'é um pedido para votar uma proposta com prioridade, à frente das demais na ordem normal. Observação: aprovar a urgência ainda não aprova a proposta, apenas acelera a votação dela.' };
   if (d.includes('emenda à constitui') || d.includes('emenda a constitui') || /\bpec\b/.test(d))
-    return { termo: 'PEC (Proposta de Emenda à Constituição)', texto: 'é uma proposta para mudar a Constituição, a lei máxima do país. Exige apoio reforçado (3/5 dos deputados) e votação em dois turnos.' };
+    return estadual
+      ? { termo: 'PEC (Proposta de Emenda à Constituição)', texto: 'é uma proposta para mudar a Constituição do estado, que está acima das leis estaduais. Exige quórum reforçado e votação em dois turnos.' }
+      : { termo: 'PEC (Proposta de Emenda à Constituição)', texto: 'é uma proposta para mudar a Constituição, a lei máxima do país. Exige três quintos dos votos, em dois turnos, nas duas Casas do Congresso.' };
   if (d.includes('medida provis') || /\bmpv?\b/.test(d))
-    return { termo: 'MP (Medida Provisória)', texto: 'é uma lei urgente editada pelo presidente, que já vale na hora, mas precisa do aval do Congresso para continuar valendo.' };
+    return { termo: 'MP (Medida Provisória)', texto: `é uma norma urgente editada pelo ${chefeExecutivo}, que já vale na hora, mas precisa do aval do Legislativo para continuar valendo.` };
   if (d.includes('lei complementar') || /\bplp\b/.test(d))
-    return { termo: 'PLP (Projeto de Lei Complementar)', texto: 'regula temas que a própria Constituição manda detalhar. Exige maioria absoluta (metade de todos os deputados + 1) para passar.' };
+    return estadual
+      ? { termo: 'PLP (Projeto de Lei Complementar)', texto: 'regula temas que a Constituição do estado manda detalhar. Exige maioria absoluta (metade de todos os deputados estaduais, mais um).' }
+      : { termo: 'PLP (Projeto de Lei Complementar)', texto: 'regula temas que a própria Constituição manda detalhar. Exige maioria absoluta (metade de todos os parlamentares da Casa, mais um).' };
   if (d.includes('reda') && d.includes('final'))
     return { termo: 'Redação Final', texto: 'é a votação do texto final já acordado, antes de a proposta seguir para a próxima etapa.' };
   if (d.includes('substitutivo'))
@@ -39,10 +62,12 @@ export function explicarTipo(descricao) {
   if (d.includes('recurso'))
     return { termo: 'Recurso', texto: 'é um pedido para o plenário revisar uma decisão tomada anteriormente.' };
   if (d.includes('veto'))
-    return { termo: 'Veto', texto: 'é a decisão sobre manter ou derrubar um veto do presidente a uma lei.' };
+    return { termo: 'Veto', texto: `é a decisão sobre manter ou derrubar um veto do ${chefeExecutivo} a uma lei.` };
   if (d.includes('projeto de lei') || /\bpl\b/.test(d))
-    return { termo: 'PL (Projeto de Lei)', texto: 'é uma proposta para criar ou mudar uma lei comum do país.' };
-  return { termo: 'Decisão em plenário', texto: 'é uma decisão tomada no plenário da Câmara. Veja abaixo o que foi votado e quem votou.' };
+    return estadual
+      ? { termo: 'PL (Projeto de Lei)', texto: 'é uma proposta para criar ou mudar uma lei do estado.' }
+      : { termo: 'PL (Projeto de Lei)', texto: 'é uma proposta para criar ou mudar uma lei comum do país.' };
+  return { termo: 'Decisão em plenário', texto: `é uma decisão tomada ${ondePlenario}. Veja abaixo o que foi votado e quem votou.` };
 }
 
 // ===== Agrupamento por matéria (uma proposição = várias votações no processo) =====
