@@ -1,18 +1,13 @@
 # coletar_fiscal.yml — o segundo agendamento do projeto. (19/09/2026)
 #
-# Por que existe, e por que os dois coletores moram no mesmo arquivo com cadências
-# diferentes: os dois ficaram de fora do coletar.yml por motivos opostos.
+# Dois coletores que ficaram de fora do coletar.yml, por motivos opostos:
 #
 #  - coletor_siconfi.js: pendência aberta em 22/08/2026. O painel fiscal só atualizava
 #    quando alguém lembrava de rodar à mão. O dado do Tesouro é BIMESTRAL, então rodar
-#    todo dia seria bater na API do Tesouro por nada.
+#    todo dia seria bater na API do Tesouro por nada. ESTE É AGENDADO.
 #  - coletor_ficha_tse.js: criado em 18/09/2026, quando as seções ao vivo do presidenciável
-#    saíram do ar (o Akamai do TSE recusa a Vercel com 403) e o dado passou a vir do banco.
-#    Este precisa do oposto: situação de candidatura, substituição e indeferimento mudam
-#    TODO DIA até a eleição de 04/10, e dado guardado envelhece em silêncio.
-#
-# Juntar os dois num arquivo só e separar por `if` custa duas linhas de condição e evita
-# um terceiro arquivo de workflow. Cada cron dispara um job só; o outro nem inicia.
+#    saíram do ar. Precisaria do oposto, diário até a eleição, e NÃO É AGENDADO. Por quê,
+#    está escrito no job dele abaixo. Fica aqui como botão, para rodar quando fizer sentido.
 #
 # LEMBRETE DO QUE O HORÁRIO SIGNIFICA (mesma nota do coletar.yml): o cron do GitHub é um
 # PEDIDO, não uma promessa. O atraso típico neste repo foi de 3 a 6 horas, com um caso de 10h.
@@ -23,9 +18,6 @@ name: Coletar dados (fiscal e TSE)
 
 on:
   schedule:
-    # 07:41 de Brasília, todo dia. Fora do horário do coletar.yml (06:17) de propósito:
-    # dois workflows do mesmo repo na mesma fila competem entre si.
-    - cron: '41 10 * * *'
     # 08:23 de Brasília, dia 5 de fev/abr/jun/ago/out/dez. Alinhado ao calendário de
     # publicação do Tesouro, que é bimestral.
     - cron: '23 11 5 2,4,6,8,10,12 *'
@@ -43,15 +35,40 @@ on:
 
 jobs:
   # ---------------------------------------------------------------------------
-  # Ficha do TSE (DivulgaCandContas) — diário até a eleição
+  # Ficha do TSE (DivulgaCandContas) — SÓ NA MÃO
   # ---------------------------------------------------------------------------
+  #
+  # POR QUE ESTE JOB NÃO TEM CRON, e a história inteira, porque ela custou uma sessão.
+  #
+  # O Akamai do TSE bloqueia por ORIGEM, faixa de datacenter. Medido em 19/09/2026:
+  #   Vercel .................. 403 (era o motivo de as seções do presidenciável sumirem)
+  #   sandbox de nuvem ........ 403
+  #   runner do GitHub Actions  403  (as 28 fichas e as 2 listagens, na 1ª execução daqui)
+  #   Edge Function Supabase .. 200  (33.707 bytes, 1,7s, região sa-east-1)
+  #   máquina do Jordy ........ 200  (28 de 28)
+  #
+  # A ponte no Supabase (função `tse-ponte`) foi construída para contornar isso, e o coletor
+  # sabe usá-la pela variável TSE_PONTE_URL. Mas a execução seguinte ainda falhou, com motivo
+  # não diagnosticado (só `exit code 1`; o anexo saida-ficha-tse da execução tem o log, e se
+  # lá estiver `ponte: credencial invalida` o conserto é a chave de serviço do GitHub não ser
+  # a mesma que o Supabase injeta na função).
+  #
+  # Parou aqui por decisão de escopo, não por falta de caminho: o Jordy roda o coletor na
+  # máquina dele, que funciona, e a necessidade diária acaba com a eleição de 04/10.
+  #
+  # O CRON DIÁRIO FOI REMOVIDO DE PROPÓSITO. Agendamento que se sabe que vai falhar manda
+  # e-mail vermelho todo dia e ensina a ignorar falha de verdade, que é o oposto do que este
+  # arquivo existe para fazer.
+  #
+  # SE UM DIA O CRON VOLTAR: voltar junto a trava de data que estava aqui. Ela impedia o
+  # agendamento de bater no TSE para sempre depois que a ficha congela (o limite era
+  # 2026-11-01, com aviso na página da execução em vez de parada silenciosa).
   ficha-tse:
     name: Ficha do TSE (situação, patrimônio, documentos)
     runs-on: ubuntu-latest
     if: >-
-      ${{ github.event.schedule == '41 10 * * *'
-          || (github.event_name == 'workflow_dispatch'
-              && (inputs.alvo == 'ficha-tse' || inputs.alvo == 'ambos')) }}
+      ${{ github.event_name == 'workflow_dispatch'
+          && (inputs.alvo == 'ficha-tse' || inputs.alvo == 'ambos') }}
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4
@@ -65,51 +82,18 @@ jobs:
         # --ignore-scripts evita compilação nativa do sharp (não usado nos coletores)
         run: npm install --ignore-scripts
 
-      # A cadência diária tem prazo de validade. Depois da eleição a ficha congela, e um
-      # agendamento que ninguém desliga vira batida diária na fonte para sempre. Em vez de
-      # parar em silêncio, o passo avisa na página da execução que é hora de baixar a
-      # frequência. Rodada manual ignora a janela.
-      - name: Conferir se ainda estamos na janela da eleição
-        id: janela
-        run: |
-          HOJE=$(date -u +%Y-%m-%d)
-          LIMITE=2026-11-01
-          if [ "${{ github.event_name }}" != "schedule" ]; then
-            echo "rodar=true" >> "$GITHUB_OUTPUT"
-            echo "Rodada manual: janela ignorada."
-          elif [[ "$HOJE" < "$LIMITE" ]]; then
-            echo "rodar=true" >> "$GITHUB_OUTPUT"
-            echo "Dentro da janela ($HOJE < $LIMITE)."
-          else
-            echo "rodar=false" >> "$GITHUB_OUTPUT"
-            echo "::warning title=Coleta diária do TSE vencida::Passou de $LIMITE. A eleição acabou e a ficha não muda mais todo dia. Tire o cron diário deste workflow ou baixe a frequência."
-          fi
-
       # SEM continue-on-error, de propósito, e é a diferença de desenho em relação ao
       # coletar.yml. Lá os passos toleram falha porque um coletor fora do ar não invalida os
       # outros. Aqui o job inteiro É a coleta: se ela não traz nada, a tela continua mostrando
       # a situação de ontem sem dizer que é de ontem. O coletor sai com código 1 quando lê
-      # zero fichas, então o passo fica vermelho e aparece na caixa de entrada.
+      # zero fichas, então o passo fica vermelho em vez de verde mentiroso.
       #
-      # TSE_PONTE_URL É O QUE FAZ ISTO FUNCIONAR AQUI, e a história merece ficar escrita.
-      # O Akamai do TSE bloqueia por ORIGEM, faixa de datacenter. Na primeira execução deste
-      # workflow, em 19/09/2026, as 28 fichas e as 2 listagens vieram 403. O mesmo código, com
-      # os mesmos cabeçalhos, traz 28 de 28 da máquina do Jordy. Não era erro de código: era o
-      # IP. Medido no mesmo dia, o Akamai recusa Vercel, sandbox de nuvem e runner do GitHub,
-      # e ACEITA as Edge Functions do Supabase (200, 33.707 bytes, da região sa-east-1).
-      # Então o caminho é GitHub -> função `tse-ponte` no Supabase -> TSE. A ponte só repassa
-      # bytes; toda a tradução dos campos continua no coletor, em um lugar só.
-      #
-      # Se um dia isto voltar a dar 403 em tudo, confira ANTES de mexer no código se a
-      # variável abaixo chegou ao passo: sem ela o coletor fala direto com o TSE e o 403
-      # volta, com a mesma cara de antes. O próprio log diz qual dos dois caminhos ele tomou,
-      # na segunda linha da saída.
-      #
-      # A URL não é segredo (a função exige a chave de serviço no Authorization, e a referência
-      # do projeto já é pública no próprio site). Fica à vista para quem ler o arquivo entender
-      # o desenho sem caçar em Settings.
+      # TSE_PONTE_URL manda o coletor falar com o TSE através da função `tse-ponte` do
+      # Supabase, em vez de direto. Sem a variável ele vai direto e leva 403 daqui. A segunda
+      # linha da saída diz qual dos dois caminhos ele tomou. A URL não é segredo: a função
+      # exige a chave de serviço no Authorization, e a referência do projeto já é pública no
+      # próprio site.
       - name: Coletar as fichas do DivulgaCandContas
-        if: steps.janela.outputs.rodar == 'true'
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
@@ -121,7 +105,7 @@ jobs:
       # da execução, então dá para ler o diagnóstico sem abrir o log linha a linha.
       # if: always() — o caso em que o arquivo mais interessa é justamente o da falha.
       - name: Guardar a saída do coletor
-        if: always() && steps.janela.outputs.rodar == 'true'
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: saida-ficha-tse
