@@ -84,18 +84,21 @@ export default function Entenda() {
           </p>
         </div>
 
-        {/* COMO O SENADO SE COMPÕE — acrescentado em 18/09/2026.
+        {/* COMO O SENADO SE COMPOE, acrescentado em 18/09/2026.
             O cartão do Senador acima já dizia 81, 3 por estado e mandato de 8 anos. Faltava a
             parte que ninguém adivinha: a renovação ALTERNADA. É ela que explica por que numa
             eleição você vota em um senador e na seguinte em dois, e por que 27 cadeiras não
             estão em disputa este ano. Sem isso, o eleitor chega à urna em outubro sem saber
-            que tem dois votos para senador — e voto não dado é voto perdido. */}
+            que tem dois votos para senador, e voto não dado é voto perdido.
+
+            REGRA DO JORDY (18/09/2026): nada de travessão no texto do site. Usar vírgula,
+            dois-pontos, parênteses ou ponto final. */}
         <h2 id="senado" style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.6rem', margin: '0 0 8px', scrollMarginTop: '90px' }}>Como o Senado se compõe</h2>
         <p style={{ color: t.cor.cinza, fontSize: '1rem', maxWidth: '720px', margin: '0 0 18px', lineHeight: 1.6 }}>
           O Senado tem <strong style={{ color: t.cor.tinta }}>81 cadeiras</strong>, e esse número não muda:
           três para cada um dos 26 estados e três para o Distrito Federal. Roraima, com menos de
-          700 mil habitantes, tem os mesmos três senadores que São Paulo, com mais de 44 milhões —
-          é assim de propósito, porque no Senado quem é representado é o <strong style={{ color: t.cor.tinta }}>estado</strong>,
+          700 mil habitantes, tem os mesmos três senadores que São Paulo, com mais de 44 milhões.
+          É assim de propósito, porque no Senado quem é representado é o <strong style={{ color: t.cor.tinta }}>estado</strong>,
           não a população. Na Câmara é o contrário: lá o tamanho da bancada segue o número de habitantes.
         </p>
 
@@ -103,7 +106,7 @@ export default function Entenda() {
           <div style={cartao}>
             <h3 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.15rem', margin: '0 0 10px' }}>Oito anos, não quatro</h3>
             <p style={{ margin: 0, fontSize: '0.95rem', lineHeight: 1.6, color: t.cor.tinta }}>
-              O mandato de senador dura <strong>8 anos</strong> — o dobro de deputado, prefeito,
+              O mandato de senador dura <strong>8 anos</strong>, o dobro de deputado, prefeito,
               governador e presidente. Um senador eleito em 2026 fica até <strong>2035</strong>.
             </p>
           </div>
@@ -120,8 +123,8 @@ export default function Entenda() {
             <h3 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.15rem', margin: '0 0 10px' }}>Em 2026 você tem dois votos</h3>
             <p style={{ margin: 0, fontSize: '0.95rem', lineHeight: 1.6, color: t.cor.tinta }}>
               Esta é uma eleição de <strong>dois terços</strong>: estão em disputa <strong>54 vagas</strong>,
-              duas em cada estado e no DF. As outras <strong>27 cadeiras</strong> não vão às urnas —
-              seus ocupantes foram eleitos em 2022 e ficam até 2031.
+              duas em cada estado e no DF. As outras <strong>27 cadeiras</strong> não vão às urnas: seus
+              ocupantes foram eleitos em 2022 e ficam até 2031.
             </p>
           </div>
         </div>
@@ -131,11 +134,11 @@ export default function Entenda() {
             <strong>O suplente entra sem eleição.</strong> Cada candidato a senador se registra com
             dois suplentes, e você vota nos três de uma vez, mesmo que só o nome do titular apareça
             na urna. Se o titular assume um ministério, se licencia ou perde o mandato, quem ocupa a
-            cadeira é o suplente — que ninguém escolheu diretamente.
+            cadeira é o suplente, que ninguém escolheu diretamente.
           </p>
           <p style={{ margin: 0, fontSize: '0.88rem', lineHeight: 1.6, color: t.cor.cinza }}>
             Por isso a lista deste site mostra <strong style={{ color: t.cor.tinta }}>quem está em exercício hoje</strong>,
-            e não quem foi eleito: em alguns estados o nome que vota no plenário não é o que estava na urna.
+            e não quem foi eleito. Em alguns estados o nome que vota no plenário não é o que estava na urna.
           </p>
         </div>
 
