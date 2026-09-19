@@ -50,18 +50,34 @@ export default function App({ Component, pageProps }) {
            ele cabe de verdade, o menu era espremido e quebrava POR DENTRO. Agora ele nao
            quebra nem encolhe: ou cabe inteiro, ou o hamburguer assume. */
         .nav-desktop { display: flex; align-items: center; flex-wrap: nowrap; flex-shrink: 0; }
+        /* Alvo de toque em tela sensível (Diretrizes: mínimo 24px, 40px em pointer coarse).
+           O item do menu tem ~33px de altura com a fonte de 0.88rem, o que basta para mouse
+           mas não para dedo. Um notebook com tela de toque fica acima do ponto de corte e vê
+           o menu inteiro, então a regra precisa existir aqui, não só no mobile. */
+        @media (pointer: coarse) {
+          .nav-desktop a, .nav-desktop button { padding-top: 12px; padding-bottom: 12px; }
+        }
         .btn-hamburguer { display: none; }
         .menu-mobile { display: none; }
-        /* 860 -> 1240 em 18/09. Com nove itens o menu cabia em qualquer desktop; com o
-           décimo (Indicações) ele passou a estourar a linha e cair para baixo do logo em
-           telas de ~1320px. O hambúrguer é um estado desenhado do site; menu em duas linhas
-           não é. Acima de 1240 o menu inteiro aparece; abaixo, o hambúrguer assume.
-           1240 subiu para 1360 em 18/09: com dez itens, 1240 ainda era estreito demais e o
-           menu aparecia espremido antes de virar hamburguer.
-           O custo: notebooks ate 1360 passam a ver o hamburguer. Para baixar esse numero o
-           caminho e tirar um item do menu. "Inicio" e o candidato natural, ja que o logo leva
-           para a home e tem aria-label dizendo isso. Decisao do Jordy, uma linha no Layout. */
-        @media (max-width: 1360px) {
+        /* PONTO DE CORTE DO HAMBÚRGUER: 1360 -> 1000 em 19/09/2026.
+
+           Histórico curto, porque o número subiu duas vezes pelo motivo errado: 860 -> 1240 e
+           depois -> 1360, sempre para acomodar um menu que crescia. Com dez itens o menu
+           media 964px e, com logo e respiro, exigia 1262px. Um notebook de 1366px tem
+           viewport de ~1350 depois da barra de rolagem, então o dono do site perdia o menu
+           inteiro por DEZ pixels, em desktop, sem ter pedido isso.
+
+           A correção foi de estrutura, não de número: agrupar Deputados com Senadores e
+           Votações com Indicações, e mandar Sobre & Fontes para o rodapé, levou o menu de
+           964px para 698px, MEDIDO no site com os rótulos definitivos (e já contando o
+           "Início", que voltou por pedido do Jordy). Com logo e respiro, precisa de 996px.
+           O corte fica em 1060 para ter folga de verdade: 1000 deixaria 4px, que é repetir
+           em escala menor o erro que esta nota descreve.
+
+           REGRA QUE FICA: quando o menu não couber, a resposta é reorganizar o menu, não
+           subir o ponto de corte. Subir o corte resolve para quem tem tela grande e tira a
+           navegação de todo o resto. */
+        @media (max-width: 1060px) {
           .nav-desktop { display: none; }
           .btn-hamburguer { display: inline-flex; align-items: center; }
           .menu-mobile { display: block; }

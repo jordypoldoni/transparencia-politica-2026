@@ -170,21 +170,45 @@ const dormir = (ms) => new Promise((r) => setTimeout(r, ms));
 const fmt = (n) => n.toLocaleString('pt-BR');
 const hoje = () => new Date().toISOString().slice(0, 10);
 
+// ORÇAMENTO SEPARADO POR PROVEDOR. (consertado em 19/09/2026)
+//
+// O QUE ESTAVA ERRADO: havia um contador só, `tokens` e `requisicoes` no topo do arquivo, e
+// toda chamada somava nos dois, fosse Gemini ou Groq. Como Gemini é medido em requisições e
+// Groq em tokens, o gasto de um aparecia como consumo do outro.
+//
+// Flagrado na prática hoje: uma rodada no Gemini queimou 122.618 tokens, e o script passou a
+// tratar a Groq como se ela tivesse gasto 122 mil dos 190 mil do dia dela. São contas
+// diferentes, em empresas diferentes: a Groq não tinha gastado nada. O efeito era fechar o
+// único caminho que restava quando o Gemini recusa.
+//
+// A intenção original continua válida e está preservada: dentro de UM provedor, o teto é da
+// CONTA, não do script, então gerar_explicacao_votacoes.js e gerar_resumo_propostas.js seguem
+// dividindo o mesmo balde. O que mudou é que agora existe um balde por provedor.
+const ZERADO = () => ({ tokens: 0, entrada: 0, saida: 0, requisicoes: 0 });
+
 function lerOrcamento() {
   try {
     const o = JSON.parse(fs.readFileSync(ARQUIVO_ORCAMENTO, 'utf8'));
-    if (o.dia === hoje()) return o;
+    if (o.dia !== hoje()) throw new Error('outro dia');
+    // Migração do formato antigo (contadores soltos na raiz). Os números que existirem vão
+    // para o Gemini, porque `requisicoes` só é incrementada de forma significativa por ele;
+    // atribuir aos dois repetiria exatamente o bug que esta mudança conserta.
+    if (o.tokens !== undefined && !o.gemini && !o.groq) {
+      return { dia: o.dia, gemini: { tokens: o.tokens || 0, entrada: o.entrada || 0, saida: o.saida || 0, requisicoes: o.requisicoes || 0 }, groq: ZERADO() };
+    }
+    return { dia: o.dia, gemini: { ...ZERADO(), ...(o.gemini || {}) }, groq: { ...ZERADO(), ...(o.groq || {}) } };
   } catch { }
-  return { dia: hoje(), tokens: 0, entrada: 0, saida: 0, requisicoes: 0 };
+  return { dia: hoje(), gemini: ZERADO(), groq: ZERADO() };
 }
 function salvarOrcamento(o) {
   try { fs.writeFileSync(ARQUIVO_ORCAMENTO, JSON.stringify(o, null, 2)); } catch { }
 }
 const orcamento = lerOrcamento();
-if (orcamento.requisicoes === undefined) orcamento.requisicoes = 0;
+// A conta do provedor em uso. Tudo abaixo lê e escreve AQUI, nunca na raiz do orçamento.
+const conta = () => (USAR_GROQ ? orcamento.groq : orcamento.gemini);
 // Cada provedor é medido na SUA unidade. Contar tokens no Gemini seria olhar para o
 // indicador errado: lá sobra token e falta requisição.
-const usado = () => (P.unidade === 'requisicoes' ? orcamento.requisicoes : orcamento.tokens);
+const usado = () => (P.unidade === 'requisicoes' ? conta().requisicoes : conta().tokens);
 const restante = () => P.limiteDia - usado();
 const custoDeUmLote = () => (P.unidade === 'requisicoes' ? 1 : CUSTO_MEDIO_LOTE);
 
@@ -259,10 +283,11 @@ async function chamarIA(usuario) {
       });
 
       const u = resp.usage;
-      orcamento.tokens += u.total_tokens || 0;
-      orcamento.entrada += u.prompt_tokens || 0;
-      orcamento.saida += u.completion_tokens || 0;
-      orcamento.requisicoes += 1;
+      const c = conta();
+      c.tokens += u.total_tokens || 0;
+      c.entrada += u.prompt_tokens || 0;
+      c.saida += u.completion_tokens || 0;
+      c.requisicoes += 1;
       salvarOrcamento(orcamento);
 
       const conteudo = resp.choices?.[0]?.message?.content;
@@ -350,7 +375,7 @@ function montarEntrada(v) {
 async function main() {
   console.log(`🚀 Explicação das votações - ${P.nome}, modelo ${MODELO}, ${LOTE} por chamada`);
   console.log(`📊 Uso de hoje (${orcamento.dia}): ${fmt(usado())} de ${fmt(P.limiteDia)} ${P.unidade}, ${fmt(restante())} livres`);
-  if (P.unidade === 'requisicoes') console.log(`   (tokens hoje: ${fmt(orcamento.tokens)} - no Gemini token não é o gargalo, requisição é)`);
+  if (P.unidade === 'requisicoes') console.log(`   (tokens hoje: ${fmt(conta().tokens)} - no Gemini token não é o gargalo, requisição é)`);
   console.log();
 
   if (restante() < custoDeUmLote() * 2) {
@@ -439,10 +464,10 @@ async function main() {
     process.stdout.write(`\r  📝 ${lotesFeitos}/${lotes.length} lotes · ${ok} explicadas · ${fmt(restante())} ${P.unidade} livres   `);
   }
 
-  const custo = orcamento.entrada * PRECO_ENTRADA + orcamento.saida * PRECO_SAIDA;
+  const custo = conta().entrada * PRECO_ENTRADA + conta().saida * PRECO_SAIDA;
   console.log('\n──────────────────────────────────────────────');
   console.log(`✅ ${ok} votação(ões) processada(s)${semFrase ? ` · ✂️ ${semFrase} sem frase própria (ementa já legível, só contexto)` : ''}${descartados ? ` · 🚫 ${descartados} descartada(s) pela guarda` : ''}`);
-  console.log(`📊 Consumo de hoje: ${fmt(orcamento.requisicoes)} requisições e ${fmt(orcamento.tokens)} tokens (${fmt(orcamento.entrada)} entrada + ${fmt(orcamento.saida)} saída). Livres em ${P.unidade}: ${fmt(restante())}`);
+  console.log(`📊 Consumo de hoje no ${P.nome}: ${fmt(conta().requisicoes)} requisições e ${fmt(conta().tokens)} tokens (${fmt(conta().entrada)} entrada + ${fmt(conta().saida)} saída). Livres em ${P.unidade}: ${fmt(restante())}`);
   console.log(`💵 Equivalente no tier pago: US$ ${custo.toFixed(4)} - no free, zero.`);
 
   const { count } = await supabase.from('votacoes').select('*', { count: 'exact', head: true }).is('explicacao_gerada_em', null);
