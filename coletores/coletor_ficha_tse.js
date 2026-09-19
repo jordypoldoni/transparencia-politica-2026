@@ -153,7 +153,8 @@ async function main() {
   const nomes = await mapaDeNomes();
   const nomeDe = (id) => (id ? (nomes[String(id)] || null) : null);
 
-  let ok = 0, falhas = 0;
+  let ok = 0;
+  const falhou = [];
   for (const c of comSq) {
     try {
       const r = await fetch(`${REST}/buscar/${ANO}/BR/${ID_ELEICAO}/candidato/${c.sq_candidato}`, { headers: UA });
@@ -174,14 +175,32 @@ async function main() {
       }
       ok++;
     } catch (e) {
-      falhas++;
+      falhou.push(`${c.nome_urna}: ${e.message}`);
       console.warn(`   ⚠ ${c.nome_urna}: ${e.message}`);
     }
     await pausa();
   }
 
-  console.log(`\n📊 ${ok} fichas${SIMULAR ? ' lidas' : ' gravadas'}, ${falhas} falhas`);
-  if (SIMULAR) console.log('(simulação — nada foi gravado)');
+  console.log(`\n📊 ${ok} fichas${SIMULAR ? ' lidas' : ' gravadas'}, ${falhou.length} falhas`);
+  if (SIMULAR) console.log('(simulação, nada foi gravado)');
+
+  // SAIDA COM CÓDIGO DE ERRO (19/09/2026), porque a partir de hoje isto roda agendado.
+  // Ninguém abre o log de uma execução que passou. Se o script sempre sai 0, uma coleta que
+  // não trouxe nada fica VERDE no GitHub, e situação de candidatura envelhece em silêncio até
+  // alguém reparar na tela. Zero ficha é falha do passo; falha parcial é aviso visível.
+  if (ok === 0) {
+    console.error('❌ Nenhuma ficha lida.');
+    console.error('   Se as falhas forem HTTP 403, o Akamai do TSE está recusando o IP de onde isto rodou');
+    console.error('   (foi exatamente o que aconteceu com a Vercel em 18/09). Não é erro de código.');
+    if (process.env.GITHUB_ACTIONS) console.log('::error title=Ficha do TSE::Nenhuma ficha coletada. Ver se o TSE devolveu 403 para o runner.');
+    process.exitCode = 1;
+    return;
+  }
+  if (falhou.length) {
+    const msg = `${falhou.length} de ${comSq.length} fichas falharam: ${falhou.join(' | ').slice(0, 400)}`;
+    console.warn(`⚠ ${msg}`);
+    if (process.env.GITHUB_ACTIONS) console.log(`::warning title=Fichas do TSE incompletas::${msg}`);
+  }
 }
 
 main()
