@@ -1,0 +1,11 @@
+-- 20/09/2026 — o refresh do radar passou a estourar o limite de tempo.
+--
+-- Causa: refresh_radar_gastos() e chamada pela API (PostgREST), cujo papel tem
+-- statement_timeout de poucos segundos. Com a reposicao dos gastos de 2026 da Camara
+-- (102.995 lancamentos novos, tabela 25% maior), o REFRESH CONCURRENTLY deixou de caber
+-- nesse limite e falhou nas tres tentativas do coletor. Nao era soluco passageiro: era
+-- teto fixo, e por isso repetir nunca ia resolver.
+--
+-- Conserto: a funcao passa a ter limite proprio, independente de quem a chama.
+-- Vale para o coletor local e para o GitHub Actions, sem mexer em nenhum dos dois.
+alter function public.refresh_radar_gastos() set statement_timeout = '300s';

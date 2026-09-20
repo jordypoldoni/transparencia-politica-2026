@@ -123,6 +123,41 @@ function Secao({ id, titulo, aberta, onToggle, children }) {
   );
 }
 
+// SELETOR DE ANO — segmented control (Diretrizes de Design, 12/09/2026).
+// Ano e escolha entre opcoes excludentes, entao vai num TRILHO: superficie recuada, e so a
+// pastilha ativa tem sombra. Ate 20/09 a secao "Gastos mes a mes" usava pilulas soltas com
+// sombra em todas, que nao comunica exclusividade e contrariava a regra ja escrita.
+// Um seletor so serve as duas secoes, e as duas leem o mesmo estado: trocar o ano numa troca
+// na outra, porque e o mesmo parlamentar e o mesmo ano.
+const trilhoAno = (escuro) => ({
+  display: 'inline-flex', gap: '2px', padding: '3px', borderRadius: t.raio.pill,
+  background: escuro ? 'rgba(255,255,255,0.09)' : t.cor.papelQuente2,
+});
+// O ANO ATIVO USA O BOTAO PADRAO DO SITE, nao o cinza neutro de um segmented generico:
+// indigo com texto ambar no fundo claro (6,43:1), ambar com texto indigo no cartao escuro,
+// que e exatamente o que as Diretrizes de Design mandam para cada fundo.
+// O inativo no fundo claro e TINTA, nunca cinza: cinza sobre papelQuente2 da 4,39:1 e reprova
+// no AA, regra ja escrita e que eu mesmo contrariei na primeira versao deste seletor.
+const pastilhaAno = (ativo, escuro) => ({
+  padding: '7px 16px', fontSize: '0.84rem', fontWeight: 700, fontFamily: t.fonte.corpo,
+  borderRadius: t.raio.pill, cursor: 'pointer', border: 'none',
+  background: ativo ? (escuro ? t.cor.ouro : t.cor.verde) : 'transparent',
+  color: ativo ? (escuro ? t.cor.verde : t.cor.ouro) : (escuro ? '#fff' : t.cor.tinta),
+  boxShadow: ativo ? t.sombra.clicavel : 'none',
+  transition: 'background .15s',
+});
+
+function SeletorAno({ anos, atual, aoTrocar, rotulo, escuro = false, margem = '14px' }) {
+  if (!anos || anos.length < 2) return null;
+  return (
+    <div style={{ ...trilhoAno(escuro), marginBottom: margem }} role="group" aria-label={rotulo}>
+      {anos.map((a) => (
+        <button key={a} onClick={() => aoTrocar(a)} aria-pressed={a === atual} style={pastilhaAno(a === atual, escuro)}>{a}</button>
+      ))}
+    </div>
+  );
+}
+
 export default function PerfilPolitico({ dados }) {
   const router = useRouter();
   const [aberta, setAberta] = useState(null);
@@ -228,6 +263,12 @@ export default function PerfilPolitico({ dados }) {
   // cartoes de uma vez. O corte resolve os dois lados do problema: nao despeja tudo, e o
   // botao da acesso a lista COMPLETA, que antes nao existia em lugar nenhum.
   const [anoSel, setAnoSel] = useState(ano_referencia);
+  // Notas de anos que NAO sao o de referencia, buscadas so quando o leitor abre uma categoria
+  // daquele ano. Medido em 20/09: mandar todos os anos com a pagina levaria o perfil de 46 kB
+  // para 199 kB em media e 791 kB no pior caso. Ver pages/api/gastos-ano.js.
+  const [notasPorAno, setNotasPorAno] = useState({});
+  const [carregandoNotas, setCarregandoNotas] = useState(false);
+  const [erroNotas, setErroNotas] = useState(null);
   const dadosAno = serie_mensal.find((s) => s.ano === anoSel) || serie_mensal[0] || null;
   const maxMes = dadosAno ? Math.max(...dadosAno.meses.map((m) => m.valor), 1) : 1;
   const mediaAno = dadosAno && dadosAno.meses_com_gasto > 0 ? dadosAno.total / dadosAno.meses_com_gasto : 0;
@@ -258,6 +299,34 @@ export default function PerfilPolitico({ dados }) {
   const totalAno = dadosAno?.total ?? total_geral;
   const nNotasAno = dadosAno?.n_notas ?? n_notas;
   const maiorCatAno = dadosAno?.maior_categoria ?? maior_categoria;
+  // Resumo por categoria do ano escolhido. Vem pronto do servidor desde 20/09; o fallback
+  // cobre perfil servido antes dessa mudanca.
+  const resumoDoAno = dadosAno?.categorias || (anoSel === ano_referencia ? resumo_gastos : null);
+  // Notas do ano escolhido: as do ano de referencia ja vieram com a pagina; as demais chegam
+  // pela rota. null significa "ainda nao busquei", que e diferente de "nao gastou nada".
+  const notasDoAno = anoSel === ano_referencia ? lista_detalhada : (notasPorAno[anoSel] || null);
+
+  // Trocar de ano fecha a categoria aberta: mante-la aberta mostraria as notas de um ano
+  // embaixo do titulo de outro.
+  function trocarAno(a) { setAnoSel(a); setAberta(null); setErroNotas(null); }
+
+  async function abrirCategoria(cat) {
+    const fechando = aberta === cat;
+    setAberta(fechando ? null : cat);
+    if (fechando || notasDoAno || carregandoNotas) return;
+    setCarregandoNotas(true);
+    setErroNotas(null);
+    try {
+      const r = await fetch(`/api/gastos-ano?id=${perfil.id}&ano=${anoSel}`);
+      const j = await r.json();
+      if (!r.ok || j.erro) throw new Error(j.erro || 'falha');
+      setNotasPorAno((p) => ({ ...p, [anoSel]: Array.isArray(j.gastos) ? j.gastos : [] }));
+    } catch (e) {
+      setErroNotas(e.message || 'falha');
+    } finally {
+      setCarregandoNotas(false);
+    }
+  }
   const corBarra = t.cor.ouro; // cor neutra (sem semáforo verde/vermelho que sugere julgamento)
 
   const linkOficial = () => {
@@ -347,6 +416,12 @@ export default function PerfilPolitico({ dados }) {
           <div style={{ flex: 1, minWidth: '220px' }}>
             <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.6rem,4vw,2.4rem)', margin: '0 0 2px' }}>{perfil.nome_urna}</h1>
             <p style={{ margin: 0, opacity: 0.85 }}>{perfil.cargo_atual || 'Deputado Federal'} · {perfil.partido_atual} · {perfil.uf_sede || 'BR'}</p>
+            {/* O ano escolhido aqui vale para o perfil inteiro: o veredito desta camada zero, o
+                grafico mes a mes e as categorias leem o mesmo estado. No topo porque e aqui que
+                o leitor chega primeiro, e o numero grande logo abaixo ja e do ano escolhido. */}
+            <div style={{ marginTop: '10px' }}>
+              <SeletorAno anos={anos_disponiveis} atual={anoSel} aoTrocar={trocarAno} rotulo="Ano dos dados deste perfil" escuro margem="0" />
+            </div>
           </div>
           <button type="button" onClick={() => toggleSecao('resumo')} aria-expanded={secoesAbertas.resumo} aria-label={secoesAbertas.resumo ? 'Recolher resumo' : 'Expandir resumo'} style={{ flexShrink: 0, background: 'rgba(255,255,255,0.14)', border: 'none', color: '#fff', cursor: 'pointer', borderRadius: '999px', width: '36px', height: '36px', fontSize: '0.8rem' }}>{secoesAbertas.resumo ? '▲' : '▼'}</button>
         </div>
@@ -477,14 +552,7 @@ export default function PerfilPolitico({ dados }) {
 
         {dadosAno && (
           <Secao id="gastos" titulo="Gastos mês a mês" aberta={secoesAbertas.gastos} onToggle={() => toggleSecao('gastos')}>
-            {anos_disponiveis.length > 1 && (
-              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '14px' }} role="tablist" aria-label="Ano">
-                {anos_disponiveis.map((a) => (
-                  <button key={a} onClick={() => setAnoSel(a)} aria-selected={a === anoSel}
-                    style={{ padding: '6px 14px', fontSize: '0.85rem', fontWeight: 700, fontFamily: t.fonte.corpo, borderRadius: t.raio.pill, cursor: 'pointer', border: 'none', background: a === anoSel ? t.cor.verde : t.cor.papelQuente, color: a === anoSel ? t.cor.ouro : t.cor.tinta, boxShadow: t.sombra.clicavel }}>{a}</button>
-                ))}
-              </div>
-            )}
+            <SeletorAno anos={anos_disponiveis} atual={anoSel} aoTrocar={trocarAno} rotulo="Ano dos gastos mes a mes" />
             <p style={{ color: t.cor.cinza, fontSize: '0.9rem', margin: '0 0 18px', lineHeight: 1.5 }}>
               Quanto {perfil.nome_urna} usou da verba em cada mês de <strong>{anoSel}</strong>: cada barra é a soma {temNotaFiscal ? 'das notas fiscais' : 'das despesas publicadas'} daquele mês.
             </p>
@@ -540,11 +608,14 @@ export default function PerfilPolitico({ dados }) {
         )}
 
         <Secao id="em-que-gastou" titulo="Em que ele gastou" aberta={secoesAbertas['em-que-gastou']} onToggle={() => toggleSecao('em-que-gastou')}>
-          <p style={{ color: t.cor.cinza, fontSize: '0.9rem', margin: '0 0 20px' }}>Toque numa categoria para ver as notas e o link de cada documento.</p>
+          <SeletorAno anos={anos_disponiveis} atual={anoSel} aoTrocar={trocarAno} rotulo="Ano das despesas por categoria" />
+          <p style={{ color: t.cor.cinza, fontSize: '0.9rem', margin: '0 0 20px' }}>
+            Em que {perfil.nome_urna} usou a verba em <strong>{anoSel}</strong>. Toque numa categoria para ver as notas e o link de cada documento.
+          </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {Object.entries(resumo_gastos).sort((a, b) => b[1] - a[1]).map(([cat, val]) => (
+            {Object.entries(resumoDoAno || {}).sort((a, b) => b[1] - a[1]).map(([cat, val]) => (
               <div key={cat} style={{ background: t.cor.papelQuente, borderRadius: t.raio.md, overflow: 'hidden', boxShadow: t.sombra.clicavel }}>
-                <div onClick={() => setAberta(aberta === cat ? null : cat)} title={dicionario[cat] || ''} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 16px', cursor: 'pointer' }}>
+                <div onClick={() => abrirCategoria(cat)} title={dicionario[cat] || ''} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 16px', cursor: 'pointer' }}>
                   <span style={{ fontWeight: 700, color: t.cor.tinta, fontSize: '0.95rem' }}>{cat}</span>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <strong>{brlExato(val)}</strong>
@@ -554,7 +625,17 @@ export default function PerfilPolitico({ dados }) {
                 {aberta === cat && (
                   <div style={{ padding: '0 16px 12px', background: '#FFFFFF' }}>
                     <p style={{ fontSize: '0.8rem', color: t.cor.cinza, margin: '10px 0' }}>{dicionario[cat] || ''}</p>
-                    {lista_detalhada.filter((g) => g.categoria_normalizada === cat).slice(0, 60).map((it, i) => (
+                    {/* As notas de outro ano chegam pela rede. Enquanto nao chegam, dizemos isso:
+                        lista vazia seria lida como "nao gastou nesta categoria". */}
+                    {!notasDoAno && carregandoNotas && (
+                      <p style={{ fontSize: '0.85rem', color: t.cor.cinza, margin: '10px 0' }}>Buscando as notas de {anoSel}…</p>
+                    )}
+                    {!notasDoAno && !carregandoNotas && erroNotas && (
+                      <p style={{ fontSize: '0.85rem', color: t.cor.tinta, margin: '10px 0' }}>
+                        Não foi possível carregar as notas de {anoSel} agora. O total por categoria acima continua valendo.
+                      </p>
+                    )}
+                    {(notasDoAno || []).filter((g) => g.categoria_normalizada === cat).slice(0, 60).map((it, i) => (
                       <div key={i} style={{ padding: '10px 0' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px', alignItems: 'flex-start' }}>
                           <span style={{ color: t.cor.tinta, fontSize: '0.86rem', fontWeight: 600 }}>
@@ -567,7 +648,7 @@ export default function PerfilPolitico({ dados }) {
                         </div>
                         <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginTop: '3px', fontSize: '0.72rem', color: t.cor.cinza }}>
                           <span><strong style={{ color: t.cor.tinta }}>Tipo:</strong> {it.tipo_despesa || '-'}</span>
-                          <span><strong style={{ color: t.cor.tinta }}>Período:</strong> {it.mes ? `${String(it.mes).padStart(2, '0')}/2026` : '-'}</span>
+                          <span><strong style={{ color: t.cor.tinta }}>Período:</strong> {it.mes ? `${String(it.mes).padStart(2, '0')}/${it.ano || anoSel}` : '-'}</span>
                           {it.id_externo_documento && <span><strong style={{ color: t.cor.tinta }}>Doc:</strong> {String(it.id_externo_documento).split('-')[0]}</span>}
                           {it.fornecedor_cnpj_cpf && <span><strong style={{ color: t.cor.tinta }}>CNPJ/CPF:</strong> {it.fornecedor_cnpj_cpf}</span>}
                         </div>

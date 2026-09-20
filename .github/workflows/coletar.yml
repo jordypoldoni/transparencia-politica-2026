@@ -40,13 +40,17 @@ jobs:
         continue-on-error: true
         run: node coletores/coletor_votos_senado.js
 
-      - name: Rodar coletor de gastos (cota parlamentar)
+      # 20/09/2026: trocado de coletor_gastos.js para coletor_gastos_arquivo.js.
+      # O endpoint /deputados/{id}/despesas da Camara devolve 200 com lista VAZIA para
+      # TODOS os anos (issues 382 e 383 do repo deles), medido em 6 variacoes da URL.
+      # O coletor antigo continua no repositorio e volta a ser o caminho no dia em que
+      # a Camara consertar: ele e incremental por deputado, enquanto este baixa 3,9 MB.
+      - name: Rodar coletor de gastos (cota parlamentar, arquivo anual)
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          ANO: '2026'
         continue-on-error: true
-        run: node coletores/coletor_gastos.js
+        run: node coletores/coletor_gastos_arquivo.js $(date -u +%Y)
 
       - name: Sincronizar senadores (lista atual)
         env:

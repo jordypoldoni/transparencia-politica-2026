@@ -141,6 +141,10 @@ const ServicoAPI = {
                 meses_com_gasto: Object.keys(serie[a].meses).length,
                 n_notas: serie[a].n_notas,
                 maior_categoria: catEntries[0]?.[0] || null,
+                // Resumo por categoria DAQUELE ano, para a secao "Em que ele gastou" poder
+                // trocar de ano sem ida ao servidor (20/09/2026). Sao ~8 pares por ano: o
+                // custo e desprezivel, ao contrario das notas, que ficam na /api/gastos-ano.
+                categorias: Object.fromEntries(catEntries),
             };
         });
 

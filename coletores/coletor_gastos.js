@@ -17,6 +17,7 @@
 // apenas quando ha dados novos para colocar no lugar.
 import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
+import { categoria } from './categoria_gastos.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -33,18 +34,8 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 const API = 'https://dadosabertos.camara.leg.br/api/v2';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-// Normaliza o "tipoDespesa" cru da Câmara em categorias de cidadão
-function categoria(tipo) {
-  const t = (tipo || '').toLowerCase();
-  if (t.includes('combust') || t.includes('veícul') || t.includes('veicul') || t.includes('táxi') || t.includes('taxi') || t.includes('passagem') === false && t.includes('locomo')) return 'Transporte e Mobilidade';
-  if (t.includes('passagem') || t.includes('hospedag') || t.includes('aérea') || t.includes('aerea')) return 'Viagens e Estadias';
-  if (t.includes('aliment')) return 'Alimentação';
-  if (t.includes('divulga') || t.includes('publicid')) return 'Publicidade e Marketing';
-  if (t.includes('escritório') || t.includes('escritorio') || t.includes('telefon') || t.includes('internet') || t.includes('postal') || t.includes('correio')) return 'Escritório e Apoio';
-  if (t.includes('consultor') || t.includes('pesquisa') || t.includes('técnic') || t.includes('tecnic')) return 'Serviços Técnicos';
-  if (t.includes('seguran')) return 'Segurança';
-  return 'Outros Operacionais';
-}
+// A funcao categoria() mudou para categoria_gastos.js em 20/09/2026: o coletor do arquivo
+// anual (coletor_gastos_arquivo.js) usa a mesma, e duas copias sairiam de sincronia.
 
 async function getJson(url, tentativas = 4) {
   for (let t = 0; t < tentativas; t++) {
