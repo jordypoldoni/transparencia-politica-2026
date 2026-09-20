@@ -1,4 +1,5 @@
 import supabase from '../supabase_cliente.js';
+import { buscarTudo } from '../lib/paginar.js';
 import { garantirResumo } from '../lib/siconfi.js';
 import { agruparPorMateria } from '../lib/votacao.js';
 import { casaDoPerfil } from '../lib/casa.js';
@@ -8,9 +9,14 @@ const ServicoAPI = {
     getRankingGeral: async (ano) => {
         console.log(`📊 Buscando ranking de ${ano}...`);
 
-        const { data, error } = await supabase
-            .from('despesas_parlamentares')
-            .select(`
+        // 20/09/2026: lia a tabela inteira do ano (260 mil linhas em 2025) e recebia 1.000,
+        // silenciosamente. Paginado para ficar CORRETO, mas atenção antes de usar isto numa
+        // tela: somar 260 mil linhas no servidor a cada acesso é caro, e para ranking já existe
+        // a view materializada `radar_gastos`, que é o que a home usa. Hoje esta função só é
+        // chamada por src/lib/integridade.js, que nenhuma página importa.
+        const data = await buscarTudo(
+            () => supabase.from('despesas_parlamentares')
+                .select(`
                 valor_liquido,
                 ano,
                 agentes_politicos (
@@ -22,13 +28,10 @@ const ServicoAPI = {
                     cargo_atual
                 )
             `)
-            .eq('ano', parseInt(ano))
-            .not('agente_id', 'is', null);
-
-        if (error) {
-            console.error("Erro Supabase:", error.message);
-            return [];
-        }
+                .eq('ano', parseInt(ano))
+                .not('agente_id', 'is', null),
+            `getRankingGeral(${ano})`,
+        );
 
         const rankingMap = data.reduce((acc, item) => {
             const p = item.agentes_politicos;
@@ -71,13 +74,14 @@ const ServicoAPI = {
 
     // Busca gastos por categoria para gráficos
     getGastosPorCategoria: async (ano) => {
-        const { data, error } = await supabase
-            .from('despesas_parlamentares')
-            .select('categoria_normalizada, valor_liquido')
-            .eq('ano', parseInt(ano));
-
-        if (error) return [];
-        return data;
+        // 20/09/2026: era .select() direto, e 2025 tem 260 mil lançamentos. O gráfico de
+        // categorias saía de 1.000 linhas arbitrárias, não do ano inteiro.
+        return buscarTudo(
+            () => supabase.from('despesas_parlamentares')
+                .select('categoria_normalizada, valor_liquido')
+                .eq('ano', parseInt(ano)),
+            `getGastosPorCategoria(${ano})`,
+        );
     },
 
     // Busca dados detalhados de um único político pelo UUID
@@ -97,9 +101,14 @@ const ServicoAPI = {
         }
 
         // 2. Busca o resumo de gastos dele (ADICIONADO: tipo_despesa, fornecedor_nome, url_documento, mes)
-        const { data: gastos, error: errorGastos } = await supabase
-            .from('despesas_parlamentares')
-            .select(`
+        // PAGINADO EM 20/09/2026, e este era o pior caso do site. Sem isto o Supabase devolvia
+        // as primeiras 1.000 linhas e nada dizia: medido no mesmo dia, 247 dos 741 parlamentares
+        // têm mais de 1.000 lançamentos (o maior tem 3.408). Total do ano, média mensal, gráfico
+        // mês a mês e categorias saíam todos de um recorte que ninguém escolheu, e a tela
+        // apresentava esses números como se fossem o gasto completo.
+        const gastos = await buscarTudo(
+            () => supabase.from('despesas_parlamentares')
+                .select(`
                 valor_liquido,
                 categoria_normalizada,
                 data_emissao,
@@ -111,11 +120,9 @@ const ServicoAPI = {
                 mes,
                 ano
             `)
-            .eq('agente_id', id);
-
-        if (errorGastos) {
-            console.error("Erro ao buscar gastos:", errorGastos.message);
-        }
+                .eq('agente_id', id),
+            `getPoliticoCompleto.gastos(${id})`,
+        );
 
         // Série histórica: agrupa por ANO e por MÊS (todos os anos com dados)
         const todosGastos = gastos || [];
@@ -204,10 +211,15 @@ const ServicoAPI = {
         let coerencia = null;
         const partido = perfil.partido_atual;
         if (partido) {
-            const { data: votosPartido } = await supabase
-                .from('votos_parlamentares')
-                .select('votacao_id_externa, voto_tipo, agentes_politicos!inner(partido_atual)')
-                .eq('agentes_politicos.partido_atual', partido);
+            // 20/09/2026: sem paginação, o índice saía de 1.000 votos arbitrários do partido.
+            // Medido: 14 partidos passam de 1.000 votos e o maior tem 15.860, então a ficha
+            // afirmava "acompanhou o partido em X%" sobre uma amostra que ninguém escolheu.
+            const votosPartido = await buscarTudo(
+                () => supabase.from('votos_parlamentares')
+                    .select('votacao_id_externa, voto_tipo, agentes_politicos!inner(partido_atual)')
+                    .eq('agentes_politicos.partido_atual', partido),
+                `coerencia(${partido})`,
+            );
 
             const contagem = {};
             for (const v of votosPartido || []) {
@@ -347,17 +359,10 @@ const ServicoAPI = {
     //
     // Por isso: pagina ate acabar, sempre, mesmo quando o total de hoje cabe numa requisicao.
     // Confiar em "cabe" e assinar o mesmo bug para a proxima vez que a base crescer.
-    _todasAsPaginas: async (montarQuery, nome) => {
-        const PAGINA = 1000;
-        const tudo = [];
-        for (let inicio = 0; ; inicio += PAGINA) {
-            const { data, error } = await montarQuery().range(inicio, inicio + PAGINA - 1);
-            if (error) { console.error(`${nome}:`, error.message); break; }
-            tudo.push(...(data || []));
-            if (!data || data.length < PAGINA) break;
-        }
-        return tudo;
-    },
+    // A implementação mora em src/lib/paginar.js desde 20/09/2026: os COLETORES precisam dela
+    // também, e o corte de 1.000 linhas já mordeu este projeto três vezes. Este apelido fica
+    // para não mexer em quem já chamava.
+    _todasAsPaginas: async (montarQuery, nome) => buscarTudo(montarQuery, nome),
 
     listarVotacoes: async () => {
         return ServicoAPI._todasAsPaginas(
@@ -455,18 +460,12 @@ const ServicoAPI = {
         // do RS sao menores (cota mensal ~R$27 mil contra ~R$54 mil da federal) e ficavam TODOS
         // abaixo do corte. Resultado: a aba do RS aparecia sem ranking como se nao houvesse dado.
         // Por isso paginamos ate acabar, em vez de confiar numa consulta unica.
-        const PAGINA = 1000;
-        const todas = [];
-        for (let inicio = 0; ; inicio += PAGINA) {
-            const { data: pagina, error } = await supabase
-                .from('radar_gastos')
+        const todas = await buscarTudo(
+            () => supabase.from('radar_gastos')
                 .select('id, slug, nome_urna, partido_atual, uf_sede, foto_url, casa, ano, total, n_notas, meses_com_gasto, situacao_atual, condicao_eleitoral')
-                .order('total', { ascending: false })
-                .range(inicio, inicio + PAGINA - 1);
-            if (error) { console.error('getRadaresPorCasaEAno:', error.message); break; }
-            todas.push(...(pagina || []));
-            if (!pagina || pagina.length < PAGINA) break;
-        }
+                .order('total', { ascending: false }),
+            'getRadaresPorCasaEAno',
+        );
         if (!todas.length) return {};
 
         // Guardamos as DUAS pontas. Mostrar so quem mais gastou e, por si, uma escolha
@@ -924,10 +923,14 @@ const ServicoAPI = {
         // vazio — ver coletor_gastos.js). Se o ano fechado nao tiver nada, cai para o mais
         // recente que tiver, e a tela informa qual ano esta mostrando.
         const anoFechado = new Date().getFullYear() - 1;
-        const { data: linhasGasto } = await supabase
-            .from('despesas_parlamentares')
-            .select('valor_liquido, mes, ano')
-            .eq('agente_id', agenteId);
+        // Mesmo corte de 1.000 do perfil: o resumo do mandato alimenta a página do candidato,
+        // então um terço dos parlamentares mostrava gasto menor do que o real. (20/09/2026)
+        const linhasGasto = await buscarTudo(
+            () => supabase.from('despesas_parlamentares')
+                .select('valor_liquido, mes, ano')
+                .eq('agente_id', agenteId),
+            `getResumoMandato.gastos(${agenteId})`,
+        );
 
         const porAno = {};
         for (const g of linhasGasto || []) {

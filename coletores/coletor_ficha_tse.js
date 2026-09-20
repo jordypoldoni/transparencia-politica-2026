@@ -29,6 +29,7 @@
 import 'dotenv/config';
 import { writeFileSync } from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
+import { traduzir } from './ficha_tse_traduzir.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -57,12 +58,19 @@ const UA = { 'User-Agent': 'Mozilla/5.0', Accept: 'application/json' };
 // tentar primeiro desperdicaria 30 requisicoes recusadas em toda execucao agendada e, pior,
 // deixaria o log com 30 erros vermelhos numa execucao que deu certo.
 const PONTE = process.env.TSE_PONTE_URL || null;
+// A senha da ponte e PROPRIA desde 20/09/2026 (PONTE_TOKEN), nao mais a chave do banco.
+// Motivo medido: o projeto passou a usar as chaves novas (sb_publishable_/sb_secret_), entao a
+// SUPABASE_SERVICE_ROLE_KEY que o ambiente da funcao injeta deixou de ser o JWT legado que este
+// coletor tem em maos, e TODA chamada voltava 401. Era o exit 1 do workflow de 19/09.
+// De quebra corrige um desenho ruim: a chave do banco viajava como senha de endpoint publico.
+// O fallback existe so para nao quebrar quem ainda nao definiu o token.
+const PONTE_TOKEN = process.env.PONTE_TOKEN || SUPABASE_KEY;
 
 async function buscarTse(caminho) {
   if (!PONTE) return fetch(HOST_TSE + caminho, { headers: UA });
 
   const r = await fetch(`${PONTE}?caminho=${encodeURIComponent(caminho)}`, {
-    headers: { Authorization: `Bearer ${SUPABASE_KEY}` },
+    headers: { Authorization: `Bearer ${PONTE_TOKEN}` },
   });
   // A ponte marca os erros DELA num cabecalho proprio. Sem isso, um 401 de credencial
   // chegaria aqui como "HTTP 401" e pareceria coisa do TSE, mandando o diagnostico para o
@@ -98,71 +106,7 @@ async function mapaDeNomes() {
   return mapa;
 }
 
-// A tradução é a MESMA de pages/api/ficha-tse.js, movida para cá sem alteração de
-// significado. Cada decisão abaixo custou uma sessão de investigação; estão comentadas na
-// rota original e resumidas aqui.
-function traduzir(f, nomeDe, sq) {
-  return {
-    situacao_tse: f.descricaoSituacao || null,
-    apto_tse: typeof f.candidatoApto === 'boolean' ? f.candidatoApto : null,
-    consta_da_urna: f.descricaoSituacaoCandidato || null,
-    totalizacao_tse: f.descricaoTotalizacao || null,
-    numero_processo: f.numeroProcesso || null,
-    motivos: Array.isArray(f.motivos) ? f.motivos.filter(Boolean) : [],
-
-    // O TSE PUBLICA a substituição em campo próprio — não é dedução por código de status.
-    substituido: f.st_SUBSTITUIDO === true,
-    substituto_sq: f.substituto?.sqCandidato ? String(f.substituto.sqCandidato) : null,
-    substituto_nome: nomeDe(f.substituto?.sqCandidato),
-
-    // O CSV em lote só traz a UF de nascimento; município e nacionalidade só existem aqui.
-    municipio_nascimento: f.nomeMunicipioNascimento || null,
-    uf_nascimento: f.sgUfNascimento || null,
-    nacionalidade: f.nacionalidade || null,
-
-    // O campo `url` da fonte vem relativo e inservível. O caminho que FUNCIONA é
-    // /divulga/rest/arquivo/doc/{idArquivo} — é de onde lemos o plano do Marçal em 13/09.
-    documentos: (Array.isArray(f.arquivos) ? f.arquivos : [])
-      .filter((a) => a?.idArquivo && a?.nome)
-      .map((a) => ({ nome: a.nome, tipo: a.tipo || null, url: `https://divulgacandcontas.tse.jus.br/divulga/rest/arquivo/doc/${a.idArquivo}` })),
-
-    // A fonte devolve handles com "https://" colado na frente ("https://@fulano"). Virar
-    // link assim dá 404, e montar "instagram.com/fulano" seria fabricar endereço que o
-    // candidato não declarou. Domínio de verdade vira link; arroba fica texto.
-    redes: (Array.isArray(f.sites) ? f.sites : [])
-      .map((x) => String(x || '').trim()).filter(Boolean)
-      .map((bruto) => {
-        const semProtocolo = bruto.replace(/^https?:\/\//i, '').trim();
-        const ehArroba = semProtocolo.startsWith('@');
-        const temDominio = /^[\w.-]+\.[a-z]{2,}(\/|$)/i.test(semProtocolo);
-        return { texto: semProtocolo, url: (!ehArroba && temDominio) ? `https://${semProtocolo}` : null };
-      }),
-
-    // st_DIVULGA_BENS é respeitado: hoje vem true nos 14, mas a flag existe para o caso de o
-    // TSE restringir a divulgação, e ignorá-la seria publicar contra a fonte.
-    // totalDeBens vem do TSE; NÃO recalculamos somando os itens — se a soma divergir
-    // (arredondamento, bem sem valor), o número exibido continua sendo o oficial.
-    divulga_bens: f.st_DIVULGA_BENS !== false,
-    total_de_bens: typeof f.totalDeBens === 'number' ? f.totalDeBens : null,
-    bens: (Array.isArray(f.bens) ? f.bens : []).map((b) => ({
-      descricao: b.descricao || null,
-      tipo: b.descricaoDeTipoDeBem || null,
-      valor: typeof b.valor === 'number' ? b.valor : null,
-    })),
-
-    // A fonte agrupa vices por NÚMERO DE URNA, não por chapa: os dois presidentes do mesmo
-    // número recebem a MESMA lista, e sq_CANDIDATO_SUPERIOR vem null. Guardamos a lista e
-    // NÃO afirmamos de quem é cada vice — a tela mostra a ressalva.
-    vices: (Array.isArray(f.vices) ? f.vices : []).map((v) => ({
-      sq: v.sq_CANDIDATO ? String(v.sq_CANDIDATO) : null,
-      nome: v.nm_URNA || v.nm_CANDIDATO || null,
-      apto: typeof v.candidatoApto === 'boolean' ? v.candidatoApto : null,
-    })),
-
-    ficha_coletada_em: new Date().toISOString(),
-    ficha_fonte_url: `https://divulgacandcontas.tse.jus.br/divulga/#/candidato/BR/BR/${ID_ELEICAO}/${sq}/${ANO}/BR`,
-  };
-}
+// A tradução mora em ficha_tse_traduzir.js desde 20/09/2026 (o coletor federal usa a mesma).
 
 async function main() {
   console.log(`🚀 Ficha do TSE para o banco${SIMULAR ? ' (SIMULAÇÃO)' : ''}`);

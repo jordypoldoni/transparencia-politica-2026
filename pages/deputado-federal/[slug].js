@@ -5,6 +5,12 @@ import Avatar from '../../components/Avatar';
 import { NOMES_UF, pctDoTeto } from '../../src/lib/cotas';
 import { t } from '../../src/estilo/tokens';
 import { hrefPerfil } from '../../src/lib/casa';
+// Os mesmos componentes da ficha do presidenciavel: a ficha do TSE passou a valer para os
+// 7.703 candidatos a deputado federal em 20/09/2026. Reuso, nao reimplementacao.
+import SituacaoCandidatura from '../../components/SituacaoCandidatura';
+import PatrimonioDeclarado from '../../components/PatrimonioDeclarado';
+import DocumentosERedes from '../../components/DocumentosERedes';
+import TrajetoriaEleitoral from '../../components/TrajetoriaEleitoral';
 
 const brl = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v || 0);
 
@@ -185,20 +191,35 @@ export default function PerfilDeputadoFederal({ candidato, canonical }) {
         </div>
       </section>
 
-      {/* Situação da candidatura: o TSE ainda não publica. Dizer isso é mais honesto que
-          esconder o campo, porque o leitor pode supor que já foi deferida. */}
-      <section style={{ background: t.cor.papelQuente, borderRadius: t.raio.sm, padding: '14px 18px', marginBottom: '20px', fontSize: '0.85rem', color: t.cor.tinta, lineHeight: 1.5 }}>
-        {c.situacao_candidatura ? (
-          <><strong>Situação da candidatura:</strong> {c.situacao_candidatura}{c.situacao_detalhe ? `, ${c.situacao_detalhe}` : ''}</>
-        ) : (
-          <><strong>Situação da candidatura: ainda não julgada.</strong> A Justiça Eleitoral ainda não publicou
-          o deferimento das candidaturas de 2026, então esta ficha não afirma que o registro está aprovado.</>
-        )}
-      </section>
+      {/* Situação da candidatura. Ate 20/09 esta pagina afirmava que a Justiça Eleitoral "ainda
+          não publicou o deferimento": deixou de ser verdade quando a ficha do TSE passou a ser
+          coletada para os 7.703, e afirmação desatualizada num site de transparência é pior que
+          ausência. Com ficha coletada mostramos a seção completa (a mesma do presidenciável);
+          sem ela, a ressalva honesta continua, agora dizendo o motivo certo. */}
+      {c.ficha_coletada_em ? (
+        <SituacaoCandidatura ficha={c} />
+      ) : (
+        <section style={{ background: t.cor.papelQuente, borderRadius: t.raio.sm, padding: '14px 18px', marginBottom: '20px', fontSize: '0.85rem', color: t.cor.tinta, lineHeight: 1.5 }}>
+          {c.situacao_candidatura ? (
+            <><strong>Situação da candidatura:</strong> {c.situacao_candidatura}{c.situacao_detalhe ? `, ${c.situacao_detalhe}` : ''}</>
+          ) : (
+            <><strong>Situação da candidatura: ainda não buscamos a ficha deste candidato.</strong> A
+            situação publicada pela Justiça Eleitoral entra aqui assim que a coleta passar por esta
+            unidade da federação.</>
+          )}
+        </section>
+      )}
+
+      {/* Trajetória antes de patrimônio: quem é a pessoa vem antes de quanto ela tem. */}
+      <TrajetoriaEleitoral ficha={c} />
+
+      <PatrimonioDeclarado ficha={c} />
 
       <section style={{ background: t.cor.papel, border: `1px solid ${t.cor.papelQuente2}`, borderRadius: t.raio.sm, padding: '14px 18px', marginBottom: '20px', fontSize: '0.85rem', color: t.cor.cinza, lineHeight: 1.5 }}>
         Deputado(a) Federal não é obrigado(a) por lei a apresentar um plano de governo na Justiça Eleitoral: essa exigência vale só para cargos majoritários (Presidente, Governador, Prefeito). Por isso não há um documento de propostas aqui.
       </section>
+
+      <DocumentosERedes ficha={c} />
 
       <p style={{ fontSize: '0.78rem', color: t.cor.cinza, lineHeight: 1.6 }}>
         Fontes: <a href={c.fonte_api || 'https://divulgacandcontas.tse.jus.br/'} target="_blank" rel="noopener noreferrer" style={{ color: t.cor.ouroTexto }}>DivulgaCandContas / TSE</a> para os dados da candidatura
