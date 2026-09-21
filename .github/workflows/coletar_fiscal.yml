@@ -5,9 +5,8 @@
 #  - coletor_siconfi.js: pendência aberta em 22/08/2026. O painel fiscal só atualizava
 #    quando alguém lembrava de rodar à mão. O dado do Tesouro é BIMESTRAL, então rodar
 #    todo dia seria bater na API do Tesouro por nada. ESTE É AGENDADO.
-#  - coletor_ficha_tse.js: criado em 18/09/2026, quando as seções ao vivo do presidenciável
-#    saíram do ar. Precisaria do oposto, diário até a eleição, e NÃO É AGENDADO. Por quê,
-#    está escrito no job dele abaixo. Fica aqui como botão, para rodar quando fizer sentido.
+#  - a ficha do TSE (presidenciáveis e deputados federais): diária até a eleição. Ficou só como
+#    botão entre 19/09 e 21/09 porque a ponte ainda não funcionava; a história está no job.
 #
 # LEMBRETE DO QUE O HORÁRIO SIGNIFICA (mesma nota do coletar.yml): o cron do GitHub é um
 # PEDIDO, não uma promessa. O atraso típico neste repo foi de 3 a 6 horas, com um caso de 10h.
@@ -21,6 +20,10 @@ on:
     # 08:23 de Brasília, dia 5 de fev/abr/jun/ago/out/dez. Alinhado ao calendário de
     # publicação do Tesouro, que é bimestral.
     - cron: '23 11 5 2,4,6,8,10,12 *'
+    # Ficha do TSE, DIÁRIA: só quem ainda pode mudar de situação. 07:41 de Brasília.
+    - cron: '41 10 * * *'
+    # Ficha do TSE, SEMANAL (domingo): todos os 7.703. 03:53 de Brasília, fila vazia.
+    - cron: '53 6 * * 0'
   workflow_dispatch:
     inputs:
       alvo:
@@ -30,82 +33,100 @@ on:
         default: ficha-tse
         options:
           - ficha-tse
+          - ficha-tse-completa
           - siconfi
           - ambos
 
 jobs:
   # ---------------------------------------------------------------------------
-  # Ficha do TSE (DivulgaCandContas) — SÓ NA MÃO
+  # Ficha do TSE (DivulgaCandContas) — diária até a eleição, completa aos domingos
   # ---------------------------------------------------------------------------
   #
-  # POR QUE ESTE JOB NÃO TEM CRON, e a história inteira, porque ela custou uma sessão.
+  # A HISTÓRIA, porque ela custou três sessões.
   #
   # O Akamai do TSE bloqueia por ORIGEM, faixa de datacenter. Medido em 19/09/2026:
-  #   Vercel .................. 403 (era o motivo de as seções do presidenciável sumirem)
+  #   Vercel .................. 403
   #   sandbox de nuvem ........ 403
-  #   runner do GitHub Actions  403  (as 28 fichas e as 2 listagens, na 1ª execução daqui)
-  #   Edge Function Supabase .. 200  (33.707 bytes, 1,7s, região sa-east-1)
-  #   máquina do Jordy ........ 200  (28 de 28)
+  #   runner do GitHub Actions  403  (por isso este job NÃO fala direto com o TSE)
+  #   Edge Function Supabase .. 200  (região sa-east-1)
+  #   máquina do Jordy ........ 200
   #
-  # A ponte no Supabase (função `tse-ponte`) foi construída para contornar isso, e o coletor
-  # sabe usá-la pela variável TSE_PONTE_URL. Mas a execução seguinte ainda falhou, com motivo
-  # não diagnosticado (só `exit code 1`; o anexo saida-ficha-tse da execução tem o log, e se
-  # lá estiver `ponte: credencial invalida` o conserto é a chave de serviço do GitHub não ser
-  # a mesma que o Supabase injeta na função).
+  # Então o caminho é GitHub -> função `tse-ponte` do Supabase -> TSE. A ponte existia desde
+  # 19/09 e dava 401 em TODA chamada: comparava a senha com a chave de serviço que o Supabase
+  # injeta, e o projeto tinha passado às chaves novas. Consertado em 20/09 com senha própria,
+  # PONTE_TOKEN, que também tirou a chave do banco de dentro de um endpoint público. Em 21/09 a
+  # ponte rodou em produção pela primeira vez, servindo o site. Por isso o cron voltou.
   #
-  # Parou aqui por decisão de escopo, não por falta de caminho: o Jordy roda o coletor na
-  # máquina dele, que funciona, e a necessidade diária acaba com a eleição de 04/10.
-  #
-  # O CRON DIÁRIO FOI REMOVIDO DE PROPÓSITO. Agendamento que se sabe que vai falhar manda
-  # e-mail vermelho todo dia e ensina a ignorar falha de verdade, que é o oposto do que este
-  # arquivo existe para fazer.
-  #
-  # SE UM DIA O CRON VOLTAR: voltar junto a trava de data que estava aqui. Ela impedia o
-  # agendamento de bater no TSE para sempre depois que a ficha congela (o limite era
-  # 2026-11-01, com aviso na página da execução em vez de parada silenciosa).
+  # POR QUE DUAS CADÊNCIAS, medido em 21/09: das 7.703 fichas de federal, só 390 estavam numa
+  # situação que ainda muda (indeferido com recurso, deferido com recurso, pendente). Recoletar
+  # todas todo dia seriam 100 mil requisições até 04/10 pela mesma ponte, convidando o Akamai a
+  # desconfiar dela também. Diário: os 390 e os 28 presidenciáveis, uns 5 minutos. Domingo: tudo,
+  # uns 80, para pegar quem era definitivo e mudou.
   ficha-tse:
-    name: Ficha do TSE (situação, patrimônio, documentos)
+    name: Ficha do TSE (situação, patrimônio, trajetória)
     runs-on: ubuntu-latest
+    timeout-minutes: 150
     if: >-
-      ${{ github.event_name == 'workflow_dispatch'
-          && (inputs.alvo == 'ficha-tse' || inputs.alvo == 'ambos') }}
+      ${{ github.event.schedule == '41 10 * * *'
+          || github.event.schedule == '53 6 * * 0'
+          || (github.event_name == 'workflow_dispatch'
+              && (inputs.alvo == 'ficha-tse' || inputs.alvo == 'ficha-tse-completa' || inputs.alvo == 'ambos')) }}
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      # A URL não é segredo (a referência do projeto é pública no site). A SENHA é.
+      TSE_PONTE_URL: https://fedxytdorrecllugnicu.supabase.co/functions/v1/tse-ponte
+      PONTE_TOKEN: ${{ secrets.PONTE_TOKEN }}
     steps:
+      # TRAVA DE DATA, que o comentário de 19/09 pedia para voltar junto com o cron. Sem ela, o
+      # agendamento continuaria batendo no TSE para sempre depois que a ficha congela. O limite é
+      # 01/11 e não 04/10 de propósito: logo depois da eleição a ficha passa a dizer quem foi
+      # eleito, e isso vale pegar. Passada a data, avisa na página da execução em vez de parar
+      # calado, e o botão manual continua funcionando.
+      - name: Trava de data (agendamento termina em 01/11/2026)
+        id: trava
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ] && [ "$(date -u +%Y%m%d)" -gt 20261101 ]; then
+            echo "::warning title=Ficha do TSE::Agendamento encerrado em 01/11/2026. Remover os dois crons da ficha deste arquivo. O botão manual continua funcionando."
+            echo "parar=1" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Checkout do código
+        if: steps.trava.outputs.parar != '1'
         uses: actions/checkout@v4
 
       - name: Configurar Node
+        if: steps.trava.outputs.parar != '1'
         uses: actions/setup-node@v4
         with:
           node-version: '22'
 
       - name: Instalar dependências
+        if: steps.trava.outputs.parar != '1'
         # --ignore-scripts evita compilação nativa do sharp (não usado nos coletores)
         run: npm install --ignore-scripts
 
-      # SEM continue-on-error, de propósito, e é a diferença de desenho em relação ao
-      # coletar.yml. Lá os passos toleram falha porque um coletor fora do ar não invalida os
-      # outros. Aqui o job inteiro É a coleta: se ela não traz nada, a tela continua mostrando
-      # a situação de ontem sem dizer que é de ontem. O coletor sai com código 1 quando lê
-      # zero fichas, então o passo fica vermelho em vez de verde mentiroso.
-      #
-      # TSE_PONTE_URL manda o coletor falar com o TSE através da função `tse-ponte` do
-      # Supabase, em vez de direto. Sem a variável ele vai direto e leva 403 daqui. A segunda
-      # linha da saída diz qual dos dois caminhos ele tomou. A URL não é segredo: a função
-      # exige a chave de serviço no Authorization, e a referência do projeto já é pública no
-      # próprio site.
-      - name: Coletar as fichas do DivulgaCandContas
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          TSE_PONTE_URL: https://fedxytdorrecllugnicu.supabase.co/functions/v1/tse-ponte
+      # SEM continue-on-error, de propósito. Aqui o job inteiro É a coleta: se ela não traz nada,
+      # a tela continua mostrando a situação de ontem sem dizer que é de ontem. Os coletores saem
+      # com código 1 quando leem zero fichas, então o passo fica vermelho em vez de verde mentiroso.
+      - name: Presidenciáveis (28 fichas)
+        if: steps.trava.outputs.parar != '1'
         run: node coletores/coletor_ficha_tse.js
 
-      # O coletor grava tudo que imprime em coletores/_saida_ficha_tse.txt (hábito que nasceu
-      # porque o terminal da máquina do Jordy quebrou em 08/09). Aqui esse arquivo vira anexo
-      # da execução, então dá para ler o diagnóstico sem abrir o log linha a linha.
-      # if: always() — o caso em que o arquivo mais interessa é justamente o da falha.
+      # Diário e botão comum: só quem ainda pode mudar. Domingo e botão "completa": todos.
+      - name: Deputados federais
+        if: steps.trava.outputs.parar != '1'
+        run: |
+          if [ "${{ github.event.schedule }}" = "53 6 * * 0" ] || [ "${{ inputs.alvo }}" = "ficha-tse-completa" ]; then
+            node coletores/coletor_ficha_tse_federal.js --refazer
+          else
+            node coletores/coletor_ficha_tse_federal.js --abertos
+          fi
+
+      # O coletor dos presidenciáveis grava o que imprime em coletores/_saida_ficha_tse.txt.
+      # Aqui vira anexo, para ler o diagnóstico sem abrir o log linha a linha.
       - name: Guardar a saída do coletor
-        if: always()
+        if: always() && steps.trava.outputs.parar != '1'
         uses: actions/upload-artifact@v4
         with:
           name: saida-ficha-tse

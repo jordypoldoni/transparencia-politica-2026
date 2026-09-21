@@ -20,6 +20,13 @@
 //   node coletores/coletor_ficha_tse_federal.js --uf=RS
 //   node coletores/coletor_ficha_tse_federal.js --limite=800        (todas as UFs, ate 800)
 //   node coletores/coletor_ficha_tse_federal.js --refazer           (ignora o ja coletado)
+//   node coletores/coletor_ficha_tse_federal.js --abertos           (so quem ainda pode mudar)
+//
+// --abertos (21/09/2026): a recoleta diaria até a eleição. Das 7.703, só 390 estavam numa
+// situação que ainda muda (indeferido com recurso, deferido com recurso, pendente de
+// julgamento). Recoletar todas todo dia seriam 100 mil requisições ao TSE até 04/10 passando
+// pela mesma ponte, o que convida o Akamai a desconfiar dela também. O giro completo fica
+// semanal, para pegar quem era definitivo e mudou.
 import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
 import { traduzir } from './ficha_tse_traduzir.js';
@@ -38,6 +45,11 @@ const args = process.argv.slice(2);
 const opcao = (nome) => { const a = args.find((x) => x.startsWith(`--${nome}=`)); return a ? a.split('=')[1] : null; };
 const SIMULAR = args.includes('--simular');
 const REFAZER = args.includes('--refazer');
+const ABERTOS = args.includes('--abertos');
+// A lista é do TSE, com a grafia do TSE. Situação nova que aparecer fica FORA do filtro diário e
+// entra no giro semanal: é o lado seguro, porque o erro possível é recoletar pouco num dia, nunca
+// deixar alguém de fora para sempre.
+const SITUACOES_ABERTAS = ['Indeferido em prazo recursal ou com recurso', 'Deferido com recurso', 'Pendente de julgamento'];
 const UF_ALVO = (opcao('uf') || '').toUpperCase() || null;
 const LIMITE = parseInt(opcao('limite') || '0', 10) || null;
 const PAUSA = parseInt(opcao('pausa') || '400', 10);
@@ -73,7 +85,8 @@ async function mapaDeNomes(uf) {
 }
 
 async function main() {
-  console.log(`🚀 Ficha do TSE, deputados federais${SIMULAR ? ' (SIMULAÇÃO, nada gravado)' : ''}`);
+  const modo = ABERTOS ? ' · só situações em aberto' : REFAZER ? ' · todos, refazendo' : '';
+  console.log(`🚀 Ficha do TSE, deputados federais${modo}${SIMULAR ? ' (SIMULAÇÃO, nada gravado)' : ''}`);
   console.log(PONTE ? `🌉 via ponte: ${PONTE}` : '🔌 direto no TSE (sem ponte)');
   if (!SUPABASE_URL || !SUPABASE_KEY) { console.error('❌ Faltam credenciais Supabase.'); process.exitCode = 1; return; }
   const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -92,7 +105,8 @@ async function main() {
       .not('sq_candidato', 'is', null).order('uf').order('nome_urna')
       .range(inicio, inicio + PAGINA - 1);
     if (UF_ALVO) consulta = consulta.eq('uf', UF_ALVO);
-    if (!REFAZER) consulta = consulta.is('ficha_coletada_em', null);
+    if (ABERTOS) consulta = consulta.in('situacao_tse', SITUACOES_ABERTAS);
+    else if (!REFAZER) consulta = consulta.is('ficha_coletada_em', null);
 
     const { data: pagina, error } = await consulta;
     if (error) { console.error('❌ Supabase:', error.message); process.exitCode = 1; return; }
@@ -101,7 +115,12 @@ async function main() {
     if (LIMITE && candidatos.length >= LIMITE) break;
   }
   if (LIMITE) candidatos.length = Math.min(candidatos.length, LIMITE);
-  if (!candidatos?.length) { console.log('✅ Nada pendente: todas as fichas do recorte já foram coletadas.'); return; }
+  if (!candidatos?.length) {
+    console.log(ABERTOS
+      ? '✅ Nenhum candidato em situação aberta: todos estão em situação definitiva.'
+      : '✅ Nada pendente: todas as fichas do recorte já foram coletadas.');
+    return;
+  }
 
   const porUf = {};
   for (const c of candidatos) (porUf[c.uf] = porUf[c.uf] || []).push(c);
