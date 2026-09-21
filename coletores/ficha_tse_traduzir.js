@@ -9,6 +9,35 @@
 // A ABRANGÊNCIA É PARÂMETRO: presidente é BR, deputado federal é a UF. Medido em 20/09, pedir a
 // ficha de um deputado com abrangência BR devolve HTTP 200 com CORPO VAZIO, não erro.
 
+// LINK DA CANDIDATURA ANTERIOR (21/09/2026). O `txLink` que a ficha traz em cada eleição anterior
+// está num formato antigo do portal (#/candidato/{ano}/{idEleicao}/{ue}/{sq}) e abre a página
+// "ERRO AO CARREGAR A PÁGINA". Gravamos 16.761 links assim em 20/09 sem abrir nenhum, e o Jordy
+// é que encontrou. O formato que funciona hoje, testado no navegador em 21/09:
+//     #/candidato/{REGIAO}/{UF}/{idEleicao}/{sq}/{ano}/{ue}
+// Testado também com região e UF ERRADAS (NORDESTE/BA para um prefeito de Porto Alegre) e com
+// BRASIL/BR: abre igual. O portal roteia pelos quatro números; região e UF são decorativas.
+// Por isso usamos a UF quando ela é conhecida e BR quando não é, sem arriscar nada.
+// O original fica guardado em url_original, e os três identificadores ficam soltos porque são
+// o que se usa para buscar os detalhes daquela eleição.
+const REGIAO = {
+  RS: 'SUL', SC: 'SUL', PR: 'SUL',
+  SP: 'SUDESTE', RJ: 'SUDESTE', MG: 'SUDESTE', ES: 'SUDESTE',
+  DF: 'CENTROOESTE', GO: 'CENTROOESTE', MT: 'CENTROOESTE', MS: 'CENTROOESTE',
+  AM: 'NORTE', PA: 'NORTE', AC: 'NORTE', RO: 'NORTE', RR: 'NORTE', AP: 'NORTE', TO: 'NORTE',
+};
+function linkCandidaturaAnterior(txLink, ufConhecida) {
+  const m = String(txLink || '').match(/#\/candidato\/(\d{4})\/(\d+)\/([^/]+)\/(\d+)$/);
+  if (!m) return { url: null, id_eleicao: null, ue: null, sq: null };
+  const [, anoE, idEleicao, ue, sq] = m;
+  const uf = /^[A-Z]{2}$/.test(ufConhecida || '') && ufConhecida !== 'BR' ? ufConhecida
+    : (/^[A-Z]{2}$/.test(ue) ? ue : 'BR');
+  const regiao = uf === 'BR' ? 'BRASIL' : (REGIAO[uf] || 'NORDESTE');
+  return {
+    url: `https://divulgacandcontas.tse.jus.br/divulga/#/candidato/${regiao}/${uf}/${idEleicao}/${sq}/${anoE}/${ue}`,
+    id_eleicao: idEleicao, ue, sq,
+  };
+}
+
 export function traduzir(f, nomeDe, sq, { ano = 2026, idEleicao = 20322002026, abrangencia = 'BR' } = {}) {
   return {
     situacao_tse: f.descricaoSituacao || null,
@@ -88,7 +117,8 @@ export function traduzir(f, nomeDe, sq, { ano = 2026, idEleicao = 20322002026, a
         // colapsamos em "eleito", porque a distinção é justamente o que quase ninguém sabe.
         resultado: e.situacaoTotalizacao || null,
         numero: e.nrCandidato ? Number(e.nrCandidato) : null,
-        url: e.txLink || null,
+        ...linkCandidaturaAnterior(e.txLink, abrangencia),
+        url_original: e.txLink || null,
       }))
       .sort((a, b) => b.ano - a.ano),
 

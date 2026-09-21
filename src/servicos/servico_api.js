@@ -259,6 +259,22 @@ const ServicoAPI = {
             }
         } catch (e) { console.error('presenca_votacoes:', e.message); }
 
+        // 6. Candidatura de 2026 ligada a este parlamentar (21/09/2026). A ficha do TSE dos 7.703
+        //    candidatos a federal traz o histórico eleitoral (`eleicoes_anteriores`), e 379 deles
+        //    são parlamentares em exercício. É UMA linha por agente, lida por chave: não passa
+        //    perto do corte de 1.000. Sem candidatura (não concorre, ou concorre a outro cargo),
+        //    fica null e a tela simplesmente não mostra a camada.
+        let candidatura_2026 = null;
+        try {
+            const { data: cand } = await supabase
+                .from('candidatos_deputado_federal')
+                .select('slug, uf, nr_candidato, partido_sigla, situacao_tse, eleicoes_anteriores')
+                .eq('agente_id', id)
+                .limit(1)
+                .maybeSingle();
+            candidatura_2026 = cand || null;
+        } catch (e) { console.error('candidatura_2026:', e.message); }
+
         const total_geral = Object.values(categorias).reduce((a, b) => a + b, 0);
         const n_notas = gastosAno.length;
         const mesesSet = new Set(gastosAno.map((g) => g.mes).filter(Boolean));
@@ -280,7 +296,8 @@ const ServicoAPI = {
             votos,
             resumo_votos,
             coerencia,
-            presenca
+            presenca,
+            candidatura_2026
         };
     },
 

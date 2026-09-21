@@ -7,6 +7,7 @@ import { pctDoTeto } from '../src/lib/cotas';
 import { nomeTipoProposicao, legendaDosTipos } from '../src/lib/proposicoes';
 import { explicarTipo, agruparPorMateria, papelVotacao, situacaoCidada } from '../src/lib/votacao';
 import { casaDoPerfil } from '../src/lib/casa';
+import TrajetoriaEleitoral from './TrajetoriaEleitoral';
 
 const brl = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v || 0);
 const brlExato = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
@@ -178,7 +179,8 @@ export default function PerfilPolitico({ dados }) {
   }, [alvoScroll]);
 
   const { perfil, resumo_gastos, total_geral, n_notas, media_mensal, maior_categoria, lista_detalhada, votos = [], resumo_votos = {}, coerencia = null,
-    serie_mensal = [], anos_disponiveis = [], ano_referencia, meses_com_gasto = 0, presenca = null } = dados;
+    serie_mensal = [], anos_disponiveis = [], ano_referencia, meses_com_gasto = 0, presenca = null,
+    candidatura_2026 = null } = dados;
 
   // Ficha 360°: dados biográficos e de atuação (podem estar vazios até o coletor rodar)
   const idade = idadeDe(perfil.data_nascimento);
@@ -255,7 +257,12 @@ export default function PerfilPolitico({ dados }) {
   const baseEleitoral = perfil.base_eleitoral || null;
   const biografiaTexto = perfil.biografia_texto || null;
   const temBio = !!(idade || naturalidade || perfil.escolaridade || perfil.profissao || perfil.email_oficial || redes.length || perfil.situacao || ocupacoes.length || cargosAnteriores.length || telContato || areasAtuacao.length || filiacoes.length || mandatoResumo || baseEleitoral || biografiaTexto);
-  const temTrajetoria = ocupacoes.length > 0 || cargosAnteriores.length > 0 || filiacoes.length > 1;
+  // A seção Trajetória tem duas fontes desde 21/09/2026: a Câmara (o que a pessoa GANHOU: cargos
+  // ocupados, partidos filiados) e o TSE (TODA candidatura, inclusive as derrotas, com resultado).
+  // Complementam, não duplicam. A seção aparece se houver qualquer uma das duas.
+  const temTrajetoriaCamara = ocupacoes.length > 0 || cargosAnteriores.length > 0 || filiacoes.length > 1;
+  const temHistoricoTse = Array.isArray(candidatura_2026?.eleicoes_anteriores) && candidatura_2026.eleicoes_anteriores.length > 0;
+  const temTrajetoria = temTrajetoriaCamara || temHistoricoTse;
 
   // Quantas proposicoes aparecem antes de o leitor pedir o resto.
   // CONTEXTO (11/09/2026): os deputados federais tem ~16 proposicoes, mas os estaduais do RS
@@ -717,7 +724,11 @@ export default function PerfilPolitico({ dados }) {
         {/* TRAJETÓRIA — atuação profissional, cargos anteriores e partidos */}
         {temTrajetoria && (
           <Secao id="trajetoria" titulo="Trajetória" aberta={secoesAbertas.trajetoria} onToggle={() => toggleSecao('trajetoria')}>
-            <p style={{ color: t.cor.cinza, fontSize: '0.9rem', margin: '0 0 20px', lineHeight: 1.5 }}>De onde veio: profissão, cargos eletivos anteriores e os partidos pelos quais passou. Fonte: {fonteNome}.</p>
+            {/* A frase cita a Câmara como fonte, então só aparece com bloco da Câmara. O bloco do
+                TSE traz a própria fonte: cada ressalva mora junto do seu dono. */}
+            {temTrajetoriaCamara && (
+              <p style={{ color: t.cor.cinza, fontSize: '0.9rem', margin: '0 0 20px', lineHeight: 1.5 }}>De onde veio: profissão, cargos eletivos anteriores e os partidos pelos quais passou. Fonte: {fonteNome}.</p>
+            )}
 
             {ocupacoes.length > 0 && (
               <div style={{ marginBottom: (cargosAnteriores.length > 0 || filiacoes.length > 1) ? '22px' : 0 }}>
@@ -758,6 +769,19 @@ export default function PerfilPolitico({ dados }) {
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+
+            {/* Camada nova (21/09/2026): o histórico eleitoral do TSE, que inclui as candidaturas
+                perdidas. Só existe para quem é candidato a deputado federal em 2026, porque vem
+                da ficha dessa candidatura (379 dos 513 deputados em exercício). */}
+            {temHistoricoTse && (
+              <div style={{ marginTop: temTrajetoriaCamara ? '22px' : 0 }}>
+                <TrajetoriaEleitoral
+                  ficha={candidatura_2026}
+                  embutido
+                  linkCandidatura={candidatura_2026.slug ? `/deputado-federal/${candidatura_2026.slug}` : null}
+                />
               </div>
             )}
           </Secao>
