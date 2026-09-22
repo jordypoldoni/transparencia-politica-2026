@@ -909,9 +909,21 @@ const ServicoAPI = {
         if (uf) q = q.eq('uf', uf.toUpperCase());
         if (partido) q = q.eq('partido_sigla', partido.toUpperCase());
         if (reeleicao) q = q.eq('reeleicao', true);
+        // BUSCA POR NOME, PARTIDO OU NÚMERO (22/09/2026, pedido do Jordy; antes era só nome).
+        // - Só dígitos: busca pelo COMEÇO do número. "1302" acha o candidato; "13" acha todos do
+        //   partido 13, porque o número de deputado federal começa pelo número do partido. É o
+        //   jeito que o eleitor já conhece o número, pela propaganda.
+        // - Texto: nome de urna, nome completo, nome do partido por extenso, e a SIGLA por
+        //   igualdade (sem curinga). Com curinga, "PT" acharia também PTB e qualquer sigla que
+        //   contenha as duas letras, e o leitor que pediu um partido receberia outros.
+        // Parênteses, vírgula e % saem do termo: são sintaxe do filtro .or() e quebrariam a consulta.
         if (busca && busca.trim()) {
-            const termo = busca.trim().replace(/[%,]/g, '');
-            q = q.or(`nome_urna.ilike.%${termo}%,nome_completo.ilike.%${termo}%`);
+            const termo = busca.trim().replace(/[%,()]/g, '');
+            if (/^\d+$/.test(termo)) {
+                q = q.like('nr_candidato', `${termo}%`);
+            } else if (termo) {
+                q = q.or(`nome_urna.ilike.%${termo}%,nome_completo.ilike.%${termo}%,partido_nome.ilike.%${termo}%,partido_sigla.ilike.${termo}`);
+            }
         }
         const paginaSegura = Math.max(1, Number(pagina) || 1);
         const de = (paginaSegura - 1) * porPagina;

@@ -291,7 +291,7 @@ export default function PerfilPolitico({ dados }) {
     { id: 'proposicoes', rotulo: 'Proposições' },
     { id: 'votos', rotulo: 'Votos' },
   ].filter(Boolean);
-  const ancora = { scrollMarginTop: '112px' }; // compensa header + barra fixa ao rolar até a âncora
+  const ancora = { scrollMarginTop: '150px' }; // cabeçalho (74) + respiro (12) + barra (~48) + folga. Era 112, calculado com a barra em 56.
 
   // A casa do parlamentar sai do fonte_api ('alesp' | 'alergs' | url da camara | url do senado).
   // BUG CORRIGIDO EM 10/09/2026: fonteNome era fixo em 'ALESP' para qualquer estadual, entao
@@ -406,12 +406,22 @@ export default function PerfilPolitico({ dados }) {
   return (
     <div className="pagina">
       <style jsx global>{`html{scroll-behavior:smooth}`}</style>
-      {/* Voltar + navegação por seções — barra fixa única abaixo do cabeçalho */}
-      <div style={{ position: 'sticky', top: '56px', zIndex: 40, marginBottom: '20px', display: 'flex', gap: '10px', alignItems: 'center' }}>
+      {/* Voltar + navegação por seções: barra fixa abaixo do cabeçalho.
+          AJUSTADA EM 22/09/2026, pedido do Jordy:
+          - top era 56px, mas o cabeçalho mede 74px (medido no site, desktop e celular). A barra
+            entrava 18px POR BAIXO dele. Agora 74 + 12 de respiro. Se o cabeçalho mudar de altura,
+            este número muda junto.
+          - O trilho ocupava a largura inteira da página e terminava num vazio depois de "Votos".
+            Agora tem o tamanho dos botões (flex: 0 1 auto) e cresce sozinho quando entrar seção
+            nova; em tela estreita, rola na horizontal.
+          - Fundo âmbar do site. Os botões dentro são brancos com texto tinta: texto claro sobre
+            âmbar é proibido (branco dá 2,36:1), e a superfície branca com a sombra de clicável é
+            o que diz "isto se aperta". */}
+      <div style={{ position: 'sticky', top: '86px', zIndex: 40, marginBottom: '20px', display: 'flex', gap: '10px', alignItems: 'center' }}>
         <button onClick={() => router.back()} style={{ ...pilula, flexShrink: 0, background: '#fff', color: t.cor.tinta, boxShadow: t.sombra.clicavel }}>← Voltar</button>
-        <nav aria-label="Seções do perfil" style={{ flex: 1, minWidth: 0, padding: '8px', display: 'flex', gap: '8px', overflowX: 'auto', background: t.cor.verde, borderRadius: t.raio.pill, boxShadow: t.sombra.clicavel }}>
+        <nav aria-label="Seções do perfil" style={{ flex: '0 1 auto', minWidth: 0, padding: '7px', display: 'flex', gap: '7px', overflowX: 'auto', background: t.cor.ouro, borderRadius: t.raio.pill, boxShadow: t.sombra.sutil }}>
           {secoes.map((s) => (
-            <button key={s.id} type="button" onClick={() => irParaSecao(s.id)} style={{ flexShrink: 0, fontSize: '0.82rem', fontWeight: 700, color: t.cor.tinta, cursor: 'pointer', border: 'none', padding: '7px 15px', borderRadius: t.raio.pill, background: t.cor.papelCartao, boxShadow: t.sombra.sutil, fontFamily: t.fonte.corpo }}>{s.rotulo}</button>
+            <button key={s.id} type="button" onClick={() => irParaSecao(s.id)} style={{ flexShrink: 0, fontSize: '0.82rem', fontWeight: 700, color: t.cor.tinta, cursor: 'pointer', border: 'none', padding: '7px 15px', borderRadius: t.raio.pill, background: '#FFFFFF', boxShadow: '0 1px 2px rgba(36,30,82,0.18), 0 2px 6px rgba(36,30,82,0.14)', fontFamily: t.fonte.corpo }}>{s.rotulo}</button>
           ))}
         </nav>
       </div>

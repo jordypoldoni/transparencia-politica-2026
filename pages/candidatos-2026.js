@@ -163,7 +163,7 @@ function ListaDeputadoFederal({ dadosIniciais, resumo, filtrosIniciais, paginaIn
           <CampoSelect opcoes={opcoesUf} valor={uf} placeholder="Todos os estados" aoLabel="Filtrar por estado" aoSelecionar={aoMudarUf} />
         </div>
         <div style={{ flex: '2 1 240px', minWidth: 0 }}>
-          <CampoBusca valor={busca} aoMudar={aoMudarBusca} placeholder="Buscar por nome…" aoLabel="Buscar candidato a Deputado Federal por nome" />
+          <CampoBusca valor={busca} aoMudar={aoMudarBusca} placeholder="Buscar por nome, partido ou número…" aoLabel="Buscar candidato a Deputado Federal por nome, partido ou número" />
         </div>
         {temFiltro && (
           <button type="button" onClick={limparFiltros}
