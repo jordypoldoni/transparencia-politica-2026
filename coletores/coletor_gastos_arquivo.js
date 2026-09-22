@@ -36,6 +36,7 @@ const args = process.argv.slice(2);
 const ANO = parseInt(args.find((a) => /^\d{4}$/.test(a)) || process.env.ANO || '2026', 10);
 const DRY = args.includes('--dry-run');
 const FORCAR = args.includes('--forcar');
+const TUDO = args.includes('--tudo'); // regrava todos, mesmo sem mudança (uso raro)
 const MAX_LINHAS = parseInt(process.env.MAX_LINHAS || '400000', 10);
 const URL_ARQUIVO = `https://www.camara.leg.br/cotas/Ano-${ANO}.csv.zip`;
 
@@ -194,8 +195,27 @@ async function main() {
     return;
   }
 
-  let gravadas = 0, feitos = 0;
+  // SÓ REGRAVA QUEM MUDOU (22/09/2026). A primeira versão apagava e regravava os ~103 mil
+  // lançamentos todo dia, mesmo sem mudança nenhuma, e a tabela foi de 214 para 256 MB com o mesmo
+  // número de linhas: o Postgres não devolve na hora o espaço de linha apagada. Agora cada
+  // deputado é comparado por uma impressão digital (quantidade, soma em centavos, emissão mais
+  // recente) calculada no banco pela função resumo_despesas_por_agente, e só quem difere é
+  // regravado. Na dúvida, regrava: impressão que não bate é sempre tratada como mudança.
+  const digitais = new Map();
+  if (!TUDO) {
+    const { data: resumo, error: errResumo } = await supabase.rpc('resumo_despesas_por_agente', { p_ano: ANO, p_casa: 'Câmara' });
+    if (errResumo) console.warn(`⚠️  sem impressão digital (${errResumo.message}): todos serão regravados.`);
+    for (const r of resumo || []) digitais.set(r.agente_id, `${r.n}|${r.centavos}|${r.ultima_emissao || ''}`);
+  }
+  const digitalDe = (lote) => {
+    const centavos = lote.reduce((t, l) => t + Math.round((Number(l.valor_liquido) || 0) * 100), 0);
+    const ultima = lote.reduce((m, l) => (l.data_emissao && l.data_emissao > m ? l.data_emissao : m), '');
+    return `${lote.length}|${centavos}|${ultima}`;
+  };
+
+  let gravadas = 0, feitos = 0, iguais = 0;
   for (const [agenteId, lote] of porAgente) {
+    if (!TUDO && digitais.get(agenteId) === digitalDe(lote)) { iguais++; continue; }
     // Substituição por deputado: delete e insert colados, para nunca existir "ano vazio".
     const { error: errDel } = await supabase.from('despesas_parlamentares')
       .delete().eq('agente_id', agenteId).eq('ano', ANO).eq('casa_legislativa', 'Câmara');
@@ -207,7 +227,7 @@ async function main() {
     }
     if (++feitos % 50 === 0) console.log(`  …${feitos}/${porAgente.size} deputados (${gravadas} lançamentos)`);
   }
-  console.log(`\n✅ ${feitos} deputados, ${gravadas} lançamentos gravados.`);
+  console.log(`\n✅ ${feitos} deputados regravados (${gravadas} lançamentos) · ${iguais} sem mudança, não tocados.`);
 }
 
 main().then(() => (DRY ? null : refreshRadar())).catch((e) => { console.error('💥 Erro:', e.message); process.exit(1); });
