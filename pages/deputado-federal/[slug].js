@@ -5,6 +5,7 @@ import Avatar from '../../components/Avatar';
 import { NOMES_UF, pctDoTeto } from '../../src/lib/cotas';
 import { t } from '../../src/estilo/tokens';
 import { hrefPerfil } from '../../src/lib/casa';
+import { useVoltarLista } from '../../src/lib/voltarLista';
 // Os mesmos componentes da ficha do presidenciavel: a ficha do TSE passou a valer para os
 // 7.703 candidatos a deputado federal em 20/09/2026. Reuso, nao reimplementacao.
 import SituacaoCandidatura from '../../components/SituacaoCandidatura';
@@ -56,6 +57,7 @@ function Numero({ valor, rotulo, contexto, fonte }) {
 }
 
 export default function PerfilDeputadoFederal({ candidato, canonical }) {
+  const voltarPara = useVoltarLista('deputado-federal', '/candidatos-2026?cargo=deputado-federal');
   const c = candidato;
   const m = c.mandato; // resumo do mandato atual, quando é a mesma pessoa
   const nomeUf = NOMES_UF[c.uf] || c.uf;
@@ -83,7 +85,9 @@ export default function PerfilDeputadoFederal({ candidato, canonical }) {
         {c.foto_url && <meta property="og:image" content={c.foto_url} />}
       </Head>
 
-      <Link href="/candidatos-2026?cargo=deputado-federal" style={{ display: 'inline-block', marginBottom: '20px', color: t.cor.cinza, textDecoration: 'none', fontWeight: 600, fontSize: '0.88rem' }}>← Candidatos 2026</Link>
+      {/* Volta para a lista COM o filtro que a pessoa tinha (src/lib/voltarLista.js). Até 22/09
+          este link tinha endereço fixo e zerava a busca. */}
+      <Link href={voltarPara} style={{ display: 'inline-block', marginBottom: '20px', color: t.cor.cinza, textDecoration: 'none', fontWeight: 600, fontSize: '0.88rem' }}>← Candidatos 2026</Link>
 
       <div style={{ display: 'flex', gap: '18px', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap' }}>
         <Avatar nome={c.nome_urna} foto={c.foto_url} size={88} />

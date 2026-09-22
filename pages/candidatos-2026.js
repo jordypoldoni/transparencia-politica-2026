@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { lembrarLista } from '../src/lib/voltarLista';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -133,7 +134,18 @@ function ListaDeputadoFederal({ dadosIniciais, resumo, filtrosIniciais, paginaIn
     if (buscaAlvo) q.set('busca', buscaAlvo);
     if (paginaAlvo > 1) q.set('pagina', String(paginaAlvo));
     router.replace(`/candidatos-2026?${q.toString()}`, undefined, { shallow: true });
+    lembrarLista('deputado-federal', `/candidatos-2026?${q.toString()}`);
   };
+
+  // Quem chegou já filtrado (link compartilhado, ou volta pelo navegador) também fica anotado.
+  useEffect(() => {
+    const q = new URLSearchParams({ cargo: 'deputado-federal' });
+    if (filtrosIniciais.uf) q.set('uf', filtrosIniciais.uf);
+    if (filtrosIniciais.partido) q.set('partido', filtrosIniciais.partido);
+    if (filtrosIniciais.busca) q.set('busca', filtrosIniciais.busca);
+    if (paginaInicial > 1) q.set('pagina', String(paginaInicial));
+    lembrarLista('deputado-federal', `/candidatos-2026?${q.toString()}`);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const aoMudarBusca = (valor) => {
     setBusca(valor);
