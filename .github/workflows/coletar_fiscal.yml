@@ -125,8 +125,15 @@ jobs:
 
       # O coletor dos presidenciáveis grava o que imprime em coletores/_saida_ficha_tse.txt.
       # Aqui vira anexo, para ler o diagnóstico sem abrir o log linha a linha.
+      #
+      # continue-on-error DESDE 22/09/2026. Na primeira execução agendada a coleta gravou tudo
+      # (28 presidenciáveis e 383 federais) e este passo falhou com 403 no serviço de anexos do
+      # GitHub, pintando de vermelho uma coleta bem-sucedida. Vermelho aqui precisa significar
+      # "a coleta falhou"; se um anexo de conveniência também pinta, a pessoa aprende a ignorar
+      # o vermelho, e a falha de verdade passa. O anexo é diagnóstico, não é a coleta.
       - name: Guardar a saída do coletor
         if: always() && steps.trava.outputs.parar != '1'
+        continue-on-error: true
         uses: actions/upload-artifact@v4
         with:
           name: saida-ficha-tse
