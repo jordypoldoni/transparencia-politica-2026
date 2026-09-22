@@ -942,7 +942,7 @@ const ServicoAPI = {
 
         const { data: perfil } = await supabase
             .from('agentes_politicos')
-            .select('id, slug, nome_urna, partido_atual, uf_sede, fonte_api, cargo_atual, mandato, n_proposicoes, comissoes, cargos_anteriores')
+            .select('id, slug, nome_urna, partido_atual, uf_sede, fonte_api, cargo_atual, mandato, n_proposicoes, comissoes, cargos_anteriores, em_exercicio')
             .eq('id', agenteId)
             .single();
         if (!perfil) return null;
@@ -1001,6 +1001,9 @@ const ServicoAPI = {
             uf_sede: perfil.uf_sede || null,
             fonte_api: perfil.fonte_api || null,
             cargo_atual: perfil.cargo_atual || null,
+            // false = ex-parlamentar (22/09/2026: 3 dos candidatos a senador são ex-senadores, e a
+            // ficha dizia "já é senador" para quem saiu). null = não sabemos, tratado como em exercício.
+            em_exercicio: perfil.em_exercicio,
             mandato: perfil.mandato || null,
             n_proposicoes: perfil.n_proposicoes ?? null,
             n_comissoes: comissoes,
@@ -1022,6 +1025,45 @@ const ServicoAPI = {
     // Ficha de um candidato a Deputado Federal pelo slug.
     // Quando o candidato JA tem mandato (agente_id preenchido pelo cruzamento nome+UF), a ficha
     // vem com `mandato`: o historico real de quem esta pedindo o voto de novo.
+    // ── Candidatos a SENADOR 2026 (22/09/2026) ─────────────────────────────────────────────
+    // Mesmo formato das funções do deputado federal, para a página de Eleições tratar os dois
+    // cargos do mesmo jeito. São 318 linhas: nenhuma leitura passa perto do corte de 1.000.
+    listarCandidatosSenador: async ({ ano = 2026, uf = null, busca = null, pagina = 1, porPagina = 24 } = {}) => {
+        let q = supabase
+            .from('candidatos_senador')
+            .select('id, slug, uf, nr_candidato, nome_urna, partido_sigla, coligacao_nome, situacao_tse, reeleicao, foto_url', { count: 'exact' })
+            .eq('ano_eleicao', ano);
+        if (uf) q = q.eq('uf', uf.toUpperCase());
+        // Mesma regra de busca do deputado: só dígitos = começo do número (o número de senador tem
+        // três dígitos e começa pelo do partido); texto = nome, nome do partido ou sigla exata.
+        if (busca && busca.trim()) {
+            const termo = busca.trim().replace(/[%,()]/g, '');
+            if (/^\d+$/.test(termo)) q = q.like('nr_candidato', `${termo}%`);
+            else if (termo) q = q.or(`nome_urna.ilike.%${termo}%,nome_completo.ilike.%${termo}%,partido_nome.ilike.%${termo}%,partido_sigla.ilike.${termo}`);
+        }
+        const paginaSegura = Math.max(1, Number(pagina) || 1);
+        const de = (paginaSegura - 1) * porPagina;
+        q = q.order('uf', { ascending: true }).order('nome_urna', { ascending: true }).range(de, de + porPagina - 1);
+        const { data, error, count } = await q;
+        if (error) { console.error('listarCandidatosSenador:', error.message); return { itens: [], total: 0 }; }
+        return { itens: data || [], total: count || 0 };
+    },
+
+    resumoCandidatosSenador: async (ano = 2026) => {
+        const { data, error } = await supabase.from('candidatos_senador').select('uf').eq('ano_eleicao', ano);
+        if (error) { console.error('resumoCandidatosSenador:', error.message); return { total: 0, porUf: {} }; }
+        const porUf = {};
+        for (const r of data || []) porUf[r.uf] = (porUf[r.uf] || 0) + 1;
+        return { total: (data || []).length, porUf };
+    },
+
+    getCandidatoSenadorPorSlug: async (slug) => {
+        const { data, error } = await supabase.from('candidatos_senador').select('*').eq('slug', slug).single();
+        if (error || !data) return null;
+        const mandato = data.agente_id ? await ServicoAPI.getResumoMandato(data.agente_id) : null;
+        return { ...data, mandato };
+    },
+
     getCandidatoDeputadoFederalPorSlug: async (slug) => {
         const { data, error } = await supabase
             .from('candidatos_deputado_federal')

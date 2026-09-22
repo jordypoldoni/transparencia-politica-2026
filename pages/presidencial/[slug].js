@@ -7,6 +7,7 @@ import TrajetoriaEleitoral from '../../components/TrajetoriaEleitoral';
 import ServicoAPI from '../../src/servicos/servico_api';
 import Avatar from '../../components/Avatar';
 import { t } from '../../src/estilo/tokens';
+import BotaoVoltar from '../../components/BotaoVoltar';
 
 function idade(dataNascimento) {
   if (!dataNascimento) return null;
@@ -52,7 +53,7 @@ export default function PerfilPresidenciavel({ candidato, colega, canonical }) {
         {c.foto_url && <meta property="og:image" content={c.foto_url} />}
       </Head>
 
-      <Link href="/candidatos-2026?cargo=presidente" style={{ display: 'inline-block', marginBottom: '20px', color: t.cor.cinza, textDecoration: 'none', fontWeight: 600, fontSize: '0.88rem' }}>← Candidatos 2026</Link>
+      <BotaoVoltar href="/candidatos-2026?cargo=presidente" />
 
       <div style={{ display: 'flex', gap: '18px', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap' }}>
         <Avatar nome={c.nome_urna} foto={c.foto_url} size={92} />

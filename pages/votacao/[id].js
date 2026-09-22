@@ -8,6 +8,7 @@ import { casaDaVotacao } from '../../src/lib/casa';
 import Termo from '../../components/Termo';
 import CampoBusca from '../../components/CampoBusca';
 import { t } from '../../src/estilo/tokens';
+import BotaoVoltar from '../../components/BotaoVoltar';
 
 const ORDEM = ['Sim', 'Não', 'Abstenção', 'Obstrução'];
 const corVoto = (tp) => {
@@ -73,7 +74,7 @@ export default function Votacao({ meta, votos }) {
     <>
       <Head><title>{`${(assunto || 'Votação').slice(0, 70)}: como votaram | Lume`}</title></Head>
       <div className="pagina">
-        <button onClick={() => router.back()} style={{ ...pilula, marginBottom: '20px' }}>← Voltar</button>
+        <BotaoVoltar />
 
         <div style={{ background: t.cor.verde, color: '#fff', borderRadius: t.raio.lg, padding: 'clamp(22px,4vw,36px)' }}>
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap' }}>

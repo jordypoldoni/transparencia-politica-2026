@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import Link from 'next/link';
 import ServicoAPI from '../../src/servicos/servico_api';
 import { t } from '../../src/estilo/tokens';
+import BotaoVoltar from '../../components/BotaoVoltar';
 
 const brlCompacto = (v) => {
   if (v == null) return '-';
@@ -39,7 +40,7 @@ export default function EntePanorama({ dados }) {
         <meta name="description" content={`Quanto ${nome} arrecadou e gastou em ${resumo?.ano || ''}, e para onde foi o dinheiro público, por função e por habitante. Fonte: SICONFI/Tesouro Nacional.`} />
       </Head>
 
-      <button onClick={() => router.back()} style={{ ...pilula, background: '#fff', color: t.cor.tinta, marginBottom: '16px', boxShadow: t.sombra.clicavel }}>← Voltar</button>
+      <BotaoVoltar margem="0 0 16px" />
 
       {/* Cabeçalho */}
       <div style={{ background: t.cor.verde, color: '#fff', borderRadius: t.raio.lg, padding: 'clamp(24px,4vw,40px)', marginBottom: '20px' }}>

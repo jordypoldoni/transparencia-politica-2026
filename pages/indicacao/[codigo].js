@@ -3,6 +3,7 @@ import Link from 'next/link';
 import Head from 'next/head';
 import ServicoAPI from '../../src/servicos/servico_api';
 import { t } from '../../src/estilo/tokens';
+import BotaoVoltar from '../../components/BotaoVoltar';
 
 // /indicacao/[codigo] — a ficha de uma indicação. (18/09/2026)
 //
@@ -87,7 +88,7 @@ export default function FichaIndicacao({ i }) {
         <meta property="og:description" content={desc} />
       </Head>
 
-      <Link href="/indicacoes" style={{ display: 'inline-block', marginBottom: '20px', color: t.cor.cinza, textDecoration: 'none', fontWeight: 600, fontSize: '0.88rem' }}>← Indicações do presidente</Link>
+      <BotaoVoltar href="/indicacoes" />
 
       <p style={{ margin: '0 0 6px', fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.cor.ouroTexto }}>
         {i.identificacao} · indicação do Poder Executivo

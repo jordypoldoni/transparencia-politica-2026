@@ -74,9 +74,16 @@ function ListaPresidente({ chapas }) {
   );
 }
 
-function CardDeputadoFederal({ d }) {
+// Os dois cargos legislativos usam a MESMA lista (22/09/2026, quando o Senado entrou). O que
+// muda por cargo mora aqui; busca, filtro por estado, paginação e o voltar com filtro são iguais.
+const CARGOS_LISTA = {
+  'deputado-federal': { chave: 'deputado-federal', api: '/api/candidatos-deputado-federal', rotulo: 'Deputado Federal', hrefBase: '/deputado-federal' },
+  senador: { chave: 'senador', api: '/api/candidatos-senador', rotulo: 'Senador', hrefBase: '/candidato-senador' },
+};
+
+function CardDeputadoFederal({ d, hrefBase = '/deputado-federal' }) {
   return (
-    <Link href={`/deputado-federal/${d.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
+    <Link href={`${hrefBase}/${d.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
       {/* Mesmo cartao da grade de /deputados: avatar 40, duas linhas e a seta a direita.
           A linha "ver perfil" nao cabe com 5 por linha, e a seta faz o mesmo papel sem
           custar altura. */}
@@ -101,7 +108,8 @@ function CardDeputadoFederal({ d }) {
 // /deputados (~600 parlamentares), então cada busca vai a um endpoint fino
 // (/api/candidatos-deputado-federal, mesmo padrão do /api/buscar-ente.js que já existia
 // pra busca de município) em vez de filtrar um array já carregado.
-function ListaDeputadoFederal({ dadosIniciais, resumo, filtrosIniciais, paginaInicial }) {
+function ListaDeputadoFederal({ dadosIniciais, resumo, filtrosIniciais, paginaInicial, cargo = 'deputado-federal' }) {
+  const cfg = CARGOS_LISTA[cargo] || CARGOS_LISTA['deputado-federal'];
   const router = useRouter();
   const [uf, setUf] = useState(filtrosIniciais.uf || '');
   const [busca, setBusca] = useState(filtrosIniciais.busca || '');
@@ -121,30 +129,30 @@ function ListaDeputadoFederal({ dadosIniciais, resumo, filtrosIniciais, paginaIn
     if (partido) params.set('partido', partido);
     if (buscaAlvo) params.set('busca', buscaAlvo);
     if (paginaAlvo > 1) params.set('pagina', String(paginaAlvo));
-    fetch(`/api/candidatos-deputado-federal?${params.toString()}`)
+    fetch(`${cfg.api}?${params.toString()}`)
       .then((r) => r.json())
       .then((data) => { if (id === pedidoRef.current) setDados(data); })
       .catch(() => { if (id === pedidoRef.current) setDados({ itens: [], total: 0 }); })
       .finally(() => { if (id === pedidoRef.current) setCarregando(false); });
 
     // Mantém a URL em dia (link compartilhável, botão voltar do navegador) sem recarregar a página.
-    const q = new URLSearchParams({ cargo: 'deputado-federal' });
+    const q = new URLSearchParams({ cargo: cfg.chave });
     if (ufAlvo) q.set('uf', ufAlvo);
     if (partido) q.set('partido', partido);
     if (buscaAlvo) q.set('busca', buscaAlvo);
     if (paginaAlvo > 1) q.set('pagina', String(paginaAlvo));
     router.replace(`/candidatos-2026?${q.toString()}`, undefined, { shallow: true });
-    lembrarLista('deputado-federal', `/candidatos-2026?${q.toString()}`);
+    lembrarLista(cfg.chave, `/candidatos-2026?${q.toString()}`);
   };
 
   // Quem chegou já filtrado (link compartilhado, ou volta pelo navegador) também fica anotado.
   useEffect(() => {
-    const q = new URLSearchParams({ cargo: 'deputado-federal' });
+    const q = new URLSearchParams({ cargo: cfg.chave });
     if (filtrosIniciais.uf) q.set('uf', filtrosIniciais.uf);
     if (filtrosIniciais.partido) q.set('partido', filtrosIniciais.partido);
     if (filtrosIniciais.busca) q.set('busca', filtrosIniciais.busca);
     if (paginaInicial > 1) q.set('pagina', String(paginaInicial));
-    lembrarLista('deputado-federal', `/candidatos-2026?${q.toString()}`);
+    lembrarLista(cfg.chave, `/candidatos-2026?${q.toString()}`);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const aoMudarBusca = (valor) => {
@@ -175,7 +183,7 @@ function ListaDeputadoFederal({ dadosIniciais, resumo, filtrosIniciais, paginaIn
           <CampoSelect opcoes={opcoesUf} valor={uf} placeholder="Todos os estados" aoLabel="Filtrar por estado" aoSelecionar={aoMudarUf} />
         </div>
         <div style={{ flex: '2 1 240px', minWidth: 0 }}>
-          <CampoBusca valor={busca} aoMudar={aoMudarBusca} placeholder="Buscar por nome, partido ou número…" aoLabel="Buscar candidato a Deputado Federal por nome, partido ou número" />
+          <CampoBusca valor={busca} aoMudar={aoMudarBusca} placeholder="Buscar por nome, partido ou número…" aoLabel={`Buscar candidato a ${cfg.rotulo} por nome, partido ou número`} />
         </div>
         {temFiltro && (
           <button type="button" onClick={limparFiltros}
@@ -200,7 +208,7 @@ function ListaDeputadoFederal({ dadosIniciais, resumo, filtrosIniciais, paginaIn
         <div className="grade-parl" style={{ opacity: carregando ? 0.5 : 1, transition: 'opacity .15s' }}>
           {/* .grade-parl (CSS em _app.js): a mesma grade de /deputados e /senadores, 5 colunas
               no desktop caindo para 4, 3 e 2. Aqui era auto-fill com 280px, que dava 4. */}
-          {dados.itens.map((d) => <CardDeputadoFederal key={d.id} d={d} />)}
+          {dados.itens.map((d) => <CardDeputadoFederal key={d.id} d={d} hrefBase={cfg.hrefBase} />)}
         </div>
       )}
 
@@ -226,26 +234,29 @@ function ListaDeputadoFederal({ dadosIniciais, resumo, filtrosIniciais, paginaIn
   );
 }
 
-export default function Candidatos2026({ cargo, chapas, deputados, resumo, filtros, pagina }) {
+export default function Candidatos2026({ cargo, chapas, deputados, resumo, resumoSenado, filtros, pagina }) {
   const totalPresidente = chapas.length;
   return (
     <div className="pagina">
       <Head>
-        <title>Candidatos 2026: Presidente e Deputado Federal | Lume</title>
-        <meta name="description" content="Todos os candidatos à Presidência e à Câmara dos Deputados em 2026: partido, coligação e situação da candidatura de cada um, sem análise ou opinião, direto da fonte oficial (TSE)." />
+        <title>Candidatos 2026: Presidente, Senador e Deputado Federal | Lume</title>
+        <meta name="description" content="Todos os candidatos à Presidência, ao Senado e à Câmara dos Deputados em 2026: partido, coligação e situação da candidatura de cada um, sem análise ou opinião, direto da fonte oficial (TSE)." />
       </Head>
 
       <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.8rem,4vw,2.6rem)', margin: '0 0 10px' }}>
         Candidatos 2026
       </h1>
       <p style={{ color: t.cor.cinza, margin: '0 0 22px', maxWidth: '70ch', lineHeight: 1.5 }}>
-        Quem disputa a Presidência e a Câmara dos Deputados em 2026: partido, coligação e a situação da candidatura de cada um(a). Dados oficiais do{' '}
+        Quem disputa a Presidência, o Senado e a Câmara dos Deputados em 2026: partido, coligação e a situação da candidatura de cada um(a). Dados oficiais do{' '}
         <a href="https://www.tse.jus.br/" target="_blank" rel="noopener noreferrer" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>TSE</a>, sem análise ou opinião, tire suas próprias conclusões com base nos dados.
       </p>
 
       <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap' }}>
         <Link href="/candidatos-2026?cargo=presidente" style={abaEstilo(cargo === 'presidente')}>
           Presidente ({totalPresidente})
+        </Link>
+        <Link href="/candidatos-2026?cargo=senador" style={abaEstilo(cargo === 'senador')}>
+          Senador ({(resumoSenado.total || 0).toLocaleString('pt-BR')})
         </Link>
         <Link href="/candidatos-2026?cargo=deputado-federal" style={abaEstilo(cargo === 'deputado-federal')}>
           Deputado Federal ({(resumo.total || 0).toLocaleString('pt-BR')})
@@ -255,14 +266,17 @@ export default function Candidatos2026({ cargo, chapas, deputados, resumo, filtr
       {cargo === 'presidente' ? (
         <ListaPresidente chapas={chapas} />
       ) : (
-        <ListaDeputadoFederal dadosIniciais={deputados} resumo={resumo} filtrosIniciais={filtros} paginaInicial={pagina} />
+        // key troca o componente inteiro ao mudar de aba: sem ela, o estado da busca de um cargo
+        // vazaria para o outro, porque o React reaproveitaria o mesmo componente.
+        <ListaDeputadoFederal key={cargo} cargo={cargo} dadosIniciais={deputados}
+          resumo={cargo === 'senador' ? resumoSenado : resumo} filtrosIniciais={filtros} paginaInicial={pagina} />
       )}
     </div>
   );
 }
 
 export async function getServerSideProps({ query }) {
-  const cargo = query.cargo === 'deputado-federal' ? 'deputado-federal' : 'presidente';
+  const cargo = ['deputado-federal', 'senador'].includes(query.cargo) ? query.cargo : 'presidente';
   const filtros = {
     uf: query.uf ? String(query.uf).toUpperCase().slice(0, 2) : '',
     partido: query.partido ? String(query.partido).toUpperCase() : '',
@@ -271,13 +285,18 @@ export async function getServerSideProps({ query }) {
   };
   const pagina = Math.max(1, parseInt(query.pagina, 10) || 1);
 
-  const [chapas, resumo] = await Promise.all([
+  const [chapas, resumo, resumoSenado] = await Promise.all([
     ServicoAPI.listarPresidenciaveis(2026).catch(() => []),
     ServicoAPI.resumoCandidatosDeputadoFederal(2026).catch(() => ({ total: 0, porUf: {} })),
+    ServicoAPI.resumoCandidatosSenador(2026).catch(() => ({ total: 0, porUf: {} })),
   ]);
 
   let deputados = { itens: [], total: 0 };
-  if (cargo === 'deputado-federal') {
+  if (cargo === 'senador') {
+    deputados = await ServicoAPI.listarCandidatosSenador({
+      ano: 2026, uf: filtros.uf || null, busca: filtros.busca || null, pagina, porPagina: PORPAGINA,
+    }).catch(() => ({ itens: [], total: 0 }));
+  } else if (cargo === 'deputado-federal') {
     deputados = await ServicoAPI.listarCandidatosDeputadoFederal({
       ano: 2026, uf: filtros.uf || null, partido: filtros.partido || null,
       busca: filtros.busca || null, reeleicao: filtros.reeleicao, pagina, porPagina: PORPAGINA,
@@ -291,6 +310,7 @@ export async function getServerSideProps({ query }) {
       chapas: JSON.parse(JSON.stringify(chapas)),
       deputados: JSON.parse(JSON.stringify(deputados)),
       resumo: JSON.parse(JSON.stringify(resumo)),
+      resumoSenado: JSON.parse(JSON.stringify(resumoSenado)),
       filtros,
       pagina,
       totalPaginas,

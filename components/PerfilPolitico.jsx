@@ -8,6 +8,7 @@ import { nomeTipoProposicao, legendaDosTipos } from '../src/lib/proposicoes';
 import { explicarTipo, agruparPorMateria, papelVotacao, situacaoCidada } from '../src/lib/votacao';
 import { casaDoPerfil } from '../src/lib/casa';
 import TrajetoriaEleitoral from './TrajetoriaEleitoral';
+import BotaoVoltar from './BotaoVoltar';
 
 const brl = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v || 0);
 const brlExato = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
@@ -418,7 +419,7 @@ export default function PerfilPolitico({ dados }) {
             âmbar é proibido (branco dá 2,36:1), e a superfície branca com a sombra de clicável é
             o que diz "isto se aperta". */}
       <div style={{ position: 'sticky', top: '86px', zIndex: 40, marginBottom: '20px', display: 'flex', gap: '10px', alignItems: 'center' }}>
-        <button onClick={() => router.back()} style={{ ...pilula, flexShrink: 0, background: '#fff', color: t.cor.tinta, boxShadow: t.sombra.clicavel }}>← Voltar</button>
+        <BotaoVoltar margem="0" style={{ flexShrink: 0 }} />
         <nav aria-label="Seções do perfil" style={{ flex: '0 1 auto', minWidth: 0, padding: '7px', display: 'flex', gap: '7px', overflowX: 'auto', background: t.cor.ouro, borderRadius: t.raio.pill, boxShadow: t.sombra.sutil }}>
           {secoes.map((s) => (
             <button key={s.id} type="button" onClick={() => irParaSecao(s.id)} style={{ flexShrink: 0, fontSize: '0.82rem', fontWeight: 700, color: t.cor.tinta, cursor: 'pointer', border: 'none', padding: '7px 15px', borderRadius: t.raio.pill, background: '#FFFFFF', boxShadow: '0 1px 2px rgba(36,30,82,0.18), 0 2px 6px rgba(36,30,82,0.14)', fontFamily: t.fonte.corpo }}>{s.rotulo}</button>
