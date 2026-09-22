@@ -61,7 +61,8 @@ jobs:
   # situação que ainda muda (indeferido com recurso, deferido com recurso, pendente). Recoletar
   # todas todo dia seriam 100 mil requisições até 04/10 pela mesma ponte, convidando o Akamai a
   # desconfiar dela também. Diário: os 390 e os 28 presidenciáveis, uns 5 minutos. Domingo: tudo,
-  # uns 80, para pegar quem era definitivo e mudou.
+  # uns 80, para pegar quem era definitivo e mudou. Os 318 senadores (desde 22/09) vão inteiros
+  # nos dois, porque cabem em 3 minutos.
   ficha-tse:
     name: Ficha do TSE (situação, patrimônio, trajetória)
     runs-on: ubuntu-latest
@@ -112,6 +113,15 @@ jobs:
       - name: Presidenciáveis (28 fichas)
         if: steps.trava.outputs.parar != '1'
         run: node coletores/coletor_ficha_tse.js
+
+      # Senadores entraram em 22/09/2026. São 318, então vão INTEIROS todo dia (uns 3 minutos),
+      # sem o filtro de situação aberta que os 7.703 deputados precisam. Pela ponte a foto é
+      # pulada (imagem não atravessa a ponte como texto) e quem já tem foto não perde; a ligação
+      # com quem tem mandato (agente_id, reeleicao) também não é tocada, porque o upsert só
+      # grava as colunas que manda.
+      - name: Candidatos a Senador (318 fichas)
+        if: steps.trava.outputs.parar != '1'
+        run: node coletores/coletor_candidatos_senador_2026.js
 
       # Diário e botão comum: só quem ainda pode mudar. Domingo e botão "completa": todos.
       - name: Deputados federais
