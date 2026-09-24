@@ -25,9 +25,8 @@
 //       node coletores/coletor_gastos_arquivo.js 2026 --dry-run   (não escreve nada)
 import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
-import AdmZip from 'adm-zip';
-import iconv from 'iconv-lite';
 import { categoria } from './categoria_gastos.js';
+import { lerCsv, paraNumero, baixarCotaAnual } from './cota_arquivo.js';
 import { refreshRadar } from './refresh_radar.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -38,7 +37,6 @@ const DRY = args.includes('--dry-run');
 const FORCAR = args.includes('--forcar');
 const TUDO = args.includes('--tudo'); // regrava todos, mesmo sem mudança (uso raro)
 const MAX_LINHAS = parseInt(process.env.MAX_LINHAS || '400000', 10);
-const URL_ARQUIVO = `https://www.camara.leg.br/cotas/Ano-${ANO}.csv.zip`;
 
 if (!SUPABASE_URL || !SUPABASE_KEY) {
   console.error('❌ Faltam SUPABASE_URL e/ou SUPABASE_SERVICE_ROLE_KEY.');
@@ -54,56 +52,9 @@ function abortar(msg) {
   process.exit(1);
 }
 
-// O CSV da Câmara usa ; como separador e " como delimitador, e há ; dentro de campo
-// (nome de fornecedor, trecho de viagem). Split não serve: precisa de máquina de estado.
-function lerCsv(texto) {
-  const linhas = [];
-  let campo = '', linha = [], dentroDeAspas = false;
-  for (let i = 0; i < texto.length; i++) {
-    const c = texto[i];
-    if (dentroDeAspas) {
-      if (c === '"') {
-        if (texto[i + 1] === '"') { campo += '"'; i++; } else dentroDeAspas = false;
-      } else campo += c;
-      continue;
-    }
-    if (c === '"') { dentroDeAspas = true; continue; }
-    if (c === ';') { linha.push(campo); campo = ''; continue; }
-    if (c === '\n') { linha.push(campo); linhas.push(linha); linha = []; campo = ''; continue; }
-    if (c === '\r') continue;
-    campo += c;
-  }
-  if (campo !== '' || linha.length) { linha.push(campo); linhas.push(linha); }
-  return linhas;
-}
-
-// "1467" ou "1467,25" ou "1.467,25" — vírgula é decimal quando existe.
-function paraNumero(v) {
-  const s = (v || '').trim();
-  if (!s) return 0;
-  const n = s.includes(',') ? Number(s.replace(/\./g, '').replace(',', '.')) : Number(s);
-  return Number.isFinite(n) ? n : 0;
-}
-
-async function baixarCsv() {
-  console.log(`⬇️  ${URL_ARQUIVO}`);
-  const res = await fetch(URL_ARQUIVO);
-  if (!res.ok) throw new Error(`HTTP ${res.status} ao baixar o arquivo anual`);
-  const buf = Buffer.from(await res.arrayBuffer());
-  console.log(`   ${(buf.length / 1048576).toFixed(1)} MB compactados.`);
-  const entrada = new AdmZip(buf).getEntries().find((e) => e.entryName.toLowerCase().endsWith('.csv'));
-  if (!entrada) throw new Error('nenhum .csv dentro do zip');
-  const bruto = entrada.getData();
-  // A Câmara já serviu este arquivo em ISO-8859-1 no passado. Decide pelo conteúdo, não pela fé.
-  let texto = bruto.toString('utf8');
-  const quebrados = (texto.match(/�/g) || []).length;
-  if (quebrados > 50) {
-    console.log(`   (${quebrados} caracteres inválidos em UTF-8, relendo como ISO-8859-1)`);
-    texto = iconv.decode(bruto, 'latin1');
-  }
-  console.log(`   ${entrada.entryName}: ${(bruto.length / 1048576).toFixed(1)} MB.`);
-  return texto;
-}
+// lerCsv, paraNumero e o download do arquivo anual moraram aqui ate 24/09/2026.
+// Foram para coletores/cota_arquivo.js quando o cadastro dos deputados faltantes
+// passou a precisar do mesmo arquivo.
 
 async function main() {
   console.log(`🚀 Gastos da Câmara ${ANO} pelo arquivo anual${DRY ? ' (SIMULAÇÃO, nada será gravado)' : ''}.`);
@@ -115,7 +66,7 @@ async function main() {
   for (const a of agentes || []) if (a.id_externo_api) porIdExterno.set(String(a.id_externo_api).trim(), a);
   console.log(`👥 ${porIdExterno.size} deputados cadastrados no banco.`);
 
-  const linhas = lerCsv(await baixarCsv());
+  const linhas = lerCsv(await baixarCotaAnual(ANO));
   const cab = linhas.shift().map((c) => c.trim());
   const col = (nome) => {
     const i = cab.indexOf(nome);

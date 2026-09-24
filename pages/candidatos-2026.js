@@ -80,6 +80,7 @@ function ListaPresidente({ chapas }) {
 const CARGOS_LISTA = {
   'deputado-federal': { chave: 'deputado-federal', api: '/api/candidatos-deputado-federal', rotulo: 'Deputado Federal', hrefBase: '/deputado-federal' },
   senador: { chave: 'senador', api: '/api/candidatos-senador', rotulo: 'Senador', hrefBase: '/candidato-senador' },
+  governador: { chave: 'governador', api: '/api/candidatos-governador', rotulo: 'Governador', hrefBase: '/candidato-governador' },
 };
 
 
@@ -216,20 +217,20 @@ function ListaDeputadoFederal({ dadosIniciais, resumo, filtrosIniciais, paginaIn
   );
 }
 
-export default function Candidatos2026({ cargo, chapas, deputados, resumo, resumoSenado, filtros, pagina }) {
+export default function Candidatos2026({ cargo, chapas, deputados, resumo, resumoSenado, resumoGoverno, filtros, pagina }) {
   const totalPresidente = chapas.length;
   return (
     <div className="pagina">
       <Head>
-        <title>Candidatos 2026: Presidente, Senador e Deputado Federal | Lume</title>
-        <meta name="description" content="Todos os candidatos à Presidência, ao Senado e à Câmara dos Deputados em 2026: partido, coligação e situação da candidatura de cada um, sem análise ou opinião, direto da fonte oficial (TSE)." />
+        <title>Candidatos 2026: Presidente, Governador, Senador e Deputado Federal | Lume</title>
+        <meta name="description" content="Todos os candidatos à Presidência, aos governos estaduais, ao Senado e à Câmara dos Deputados em 2026: partido, coligação e situação da candidatura de cada um, sem análise ou opinião, direto da fonte oficial (TSE)." />
       </Head>
 
       <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.8rem,4vw,2.6rem)', margin: '0 0 10px' }}>
         Candidatos 2026
       </h1>
       <p style={{ color: t.cor.cinza, margin: '0 0 22px', maxWidth: '70ch', lineHeight: 1.5 }}>
-        Quem disputa a Presidência, o Senado e a Câmara dos Deputados em 2026: partido, coligação e a situação da candidatura de cada um(a). Dados oficiais do{' '}
+        Quem disputa a Presidência, os governos estaduais, o Senado e a Câmara dos Deputados em 2026: partido, coligação e a situação da candidatura de cada um(a). Dados oficiais do{' '}
         <a href="https://www.tse.jus.br/" target="_blank" rel="noopener noreferrer" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>TSE</a>, sem análise ou opinião, tire suas próprias conclusões com base nos dados.
       </p>
 
@@ -243,6 +244,9 @@ export default function Candidatos2026({ cargo, chapas, deputados, resumo, resum
         <Link href="/candidatos-2026?cargo=deputado-federal" style={abaEstilo(cargo === 'deputado-federal')}>
           Deputado Federal ({(resumo.total || 0).toLocaleString('pt-BR')})
         </Link>
+        <Link href="/candidatos-2026?cargo=governador" style={abaEstilo(cargo === 'governador')}>
+          Governador ({(resumoGoverno.total || 0).toLocaleString('pt-BR')})
+        </Link>
       </div>
 
       {cargo === 'presidente' ? (
@@ -251,14 +255,15 @@ export default function Candidatos2026({ cargo, chapas, deputados, resumo, resum
         // key troca o componente inteiro ao mudar de aba: sem ela, o estado da busca de um cargo
         // vazaria para o outro, porque o React reaproveitaria o mesmo componente.
         <ListaDeputadoFederal key={cargo} cargo={cargo} dadosIniciais={deputados}
-          resumo={cargo === 'senador' ? resumoSenado : resumo} filtrosIniciais={filtros} paginaInicial={pagina} />
+          resumo={cargo === 'senador' ? resumoSenado : cargo === 'governador' ? resumoGoverno : resumo}
+          filtrosIniciais={filtros} paginaInicial={pagina} />
       )}
     </div>
   );
 }
 
 export async function getServerSideProps({ query }) {
-  const cargo = ['deputado-federal', 'senador'].includes(query.cargo) ? query.cargo : 'presidente';
+  const cargo = ['deputado-federal', 'senador', 'governador'].includes(query.cargo) ? query.cargo : 'presidente';
   const filtros = {
     uf: query.uf ? String(query.uf).toUpperCase().slice(0, 2) : '',
     partido: query.partido ? String(query.partido).toUpperCase() : '',
@@ -267,15 +272,20 @@ export async function getServerSideProps({ query }) {
   };
   const pagina = Math.max(1, parseInt(query.pagina, 10) || 1);
 
-  const [chapas, resumo, resumoSenado] = await Promise.all([
+  const [chapas, resumo, resumoSenado, resumoGoverno] = await Promise.all([
     ServicoAPI.listarPresidenciaveis(2026).catch(() => []),
     ServicoAPI.resumoCandidatosDeputadoFederal(2026).catch(() => ({ total: 0, porUf: {} })),
     ServicoAPI.resumoCandidatosSenador(2026).catch(() => ({ total: 0, porUf: {} })),
+    ServicoAPI.resumoCandidatosGovernador(2026).catch(() => ({ total: 0, porUf: {} })),
   ]);
 
   let deputados = { itens: [], total: 0 };
   if (cargo === 'senador') {
     deputados = await ServicoAPI.listarCandidatosSenador({
+      ano: 2026, uf: filtros.uf || null, busca: filtros.busca || null, pagina, porPagina: PORPAGINA,
+    }).catch(() => ({ itens: [], total: 0 }));
+  } else if (cargo === 'governador') {
+    deputados = await ServicoAPI.listarCandidatosGovernador({
       ano: 2026, uf: filtros.uf || null, busca: filtros.busca || null, pagina, porPagina: PORPAGINA,
     }).catch(() => ({ itens: [], total: 0 }));
   } else if (cargo === 'deputado-federal') {
@@ -293,6 +303,7 @@ export async function getServerSideProps({ query }) {
       deputados: JSON.parse(JSON.stringify(deputados)),
       resumo: JSON.parse(JSON.stringify(resumo)),
       resumoSenado: JSON.parse(JSON.stringify(resumoSenado)),
+      resumoGoverno: JSON.parse(JSON.stringify(resumoGoverno)),
       filtros,
       pagina,
       totalPaginas,

@@ -1061,6 +1061,46 @@ const ServicoAPI = {
         return { total: (data || []).length, porUf };
     },
 
+    // CANDIDATOS A GOVERNADOR 2026 (24/09/2026). Sao 201 no pais, de 4 em AL a 11 no DF, MG e
+    // PI: cabe tudo sem paginacao pesada, mas a lista usa o mesmo formato das outras para a
+    // pagina /candidatos-2026 poder tratar os tres cargos igual.
+    listarCandidatosGovernador: async ({ ano = 2026, uf = null, busca = null, pagina = 1, porPagina = 24 } = {}) => {
+        let q = supabase
+            .from('candidatos_governador')
+            .select('id, slug, uf, nr_candidato, nome_urna, partido_sigla, coligacao_nome, situacao_tse, reeleicao, agente_id, foto_url', { count: 'exact' })
+            .eq('ano_eleicao', ano);
+        if (uf) q = q.eq('uf', uf.toUpperCase());
+        // Mesma regra de busca dos outros cargos: so digitos = comeco do numero (o de
+        // governador tem dois digitos, os do proprio partido); texto = nome, nome do partido
+        // por extenso ou sigla exata.
+        if (busca && busca.trim()) {
+            const termo = busca.trim().replace(/[%,()]/g, '');
+            if (/^\d+$/.test(termo)) q = q.like('nr_candidato', `${termo}%`);
+            else if (termo) q = q.or(`nome_urna.ilike.%${termo}%,nome_completo.ilike.%${termo}%,partido_nome.ilike.%${termo}%,partido_sigla.ilike.${termo}`);
+        }
+        const paginaSegura = Math.max(1, Number(pagina) || 1);
+        const de = (paginaSegura - 1) * porPagina;
+        q = q.order('uf', { ascending: true }).order('nome_urna', { ascending: true }).range(de, de + porPagina - 1);
+        const { data, error, count } = await q;
+        if (error) { console.error('listarCandidatosGovernador:', error.message); return { itens: [], total: 0 }; }
+        return { itens: data || [], total: count || 0 };
+    },
+
+    resumoCandidatosGovernador: async (ano = 2026) => {
+        const { data, error } = await supabase.from('candidatos_governador').select('uf').eq('ano_eleicao', ano);
+        if (error) { console.error('resumoCandidatosGovernador:', error.message); return { total: 0, porUf: {} }; }
+        const porUf = {};
+        for (const r of data || []) porUf[r.uf] = (porUf[r.uf] || 0) + 1;
+        return { total: (data || []).length, porUf };
+    },
+
+    getCandidatoGovernadorPorSlug: async (slug) => {
+        const { data, error } = await supabase.from('candidatos_governador').select('*').eq('slug', slug).single();
+        if (error || !data) return null;
+        const mandato = data.agente_id ? await ServicoAPI.getResumoMandato(data.agente_id) : null;
+        return { ...data, mandato };
+    },
+
     // CEDULA DO ELEITOR (/comecar): tudo o que quem mora num estado vota em 04/10/2026,
     // na ordem em que a urna pergunta. Uma chamada so, porque a pagina precisa das tres
     // listas juntas e servidas no HTML (SSR), nao carregadas depois pelo navegador.
@@ -1068,18 +1108,20 @@ const ServicoAPI = {
     // Deputado federal nao cabe inteiro: sao 1.119 em SP, 457 no RS. O recorte aqui e quem
     // JA TEM MANDATO (agente_id preenchido), porque desses o site tem gasto e voto para
     // mostrar; o resto fica a um clique, na lista completa de /candidatos-2026.
-    // Governador e deputado estadual ainda nao foram coletados: a pagina diz isso em vez de
+    // Governador entrou em 24/09. Deputado estadual ainda nao: a pagina diz isso em vez de
     // fingir que a cedula esta completa.
     montarCedula: async ({ uf, ano = 2026 }) => {
         if (!uf) return null;
         const UF = String(uf).toUpperCase().slice(0, 2);
-        const [comMandato, contagem, senadores, chapas] = await Promise.all([
+        const [comMandato, contagem, senadores, governadores, chapas] = await Promise.all([
             // 100 cobre com folga: o maior estado tem 70 cadeiras na Camara.
             ServicoAPI.listarCandidatosDeputadoFederal({ ano, uf: UF, comMandato: true, porPagina: 100 }),
             // porPagina 1 so para ler o count exato do estado sem trazer as centenas de linhas.
             ServicoAPI.listarCandidatosDeputadoFederal({ ano, uf: UF, porPagina: 1 }),
             // 60 cobre: o estado com mais candidatos ao Senado tem 20.
             ServicoAPI.listarCandidatosSenador({ ano, uf: UF, porPagina: 60 }),
+            // 40 cobre: o estado com mais candidatos a governador tem 11.
+            ServicoAPI.listarCandidatosGovernador({ ano, uf: UF, porPagina: 40 }),
             ServicoAPI.listarPresidenciaveis(ano),
         ].map((pr) => pr.catch((e) => { console.error('montarCedula:', e.message); return null; })));
 
@@ -1090,6 +1132,7 @@ const ServicoAPI = {
                 total: contagem?.total || 0,
             },
             senadores: senadores?.itens || [],
+            governadores: governadores?.itens || [],
             chapas: chapas || [],
         };
     },

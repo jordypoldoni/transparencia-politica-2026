@@ -57,6 +57,7 @@ function Cedula({ uf, cedula }) {
   const nomeUf = NOMES_UF[uf] || uf;
   const federais = cedula?.federais || { comMandato: [], total: 0 };
   const senadores = cedula?.senadores || [];
+  const governadores = cedula?.governadores || [];
   const chapas = cedula?.chapas || [];
 
   return (
@@ -93,8 +94,15 @@ function Cedula({ uf, cedula }) {
         )}
       </BlocoCargo>
 
-      <BlocoCargo ordem={4} cargo="Governador">
-        <AindaNaoTemos texto="Ainda não coletamos os candidatos a governador. Entra junto com o deputado estadual." />
+      <BlocoCargo ordem={4} cargo="Governador"
+        nota={`Você vota em um nome. Cada chapa leva um vice, que assume o governo se o titular sair: o vice está na ficha de cada candidato. São ${governadores.length} no ${nomeUf}.`}>
+        {governadores.length > 0 ? (
+          <div className="grade-parl">
+            {governadores.map((g) => <CardCandidato key={g.id} d={g} hrefBase="/candidato-governador" />)}
+          </div>
+        ) : (
+          <AindaNaoTemos texto={`Nenhum candidato a governador coletado para o ${nomeUf} até agora.`} />
+        )}
       </BlocoCargo>
 
       <BlocoCargo ordem={5} cargo="Presidente"

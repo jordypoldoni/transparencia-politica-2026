@@ -5,7 +5,7 @@ import { NOMES_UF, pctDoTeto } from '../src/lib/cotas';
 import { t } from '../src/estilo/tokens';
 import { hrefPerfil } from '../src/lib/casa';
 import { useVoltarLista } from '../src/lib/voltarLista';
-// FICHA DE CANDIDATO A CARGO LEGISLATIVO (22/09/2026). Era o corpo de
+// FICHA DE CANDIDATO (22/09/2026; governador entrou em 24/09). Era o corpo de
 // pages/deputado-federal/[slug].js; virou componente quando os 318 candidatos a SENADOR
 // chegaram, para as duas páginas não serem duas cópias de 200 linhas com palavras trocadas.
 // O que muda por cargo mora em CARGOS, logo abaixo. O que muda por PESSOA (ser a mesma casa,
@@ -33,6 +33,17 @@ const CARGOS = {
     listaPadrao: '/candidatos-2026?cargo=senador',
     listaParlamentares: { href: '/senadores', rotulo: 'lista de Senadores' },
     semPlano: 'Senador(a) não é obrigado(a) por lei a apresentar um plano de governo na Justiça Eleitoral: a eleição para o Senado é majoritária, mas a exigência vale só para o Executivo (Presidente, Governador, Prefeito). Por isso não há um documento de propostas aqui.',
+  },
+  // GOVERNADOR (24/09/2026) é o primeiro cargo do EXECUTIVO nesta ficha, e por isso muda duas
+  // coisas: a chapa tem um vice em vez de dois suplentes, e o plano de governo é OBRIGATÓRIO
+  // por lei, então aqui não cabe a ressalva de "não é obrigado a apresentar".
+  governador: {
+    nome: 'Governador(a)',
+    chaveLista: 'governador',
+    listaPadrao: '/candidatos-2026?cargo=governador',
+    listaParlamentares: null,
+    semMandato: 'Não exerce mandato no Congresso Nacional hoje, então não há gastos de cota, votações nem presença a mostrar aqui. Governo de estado não é acompanhado pelo site: o que temos do Executivo estadual são os gastos do estado, na seção de gastos públicos.',
+    comPlano: 'Candidato(a) a Governador(a) é obrigado(a) por lei a entregar uma proposta de governo à Justiça Eleitoral. Quando o TSE publica o documento, ele aparece na seção de documentos abaixo, no original.',
   },
 };
 
@@ -69,6 +80,36 @@ function Suplentes({ suplentes }) {
               )}
             </div>
           ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+// O VICE (24/09/2026). Na chapa majoritária do Executivo é uma pessoa só, eleita junto com o
+// titular e sem voto próprio, que assume o governo se o titular sair. Mesma ideia da seção de
+// suplentes do senador, e por isso o mesmo desenho.
+function Vice({ vice }) {
+  return (
+    <section style={{ background: t.cor.papelCartao, borderRadius: t.raio.md, padding: 'clamp(18px,3vw,26px)', boxShadow: t.sombra.sutil, marginBottom: '20px' }}>
+      <h2 style={{ fontSize: '1rem', margin: '0 0 6px' }}>Vice da chapa</h2>
+      <p style={{ margin: '0 0 16px', fontSize: '0.88rem', color: t.cor.cinza, lineHeight: 1.5 }}>
+        Quem assume o governo do estado se o titular sair do cargo (licença, renúncia, cassação
+        ou morte). É eleito junto, na mesma chapa, sem receber voto próprio.
+      </p>
+      {!vice ? (
+        <p style={{ margin: 0, fontSize: '0.88rem', color: t.cor.tinta }}>O TSE não informa o vice nesta candidatura.</p>
+      ) : (
+        <div style={{ background: t.cor.papelQuente, borderRadius: t.raio.md, padding: '14px 16px', maxWidth: '420px' }}>
+          <p style={{ margin: '0 0 4px', fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: t.cor.tinta }}>
+            {vice.cargo || 'Vice-Governador(a)'}
+          </p>
+          <p style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: t.cor.tinta }}>{vice.nome || 'Nome não informado'}</p>
+          {(vice.partido || vice.nome_completo) && (
+            <p style={{ margin: '2px 0 0', fontSize: '0.82rem', color: t.cor.tinta }}>
+              {[vice.nome_completo && vice.nome_completo !== vice.nome ? vice.nome_completo : null, vice.partido].filter(Boolean).join(' · ')}
+            </p>
+          )}
         </div>
       )}
     </section>
@@ -129,7 +170,9 @@ export default function FichaCandidatoLegislativo({ candidato, canonical, cargo 
   // senadores buscando reeleição, 30 são deputados tentando mudar de casa e 3 são ex-senadores.
   const casaM = m ? casaDoMandato(m) : null;
   const fonteMandato = casaM ? FONTE_CASA[casaM] : null;
-  const mesmoCargo = m && ((cargo === 'senador') === (casaM === 'senado'));
+  // 'Mesmo cargo' so faz sentido entre cargos legislativos: um governador nunca esta
+  // buscando reeleicao para a casa onde teve mandato.
+  const mesmoCargo = m && cargo !== 'governador' && ((cargo === 'senador') === (casaM === 'senado'));
   const exercendo = m && m.em_exercicio !== false;
   const cargoMandato = casaM === 'senado' ? 'Senador(a)' : 'Deputado(a) Federal';
 
@@ -189,6 +232,7 @@ export default function FichaCandidatoLegislativo({ candidato, canonical, cargo 
 
       {/* A chapa vem junto do nome: quem assume a vaga é informação sobre o candidato. */}
       {cargo === 'senador' && <Suplentes suplentes={c.suplentes} />}
+      {cargo === 'governador' && <Vice vice={c.vice} />}
 
       {/* Os quatro números. Só aparecem para quem tem mandato: não há o que prestar de contas
           sobre um mandato que não existe. */}
@@ -251,9 +295,13 @@ export default function FichaCandidatoLegislativo({ candidato, canonical, cargo 
       {/* Sem mandato federal hoje: dizer isso é informação, não é tela vazia. */}
       {!m && (
         <div style={{ background: t.cor.papel, border: `1px solid ${t.cor.papelQuente2}`, borderRadius: t.raio.sm, padding: '14px 18px', marginBottom: '22px', fontSize: '0.9rem', color: t.cor.tinta, lineHeight: 1.55 }}>
-          <strong>Não exerce mandato no Congresso hoje.</strong> Por isso não há gastos de cota,
-          votações nem presença a mostrar aqui. Quem já está no cargo tem esse histórico na
-          {' '}<Link href={cfg.listaParlamentares.href} style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>{cfg.listaParlamentares.rotulo}</Link>.
+          {cfg.semMandato ? cfg.semMandato : (
+            <>
+              <strong>Não exerce mandato no Congresso hoje.</strong> Por isso não há gastos de cota,
+              votações nem presença a mostrar aqui. Quem já está no cargo tem esse histórico na
+              {' '}<Link href={cfg.listaParlamentares.href} style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>{cfg.listaParlamentares.rotulo}</Link>.
+            </>
+          )}
         </div>
       )}
 
@@ -299,7 +347,7 @@ export default function FichaCandidatoLegislativo({ candidato, canonical, cargo 
       <PatrimonioDeclarado ficha={c} />
 
       <section style={{ background: t.cor.papel, border: `1px solid ${t.cor.papelQuente2}`, borderRadius: t.raio.sm, padding: '14px 18px', marginBottom: '20px', fontSize: '0.85rem', color: t.cor.cinza, lineHeight: 1.5 }}>
-        {cfg.semPlano}
+        {cfg.comPlano || cfg.semPlano}
       </section>
 
       <DocumentosERedes ficha={c} />
