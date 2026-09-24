@@ -901,14 +901,18 @@ const ServicoAPI = {
 
     // Lista paginada de candidatos a Deputado Federal, com filtros (uf, partido, busca por nome,
     // só quem busca reeleição). Ordenado por partido e depois nome, pra navegação previsível.
-    listarCandidatosDeputadoFederal: async ({ ano = 2026, uf = null, partido = null, busca = null, reeleicao = false, pagina = 1, porPagina = 24 } = {}) => {
+    listarCandidatosDeputadoFederal: async ({ ano = 2026, uf = null, partido = null, busca = null, reeleicao = false, comMandato = false, pagina = 1, porPagina = 24 } = {}) => {
         let q = supabase
             .from('candidatos_deputado_federal')
-            .select('id, slug, uf, nr_candidato, nome_urna, partido_sigla, coligacao_nome, situacao_candidatura, reeleicao, foto_url', { count: 'exact' })
+            .select('id, slug, uf, nr_candidato, nome_urna, partido_sigla, coligacao_nome, situacao_candidatura, reeleicao, agente_id, foto_url', { count: 'exact' })
             .eq('ano_eleicao', ano);
         if (uf) q = q.eq('uf', uf.toUpperCase());
         if (partido) q = q.eq('partido_sigla', partido.toUpperCase());
         if (reeleicao) q = q.eq('reeleicao', true);
+        // comMandato: so quem ja esta no banco de parlamentares (agente_id preenchido pelo
+        // casamento do coletor). E o recorte da cedula do eleitor: de quem se pode conferir
+        // gasto e voto do mandato atual, nao so a ficha de candidatura.
+        if (comMandato) q = q.not('agente_id', 'is', null);
         // BUSCA POR NOME, PARTIDO OU NÚMERO (22/09/2026, pedido do Jordy; antes era só nome).
         // - Só dígitos: busca pelo COMEÇO do número. "1302" acha o candidato; "13" acha todos do
         //   partido 13, porque o número de deputado federal começa pelo número do partido. É o
@@ -1031,7 +1035,7 @@ const ServicoAPI = {
     listarCandidatosSenador: async ({ ano = 2026, uf = null, busca = null, pagina = 1, porPagina = 24 } = {}) => {
         let q = supabase
             .from('candidatos_senador')
-            .select('id, slug, uf, nr_candidato, nome_urna, partido_sigla, coligacao_nome, situacao_tse, reeleicao, foto_url', { count: 'exact' })
+            .select('id, slug, uf, nr_candidato, nome_urna, partido_sigla, coligacao_nome, situacao_tse, reeleicao, agente_id, foto_url', { count: 'exact' })
             .eq('ano_eleicao', ano);
         if (uf) q = q.eq('uf', uf.toUpperCase());
         // Mesma regra de busca do deputado: só dígitos = começo do número (o número de senador tem
@@ -1055,6 +1059,39 @@ const ServicoAPI = {
         const porUf = {};
         for (const r of data || []) porUf[r.uf] = (porUf[r.uf] || 0) + 1;
         return { total: (data || []).length, porUf };
+    },
+
+    // CEDULA DO ELEITOR (/comecar): tudo o que quem mora num estado vota em 04/10/2026,
+    // na ordem em que a urna pergunta. Uma chamada so, porque a pagina precisa das tres
+    // listas juntas e servidas no HTML (SSR), nao carregadas depois pelo navegador.
+    //
+    // Deputado federal nao cabe inteiro: sao 1.119 em SP, 457 no RS. O recorte aqui e quem
+    // JA TEM MANDATO (agente_id preenchido), porque desses o site tem gasto e voto para
+    // mostrar; o resto fica a um clique, na lista completa de /candidatos-2026.
+    // Governador e deputado estadual ainda nao foram coletados: a pagina diz isso em vez de
+    // fingir que a cedula esta completa.
+    montarCedula: async ({ uf, ano = 2026 }) => {
+        if (!uf) return null;
+        const UF = String(uf).toUpperCase().slice(0, 2);
+        const [comMandato, contagem, senadores, chapas] = await Promise.all([
+            // 100 cobre com folga: o maior estado tem 70 cadeiras na Camara.
+            ServicoAPI.listarCandidatosDeputadoFederal({ ano, uf: UF, comMandato: true, porPagina: 100 }),
+            // porPagina 1 so para ler o count exato do estado sem trazer as centenas de linhas.
+            ServicoAPI.listarCandidatosDeputadoFederal({ ano, uf: UF, porPagina: 1 }),
+            // 60 cobre: o estado com mais candidatos ao Senado tem 20.
+            ServicoAPI.listarCandidatosSenador({ ano, uf: UF, porPagina: 60 }),
+            ServicoAPI.listarPresidenciaveis(ano),
+        ].map((pr) => pr.catch((e) => { console.error('montarCedula:', e.message); return null; })));
+
+        return {
+            uf: UF,
+            federais: {
+                comMandato: comMandato?.itens || [],
+                total: contagem?.total || 0,
+            },
+            senadores: senadores?.itens || [],
+            chapas: chapas || [],
+        };
     },
 
     getCandidatoSenadorPorSlug: async (slug) => {

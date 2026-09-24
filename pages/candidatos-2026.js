@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import ServicoAPI from '../src/servicos/servico_api';
 import Avatar from '../components/Avatar';
+import CardCandidato from '../components/CardCandidato';
 import CampoBusca from '../components/CampoBusca';
 import CampoSelect from '../components/CampoSelect';
 import { NOMES_UF } from '../src/lib/cotas';
@@ -81,25 +82,6 @@ const CARGOS_LISTA = {
   senador: { chave: 'senador', api: '/api/candidatos-senador', rotulo: 'Senador', hrefBase: '/candidato-senador' },
 };
 
-function CardDeputadoFederal({ d, hrefBase = '/deputado-federal' }) {
-  return (
-    <Link href={`${hrefBase}/${d.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-      {/* Mesmo cartao da grade de /deputados: avatar 40, duas linhas e a seta a direita.
-          A linha "ver perfil" nao cabe com 5 por linha, e a seta faz o mesmo papel sem
-          custar altura. */}
-      <div style={{ background: t.cor.papelCartao, borderRadius: t.raio.md, padding: '11px 12px', height: '100%', minWidth: 0, overflow: 'hidden', boxShadow: t.sombra.clicavel, transition: 'box-shadow .15s ease, transform .15s ease', display: 'flex', gap: '10px', alignItems: 'center' }}
-        onMouseOver={(e) => { e.currentTarget.style.boxShadow = t.sombra.hover; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-        onMouseOut={(e) => { e.currentTarget.style.boxShadow = t.sombra.clicavel; e.currentTarget.style.transform = 'none'; }}>
-        <Avatar nome={d.nome_urna} foto={d.foto_url} size={40} />
-        <div style={{ minWidth: 0, flex: 1 }}>
-          <p style={{ margin: 0, fontWeight: 700, fontSize: '0.88rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.nome_urna}</p>
-          <p style={{ margin: '2px 0 0', fontSize: '0.76rem', color: t.cor.cinza, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.partido_sigla || 'S/P'}{d.nr_candidato ? ` · nº ${d.nr_candidato}` : ''} · {d.uf}</p>
-        </div>
-        <span aria-hidden="true" style={{ flexShrink: 0, color: t.cor.ouroTexto, fontWeight: 700, fontSize: '0.9rem' }}>→</span>
-      </div>
-    </Link>
-  );
-}
 
 // Busca de candidato a Deputado Federal: mesmo campo padrão do site (pílula, ícone de lupa,
 // linha âmbar ao focar) e o MESMO comportamento de /deputados — digita e a lista já vai
@@ -208,7 +190,7 @@ function ListaDeputadoFederal({ dadosIniciais, resumo, filtrosIniciais, paginaIn
         <div className="grade-parl" style={{ opacity: carregando ? 0.5 : 1, transition: 'opacity .15s' }}>
           {/* .grade-parl (CSS em _app.js): a mesma grade de /deputados e /senadores, 5 colunas
               no desktop caindo para 4, 3 e 2. Aqui era auto-fill com 280px, que dava 4. */}
-          {dados.itens.map((d) => <CardDeputadoFederal key={d.id} d={d} hrefBase={cfg.hrefBase} />)}
+          {dados.itens.map((d) => <CardCandidato key={d.id} d={d} hrefBase={cfg.hrefBase} />)}
         </div>
       )}
 
