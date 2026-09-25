@@ -202,6 +202,9 @@ function ListaDeputadoFederal({ dadosIniciais, resumo, filtrosIniciais, paginaIn
           <>
             {(dados.total || 0).toLocaleString('pt-BR')} candidato{dados.total === 1 ? '' : 's'} encontrado{dados.total === 1 ? '' : 's'}
             {uf ? ` em ${uf} · ${NOMES_UF[uf] || ''}` : ' em todo o Brasil'}.
+            {cfg.aoVivo && filtrosIniciais.ufPadrao && uf === filtrosIniciais.uf && (filtrosIniciais.ufPadrao === 'local'
+              ? ' Estado escolhido pela sua localização aproximada; troque no campo acima.'
+              : ' SP aparece por padrão; escolha o seu estado no campo acima.')}
             {cfg.aoVivo && ' Lista consultada no TSE no momento da visita (renovada a cada 30 minutos), não guardada no site.'}
           </>
         )}
@@ -266,11 +269,13 @@ export default function Candidatos2026({ cargo, chapas, deputados, resumo, resum
         <Link href="/candidatos-2026?cargo=senador" style={abaEstilo(cargo === 'senador')}>
           Senador ({(resumoSenado.total || 0).toLocaleString('pt-BR')})
         </Link>
-        <Link href="/candidatos-2026?cargo=deputado-federal" style={abaEstilo(cargo === 'deputado-federal')}>
-          Deputado Federal ({(resumo.total || 0).toLocaleString('pt-BR')})
-        </Link>
+        {/* Ordem pedida pelo Jordy em 25/09: Governador antes de Deputado Federal, e os dois
+            legislativos da UF (federal e estadual) lado a lado no fim. */}
         <Link href="/candidatos-2026?cargo=governador" style={abaEstilo(cargo === 'governador')}>
           Governador ({(resumoGoverno.total || 0).toLocaleString('pt-BR')})
+        </Link>
+        <Link href="/candidatos-2026?cargo=deputado-federal" style={abaEstilo(cargo === 'deputado-federal')}>
+          Deputado Federal ({(resumo.total || 0).toLocaleString('pt-BR')})
         </Link>
         {/* Sem contagem: a lista é lida do TSE por estado, e o total do país pediria 27 consultas. */}
         <Link href="/candidatos-2026?cargo=deputado-estadual" style={abaEstilo(cargo === 'deputado-estadual')}>
@@ -291,7 +296,7 @@ export default function Candidatos2026({ cargo, chapas, deputados, resumo, resum
   );
 }
 
-export async function getServerSideProps({ query }) {
+export async function getServerSideProps({ query, req }) {
   const cargo = ['deputado-federal', 'senador', 'governador', 'deputado-estadual'].includes(query.cargo) ? query.cargo : 'presidente';
   const filtros = {
     uf: query.uf ? String(query.uf).toUpperCase().slice(0, 2) : '',
@@ -299,6 +304,18 @@ export async function getServerSideProps({ query }) {
     busca: query.busca ? String(query.busca).slice(0, 80) : '',
     reeleicao: query.reeleicao === '1',
   };
+  // DEPUTADO ESTADUAL abre JÁ com um estado (pedido do Jordy em 25/09): as outras abas abrem com
+  // candidatos na tela, e esta abria vazia pedindo o estado. Ordem: o que veio no endereço; senão
+  // o estado aproximado de quem visita, que a Vercel informa pelo IP no cabeçalho
+  // x-vercel-ip-country-region (não guardamos nada); senão SP, o maior colégio eleitoral.
+  // A tela diz qual estado está mostrando e o seletor continua ali para trocar.
+  if (query.cargo === 'deputado-estadual' && !filtros.uf) {
+    const pais = String(req.headers['x-vercel-ip-country'] || '').toUpperCase();
+    const regiao = String(req.headers['x-vercel-ip-country-region'] || '').toUpperCase();
+    const porLocal = pais === 'BR' && UFS_ESTADUAL.includes(regiao);
+    filtros.uf = porLocal ? regiao : 'SP';
+    filtros.ufPadrao = porLocal ? 'local' : 'sp';
+  }
   const pagina = Math.max(1, parseInt(query.pagina, 10) || 1);
 
   const [chapas, resumo, resumoSenado, resumoGoverno] = await Promise.all([
