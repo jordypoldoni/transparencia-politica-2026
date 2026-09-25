@@ -18,6 +18,13 @@ import { t } from '../src/estilo/tokens';
 // candidatos (de 6 itens a 147) para ficar aberto sempre. O cabeçalho mostra a contagem, então
 // quem não abrir ainda sabe o que tem ali: a informação de que existem 85 documentos é, ela
 // mesma, um dado. Aberta, a lista longa ganha rolagem própria em vez de esticar a página.
+//
+// CELULAR (25/09/2026). Na ficha do Cabo Daciolo a seção aberta alargava a PÁGINA inteira: os
+// nomes dos PDFs estavam em uma linha só (nowrap), e item de grade não encolhe abaixo do próprio
+// conteúdo, então a coluna crescia até caber o nome. Pior que o corte: o navegador reduzia o
+// zoom da página toda. Agora a coluna é minmax(0, 1fr) e o nome QUEBRA LINHA em vez de cortar
+// com reticências, porque o que importa ("Certidão TRF1 Criminal") fica no fim do nome e era
+// justamente o que sumia. Endereço longo de rede sem espaço (facebook.com/people/...) também quebra.
 export default function DocumentosERedes({ ficha }) {
   const [aberta, setAberta] = useState(false);
 
@@ -66,12 +73,12 @@ export default function DocumentosERedes({ ficha }) {
           {docs.length > 0 && (
             <div style={{ marginBottom: redes.length ? '18px' : 0 }}>
               <p style={rotulo}>Entregues ao TSE no registro</p>
-              <div style={{ display: 'grid', gap: '6px', marginTop: '8px', ...listaRolavel }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: '6px', marginTop: '8px', ...listaRolavel }}>
                 {docs.map((doc, i) => (
                   <a key={i} href={doc.url} target="_blank" rel="noopener noreferrer"
-                    style={{ display: 'flex', alignItems: 'center', gap: '10px', background: t.cor.papelQuente, borderRadius: t.raio.sm, padding: '10px 14px', textDecoration: 'none', color: t.cor.tinta, fontSize: '0.88rem', lineHeight: 1.4 }}>
-                    <span aria-hidden="true" style={{ fontSize: '0.72rem', fontWeight: 800, color: t.cor.ouroTexto, textTransform: 'uppercase' }}>{doc.tipo || 'doc'}</span>
-                    <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{doc.nome}</span>
+                    style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', minWidth: 0, background: t.cor.papelQuente, borderRadius: t.raio.sm, padding: '10px 14px', textDecoration: 'none', color: t.cor.tinta, fontSize: '0.88rem', lineHeight: 1.4 }}>
+                    <span aria-hidden="true" style={{ flexShrink: 0, paddingTop: '2px', fontSize: '0.72rem', fontWeight: 800, color: t.cor.ouroTexto, textTransform: 'uppercase' }}>{doc.tipo || 'doc'}</span>
+                    <span style={{ minWidth: 0, overflowWrap: 'anywhere' }}>{doc.nome}</span>
                   </a>
                 ))}
               </div>
@@ -84,11 +91,11 @@ export default function DocumentosERedes({ ficha }) {
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '8px' }}>
                 {redes.map((r, i) => r.url ? (
                   <a key={i} href={r.url} target="_blank" rel="noopener noreferrer"
-                    style={{ fontSize: '0.84rem', fontWeight: 600, padding: '6px 12px', borderRadius: t.raio.pill, background: t.cor.papelQuente, color: t.cor.ouroTexto, textDecoration: 'none' }}>
+                    style={{ maxWidth: '100%', overflowWrap: 'anywhere', fontSize: '0.84rem', fontWeight: 600, padding: '6px 12px', borderRadius: t.raio.pill, background: t.cor.papelQuente, color: t.cor.ouroTexto, textDecoration: 'none' }}>
                     {r.texto}
                   </a>
                 ) : (
-                  <span key={i} style={{ fontSize: '0.84rem', fontWeight: 600, padding: '6px 12px', borderRadius: t.raio.pill, background: t.cor.papelQuente, color: t.cor.tinta }}>
+                  <span key={i} style={{ maxWidth: '100%', overflowWrap: 'anywhere', fontSize: '0.84rem', fontWeight: 600, padding: '6px 12px', borderRadius: t.raio.pill, background: t.cor.papelQuente, color: t.cor.tinta }}>
                     {r.texto}
                   </span>
                 ))}
