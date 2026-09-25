@@ -45,6 +45,18 @@ const CARGOS = {
     semMandato: 'Não exerce mandato no Congresso Nacional hoje, então não há gastos de cota, votações nem presença a mostrar aqui. Governo de estado não é acompanhado pelo site: o que temos do Executivo estadual são os gastos do estado, na seção de gastos públicos.',
     comPlano: 'Candidato(a) a Governador(a) é obrigado(a) por lei a entregar uma proposta de governo à Justiça Eleitoral. Quando o TSE publica o documento, ele aparece na seção de documentos abaixo, no original.',
   },
+  // DEPUTADO ESTADUAL (25/09/2026): a ficha é lida do TSE NA HORA (pages/candidato-estadual), nada
+  // no banco. A ligação com o mandato atual ainda NÃO existe: a lista do TSE diz "não é reeleição"
+  // para todo mundo (Leonel Radde incluído), então o texto não pode afirmar que a pessoa não tem
+  // mandato. Diz o que o site sabe e aponta a trajetória, que mostra se já foi eleito(a).
+  'deputado-estadual': {
+    nome: 'Deputado(a) Estadual',
+    chaveLista: 'deputado-estadual',
+    listaPadrao: '/candidatos-2026?cargo=deputado-estadual',
+    listaParlamentares: null,
+    semMandato: 'Esta ficha ainda não está ligada ao mandato que o(a) candidato(a) possa exercer hoje, então gastos e votos não aparecem aqui. A trajetória eleitoral abaixo mostra se já foi eleito(a) antes. Das Assembleias Legislativas, o site acompanha por enquanto as de SP e do RS, no menu Parlamentares.',
+    semPlano: 'Deputado(a) Estadual não é obrigado(a) por lei a apresentar um plano de governo na Justiça Eleitoral: essa exigência vale só para cargos majoritários do Executivo (Presidente, Governador, Prefeito). Por isso não há um documento de propostas aqui.',
+  },
 };
 
 // Casa do mandato que a pessoa tem ou teve, para dizer a fonte certa dos números.

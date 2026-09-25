@@ -12,6 +12,7 @@ import { NOMES_UF } from '../src/lib/cotas';
 import { t } from '../src/estilo/tokens';
 import SeloSituacao from '../components/SeloSituacao';
 import { pilulaPagina, realcePagina } from '../src/estilo/botoes';
+import { listarCandidatosEstaduais, UFS_ESTADUAL } from '../src/lib/candidatosEstaduais';
 
 const UFS = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
 const PORPAGINA = 25; // 5 colunas x 5 linhas, igual as listas de /deputados e /senadores
@@ -81,6 +82,10 @@ const CARGOS_LISTA = {
   'deputado-federal': { chave: 'deputado-federal', api: '/api/candidatos-deputado-federal', rotulo: 'Deputado Federal', hrefBase: '/deputado-federal' },
   senador: { chave: 'senador', api: '/api/candidatos-senador', rotulo: 'Senador', hrefBase: '/candidato-senador' },
   governador: { chave: 'governador', api: '/api/candidatos-governador', rotulo: 'Governador', hrefBase: '/candidato-governador' },
+  // DEPUTADO ESTADUAL (25/09/2026) é o primeiro cargo lido do TSE NA HORA, sem banco: ~20 mil
+  // candidatos no país não cabem no plano gratuito. A fonte só lista por estado, então aqui o
+  // estado é OBRIGATÓRIO (sem "Todos os estados") e não há contagem por UF antes de escolher.
+  'deputado-estadual': { chave: 'deputado-estadual', api: '/api/candidatos-deputado-estadual', rotulo: 'Deputado Estadual', hrefBase: '/candidato-estadual', ufObrigatoria: true, aoVivo: true },
 };
 
 
@@ -148,22 +153,27 @@ function ListaDeputadoFederal({ dadosIniciais, resumo, filtrosIniciais, paginaIn
   const limparFiltros = () => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     partidoRef.current = '';
-    setUf(''); setBusca(''); setPagina(1); buscar('', '', 1);
+    // Com estado obrigatório, limpar tira só a busca: voltar para "sem estado" esvaziaria a lista.
+    const ufMantida = cfg.ufObrigatoria ? uf : '';
+    setUf(ufMantida); setBusca(''); setPagina(1); buscar(ufMantida, '', 1);
   };
 
-  const opcoesUf = [
-    { valor: '', rotulo: `Todos os estados (${resumo.total})`, busca: 'todos brasil nacional' },
-    ...UFS.map((u) => ({ valor: u, rotulo: `${u} · ${NOMES_UF[u] || u} (${resumo.porUf[u] || 0})`, busca: `${u} ${NOMES_UF[u] || ''}` })),
-  ];
+  const opcoesUf = cfg.ufObrigatoria
+    ? UFS_ESTADUAL.map((u) => ({ valor: u, rotulo: `${u} · ${NOMES_UF[u] || u}`, busca: `${u} ${NOMES_UF[u] || ''}` }))
+    : [
+      { valor: '', rotulo: `Todos os estados (${resumo.total})`, busca: 'todos brasil nacional' },
+      ...UFS.map((u) => ({ valor: u, rotulo: `${u} · ${NOMES_UF[u] || u} (${resumo.porUf[u] || 0})`, busca: `${u} ${NOMES_UF[u] || ''}` })),
+    ];
 
-  const temFiltro = !!(uf || busca);
+  const temFiltro = cfg.ufObrigatoria ? !!busca : !!(uf || busca);
+  const semEstado = cfg.ufObrigatoria && !uf;
   const totalPaginas = Math.max(1, Math.ceil((dados.total || 0) / PORPAGINA));
 
   return (
     <div>
       <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'flex-start', marginBottom: '16px' }}>
         <div style={{ flex: '1 1 220px', minWidth: '200px' }}>
-          <CampoSelect opcoes={opcoesUf} valor={uf} placeholder="Todos os estados" aoLabel="Filtrar por estado" aoSelecionar={aoMudarUf} />
+          <CampoSelect opcoes={opcoesUf} valor={uf} placeholder={cfg.ufObrigatoria ? 'Escolha o estado' : 'Todos os estados'} aoLabel="Filtrar por estado" aoSelecionar={aoMudarUf} />
         </div>
         <div style={{ flex: '2 1 240px', minWidth: 0 }}>
           <CampoBusca valor={busca} aoMudar={aoMudarBusca} placeholder="Buscar por nome, partido ou número…" aoLabel={`Buscar candidato a ${cfg.rotulo} por nome, partido ou número`} />
@@ -176,11 +186,23 @@ function ListaDeputadoFederal({ dadosIniciais, resumo, filtrosIniciais, paginaIn
         )}
       </div>
 
+      {semEstado ? (
+        // Sem estado escolhido não há o que listar: a fonte só responde por UF. Dizer por quê.
+        <p style={{ color: t.cor.cinza, fontSize: '0.92rem', lineHeight: 1.5, margin: '0 0 14px', maxWidth: '70ch' }}>
+          Escolha um estado para ver quem concorre à Assembleia Legislativa. No Distrito Federal o cargo
+          equivalente é o de deputado distrital, que ainda não está no site.
+        </p>
+      ) : dados.erro && !carregando ? (
+        // Falha da fonte não pode parecer "nenhum candidato".
+        <p style={{ color: t.cor.alertaTexto, fontSize: '0.9rem', margin: '0 0 14px' }}>{dados.erro}</p>
+      ) : (
+      <>
       <p style={{ color: t.cor.cinza, fontSize: '0.86rem', margin: '0 0 14px' }}>
         {carregando ? 'Buscando…' : (
           <>
             {(dados.total || 0).toLocaleString('pt-BR')} candidato{dados.total === 1 ? '' : 's'} encontrado{dados.total === 1 ? '' : 's'}
             {uf ? ` em ${uf} · ${NOMES_UF[uf] || ''}` : ' em todo o Brasil'}.
+            {cfg.aoVivo && ' Lista consultada no TSE no momento da visita (renovada a cada 30 minutos), não guardada no site.'}
           </>
         )}
       </p>
@@ -195,7 +217,10 @@ function ListaDeputadoFederal({ dadosIniciais, resumo, filtrosIniciais, paginaIn
         </div>
       )}
 
-      {totalPaginas > 1 && (
+      </>
+      )}
+
+      {!semEstado && totalPaginas > 1 && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '14px', marginTop: '28px', flexWrap: 'wrap' }}>
           {/* Botao padrao do site (src/estilo/botoes.js). Os dois aqui tinham cores diferentes
               entre si (um cinza claro, outro indigo com texto branco) e setas, destoando da
@@ -222,15 +247,15 @@ export default function Candidatos2026({ cargo, chapas, deputados, resumo, resum
   return (
     <div className="pagina">
       <Head>
-        <title>Candidatos 2026: Presidente, Governador, Senador e Deputado Federal | Lume</title>
-        <meta name="description" content="Todos os candidatos à Presidência, aos governos estaduais, ao Senado e à Câmara dos Deputados em 2026: partido, coligação e situação da candidatura de cada um, sem análise ou opinião, direto da fonte oficial (TSE)." />
+        <title>Candidatos 2026: Presidente, Governador, Senador, Deputado Federal e Estadual | Lume</title>
+        <meta name="description" content="Todos os candidatos à Presidência, aos governos estaduais, ao Senado, à Câmara dos Deputados e às Assembleias Legislativas em 2026: partido, coligação e situação da candidatura de cada um, sem análise ou opinião, direto da fonte oficial (TSE)." />
       </Head>
 
       <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.8rem,4vw,2.6rem)', margin: '0 0 10px' }}>
         Candidatos 2026
       </h1>
       <p style={{ color: t.cor.cinza, margin: '0 0 22px', maxWidth: '70ch', lineHeight: 1.5 }}>
-        Quem disputa a Presidência, os governos estaduais, o Senado e a Câmara dos Deputados em 2026: partido, coligação e a situação da candidatura de cada um(a). Dados oficiais do{' '}
+        Quem disputa a Presidência, os governos estaduais, o Senado, a Câmara dos Deputados e as Assembleias Legislativas em 2026: partido, coligação e a situação da candidatura de cada um(a). Dados oficiais do{' '}
         <a href="https://www.tse.jus.br/" target="_blank" rel="noopener noreferrer" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>TSE</a>, sem análise ou opinião, tire suas próprias conclusões com base nos dados.
       </p>
 
@@ -247,6 +272,10 @@ export default function Candidatos2026({ cargo, chapas, deputados, resumo, resum
         <Link href="/candidatos-2026?cargo=governador" style={abaEstilo(cargo === 'governador')}>
           Governador ({(resumoGoverno.total || 0).toLocaleString('pt-BR')})
         </Link>
+        {/* Sem contagem: a lista é lida do TSE por estado, e o total do país pediria 27 consultas. */}
+        <Link href="/candidatos-2026?cargo=deputado-estadual" style={abaEstilo(cargo === 'deputado-estadual')}>
+          Deputado Estadual
+        </Link>
       </div>
 
       {cargo === 'presidente' ? (
@@ -255,7 +284,7 @@ export default function Candidatos2026({ cargo, chapas, deputados, resumo, resum
         // key troca o componente inteiro ao mudar de aba: sem ela, o estado da busca de um cargo
         // vazaria para o outro, porque o React reaproveitaria o mesmo componente.
         <ListaDeputadoFederal key={cargo} cargo={cargo} dadosIniciais={deputados}
-          resumo={cargo === 'senador' ? resumoSenado : cargo === 'governador' ? resumoGoverno : resumo}
+          resumo={cargo === 'senador' ? resumoSenado : cargo === 'governador' ? resumoGoverno : cargo === 'deputado-estadual' ? { total: 0, porUf: {} } : resumo}
           filtrosIniciais={filtros} paginaInicial={pagina} />
       )}
     </div>
@@ -263,7 +292,7 @@ export default function Candidatos2026({ cargo, chapas, deputados, resumo, resum
 }
 
 export async function getServerSideProps({ query }) {
-  const cargo = ['deputado-federal', 'senador', 'governador'].includes(query.cargo) ? query.cargo : 'presidente';
+  const cargo = ['deputado-federal', 'senador', 'governador', 'deputado-estadual'].includes(query.cargo) ? query.cargo : 'presidente';
   const filtros = {
     uf: query.uf ? String(query.uf).toUpperCase().slice(0, 2) : '',
     partido: query.partido ? String(query.partido).toUpperCase() : '',
@@ -288,6 +317,12 @@ export async function getServerSideProps({ query }) {
     deputados = await ServicoAPI.listarCandidatosGovernador({
       ano: 2026, uf: filtros.uf || null, busca: filtros.busca || null, pagina, porPagina: PORPAGINA,
     }).catch(() => ({ itens: [], total: 0 }));
+  } else if (cargo === 'deputado-estadual') {
+    // Lido do TSE na hora (src/lib/candidatosEstaduais.js). A primeira página já vem no HTML;
+    // se a fonte falhar, a tela diz que falhou em vez de mostrar zero.
+    deputados = await listarCandidatosEstaduais({
+      uf: filtros.uf, busca: filtros.busca, pagina, porPagina: PORPAGINA,
+    }).catch(() => ({ itens: [], total: 0, erro: 'Não foi possível consultar o TSE agora. Tente de novo em alguns minutos.' }));
   } else if (cargo === 'deputado-federal') {
     deputados = await ServicoAPI.listarCandidatosDeputadoFederal({
       ano: 2026, uf: filtros.uf || null, partido: filtros.partido || null,

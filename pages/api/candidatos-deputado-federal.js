@@ -5,7 +5,7 @@
 // /api/buscar-ente.js (usado pela busca de município): endpoint fino + fetch do componente.
 import ServicoAPI from '../../src/servicos/servico_api';
 
-const PORPAGINA = 24;
+const PORPAGINA = 25; // igual à página /candidatos-2026 (5x5). Era 24: a 1ª página vinha com 25 do servidor e as seguintes pulavam/repetiam itens.
 
 export default async function handler(req, res) {
   const { uf, partido, busca, pagina } = req.query;
