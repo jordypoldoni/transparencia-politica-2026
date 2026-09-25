@@ -19,8 +19,11 @@ export const UFS_ESTADUAL = 'AC AL AP AM BA CE ES GO MA MT MS MG PA PB PR PE PI 
 const UFS = new Set(UFS_ESTADUAL);
 
 // Cache na memória da função: a lista muda devagar (situação de registro) e a busca e a troca
-// de página não devem pedir 1.431 candidatos de novo ao TSE. 30 minutos, por UF.
-const TTL_MS = 30 * 60 * 1000;
+// de página não devem pedir 1.431 candidatos de novo ao TSE. Era 30 minutos; subiu para 6 horas
+// em 25/09 quando entrou a contagem do país (26 listas): cada lista cheia passa pela ponte do
+// Supabase (3,4 MB só a de SP) e isso conta na franquia de tráfego do plano gratuito.
+export const TTL_LISTA_S = 6 * 60 * 60;
+const TTL_MS = TTL_LISTA_S * 1000;
 const cache = new Map();
 
 const semAcento = (s) => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -78,4 +81,26 @@ export async function listarCandidatosEstaduais({ uf, busca = '', pagina = 1, po
   const de = (Math.max(1, Number(pagina) || 1) - 1) * porPagina;
   const itens = lista.slice(de, de + porPagina).map(({ nome_completo, ...resto }) => resto);
   return { itens, total: lista.length };
+}
+
+// CONTAGEM DO PAÍS E POR ESTADO (25/09/2026), para a aba e o seletor mostrarem números como os
+// outros cargos. Não existe endpoint de contagem: são as 26 listas, de 4 em 4 para não disparar
+// tudo de uma vez contra a fonte. Guardada 24 horas. Se algum estado falhar, o total NÃO sai:
+// um número do país faltando um estado seria um número errado com cara de certo.
+const TTL_RESUMO_MS = 24 * 60 * 60 * 1000;
+let resumoGuardado = null;
+
+export async function resumoCandidatosEstaduais() {
+  if (resumoGuardado && Date.now() - resumoGuardado.em < TTL_RESUMO_MS) return resumoGuardado.dados;
+  const porUf = {};
+  const falhas = [];
+  for (let i = 0; i < UFS_ESTADUAL.length; i += 4) {
+    await Promise.all(UFS_ESTADUAL.slice(i, i + 4).map(async (uf) => {
+      try { porUf[uf] = (await listaDaUf(uf)).length; } catch (e) { falhas.push(uf); }
+    }));
+  }
+  const completo = falhas.length === 0;
+  const dados = { total: completo ? Object.values(porUf).reduce((a, b) => a + b, 0) : null, porUf, completo, falhas };
+  if (completo) resumoGuardado = { em: Date.now(), dados };
+  return dados;
 }

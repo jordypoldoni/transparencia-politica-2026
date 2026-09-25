@@ -159,7 +159,7 @@ function ListaDeputadoFederal({ dadosIniciais, resumo, filtrosIniciais, paginaIn
   };
 
   const opcoesUf = cfg.ufObrigatoria
-    ? UFS_ESTADUAL.map((u) => ({ valor: u, rotulo: `${u} · ${NOMES_UF[u] || u}`, busca: `${u} ${NOMES_UF[u] || ''}` }))
+    ? UFS_ESTADUAL.map((u) => ({ valor: u, rotulo: `${u} · ${NOMES_UF[u] || u}${resumo.porUf[u] != null ? ` (${resumo.porUf[u].toLocaleString('pt-BR')})` : ''}`, busca: `${u} ${NOMES_UF[u] || ''}` }))
     : [
       { valor: '', rotulo: `Todos os estados (${resumo.total})`, busca: 'todos brasil nacional' },
       ...UFS.map((u) => ({ valor: u, rotulo: `${u} · ${NOMES_UF[u] || u} (${resumo.porUf[u] || 0})`, busca: `${u} ${NOMES_UF[u] || ''}` })),
@@ -205,7 +205,7 @@ function ListaDeputadoFederal({ dadosIniciais, resumo, filtrosIniciais, paginaIn
             {cfg.aoVivo && filtrosIniciais.ufPadrao && uf === filtrosIniciais.uf && (filtrosIniciais.ufPadrao === 'local'
               ? ' Estado escolhido pela sua localização aproximada; troque no campo acima.'
               : ' SP aparece por padrão; escolha o seu estado no campo acima.')}
-            {cfg.aoVivo && ' Lista consultada no TSE no momento da visita (renovada a cada 30 minutos), não guardada no site.'}
+            {cfg.aoVivo && ' Lista consultada no TSE no momento da visita (renovada a cada 6 horas), não guardada no site.'}
           </>
         )}
       </p>
@@ -247,6 +247,17 @@ function ListaDeputadoFederal({ dadosIniciais, resumo, filtrosIniciais, paginaIn
 
 export default function Candidatos2026({ cargo, chapas, deputados, resumo, resumoSenado, resumoGoverno, filtros, pagina }) {
   const totalPresidente = chapas.length;
+  // Contagem dos estaduais vem DEPOIS de a página abrir (/api/resumo-deputado-estadual): exige as
+  // 26 listas do TSE. Enquanto não chega, ou se algum estado falhar, a aba fica sem número.
+  const [resumoEstadual, setResumoEstadual] = useState({ total: null, porUf: {} });
+  useEffect(() => {
+    let vivo = true;
+    fetch('/api/resumo-deputado-estadual')
+      .then((r) => r.json())
+      .then((d) => { if (vivo && d && d.completo) setResumoEstadual({ total: d.total, porUf: d.porUf || {} }); })
+      .catch(() => {});
+    return () => { vivo = false; };
+  }, []);
   return (
     <div className="pagina">
       <Head>
@@ -279,7 +290,7 @@ export default function Candidatos2026({ cargo, chapas, deputados, resumo, resum
         </Link>
         {/* Sem contagem: a lista é lida do TSE por estado, e o total do país pediria 27 consultas. */}
         <Link href="/candidatos-2026?cargo=deputado-estadual" style={abaEstilo(cargo === 'deputado-estadual')}>
-          Deputado Estadual
+          Deputado Estadual{resumoEstadual.total != null ? ` (${resumoEstadual.total.toLocaleString('pt-BR')})` : ''}
         </Link>
       </div>
 
@@ -289,7 +300,7 @@ export default function Candidatos2026({ cargo, chapas, deputados, resumo, resum
         // key troca o componente inteiro ao mudar de aba: sem ela, o estado da busca de um cargo
         // vazaria para o outro, porque o React reaproveitaria o mesmo componente.
         <ListaDeputadoFederal key={cargo} cargo={cargo} dadosIniciais={deputados}
-          resumo={cargo === 'senador' ? resumoSenado : cargo === 'governador' ? resumoGoverno : cargo === 'deputado-estadual' ? { total: 0, porUf: {} } : resumo}
+          resumo={cargo === 'senador' ? resumoSenado : cargo === 'governador' ? resumoGoverno : cargo === 'deputado-estadual' ? resumoEstadual : resumo}
           filtrosIniciais={filtros} paginaInicial={pagina} />
       )}
     </div>
