@@ -75,14 +75,23 @@ function dataIso(v) {
   return null;
 }
 
-// O VICE. Mesmo campo `vices` que no senador guarda os dois suplentes; aqui vem um item só.
-// Se a fonte mandar mais de um, fica o primeiro e o aviso sai no resumo: é sinal de que a
-// eleição tem formato diferente do que medimos, e isso precisa ser olhado, não engolido.
+// O VICE. Mesmo campo `vices` que no senador guarda os dois suplentes.
+//
+// A FICHA PODE TRAZER MAIS DE UM, e a primeira versao deste coletor pegava o primeiro da
+// lista. Errado: medimos em 24/09 (coletores/_sonda_vice_duplicado.mjs) que 19 das 201 chapas
+// trazem dois, e que o segundo nome e quase sempre o vice SUBSTITUIDO, que a ficha continua
+// listando. Em 10 dessas chapas o substituido vinha primeiro, e o banco ficou com o vice
+// errado: a chapa do Garotinho (RJ) apareceu com Major Elaine no lugar de Andre Monteiro.
+//
+// O DISCRIMINADOR, medido na mesma sonda: `candidatoApto` true com situacaoVice "12" e o vice
+// que esta na chapa; false com "3" e o substituido. Ficamos com o apto.
+//
+// Quando NENHUM e apto (uma chapa em SP, com os dois em "3"), nao inventamos: fica o primeiro,
+// com apto=false, e a tela diz a situacao em vez de apresentar como vice confirmado.
+// Os substituidos ficam guardados em `substituidos`, porque quem saiu da chapa e informacao,
+// nao lixo.
 function viceDe(f) {
-  const lista = Array.isArray(f.vices) ? f.vices : [];
-  const v = lista[0];
-  if (!v) return null;
-  return {
+  const lista = (Array.isArray(f.vices) ? f.vices : []).map((v) => ({
     cargo: v.ds_CARGO || v.dsCargo || v.nm_CARGO || null,
     nome: v.nm_URNA || v.nm_CANDIDATO || null,
     nome_completo: v.nm_CANDIDATO || null,
@@ -91,8 +100,17 @@ function viceDe(f) {
     partido_nome: v.nm_PARTIDO || null,
     apto: typeof v.candidatoApto === 'boolean' ? v.candidatoApto : null,
     situacao: v.situacaoVice || v.situacaoCandidato || null,
-  };
+  }));
+  if (!lista.length) return null;
+
+  const aptos = lista.filter((v) => v.apto === true);
+  const escolhido = aptos[0] || lista[0];
+  const substituidos = lista.filter((v) => v !== escolhido);
+  return { ...escolhido, ...(substituidos.length ? { substituidos } : {}) };
 }
+
+// Quantos aptos a ficha traz: 0 e chapa sem vice confirmado, mais de 1 foge do que medimos.
+const quantosAptos = (f) => (Array.isArray(f.vices) ? f.vices : []).filter((v) => v.candidatoApto === true).length;
 
 async function garantirBucket(nome) {
   const { data: buckets } = await supabase.storage.listBuckets();
@@ -125,7 +143,11 @@ async function main() {
   const fotoJa = new Map(existentes.filter((e) => e.foto_url).map((e) => [e.sq_candidato, e.foto_url]));
   if (!SIMULAR && !PONTE) await garantirBucket(BUCKET_FOTOS);
 
-  let ok = 0, fotos = 0, semVice = 0, viceDemais = 0;
+  let ok = 0, fotos = 0, semVice = 0, semViceApto = 0, viceDemais = 0;
+  // Vice não apto tem duas causas diferentes (medido em 25/09/2026): o TITULAR indeferido, e o
+  // vice só acompanha a chapa; ou o titular apto com o vice em troca. Contar junto dizia
+  // "substituição em curso" para 5 chapas em que nenhuma estava substituindo ninguém.
+  const titularNaoApto = [];
   const semFoto = [];
   const falhou = [];
 
@@ -151,7 +173,11 @@ async function main() {
         const { vices, uf_nascimento, ...ficha } = traduzir(f, (id) => nomes[String(id)] || null, sq, { ano: ANO, idEleicao: ID_ELEICAO, abrangencia: uf });
         const vice = viceDe(f);
         if (!vice) semVice++;
-        if (Array.isArray(f.vices) && f.vices.length > 1) viceDemais++;
+        else if (vice.apto !== true) {
+          if (ficha.apto_tse === false) titularNaoApto.push(`${uf}/${f.nomeUrna} (${ficha.situacao_tse || 'não apto'})`);
+          else semViceApto++;
+        }
+        if (quantosAptos(f) > 1) viceDemais++;
 
         const linha = {
           ano_eleicao: ANO,
@@ -192,7 +218,7 @@ async function main() {
         }
 
         if (SIMULAR) {
-          console.log(`   ${linha.nome_urna} (${linha.partido_sigla} ${linha.nr_candidato}) · ${linha.situacao_tse} · ${ficha.bens.length} bens · ${ficha.eleicoes_anteriores.length} eleições · vice: ${vice ? `${vice.nome} (${vice.partido})` : 'nenhum'}`);
+          console.log(`   ${linha.nome_urna} (${linha.partido_sigla} ${linha.nr_candidato}) · ${linha.situacao_tse} · ${ficha.bens.length} bens · ${ficha.eleicoes_anteriores.length} eleições · vice: ${vice ? `${vice.nome} (${vice.partido})${vice.apto === true ? '' : ' [NÃO APTO]'}${vice.substituidos ? ` [substituiu ${vice.substituidos.map((x) => x.nome).join(', ')}]` : ''}` : 'nenhum'}`);
         } else {
           const { error } = await supabase.from(TABELA).upsert(linha, { onConflict: 'sq_candidato' });
           if (error) throw new Error(`gravação: ${error.message}`);
@@ -208,7 +234,9 @@ async function main() {
 
   console.log(`\n📊 ${ok} candidatos${SIMULAR ? ' lidos' : ' gravados'}, ${fotos} fotos novas, ${falhou.length} falhas`);
   if (semVice) console.log(`   ${semVice} sem vice na ficha (a tela não inventa: mostra que a fonte não informa)`);
-  if (viceDemais) console.warn(`⚠️  ${viceDemais} fichas trouxeram MAIS DE UM vice. Guardamos o primeiro, mas isso foge do que medimos e merece olhada.`);
+  if (titularNaoApto.length) console.log(`   ${titularNaoApto.length} com o TITULAR não apto, e o vice segue a chapa: ${titularNaoApto.join(', ')}`);
+  if (semViceApto) console.log(`   ${semViceApto} com titular apto e vice não apto (substituição de vice em curso): a tela mostra a situação, não afirma vice confirmado`);
+  if (viceDemais) console.warn(`⚠️  ${viceDemais} fichas trouxeram MAIS DE UM vice APTO. Ficamos com o primeiro, mas isso foge do que medimos em 24/09 e merece olhada.`);
   if (semFoto.length) console.warn(`⚠️  ${semFoto.length} fotos não baixaram: ${semFoto.slice(0, 8).join(', ')}${semFoto.length > 8 ? '…' : ''}`);
   if (ok === 0) {
     console.error('❌ Nenhum candidato lido. Se for 403, o Akamai recusou a origem; a ponte existe para isso.');

@@ -89,7 +89,7 @@ function Suplentes({ suplentes }) {
 // O VICE (24/09/2026). Na chapa majoritária do Executivo é uma pessoa só, eleita junto com o
 // titular e sem voto próprio, que assume o governo se o titular sair. Mesma ideia da seção de
 // suplentes do senador, e por isso o mesmo desenho.
-function Vice({ vice }) {
+function Vice({ vice, titular }) {
   return (
     <section style={{ background: t.cor.papelCartao, borderRadius: t.raio.md, padding: 'clamp(18px,3vw,26px)', boxShadow: t.sombra.sutil, marginBottom: '20px' }}>
       <h2 style={{ fontSize: '1rem', margin: '0 0 6px' }}>Vice da chapa</h2>
@@ -110,7 +110,31 @@ function Vice({ vice }) {
               {[vice.nome_completo && vice.nome_completo !== vice.nome ? vice.nome_completo : null, vice.partido].filter(Boolean).join(' · ')}
             </p>
           )}
+          {/* A fonte marca como não apto quem ainda não teve o registro aceito. Dizer isso é
+              melhor do que apresentar a pessoa como vice confirmado.
+              25/09/2026: nas 5 chapas com vice não apto, quem estava INDEFERIDO era o titular, e o
+              vice só acompanhava a chapa. "Ainda não considera apto" dava a entender pendência.
+              Quando o titular não está apto, a frase diz isso, com a situação escrita pela fonte. */}
+          {vice.apto === false && titular?.apto === false && (
+            <p style={{ margin: '8px 0 0', fontSize: '0.8rem', color: t.cor.alertaTexto, lineHeight: 1.45 }}>
+              A chapa não está apta: a candidatura do titular consta como{titular.situacao ? <> <strong style={{ fontWeight: 700 }}>{titular.situacao}</strong></> : ' não apta'} no
+              TSE, e o registro do vice segue a situação do titular.
+            </p>
+          )}
+          {vice.apto === false && titular?.apto !== false && (
+            <p style={{ margin: '8px 0 0', fontSize: '0.8rem', color: t.cor.alertaTexto, lineHeight: 1.45 }}>
+              A Justiça Eleitoral ainda não considera este registro apto. A chapa pode mudar até a eleição.
+            </p>
+          )}
         </div>
+      )}
+      {/* Quem saiu da chapa é informação, não lixo: em 19 das 201 chapas de governador a ficha
+          do TSE ainda lista o vice substituído junto do atual. */}
+      {vice?.substituidos?.length > 0 && (
+        <p style={{ margin: '14px 0 0', fontSize: '0.82rem', color: t.cor.cinza, lineHeight: 1.5 }}>
+          Antes da chapa atual, a candidatura registrou {vice.substituidos.length === 1 ? 'outro nome' : 'outros nomes'} para vice:{' '}
+          {vice.substituidos.map((x) => `${x.nome}${x.partido ? ` (${x.partido})` : ''}`).join(', ')}. A substituição consta da própria ficha do TSE.
+        </p>
       )}
     </section>
   );
@@ -232,7 +256,7 @@ export default function FichaCandidatoLegislativo({ candidato, canonical, cargo 
 
       {/* A chapa vem junto do nome: quem assume a vaga é informação sobre o candidato. */}
       {cargo === 'senador' && <Suplentes suplentes={c.suplentes} />}
-      {cargo === 'governador' && <Vice vice={c.vice} />}
+      {cargo === 'governador' && <Vice vice={c.vice} titular={{ apto: c.apto_tse, situacao: c.situacao_tse }} />}
 
       {/* Os quatro números. Só aparecem para quem tem mandato: não há o que prestar de contas
           sobre um mandato que não existe. */}
