@@ -87,10 +87,16 @@ export default function App({ Component, pageProps }) {
           .logo-marca { display: none !important; }
           .logo-simbolo { display: block; }
         }
+        .titulo-pagina-movel { display: none; }
         @media (max-width: 1060px) {
           .nav-desktop { display: none; }
           .btn-hamburguer { display: inline-flex; align-items: center; }
           .menu-mobile { display: block; }
+          /* Celular: nome da pagina numa segunda linha do cabecalho. A primeira linha fica mais
+             baixa para o cabecalho inteiro nao crescer demais. */
+          .topo-linha { padding: 10px 16px 6px !important; }
+          .titulo-pagina-movel { display: block; padding: 0 16px 10px; }
+          .conta-nome { max-width: 130px !important; }
         }
 
         .hero-grid {

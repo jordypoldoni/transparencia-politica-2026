@@ -68,10 +68,27 @@ function ehAtivo(href, pathname) {
   // vivia em /deputados?casa=senado, e esta funcao tinha de deduzir a casa pela query e,
   // dentro de um perfil, pela casa do proprio parlamentar.
   if (hp === '/senadores') return pathname === '/senadores' || pathname.startsWith('/senador/');
-  if (hp === '/deputados') return pathname === '/deputados' || pathname.startsWith('/deputado/');
+  if (hp === '/deputados') return pathname === '/deputados' || pathname.startsWith('/deputados/') || pathname.startsWith('/deputado/');
+  if (hp === '/indicacoes') return pathname === '/indicacoes' || pathname.startsWith('/indicacao/');
   if (hp === '/votacoes') return pathname === '/votacoes' || pathname.startsWith('/votacao');
-  if (hp === '/candidatos-2026') return pathname === '/candidatos-2026' || pathname.startsWith('/presidencial/') || pathname.startsWith('/deputado-federal/');
+  if (hp === '/candidatos-2026') return pathname === '/candidatos-2026' || pathname.startsWith('/presidencial/') || pathname.startsWith('/deputado-federal/') || pathname.startsWith('/candidato-');
   return pathname === hp || pathname.startsWith(hp + '/');
+}
+
+// NOME DA PÁGINA NO CABEÇALHO DO CELULAR (26/09/2026, pedido do Jordy). No celular o menu vira
+// hambúrguer e some a pista de onde a pessoa está. O nome sai do próprio menu (o item ativo), e
+// as páginas que não estão no menu têm nome aqui.
+const FORA_DO_MENU = [
+  ['/entrar', 'Entrar'], ['/privacidade', 'Privacidade'], ['/sobre', 'Sobre o Lume'],
+  ['/estado/', 'Parlamentares do estado'], ['/ente/', 'Gastos públicos'],
+];
+function nomeDaPagina(pathname) {
+  for (const n of navItens) {
+    if (n.filhos) { const f = n.filhos.find((x) => ehAtivo(x.href, pathname)); if (f) return f.rotulo; }
+    else if (ehAtivo(n.href, pathname)) return n.rotulo;
+  }
+  const extra = FORA_DO_MENU.find(([p]) => (p.endsWith('/') ? pathname.startsWith(p) : pathname === p));
+  return extra ? extra[1] : '';
 }
 
 const grupoAtivo = (item, pathname) =>
@@ -183,7 +200,7 @@ export default function Layout({ children, pageProps }) {
             logo em vez de virar hambúrguer. Uma linha extra de menu não é um estado desenhado,
             é um acidente de layout. Ou cabe na linha, ou o hambúrguer assume (ponto de corte
             em _app.js, de 1360 para 1060 depois que o menu encolheu). */}
-        <div style={{ width: '100%', padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'nowrap' }}>
+        <div className="topo-linha" style={{ width: '100%', padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'nowrap' }}>
           {/* LOGO + CONTA, juntos à esquerda (pedido do Jordy, 26/09/2026). No celular (mesmo
               ponto de corte do hambúrguer, em _app.js) o logotipo sai e fica só o símbolo, menor,
               para o botão de entrar caber ao lado sem apertar. */}
@@ -278,6 +295,15 @@ export default function Layout({ children, pageProps }) {
             )}
           </button>
         </div>
+
+        {/* Segunda linha do cabeçalho, só no celular (CSS em _app.js): o nome da página. Linha
+            própria, e não entre o logo e o hambúrguer, porque ali já estão o símbolo e a conta
+            com nome e sobrenome: numa linha só, o nome da página viraria "Gastos pú..." */}
+        {nomeDaPagina(pathname) && (
+          <p className="titulo-pagina-movel" style={{ margin: 0, fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.15rem', lineHeight: 1.2, color: t.cor.tinta, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {nomeDaPagina(pathname)}
+          </p>
+        )}
 
         {/* Menu mobile. Os grupos viram SEÇÕES abertas, não sanfona: no celular há rolagem de
             sobra, e esconder dois links atrás de mais um toque só acrescenta trabalho. */}
