@@ -95,8 +95,18 @@ export function compararPartido(porPergunta, respostas) {
   return { iguais, comparaveis, detalhes };
 }
 
-// Ordem: mais concordância primeiro; empate, quem tem mais comparações (mais evidência) primeiro.
+// ORDEM (revista em 26/09/2026). A primeira versão ordenava pela porcentagem pura, e "1 de 1"
+// (100%) ficava acima de "9 de 10" (90%): pouca evidência ganhava de muita. Agora:
+//   1) quem tem pelo menos MIN_COMPARAVEIS perguntas comparáveis vem antes de quem tem menos
+//      (a página mostra esses em grupo separado, "votou poucas dessas propostas");
+//   2) dentro de cada grupo, o SALDO: iguais menos diferentes. 5 iguais e 1 diferente (saldo 4)
+//      empata com 4 e 0 (saldo 4), e os dois ficam acima de 3 e 0 (saldo 3);
+//   3) empate no saldo: quem votou mais perguntas (mais evidência) primeiro.
+export const MIN_COMPARAVEIS = 3;
+export const saldo = (x) => x.iguais - (x.comparaveis - x.iguais);
 export const ordenarPorConcordancia = (a, b) =>
-  (b.iguais / (b.comparaveis || 1)) - (a.iguais / (a.comparaveis || 1)) || b.comparaveis - a.comparaveis;
+  (b.comparaveis >= MIN_COMPARAVEIS) - (a.comparaveis >= MIN_COMPARAVEIS)
+  || saldo(b) - saldo(a)
+  || b.comparaveis - a.comparaveis;
 
 export { semAcento as normalizarSigla };

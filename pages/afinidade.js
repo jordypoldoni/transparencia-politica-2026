@@ -10,6 +10,7 @@ import NavPraVoce from '../components/NavPraVoce';
 import { t } from '../src/estilo/tokens';
 import { NOMES_UF } from '../src/lib/cotas';
 import { PERGUNTAS_AFINIDADE } from '../src/lib/perguntasAfinidade';
+import { MIN_COMPARAVEIS } from '../src/lib/calcularAfinidade';
 import { lerRespostasLocais, salvarResposta } from '../src/lib/perfilUsuario';
 
 // QUEM VOTA COMO VOCÊ (26/09/2026). Caminho principal do questionário de afinidade, SEM IA:
@@ -116,6 +117,44 @@ function Pergunta({ p, resposta, aoResponder }) {
   );
 }
 
+// PLACAR (26/09/2026, pedido do Jordy). Antes o cartão dizia "Votou como você em 1 de 6
+// votações", e quem respondeu 10 perguntas não entendia de onde vinha o 6. Agora há UMA CASA POR
+// PERGUNTA RESPONDIDA, na ordem do questionário:
+//   âmbar escuro = mesma posição · índigo = posição diferente · vazia = sem voto (ou, no partido,
+//   sem maioria). A legenda embaixo repete tudo em texto, com o total de casas batendo com o
+//   número de respostas, então a cor nunca é a única pista (WCAG 1.4.1).
+// O âmbar é o #CC7A22 (3,29:1 contra o branco), não o #FF8A00 (2,36:1), para a casa aparecer.
+const ORDEM_PERGUNTA = Object.fromEntries(PERGUNTAS_AFINIDADE.map((p, i) => [p.id, i]));
+const emOrdem = (itens) => [...(itens || [])].sort((a, b) => (ORDEM_PERGUNTA[a.pergunta_id] ?? 99) - (ORDEM_PERGUNTA[b.pergunta_id] ?? 99));
+const COR_CASA = { igual: '#CC7A22', diferente: t.cor.verde, sem: t.cor.papelQuente2 };
+function Placar({ itens, campo }) {
+  const casas = emOrdem(itens).map((d) => {
+    const deles = campo === 'votou' ? d.votou : (d.maioria === 'dividido' ? null : d.maioria);
+    return { id: d.pergunta_id, tipo: !deles ? 'sem' : deles === d.voce ? 'igual' : 'diferente' };
+  });
+  const n = (tipo) => casas.filter((c) => c.tipo === tipo).length;
+  const semRotulo = campo === 'votou' ? 'sem voto' : 'sem maioria';
+  const Ponto = ({ tipo }) => (
+    <span aria-hidden="true" style={{ display: 'inline-block', width: '9px', height: '9px', borderRadius: '50%', background: COR_CASA[tipo],
+      boxShadow: tipo === 'sem' ? 'inset 0 0 0 1px #B9AE9E' : 'none', marginRight: '5px', verticalAlign: '0' }} />
+  );
+  return (
+    <div style={{ marginTop: '12px' }}>
+      <div aria-hidden="true" style={{ display: 'flex', gap: '4px' }}>
+        {casas.map((c) => (
+          <span key={c.id} style={{ flex: 1, height: '10px', borderRadius: t.raio.pill, background: COR_CASA[c.tipo],
+            boxShadow: c.tipo === 'sem' ? 'inset 0 0 0 1px #D9CFC0' : 'none' }} />
+        ))}
+      </div>
+      <p style={{ margin: '8px 0 0', fontSize: '0.86rem', color: t.cor.tinta, display: 'flex', flexWrap: 'wrap', columnGap: '14px', rowGap: '2px' }}>
+        <span><Ponto tipo="igual" /><strong>{n('igual')} {n('igual') === 1 ? 'igual' : 'iguais'}</strong></span>
+        <span><Ponto tipo="diferente" />{n('diferente')} {n('diferente') === 1 ? 'diferente' : 'diferentes'}</span>
+        <span style={{ color: t.cor.cinza }}><Ponto tipo="sem" />{n('sem')} {semRotulo}</span>
+      </p>
+    </div>
+  );
+}
+
 // VOTO A VOTO (26/09, segunda versão, pedido do Jordy): cada votação no seu próprio bloco, com
 // a pergunta em cima e, cada uma na sua linha, a posição da pessoa e a do parlamentar (ou da
 // maioria do partido). A etiqueta à direita diz só se coincidiu, sem cor de certo ou errado:
@@ -128,7 +167,7 @@ function Detalhes({ itens, campo }) {
   const Valor = ({ children }) => <strong style={{ color: t.cor.tinta }}>{children}</strong>;
   return (
     <div style={{ display: 'grid', gap: '8px', marginTop: '10px' }}>
-      {itens.map((d) => {
+      {emOrdem(itens).map((d) => {
         const deles = campo === 'votou' ? d.votou : (d.maioria === 'dividido' ? null : d.maioria);
         const etiqueta = !deles ? null : deles === d.voce ? 'mesma posição' : 'posição diferente';
         return (
@@ -173,10 +212,8 @@ function CartaoCandidato({ c, cargoRotulo, partido }) {
       </div>
       {c.comparaveis > 0 ? (
         <>
-          <p style={{ margin: '12px 0 0', fontSize: '0.92rem', color: t.cor.tinta }}>
-            Votou como você em <strong>{c.iguais} de {c.comparaveis}</strong> {c.comparaveis === 1 ? 'votação' : 'votações'}
-          </p>
-          <details style={{ marginTop: '6px' }}>
+          <Placar itens={c.detalhes} campo="votou" />
+          <details style={{ marginTop: '8px' }}>
             <summary style={{ cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700, color: t.cor.ouroTexto }}>Ver voto a voto</summary>
             <Detalhes itens={c.detalhes} campo="votou" />
           </details>
@@ -184,7 +221,7 @@ function CartaoCandidato({ c, cargoRotulo, partido }) {
       ) : (
         <p style={{ margin: '12px 0 0', fontSize: '0.84rem', color: t.cor.cinza, lineHeight: 1.5 }}>
           Não votou nenhuma dessas propostas (não tinha mandato na época, ou ainda não temos os votos da casa dele).
-          {partido ? <> Os atuais parlamentares do {c.partido_sigla} votaram como você em <strong style={{ color: t.cor.tinta }}>{partido.iguais} de {partido.comparaveis}</strong>.</> : ''}
+          {partido ? <> A maioria dos atuais parlamentares do {c.partido_sigla} teve a sua posição em <strong style={{ color: t.cor.tinta }}>{partido.iguais}</strong> e posição diferente em <strong style={{ color: t.cor.tinta }}>{partido.comparaveis - partido.iguais}</strong> das suas respostas.</> : ''}
         </p>
       )}
     </div>
@@ -219,8 +256,9 @@ function Resultado({ r, cargo, setCargo, busca, setBusca }) {
     <div id="resultado" style={{ marginTop: '30px' }}>
       <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.5rem', margin: '0 0 6px' }}>Candidatos do {r.uf} e como votaram</h2>
       <p style={{ color: t.cor.cinza, fontSize: '0.88rem', lineHeight: 1.5, margin: '0 0 14px', maxWidth: '75ch' }}>
-        O número em cada cargo é quantos candidatos já votaram ao menos uma das suas respostas. A conta usa só voto Sim ou Não:
-        abstenção e ausência não dizem posição e ficam de fora.
+        Cada cartão tem uma casa por pergunta que você respondeu. <strong style={{ color: t.cor.tinta }}>Sem voto</strong> quer dizer
+        que a proposta não passou pela casa onde a pessoa estava (três foram votadas só no Senado{r.uf === 'RS' ? ' e uma só na Assembleia do RS' : ''}),
+        ou que ela faltou, se absteve ou ainda não tinha mandato. Isso não conta nem a favor nem contra.
       </p>
       <div style={{ marginBottom: '12px' }}>
         {/* Mesmas pílulas de /deputados ("Federais · Estaduais"): o padrão do site para separar
@@ -249,8 +287,21 @@ function Resultado({ r, cargo, setCargo, busca, setBusca }) {
         <p style={{ color: t.cor.cinza }}>{termo ? 'Nenhum candidato com essa busca neste cargo.' : `Nenhum candidato a ${rotuloCargo} do ${r.uf} votou as propostas que você respondeu.`}</p>
       ) : (
         <div style={{ display: 'grid', gap: '10px', alignItems: 'start', gridTemplateColumns: 'repeat(auto-fill, minmax(min(320px, 100%), 1fr))' }}>
-          {mostrar.map((c) => <CartaoCandidato key={c.href} c={c} cargoRotulo={rotuloCargo} partido={partidoPorSigla[semAcento(c.partido_sigla)]} />)}
+          {mostrar.filter((c) => c.comparaveis >= MIN_COMPARAVEIS || c.comparaveis === 0).map((c) => <CartaoCandidato key={c.href} c={c} cargoRotulo={rotuloCargo} partido={partidoPorSigla[semAcento(c.partido_sigla)]} />)}
         </div>
+      )}
+      {/* POUCOS VOTOS (26/09/2026): 1 ou 2 perguntas comparáveis dizem pouco. Ficam depois, em
+          grupo próprio e com o motivo escrito, para "1 de 1" não parecer afinidade total. */}
+      {mostrar.some((c) => c.comparaveis > 0 && c.comparaveis < MIN_COMPARAVEIS) && (
+        <>
+          <h3 style={{ fontFamily: t.fonte.corpo, fontSize: '1rem', fontWeight: 800, margin: '26px 0 4px', color: t.cor.tinta }}>Votaram poucas dessas propostas</h3>
+          <p style={{ color: t.cor.cinza, fontSize: '0.84rem', lineHeight: 1.5, margin: '0 0 12px', maxWidth: '75ch' }}>
+            Menos de {MIN_COMPARAVEIS} das suas respostas têm voto dessas pessoas. Com tão poucos votos, a comparação diz pouco sobre elas.
+          </p>
+          <div style={{ display: 'grid', gap: '10px', alignItems: 'start', gridTemplateColumns: 'repeat(auto-fill, minmax(min(320px, 100%), 1fr))' }}>
+            {mostrar.filter((c) => c.comparaveis > 0 && c.comparaveis < MIN_COMPARAVEIS).map((c) => <CartaoCandidato key={c.href} c={c} cargoRotulo={rotuloCargo} partido={partidoPorSigla[semAcento(c.partido_sigla)]} />)}
+          </div>
+        </>
       )}
 
       <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.5rem', margin: '36px 0 6px' }}>Os partidos na disputa do {r.uf}</h2>
@@ -265,8 +316,8 @@ function Resultado({ r, cargo, setCargo, busca, setBusca }) {
               <p style={{ margin: 0, fontWeight: 800, color: t.cor.tinta }}>{p.sigla}</p>
               <BotaoFavorito tipo="partido" chave={p.sigla} rotulo={p.sigla} detalhe="Partido" />
             </div>
-            <p style={{ margin: '6px 0 0', fontSize: '0.88rem', color: t.cor.tinta }}>A maioria votou como você em <strong>{p.iguais} de {p.comparaveis}</strong></p>
-            <details style={{ marginTop: '6px' }}>
+            <Placar itens={p.detalhes} campo="maioria" />
+            <details style={{ marginTop: '8px' }}>
               <summary style={{ cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700, color: t.cor.ouroTexto }}>Ver voto a voto</summary>
               <Detalhes itens={p.detalhes} campo="maioria" />
             </details>
