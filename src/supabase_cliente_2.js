@@ -8,8 +8,13 @@ import { createClient } from '@supabase/supabase-js';
 // faltam coletar os candidatos a governador e a deputado estadual, que sozinhos sao mais de
 // 13 mil linhas com ficha completa. Em vez de apagar dado para caber, a coleta nova nasce aqui.
 //
-// O que NAO vem para ca: conta de usuario, favoritos, qualquer dado pessoal. Este banco e a
-// continuacao do banco 1, so com dado publico. Dado de gente merece banco proprio.
+// MUDOU EM 25/09/2026: os deputados estaduais passaram a ser lidos do TSE na hora, sem banco, e
+// o banco 2 ficou vazio. Pedido do Jordy: ele virou o banco do PERFIL DO USUARIO
+// (supabase/banco2/001_perfis_afinidade.sql). A regra de antes vale ao contrario: dado de gente
+// fica sozinho aqui, e NADA publico do site entra neste banco.
+//
+// Este cliente usa a chave de SERVICO e existe so para o servidor (ex.: apagar conta). O perfil
+// visto pela propria pessoa passa por src/lib/perfilUsuario.js, com a chave publicavel e a RLS.
 //
 // Mesmas variaveis do banco 1, com o sufixo _2. Falta de chave aqui NAO derruba o site: quem
 // usa este cliente e so a parte nova, e o resto da pagina tem que continuar de pe.

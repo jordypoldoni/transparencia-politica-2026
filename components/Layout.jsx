@@ -313,6 +313,10 @@ export default function Layout({ children, pageProps }) {
             <p style={{ margin: '12px 0 0' }}>
               <Link href="/sobre" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>Sobre o Lume e as fontes que usamos</Link>
             </p>
+            {/* 26/09/2026: a política de privacidade entrou com o perfil do usuário (banco 2). */}
+            <p style={{ margin: '8px 0 0' }}>
+              <Link href="/privacidade" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>Privacidade: o que guardamos sobre você</Link>
+            </p>
           </div>
           <div>
             <p style={{ margin: '0 0 8px', fontWeight: 700, color: t.cor.tinta }}>Fontes oficiais</p>
