@@ -92,11 +92,14 @@ export default function App({ Component, pageProps }) {
           .nav-desktop { display: none; }
           .btn-hamburguer { display: inline-flex; align-items: center; }
           .menu-mobile { display: block; }
-          /* Celular: nome da pagina numa segunda linha do cabecalho. A primeira linha fica mais
-             baixa para o cabecalho inteiro nao crescer demais. */
-          .topo-linha { padding: 10px 16px 6px !important; }
-          .titulo-pagina-movel { display: block; padding: 0 16px 10px; }
+          /* Celular: nome da pagina na mesma linha, colado ao hamburguer. */
+          .topo-linha { padding: 12px 16px !important; gap: 10px !important; }
+          .titulo-pagina-movel { display: block; }
           .conta-nome { max-width: 130px !important; }
+        }
+        /* Telas estreitas (ate 420px): o nome da conta cede espaco para o nome da pagina. */
+        @media (max-width: 420px) {
+          .conta-nome { max-width: 100px !important; }
         }
 
         .hero-grid {

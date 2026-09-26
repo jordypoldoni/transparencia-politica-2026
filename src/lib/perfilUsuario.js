@@ -195,7 +195,7 @@ export async function sincronizarRespostas() {
     .filter(([id, r]) => perguntaPorId(id) && (!remotas[id] || remotas[id].respondido_em < r.respondido_em))
     .map(([pergunta_id, r]) => ({ user_id: s.user.id, pergunta_id, resposta: r.resposta, origem: r.origem, respondido_em: r.respondido_em }));
   if (subir.length) {
-    const { error: e2 } = await b.from('respostas_afinidade').upsert(subir);
+    const { error: e2 } = await b.from('respostas_afinidade').upsert(subir, { onConflict: 'user_id,pergunta_id' });
     if (e2) throw e2;
   }
   let desceram = 0;

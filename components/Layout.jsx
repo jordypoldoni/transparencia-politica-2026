@@ -218,7 +218,7 @@ export default function Layout({ children, pageProps }) {
               para o botão de entrar caber ao lado sem apertar. */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '14px', minWidth: 0 }}>
             <Link href="/" aria-label="Lume Cidadão, ir para a página inicial"
-              style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
+              style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
               {/* Marca em SVG de contorno: símbolo + logotipo (Plus Jakarta Sans 700/500 vetorizada),
                   sem dependência de fonte e sem perda em qualquer tamanho. */}
               <img className="logo-marca" src="/marca-lume.svg" alt="Lume Cidadão" style={{ height: '30px', width: 'auto', display: 'block' }} />
@@ -296,6 +296,17 @@ export default function Layout({ children, pageProps }) {
             })}
           </nav>
 
+          {/* Nome da página, só no celular (CSS em _app.js), COLADO AO HAMBÚRGUER, na mesma linha
+              (pedido do Jordy, 26/09/2026: numa segunda linha embaixo do logo ficou solto e feio).
+              Ocupa o espaço que sobra entre a conta e o menu, alinhado à direita; se não couber,
+              termina em reticências e o nome inteiro fica no title. */}
+          {nomeDaPagina(pathname) && (
+            <span className="titulo-pagina-movel" title={nomeDaPagina(pathname)}
+              style={{ flex: '1 1 auto', minWidth: 0, textAlign: 'right', fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1rem', lineHeight: 1.2, color: t.cor.tinta, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {nomeDaPagina(pathname)}
+            </span>
+          )}
+
           {/* Hambúrguer (mobile) */}
           <button className="btn-hamburguer" onClick={() => setMenu((m) => !m)}
             aria-label={menu ? 'Fechar menu' : 'Abrir menu'} aria-expanded={menu}
@@ -307,15 +318,6 @@ export default function Layout({ children, pageProps }) {
             )}
           </button>
         </div>
-
-        {/* Segunda linha do cabeçalho, só no celular (CSS em _app.js): o nome da página. Linha
-            própria, e não entre o logo e o hambúrguer, porque ali já estão o símbolo e a conta
-            com nome e sobrenome: numa linha só, o nome da página viraria "Gastos pú..." */}
-        {nomeDaPagina(pathname) && (
-          <p className="titulo-pagina-movel" style={{ margin: 0, fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.15rem', lineHeight: 1.2, color: t.cor.tinta, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {nomeDaPagina(pathname)}
-          </p>
-        )}
 
         {/* Menu mobile. Os grupos viram SEÇÕES abertas, não sanfona: no celular há rolagem de
             sobra, e esconder dois links atrás de mais um toque só acrescenta trabalho. */}

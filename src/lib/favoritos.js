@@ -49,7 +49,13 @@ async function espelharNoPerfil(acao, fav) {
     if (!error) { sinc.delete(k); gravarSinc(sinc); }
   } else {
     // Sem consentimento na versão nova o banco recusa (política do SQL). O navegador já guardou.
-    const { error } = await b.from('favoritos').upsert({ user_id: s.user.id, tipo: fav.tipo, chave: fav.chave, rotulo: fav.rotulo, detalhe: fav.detalhe || null });
+    // IGNORAR DUPLICADO, NÃO ATUALIZAR (corrigido em 26/09/2026): a tabela não dá permissão de
+    // UPDATE (003_favoritos.sql), e um upsert comum vira INSERT ... ON CONFLICT DO UPDATE, que o
+    // Postgres recusa inteiro sem essa permissão. Resultado: NENHUM favorito chegava ao banco.
+    // Com ignoreDuplicates vira ON CONFLICT DO NOTHING, que só precisa de INSERT.
+    const { error } = await b.from('favoritos').upsert(
+      { user_id: s.user.id, tipo: fav.tipo, chave: fav.chave, rotulo: fav.rotulo, detalhe: fav.detalhe || null },
+      { onConflict: 'user_id,tipo,chave', ignoreDuplicates: true });
     if (!error) { sinc.add(k); gravarSinc(sinc); }
   }
 }
@@ -121,7 +127,7 @@ export async function sincronizarFavoritos() {
     else subir.push({ user_id: s.user.id, tipo: f.tipo, chave: f.chave, rotulo: f.rotulo, detalhe: f.detalhe || null });
   }
   if (subir.length) {
-    const { error: e2 } = await b.from('favoritos').upsert(subir);
+    const { error: e2 } = await b.from('favoritos').upsert(subir, { onConflict: 'user_id,tipo,chave', ignoreDuplicates: true });
     if (e2) throw e2;
   }
   let desceram = 0;
