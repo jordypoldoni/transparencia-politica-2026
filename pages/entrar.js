@@ -46,6 +46,7 @@ export default function Entrar() {
   const [enviado, setEnviado] = useState(false);
   const [erro, setErro] = useState('');
   const [ocupado, setOcupado] = useState(false);
+  const [focoEmail, setFocoEmail] = useState(false);
 
   // Quem já está logado não precisa desta página.
   useEffect(() => { sessaoAtual().then((s) => { if (s) router.replace('/perfil'); }).catch(() => {}); }, [router]);
@@ -104,8 +105,17 @@ export default function Entrar() {
             </div>
             <form onSubmit={porEmail}>
               <label htmlFor="email" style={{ display: 'block', fontWeight: 700, fontSize: '0.9rem', marginBottom: '8px' }}>Receber um link de acesso por e-mail</label>
-              <input id="email" type="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="seu@email.com"
-                style={{ width: '100%', padding: '12px 18px', borderRadius: t.raio.pill, border: 'none', background: t.cor.papelQuente, fontSize: '0.95rem', fontFamily: t.fonte.corpo, color: t.cor.tinta, marginBottom: '12px' }} />
+              {/* CAMPO DE E-MAIL ACESSÍVEL (26/09/2026). O fundo creme sobre o cartão branco dava 1,08:1:
+                  o campo não aparecia. Nenhum fundo claro chega a 3:1 contra o branco (WCAG 1.4.11), então
+                  o limite do campo é um anel cinza de 3,25:1 (sombra interna, sem borda). No foco vira
+                  anel índigo com halo âmbar. Fonte de 16px: abaixo disso o iPhone dá zoom ao tocar. */}
+              <input id="email" type="email" inputMode="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="seu@email.com"
+                className="campo-email" aria-describedby={erro ? 'erro-entrar' : undefined} aria-invalid={erro ? true : undefined}
+                onFocus={() => setFocoEmail(true)} onBlur={() => setFocoEmail(false)}
+                style={{ width: '100%', minHeight: '48px', padding: '12px 20px', borderRadius: t.raio.pill, border: 'none', outline: 'none',
+                  background: '#FFFFFF', fontSize: '1rem', fontFamily: t.fonte.corpo, color: t.cor.tinta, marginBottom: '14px',
+                  boxShadow: focoEmail ? `inset 0 0 0 2px ${t.cor.verde}, ${t.sombra.anelFoco}` : 'inset 0 0 0 1.5px #8A8F98, inset 0 1px 3px rgba(25,28,32,0.08)',
+                  transition: 'box-shadow .15s' }} />
               <button type="submit" disabled={ocupado} style={botao(false, ocupado)}
                 onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}>
                 {ocupado ? 'Enviando…' : 'Enviar link'}
@@ -113,7 +123,7 @@ export default function Entrar() {
             </form>
           </div>
         )}
-        {erro && <p role="alert" style={{ color: t.cor.alertaTexto, marginTop: '12px' }}>{erro}</p>}
+        {erro && <p id="erro-entrar" role="alert" style={{ color: t.cor.alertaTexto, marginTop: '12px' }}>{erro}</p>}
         <p style={{ color: t.cor.cinza, fontSize: '0.84rem', lineHeight: 1.6, marginTop: '18px' }}>
           Ao entrar, nada é guardado no seu perfil sem você autorizar na página seguinte. Veja{' '}
           <Link href="/privacidade" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>o que guardamos e como apagar</Link>.

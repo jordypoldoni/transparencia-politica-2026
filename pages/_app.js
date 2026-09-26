@@ -102,6 +102,10 @@ export default function App({ Component, pageProps }) {
           .hero-grid { grid-template-columns: 1fr; gap: 28px; align-items: stretch; }
         }
 
+        /* Placeholder do campo de e-mail do /entrar: cinza #666E7B (4,7:1), nao o cinza claro
+           padrao do navegador. Em hex pelo mesmo motivo do bloco abaixo. */
+        .campo-email::placeholder { color: #666E7B; opacity: 1; }
+
         /* Grafico de gastos mes a mes (PerfilPolitico). Fica AQUI, e nao num <style jsx> dentro
            do componente: o compilador do Next quebra ("Option::unwrap() on a None") quando o CSS
            do componente interpola valores dos tokens. Por isso as cores vao em hex, iguais as de

@@ -33,8 +33,8 @@ export const t = {
     // botões; o Jordy exigiu sombreamento padrão e elegante em TODO botão clicável. Duas camadas
     // em tom índigo: uma curta que assenta o botão, uma difusa que o levanta. `clicavel` segue
     // só para cartões e campos.
-    botao: '0 1px 2px rgba(36,30,82,0.14), 0 4px 12px rgba(36,30,82,0.16)',
-    botaoHover: '0 2px 4px rgba(36,30,82,0.14), 0 10px 24px rgba(36,30,82,0.22)',
+    botao: '0 2px 4px rgba(36,30,82,0.20), 0 8px 20px rgba(36,30,82,0.28)',
+    botaoHover: '0 4px 8px rgba(36,30,82,0.22), 0 16px 34px rgba(36,30,82,0.34)',
     anelFoco: '0 0 0 3px rgba(255,138,0,0.28)', // anel âmbar p/ foco/ativo (no lugar de borda)
   },
   larguraMax: '1080px',
