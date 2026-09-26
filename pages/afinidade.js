@@ -11,7 +11,7 @@ import { t } from '../src/estilo/tokens';
 import { NOMES_UF } from '../src/lib/cotas';
 import { PERGUNTAS_AFINIDADE } from '../src/lib/perguntasAfinidade';
 import { MIN_COMPARAVEIS } from '../src/lib/calcularAfinidade';
-import { lerRespostasLocais, salvarResposta } from '../src/lib/perfilUsuario';
+import { lerRespostasLocais, salvarResposta, EVENTO_RESPOSTAS } from '../src/lib/perfilUsuario';
 
 // QUEM VOTA COMO VOCÊ (26/09/2026). Caminho principal do questionário de afinidade, SEM IA:
 // a pessoa responde votações que já aconteceram e o resultado sai do voto registrado de cada
@@ -370,6 +370,16 @@ export default function Afinidade({ ufInicial }) {
     }
     pronto.current = true;
   }, [ufInicial]);
+  // Respostas que DESCEM do perfil depois que a página já abriu (login em outro aparelho, ver
+  // src/lib/sincronizacao.js): entram na tela sem recarregar.
+  useEffect(() => {
+    const atualizar = () => {
+      const locais = lerRespostasLocais();
+      setRespostas(Object.fromEntries(Object.entries(locais).map(([id, r]) => [id, r.resposta])));
+    };
+    window.addEventListener(EVENTO_RESPOSTAS, atualizar);
+    return () => window.removeEventListener(EVENTO_RESPOSTAS, atualizar);
+  }, []);
 
   useEffect(() => {
     const salvarRolagem = () => {

@@ -9,9 +9,9 @@ import { NOMES_UF } from '../src/lib/cotas';
 import { PERGUNTAS_AFINIDADE } from '../src/lib/perguntasAfinidade';
 import {
   sessaoAtual, aoMudarSessao, sair, lerPerfil, registrarConsentimento, atualizarUf, lerRespostas,
-  levarRespostasLocaisProPerfil, apagarMeusDados, VERSAO_CONSENTIMENTO, perfilDisponivel,
+  apagarMeusDados, VERSAO_CONSENTIMENTO, perfilDisponivel,
 } from '../src/lib/perfilUsuario';
-import { sincronizarFavoritos } from '../src/lib/favoritos';
+import { sincronizarTudo } from '../src/lib/sincronizacao';
 
 // SEU PERFIL (26/09/2026). Página de "Pra você" onde a pessoa vê e controla o que é dela.
 //
@@ -56,9 +56,10 @@ export default function Perfil() {
     if (s) {
       const p = await lerPerfil().catch(() => null);
       setPerfil(p);
+      // Com autorização em dia, cada visita junta respostas e favoritos dos dois lados ANTES de
+      // mostrar as respostas, para a lista já vir completa.
+      if (p?.consentimento_em && p.consentimento_versao >= VERSAO_CONSENTIMENTO) await sincronizarTudo({ forcar: true }).catch(() => null);
       setRespostas(await lerRespostas().catch(() => ({})));
-      // Com consentimento em dia, cada visita junta os favoritos dos dois lados.
-      if (p?.consentimento_em && p.consentimento_versao >= VERSAO_CONSENTIMENTO) sincronizarFavoritos().catch(() => {});
     }
     setCarregando(false);
   }, []);
@@ -76,9 +77,11 @@ export default function Perfil() {
       let uf = perfil?.uf || null;
       try { uf = uf || JSON.parse(localStorage.getItem('prefs') || '{}').uf || null; } catch (e) {}
       await registrarConsentimento({ uf });
-      const r = await levarRespostasLocaisProPerfil().catch(() => 0);
-      const f = await sincronizarFavoritos().catch(() => ({ subiram: 0, desceram: 0 }));
-      setAviso(`Pronto. ${r} ${r === 1 ? 'resposta' : 'respostas'} e ${f.subiram} ${f.subiram === 1 ? 'favorito' : 'favoritos'} deste navegador foram para o seu perfil.`);
+      const x = await sincronizarTudo({ forcar: true }).catch(() => null);
+      const r = x?.respostas?.subiram || 0;
+      const f = x?.favoritos || { subiram: 0, desceram: 0 };
+      const d = (x?.respostas?.desceram || 0) + f.desceram;
+      setAviso(`Pronto. ${r} ${r === 1 ? 'resposta' : 'respostas'} e ${f.subiram} ${f.subiram === 1 ? 'favorito' : 'favoritos'} deste navegador foram para o seu perfil${d ? `, e ${d} ${d === 1 ? 'item veio' : 'itens vieram'} de outros aparelhos` : ''}.`);
       await recarregar();
     } catch (e) { setErro('Não foi possível guardar a autorização. Tente de novo.'); }
   };

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { t } from '../src/estilo/tokens';
-import { sessaoAtual, aoMudarSessao, sair } from '../src/lib/perfilUsuario';
+import { sessaoAtual, aoMudarSessao, sair, consentimentoEmDia } from '../src/lib/perfilUsuario';
 
 // ENTRAR / CONTA no cabeçalho, AO LADO DO LOGO (pedido do Jordy, 26/09/2026). No celular o logo
 // perde o texto "Lume Cidadão" e fica só o símbolo, para caber este botão ao lado dele.
@@ -25,7 +25,15 @@ const realce = (e, ligar) => {
 export default function BotaoConta() {
   const [sessao, setSessao] = useState(null);
   const [aberto, setAberto] = useState(false);
+  const [noPerfil, setNoPerfil] = useState(null); // autorização em dia? null = ainda não sei
   const ref = useRef(null);
+
+  // Ao abrir o menu, diz onde estão os dados. Sem autorização eles ficam SÓ neste aparelho, e
+  // foi isso que fez o Jordy não achar no computador o que marcou no celular (26/09/2026).
+  useEffect(() => {
+    if (!aberto || !sessao) return;
+    consentimentoEmDia().then(setNoPerfil).catch(() => setNoPerfil(null));
+  }, [aberto, sessao]);
 
   useEffect(() => {
     let vivo = true;
@@ -67,6 +75,16 @@ export default function BotaoConta() {
         <div style={{ position: 'absolute', top: '100%', left: 0, paddingTop: '6px', zIndex: 60 }}>
           <div style={{ minWidth: '230px', background: t.cor.papelCartao, borderRadius: t.raio.md, boxShadow: t.sombra.media, padding: '6px' }}>
             <p style={{ margin: 0, padding: '8px 12px 6px', fontSize: '0.76rem', color: t.cor.cinza, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{email}</p>
+            {noPerfil === true && (
+              <p style={{ margin: '0 6px 6px', padding: '8px 10px', borderRadius: t.raio.sm, background: t.cor.papelQuente, fontSize: '0.78rem', lineHeight: 1.45, color: t.cor.tinta }}>
+                Respostas e favoritos guardados no seu perfil, em todos os aparelhos.
+              </p>
+            )}
+            {noPerfil === false && (
+              <Link href="/perfil" onClick={() => setAberto(false)} style={{ display: 'block', margin: '0 6px 6px', padding: '8px 10px', borderRadius: t.raio.sm, background: t.cor.alertaBg, fontSize: '0.78rem', lineHeight: 1.45, color: t.cor.alertaTexto, textDecoration: 'none' }}>
+                Suas respostas e favoritos estão <strong>só neste aparelho</strong>. <span style={{ textDecoration: 'underline', fontWeight: 700 }}>Autorizar no perfil</span>
+              </Link>
+            )}
             {[['/perfil', 'Seu perfil'], ['/favoritos', 'Seus favoritos']].map(([href, rotulo]) => (
               <Link key={href} href={href} onClick={() => setAberto(false)} style={item}
                 onMouseOver={(e) => { e.currentTarget.style.background = t.cor.papelQuente; }} onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; }}>{rotulo}</Link>

@@ -16,6 +16,9 @@ import { useEffect, useState, useCallback } from 'react';
 import { sessaoAtual, banco } from './perfilUsuario';
 
 const CHAVE_LOCAL = 'lume:favoritos';
+// Chaves que estavam no perfil na última sincronização DESTE aparelho. É o que permite saber se
+// um favorito que falta de um lado foi APAGADO ou é NOVO (ver sincronizarFavoritos).
+const CHAVE_SINC = 'lume:favoritos:sinc';
 const EVENTO = 'lume:favoritos';
 export const TIPOS = ['parlamentar', 'candidato', 'partido'];
 const id = (tipo, chave) => `${tipo}|${chave}`;
@@ -28,15 +31,26 @@ function gravar(mapa) {
   try { window.dispatchEvent(new CustomEvent(EVENTO)); } catch { /* sem window */ }
 }
 
+function lerSinc() {
+  try { return new Set(JSON.parse(window.localStorage.getItem(CHAVE_SINC) || '[]')); } catch { return new Set(); }
+}
+function gravarSinc(conjunto) {
+  try { window.localStorage.setItem(CHAVE_SINC, JSON.stringify([...conjunto])); } catch { /* nada */ }
+}
+
 async function espelharNoPerfil(acao, fav) {
   const b = banco();
   const s = await sessaoAtual().catch(() => null);
   if (!b || !s) return;
+  const k = id(fav.tipo, fav.chave);
+  const sinc = lerSinc();
   if (acao === 'remover') {
-    await b.from('favoritos').delete().match({ user_id: s.user.id, tipo: fav.tipo, chave: fav.chave });
+    const { error } = await b.from('favoritos').delete().match({ user_id: s.user.id, tipo: fav.tipo, chave: fav.chave });
+    if (!error) { sinc.delete(k); gravarSinc(sinc); }
   } else {
     // Sem consentimento na versão nova o banco recusa (política do SQL). O navegador já guardou.
-    await b.from('favoritos').upsert({ user_id: s.user.id, tipo: fav.tipo, chave: fav.chave, rotulo: fav.rotulo, detalhe: fav.detalhe || null });
+    const { error } = await b.from('favoritos').upsert({ user_id: s.user.id, tipo: fav.tipo, chave: fav.chave, rotulo: fav.rotulo, detalhe: fav.detalhe || null });
+    if (!error) { sinc.add(k); gravarSinc(sinc); }
   }
 }
 
@@ -80,9 +94,15 @@ export function useFavoritos() {
   return lista;
 }
 
-// Depois do login com consentimento: junta os dois lados. O que só existe no navegador sobe para
-// o perfil; o que só existe no perfil (marcado em outro aparelho) desce para o navegador.
-// Devolve quantos subiram e quantos desceram, para a página do perfil dizer.
+// SINCRONIZAR (revisto em 26/09/2026). Junta o navegador e o perfil com COMPARAÇÃO DE TRÊS
+// PONTAS: o que está aqui, o que está no perfil e o que estava no perfil na última vez que este
+// aparelho sincronizou (CHAVE_SINC). Sem a terceira ponta, apagar um favorito no computador não
+// adiantava: o celular ainda tinha a cópia e a subia de volta na próxima visita.
+//   só aqui, e não estava no perfil antes  → é NOVO deste aparelho: sobe;
+//   só aqui, mas estava no perfil antes    → foi APAGADO em outro aparelho: sai daqui;
+//   só no perfil, e não estava antes        → é NOVO de outro aparelho: desce;
+//   só no perfil, mas estava antes          → foi APAGADO aqui sem sessão: sai do perfil.
+// Primeira sincronização de um aparelho (nada registrado): tudo sobe e tudo desce, sem perda.
 export async function sincronizarFavoritos() {
   const b = banco();
   const s = await sessaoAtual().catch(() => null);
@@ -90,16 +110,33 @@ export async function sincronizarFavoritos() {
   const { data, error } = await b.from('favoritos').select('tipo, chave, rotulo, detalhe, criado_em');
   if (error) throw error;
   const locais = lerFavoritos();
+  const antes = lerSinc();
   const remotos = Object.fromEntries((data || []).map((f) => [id(f.tipo, f.chave), f]));
-  const subir = Object.entries(locais).filter(([k]) => !remotos[k]).map(([, f]) => ({ user_id: s.user.id, tipo: f.tipo, chave: f.chave, rotulo: f.rotulo, detalhe: f.detalhe || null }));
+
+  const subir = [];
+  let apagadosAqui = 0;
+  for (const [k, f] of Object.entries(locais)) {
+    if (remotos[k]) continue;
+    if (antes.has(k)) { delete locais[k]; apagadosAqui++; }
+    else subir.push({ user_id: s.user.id, tipo: f.tipo, chave: f.chave, rotulo: f.rotulo, detalhe: f.detalhe || null });
+  }
   if (subir.length) {
     const { error: e2 } = await b.from('favoritos').upsert(subir);
     if (e2) throw e2;
   }
   let desceram = 0;
   for (const [k, f] of Object.entries(remotos)) {
-    if (!locais[k]) { locais[k] = { ...f, foto: null }; desceram++; }
+    if (locais[k]) continue;
+    if (antes.has(k)) {
+      // Apagado neste aparelho enquanto estava sem sessão: sai do perfil também.
+      await b.from('favoritos').delete().match({ user_id: s.user.id, tipo: f.tipo, chave: f.chave });
+      delete remotos[k];
+      continue;
+    }
+    locais[k] = { ...f, foto: null };
+    desceram++;
   }
-  if (desceram) gravar(locais);
+  if (desceram || apagadosAqui) gravar(locais);
+  gravarSinc(new Set([...Object.keys(remotos), ...subir.map((f) => id(f.tipo, f.chave))]));
   return { subiram: subir.length, desceram };
 }

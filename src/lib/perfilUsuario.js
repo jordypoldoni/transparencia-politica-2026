@@ -40,8 +40,12 @@ export function banco() {
 export function lerRespostasLocais() {
   try { return JSON.parse(window.localStorage.getItem(CHAVE_LOCAL) || '{}') || {}; } catch { return {}; }
 }
+// Avisa as páginas abertas (o questionário) que as respostas deste navegador mudaram, por
+// exemplo porque desceram do perfil depois do login em outro aparelho.
+export const EVENTO_RESPOSTAS = 'lume:respostas';
 function gravarLocais(mapa) {
   try { window.localStorage.setItem(CHAVE_LOCAL, JSON.stringify(mapa)); } catch { /* bloqueado: segue sem */ }
+  try { window.dispatchEvent(new CustomEvent(EVENTO_RESPOSTAS)); } catch { /* sem window */ }
 }
 export function limparRespostasLocais() {
   try { window.localStorage.removeItem(CHAVE_LOCAL); } catch { /* nada */ }
@@ -96,9 +100,24 @@ export async function atualizarUf(uf) {
   if (error) throw error;
 }
 
+// SAIR LIMPA O APARELHO (26/09/2026). Com a sincronização, as respostas e os favoritos do perfil
+// descem para o navegador de qualquer aparelho em que a pessoa entrar, inclusive um computador
+// emprestado. Ao sair, se estava tudo guardado no perfil (autorização em dia), a cópia local é
+// apagada: dado político não fica para o próximo que usar o aparelho. Sem autorização, a cópia
+// local é a ÚNICA que existe, e fica.
 export async function sair() {
   const b = banco();
-  if (b) await b.auth.signOut();
+  if (!b) return;
+  const guardadoNoPerfil = await consentimentoEmDia().catch(() => false);
+  await b.auth.signOut();
+  if (guardadoNoPerfil) {
+    limparRespostasLocais();
+    try {
+      ['lume:favoritos', 'lume:favoritos:sinc'].forEach((k) => window.localStorage.removeItem(k));
+      window.dispatchEvent(new CustomEvent('lume:favoritos'));
+      window.dispatchEvent(new CustomEvent(EVENTO_RESPOSTAS));
+    } catch { /* nada */ }
+  }
 }
 
 // ── Perfil e consentimento ───────────────────────────────────────────────────────────────
@@ -109,6 +128,11 @@ export async function lerPerfil() {
   const { data, error } = await b.from('perfis').select('uf, consentimento_em, consentimento_versao').eq('id', s.user.id).maybeSingle();
   if (error) throw error;
   return data;
+}
+
+export async function consentimentoEmDia() {
+  const p = await lerPerfil();
+  return Boolean(p?.consentimento_em && p.consentimento_versao >= VERSAO_CONSENTIMENTO);
 }
 
 // Sem isto o banco recusa gravar respostas (política do SQL). Chamar só depois de a pessoa
@@ -155,6 +179,37 @@ export async function lerRespostas() {
   return mapa;
 }
 
+// SINCRONIZAR RESPOSTAS NOS DOIS SENTIDOS (26/09/2026). Antes só SUBIA (no momento da
+// autorização) e nunca DESCIA: quem respondeu no celular e entrou no computador via o
+// questionário vazio, porque a página do questionário lê só este navegador. Agora, com sessão e
+// autorização em dia, junta os dois lados e em conflito fica a resposta MAIS NOVA.
+export async function sincronizarRespostas() {
+  const b = banco();
+  const s = await sessaoAtual();
+  if (!b || !s) return { subiram: 0, desceram: 0 };
+  const { data, error } = await b.from('respostas_afinidade').select('pergunta_id, resposta, origem, respondido_em');
+  if (error) throw error;
+  const remotas = Object.fromEntries((data || []).map((r) => [r.pergunta_id, r]));
+  const locais = lerRespostasLocais();
+  const subir = Object.entries(locais)
+    .filter(([id, r]) => perguntaPorId(id) && (!remotas[id] || remotas[id].respondido_em < r.respondido_em))
+    .map(([pergunta_id, r]) => ({ user_id: s.user.id, pergunta_id, resposta: r.resposta, origem: r.origem, respondido_em: r.respondido_em }));
+  if (subir.length) {
+    const { error: e2 } = await b.from('respostas_afinidade').upsert(subir);
+    if (e2) throw e2;
+  }
+  let desceram = 0;
+  for (const [id, r] of Object.entries(remotas)) {
+    if (!perguntaPorId(id)) continue;
+    if (!locais[id] || locais[id].respondido_em < r.respondido_em) {
+      locais[id] = { resposta: r.resposta, origem: r.origem, respondido_em: r.respondido_em };
+      desceram++;
+    }
+  }
+  if (desceram) gravarLocais(locais);
+  return { subiram: subir.length, desceram };
+}
+
 // Depois do login: sobe o que estava no navegador. Em conflito, fica a resposta MAIS NOVA.
 export async function levarRespostasLocaisProPerfil() {
   const b = banco();
@@ -175,7 +230,7 @@ export async function levarRespostasLocaisProPerfil() {
 // caminho (servidor, chave de serviço), ainda a construir.
 export async function apagarMeusDados() {
   limparRespostasLocais();
-  try { window.localStorage.removeItem('lume:favoritos'); window.dispatchEvent(new CustomEvent('lume:favoritos')); } catch { /* nada */ }
+  try { ['lume:favoritos', 'lume:favoritos:sinc'].forEach((k) => window.localStorage.removeItem(k)); window.dispatchEvent(new CustomEvent('lume:favoritos')); } catch { /* nada */ }
   const b = banco();
   const s = await sessaoAtual();
   if (!b || !s) return;

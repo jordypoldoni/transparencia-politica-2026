@@ -4,6 +4,8 @@ import { useRouter } from 'next/router';
 import { t } from '../src/estilo/tokens';
 import BotaoConta from './BotaoConta';
 import { PAGINAS_PRA_VOCE } from './NavPraVoce';
+import { sincronizarTudo } from '../src/lib/sincronizacao';
+import { aoMudarSessao } from '../src/lib/perfilUsuario';
 
 // ============================================================================
 // MENU PRINCIPAL, REORGANIZADO EM 19/09/2026
@@ -135,6 +137,16 @@ export default function Layout({ children, pageProps }) {
   const relogio = useRef(null);
 
   useEffect(() => { setMenu(false); setAberto(null); }, [asPath]); // fecha ao navegar
+
+  // Respostas e favoritos entre aparelhos (src/lib/sincronizacao.js): ao abrir o site, ao entrar
+  // na conta e ao voltar para a aba. Sem sessão ou sem autorização, não faz nada.
+  useEffect(() => {
+    sincronizarTudo({ forcar: true });
+    const parar = aoMudarSessao((s) => { if (s) sincronizarTudo({ forcar: true }); });
+    const aoVoltar = () => { if (document.visibilityState === 'visible') sincronizarTudo(); };
+    document.addEventListener('visibilitychange', aoVoltar);
+    return () => { parar(); document.removeEventListener('visibilitychange', aoVoltar); };
+  }, []);
 
   // MENU MÓVEL TRAVA A PÁGINA (26/09/2026). Com o menu aberto, o dedo rolava a página de baixo
   // e o menu ia junto, porque era parte do cabeçalho. Agora: a página trava (classe no <html>,
