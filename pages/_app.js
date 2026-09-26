@@ -77,6 +77,16 @@ export default function App({ Component, pageProps }) {
            REGRA QUE FICA: quando o menu não couber, a resposta é reorganizar o menu, não
            subir o ponto de corte. Subir o corte resolve para quem tem tela grande e tira a
            navegação de todo o resto. */
+        /* Logo (26/09/2026): marca inteira em tela larga; abaixo de 1200px, só o símbolo, para o
+           botão de entrar caber ao lado dele (Layout.jsx). O corte é 1200 e não o do hambúrguer
+           (1060) por CONTA, não por gosto: marca de 234px + botão Entrar + menu de ~715px pedem
+           ~1104px, e entre 1061 e 1104 o menu vazaria. Trocar a marca pelo símbolo devolve
+           ~210px, sem subir o corte do menu (regra de 19/09). */
+        .logo-simbolo { display: none; }
+        @media (max-width: 1200px) {
+          .logo-marca { display: none !important; }
+          .logo-simbolo { display: block; }
+        }
         @media (max-width: 1060px) {
           .nav-desktop { display: none; }
           .btn-hamburguer { display: inline-flex; align-items: center; }

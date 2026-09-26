@@ -18,15 +18,18 @@
 import { createClient } from '@supabase/supabase-js';
 import { RESPOSTAS_VALIDAS, perguntaPorId } from './perguntasAfinidade';
 
-export const VERSAO_CONSENTIMENTO = '2026-09-25';
+// 2026-09-26: o texto do consentimento passou a citar os FAVORITOS (supabase/banco2/003_favoritos.sql).
+export const VERSAO_CONSENTIMENTO = '2026-09-26';
 const CHAVE_LOCAL = 'lume:afinidade';
 
 const URL2 = process.env.NEXT_PUBLIC_SUPABASE_URL_2;
 const CHAVE2 = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY_2;
 export const perfilDisponivel = Boolean(URL2 && CHAVE2);
 
+// Um cliente só para o site inteiro: dois clientes de login no mesmo navegador brigam pela sessão.
+// Exportado para src/lib/favoritos.js usar o mesmo.
 let cliente = null;
-function banco() {
+export function banco() {
   if (!perfilDisponivel || typeof window === 'undefined') return null;
   if (!cliente) cliente = createClient(URL2, CHAVE2, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
   return cliente;
@@ -64,6 +67,32 @@ export async function entrarComEmail(email, voltarPara) {
   const b = banco();
   if (!b) throw new Error('perfil indisponível');
   const { error } = await b.auth.signInWithOtp({ email, options: { emailRedirectTo: voltarPara } });
+  if (error) throw error;
+}
+
+// Entrar com Google (26/09/2026). O Google devolve a pessoa para `voltarPara`, que precisa
+// estar na lista de endereços permitidos do Supabase (Authentication, URL Configuration).
+export async function entrarComGoogle(voltarPara) {
+  const b = banco();
+  if (!b) throw new Error('perfil indisponível');
+  const { error } = await b.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: voltarPara } });
+  if (error) throw error;
+}
+
+// Avisa quem estiver ouvindo (o botão do cabeçalho, a página do perfil) quando a pessoa entra
+// ou sai. Devolve a função que para de ouvir.
+export function aoMudarSessao(cb) {
+  const b = banco();
+  if (!b) return () => {};
+  const { data } = b.auth.onAuthStateChange((_evento, sessao) => cb(sessao || null));
+  return () => data?.subscription?.unsubscribe();
+}
+
+export async function atualizarUf(uf) {
+  const b = banco();
+  const s = await sessaoAtual();
+  if (!b || !s) return;
+  const { error } = await b.from('perfis').update({ uf: uf ? String(uf).toUpperCase() : null }).eq('id', s.user.id);
   if (error) throw error;
 }
 
@@ -146,6 +175,7 @@ export async function levarRespostasLocaisProPerfil() {
 // caminho (servidor, chave de serviço), ainda a construir.
 export async function apagarMeusDados() {
   limparRespostasLocais();
+  try { window.localStorage.removeItem('lume:favoritos'); window.dispatchEvent(new CustomEvent('lume:favoritos')); } catch { /* nada */ }
   const b = banco();
   const s = await sessaoAtual();
   if (!b || !s) return;

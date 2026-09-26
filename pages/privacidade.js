@@ -37,7 +37,7 @@ export default function Privacidade() {
 
         <h2 style={h2}>Navegando sem conta</h2>
         <ul style={{ paddingLeft: '20px', margin: '0 0 12px' }}>
-          <li style={li}><strong style={forte}>No seu próprio navegador</strong> ficam o estado e os temas que você escolheu, as respostas do questionário da página "Pra você" e o último filtro das listas. Isso não sai do seu aparelho e some se você limpar os dados do navegador.</li>
+          <li style={li}><strong style={forte}>No seu próprio navegador</strong> ficam o estado e os temas que você escolheu, as respostas do questionário da página "Pra você", os políticos e partidos que você marcou com o coração (favoritos) e o último filtro das listas. Isso não sai do seu aparelho e some se você limpar os dados do navegador.</li>
           <li style={li}><strong style={forte}>Estado aproximado pela conexão:</strong> na lista de candidatos a deputado estadual, o site usa a região aproximada que a hospedagem informa a partir do seu endereço de internet para abrir já no seu estado. Essa informação é usada naquele momento e não é guardada.</li>
           <li style={li}><strong style={forte}>Registros técnicos da hospedagem</strong> (Vercel), como em qualquer site: endereço de internet e página acessada, mantidos pela própria hospedagem por prazo curto, para segurança e funcionamento.</li>
         </ul>
@@ -46,10 +46,10 @@ export default function Privacidade() {
         <p style={p}>Você pode entrar com Google ou com um link enviado ao seu e-mail. A conta serve só para levar o seu perfil para outros aparelhos. Guardamos:</p>
         <ul style={{ paddingLeft: '20px', margin: '0 0 12px' }}>
           <li style={li}><strong style={forte}>Da conta:</strong> seu e-mail e, se entrar com Google, o nome e a foto que o Google envia.</li>
-          <li style={li}><strong style={forte}>Do perfil:</strong> o seu estado, a data em que você deu o consentimento abaixo, e a sua posição (a favor, contra ou sem opinião) em cada pergunta do questionário, com a indicação de como ela foi dada: marcada por você, ou sugerida pela leitura automática e confirmada ou corrigida por você.</li>
+          <li style={li}><strong style={forte}>Do perfil:</strong> o seu estado, a data em que você deu o consentimento abaixo, a sua posição (a favor, contra ou sem opinião) em cada pergunta do questionário, com a indicação de como ela foi dada (marcada por você, ou sugerida pela leitura automática e confirmada ou corrigida por você), e os políticos e partidos que você marcou como favoritos.</li>
         </ul>
         <p style={p}>
-          A sua posição sobre temas políticos é <strong style={forte}>dado pessoal sensível</strong> pela Lei Geral de Proteção de Dados.
+          A sua posição sobre temas políticos, e também quais políticos e partidos você favorita, é <strong style={forte}>dado pessoal sensível</strong> pela Lei Geral de Proteção de Dados.
           Por isso ela só é guardada no perfil depois que você marca, na própria página, que concorda com isso (LGPD, art. 11, I).
           Sem esse consentimento, o sistema recusa gravar.
         </p>
@@ -60,6 +60,14 @@ export default function Privacidade() {
           inteligência artificial, a <strong style={forte}>Groq, Inc.</strong>, empresa dos Estados Unidos, apenas para sugerir as
           suas respostas às perguntas. <strong style={forte}>O Lume não guarda esse texto</strong>: guardamos só as respostas que você
           confirmar. Não escreva nesse campo nomes, documentos ou qualquer coisa que identifique você ou outra pessoa.
+        </p>
+        <p style={p}>
+          Esse envio é <strong style={forte}>opcional</strong>: o questionário pode ser respondido inteiro sem escrever nada, e
+          nesse caminho nenhuma resposta sai do seu aparelho para serviço externo. Se você escolher escrever, o site só envia o
+          texto depois que você marca a autorização ao lado do campo, e <strong style={forte}>registra que a autorização foi dada</strong>:
+          a data e a versão do aviso que estava na tela. Se você estiver com a conta aberta, o registro fica ligado a ela; se não,
+          não guarda nada que identifique você. O texto em si nunca é registrado. A Groq foi configurada para não guardar os
+          textos recebidos (retenção zero).
         </p>
 
         <h2 style={h2}>Onde os dados ficam</h2>
@@ -79,7 +87,7 @@ export default function Privacidade() {
         <p style={p}>
           Você pode ver, corrigir e apagar os seus dados, e retirar o consentimento quando quiser (LGPD, art. 18). Na página{' '}
           <Link href="/comecar" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>Pra você</Link>, a opção "Apagar meus dados"
-          remove o perfil e as respostas de uma vez. Para apagar também a conta, ou para qualquer outro pedido, escreva para{' '}
+          remove o perfil, as respostas e os favoritos de uma vez. Para apagar também a conta, ou para qualquer outro pedido, escreva para{' '}
           <a href={`mailto:${CONTATO}`} style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>{CONTATO}</a>.
         </p>
 

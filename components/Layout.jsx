@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { t } from '../src/estilo/tokens';
+import BotaoConta from './BotaoConta';
+import { PAGINAS_PRA_VOCE } from './NavPraVoce';
 
 // ============================================================================
 // MENU PRINCIPAL, REORGANIZADO EM 19/09/2026
@@ -37,7 +39,9 @@ import { t } from '../src/estilo/tokens';
 
 const navItens = [
   { href: '/', rotulo: 'Início' },
-  { href: '/comecar', rotulo: 'Pra você' },
+  // 26/09/2026: "Pra você" virou grupo (decisão do Jordy): cédula, afinidade, favoritos e perfil,
+  // cada um com endereço próprio. A lista mora em NavPraVoce.jsx, que as páginas também usam.
+  { rotulo: 'Pra você', filhos: PAGINAS_PRA_VOCE },
   {
     rotulo: 'Parlamentares',
     filhos: [
@@ -164,12 +168,19 @@ export default function Layout({ children, pageProps }) {
             é um acidente de layout. Ou cabe na linha, ou o hambúrguer assume (ponto de corte
             em _app.js, de 1360 para 1060 depois que o menu encolheu). */}
         <div style={{ width: '100%', padding: '16px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'nowrap' }}>
-          <Link href="/" aria-label="Lume Cidadão, ir para a página inicial"
-            style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
-            {/* Marca em SVG de contorno: símbolo + logotipo (Plus Jakarta Sans 700/500 vetorizada),
-                sem dependência de fonte e sem perda em qualquer tamanho. */}
-            <img src="/marca-lume.svg" alt="Lume Cidadão" style={{ height: '30px', width: 'auto', display: 'block' }} />
-          </Link>
+          {/* LOGO + CONTA, juntos à esquerda (pedido do Jordy, 26/09/2026). No celular (mesmo
+              ponto de corte do hambúrguer, em _app.js) o logotipo sai e fica só o símbolo, menor,
+              para o botão de entrar caber ao lado sem apertar. */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', minWidth: 0 }}>
+            <Link href="/" aria-label="Lume Cidadão, ir para a página inicial"
+              style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
+              {/* Marca em SVG de contorno: símbolo + logotipo (Plus Jakarta Sans 700/500 vetorizada),
+                  sem dependência de fonte e sem perda em qualquer tamanho. */}
+              <img className="logo-marca" src="/marca-lume.svg" alt="Lume Cidadão" style={{ height: '30px', width: 'auto', display: 'block' }} />
+              <img className="logo-simbolo" src="/simbolo-lume.svg" alt="Lume Cidadão" style={{ height: '26px', width: 'auto' }} />
+            </Link>
+            <BotaoConta />
+          </div>
 
           <nav ref={navRef} className="nav-desktop" aria-label="Navegação principal" style={{ gap: '0' }}>
             {navItens.map((n) => {

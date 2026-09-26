@@ -4,6 +4,8 @@ import Head from 'next/head';
 import Link from 'next/link';
 import ServicoAPI from '../src/servicos/servico_api';
 import CardCandidato from '../components/CardCandidato';
+import SeusFavoritos from '../components/SeusFavoritos';
+import NavPraVoce from '../components/NavPraVoce';
 import { t } from '../src/estilo/tokens';
 import { NOMES_UF } from '../src/lib/cotas';
 
@@ -79,8 +81,18 @@ function Cedula({ uf, cedula }) {
         </div>
       </BlocoCargo>
 
-      <BlocoCargo ordem={2} cargo="Deputado Estadual">
-        <AindaNaoTemos texto="Ainda não coletamos os candidatos a deputado estadual. É o próximo bloco a entrar, antes da eleição." />
+      {/* 26/09/2026: os estaduais entraram em 25/09, lidos do TSE na hora. O aviso de "ainda não
+          coletamos" passou a ser falso e deu lugar ao link para a lista do estado. */}
+      <BlocoCargo ordem={2} cargo="Deputado Estadual"
+        nota={uf === 'DF' ? 'No Distrito Federal o cargo equivalente é o de deputado distrital, que ainda não está no site.' : `Quem disputa a Assembleia Legislativa do ${nomeUf}. A lista vem direto do TSE, com a ficha de cada candidato.`}>
+        {uf === 'DF' ? (
+          <AindaNaoTemos texto="Deputado distrital ainda não está no site." />
+        ) : (
+          <Link href={`/candidatos-2026?cargo=deputado-estadual&uf=${uf}`}
+            style={{ display: 'inline-block', padding: '11px 20px', borderRadius: t.raio.pill, background: t.cor.verde, color: t.cor.ouro, fontWeight: 700, fontSize: '0.88rem', textDecoration: 'none', boxShadow: t.sombra.clicavel }}>
+            Ver os candidatos a deputado estadual do {uf} →
+          </Link>
+        )}
       </BlocoCargo>
 
       <BlocoCargo ordem={3} cargo="Senador"
@@ -171,6 +183,7 @@ export default function Comecar({ modo, temasDisponiveis, ufSel, temasSel, cedul
           <meta name="description" content={ufSel ? `Quem disputa a sua cédula no ${nomeUf} em 4 de outubro de 2026: deputado federal, senador e presidente, com a ficha de cada candidato.` : 'Votações recentes sobre os temas que você escolheu.'} />
         </Head>
 
+        <NavPraVoce />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '10px' }}>
           <div>
             <span style={{ fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: t.cor.ouroTexto }}>Feito pra você</span>
@@ -191,6 +204,20 @@ export default function Comecar({ modo, temasDisponiveis, ufSel, temasSel, cedul
             ? <>Em 4 de outubro de 2026, quem vota no {nomeUf} escolhe cinco cargos, nesta ordem na urna.{temasSel.length > 0 ? ` Seus temas: ${temasSel.join(', ')}.` : ''}</>
             : <>Você ainda não escolheu um estado. Escolha um para ver a sua cédula.</>}
         </p>
+
+        {/* 26/09/2026: favoritos marcados com o coração em qualquer cartão do site. */}
+        <SeusFavoritos />
+
+        {/* 26/09/2026: entrada para o questionário de afinidade (/afinidade), sem IA. */}
+        {ufSel && (
+          <Link href={`/afinidade?uf=${ufSel}`} style={{ display: 'block', textDecoration: 'none', color: t.cor.tinta, background: '#fff', borderRadius: t.raio.md, padding: '18px 20px', marginBottom: '30px', boxShadow: t.sombra.clicavel , transition: 'box-shadow .15s, transform .15s' }} onMouseOver={(e) => { e.currentTarget.style.boxShadow = t.sombra.hover; e.currentTarget.style.transform = 'translateY(-2px)'; }} onMouseOut={(e) => { e.currentTarget.style.boxShadow = t.sombra.clicavel; e.currentTarget.style.transform = 'none'; }}>
+            <strong style={{ fontSize: '1.05rem' }}>Quem vota como você?</strong>
+            <span style={{ display: 'block', marginTop: '4px', fontSize: '0.88rem', color: t.cor.cinza, lineHeight: 1.5 }}>
+              Responda votações que já aconteceram no Congresso e veja quais candidatos do {ufSel} votaram como você, pelo voto registrado de cada um.
+            </span>
+            <span style={{ display: 'inline-block', marginTop: '8px', fontSize: '0.85rem', fontWeight: 700, color: t.cor.ouroTexto }}>Responder →</span>
+          </Link>
+        )}
 
         {ufSel && <Cedula uf={ufSel} cedula={cedula} />}
 
@@ -227,6 +254,7 @@ export default function Comecar({ modo, temasDisponiveis, ufSel, temasSel, cedul
         <meta name="description" content="Duas perguntas rápidas, sem cadastro: escolha o seu estado e os temas que te importam, e veja quem está na sua cédula em 2026." />
       </Head>
 
+      <NavPraVoce />
       <span style={{ fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: t.cor.ouroTexto }}>2 perguntas rápidas</span>
       <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.9rem,5vw,2.8rem)', lineHeight: 1.1, margin: '10px 0 10px' }}>
         Vamos mostrar o que importa <span style={{ color: t.cor.ouroTexto }}>pra você</span>.
@@ -234,6 +262,19 @@ export default function Comecar({ modo, temasDisponiveis, ufSel, temasSel, cedul
       <p style={{ color: t.cor.cinza, fontSize: '1.05rem', margin: '0 0 36px', lineHeight: 1.5 }}>
         Sem cadastro, sem IA te vigiando. Você escolhe, a gente direciona. Dá pra mudar quando quiser.
       </p>
+
+      {/* Quem já marcou favoritos vê a lista aqui também, antes mesmo de responder. */}
+      <SeusFavoritos />
+
+      {/* 26/09/2026: o questionário de afinidade também tem entrada aqui, e não só depois de
+          escolher o estado: é uma ferramenta própria, não um passo da cédula. */}
+      <Link href="/afinidade" style={{ display: 'block', textDecoration: 'none', color: t.cor.tinta, background: '#fff', borderRadius: t.raio.md, padding: '18px 20px', marginBottom: '30px', boxShadow: t.sombra.clicavel, transition: 'box-shadow .15s, transform .15s', maxWidth: '720px' }} onMouseOver={(e) => { e.currentTarget.style.boxShadow = t.sombra.hover; e.currentTarget.style.transform = 'translateY(-2px)'; }} onMouseOut={(e) => { e.currentTarget.style.boxShadow = t.sombra.clicavel; e.currentTarget.style.transform = 'none'; }}>
+        <strong style={{ fontSize: '1.05rem' }}>Quem vota como você?</strong>
+        <span style={{ display: 'block', marginTop: '4px', fontSize: '0.88rem', color: t.cor.cinza, lineHeight: 1.5 }}>
+          Responda votações que já aconteceram no Congresso e veja quais candidatos votaram como você, pelo voto registrado de cada um.
+        </span>
+        <span style={{ display: 'inline-block', marginTop: '8px', fontSize: '0.85rem', fontWeight: 700, color: t.cor.ouroTexto }}>Responder →</span>
+      </Link>
 
       <div style={{ marginBottom: '32px' }}>
         <h2 style={{ fontSize: '1.1rem', margin: '0 0 14px' }}>1. Qual é o seu estado?</h2>
