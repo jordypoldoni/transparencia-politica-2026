@@ -102,6 +102,31 @@ export default function App({ Component, pageProps }) {
           .hero-grid { grid-template-columns: 1fr; gap: 28px; align-items: stretch; }
         }
 
+        /* CELULAR SEM ARRASTAR PARA OS LADOS (26/09/2026).
+           1) overflow-x clip: nada pode alargar a pagina alem da tela. Clip e nao hidden, porque
+              hidden no body quebra o cabecalho sticky.
+           2) Campo de digitar com 16px no celular: abaixo disso o iPhone da zoom ao tocar no campo
+              e depois a pagina fica solta, andando para os lados.
+           3) Menu aberto trava a rolagem da pagina de baixo (classe posta pelo Layout). So no html:
+              overflow hidden no body transforma o body em area de rolagem e o cabecalho sticky some. */
+        html, body { overflow-x: clip; max-width: 100%; }
+        @media (max-width: 760px) { input, select, textarea { font-size: 16px !important; } }
+        html.menu-aberto { overflow: hidden; overscroll-behavior: none; }
+
+        /* Tela /entrar (26/09/2026). Celular: titulo, cartao de login, explicacao. Computador:
+           titulo e explicacao a esquerda, cartao a direita ocupando as duas linhas. */
+        .entrar-grade { display: grid; gap: 28px; grid-template-columns: minmax(0, 1fr);
+          grid-template-areas: "texto" "acao" "porque"; max-width: 480px; margin: 8px auto 0; }
+        .entrar-texto { grid-area: texto; }
+        .entrar-acao { grid-area: acao; }
+        .entrar-porque { grid-area: porque; }
+        @media (min-width: 880px) {
+          .entrar-grade { max-width: 1000px; grid-template-columns: minmax(0, 1fr) minmax(0, 430px);
+            grid-template-areas: "texto acao" "porque acao"; column-gap: 72px; row-gap: 28px;
+            align-items: start; margin-top: 40px; }
+          .entrar-texto { align-self: end; }
+        }
+
         /* Placeholder do campo de e-mail do /entrar: cinza #666E7B (4,7:1), nao o cinza claro
            padrao do navegador. Em hex pelo mesmo motivo do bloco abaixo. */
         .campo-email::placeholder { color: #666E7B; opacity: 1; }
@@ -179,9 +204,12 @@ export default function App({ Component, pageProps }) {
         /* Grade de parlamentares (/deputados, /deputados/[uf], /senadores). Colunas fixas por
            faixa de largura em vez de auto-fill: o pedido e 5 por linha no desktop, e auto-fill
            entrega 4 ou 6 conforme a largura da janela. */
-        .grade-parl { display: grid; gap: 10px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
-        @media (min-width: 620px) { .grade-parl { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-        @media (min-width: 880px) { .grade-parl { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+        /* Celular (26/09/2026): UM cartao por linha. Com dois, nome e partido viravam "Al..." e
+           "RE..." e ninguem sabia quem era quem. */
+        .grade-parl { display: grid; gap: 10px; grid-template-columns: minmax(0, 1fr); }
+        @media (min-width: 560px) { .grade-parl { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        @media (min-width: 760px) { .grade-parl { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+        @media (min-width: 980px) { .grade-parl { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
         @media (min-width: 1120px) { .grade-parl { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
         .radar-linha { display: flex; align-items: center; gap: 14px; min-width: 0; }
         .radar-nome { min-width: 0; }

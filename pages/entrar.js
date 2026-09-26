@@ -11,7 +11,7 @@ import { entrarComGoogle, entrarComEmail, sessaoAtual, perfilDisponivel } from '
 //
 // Depois de entrar, a pessoa cai em /perfil, onde decide (consentimento) se as respostas e os
 // favoritos deste navegador vão para o perfil.
-const caixa = { background: t.cor.papelCartao, borderRadius: t.raio.md, padding: 'clamp(20px,4vw,28px)', boxShadow: t.sombra.sutil };
+const caixa = { background: t.cor.papelCartao, borderRadius: t.raio.lg, padding: 'clamp(22px,4vw,32px)', boxShadow: t.sombra.media };
 const botao = (claro = false, desligado = false) => ({
   display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '10px', width: '100%',
   padding: '12px 20px', fontSize: '0.95rem', fontWeight: 700, fontFamily: t.fonte.corpo, border: 'none',
@@ -69,65 +69,81 @@ export default function Entrar() {
   return (
     <div className="pagina">
       <Head><title>Entrar | Lume Cidadão</title><meta name="robots" content="noindex" /></Head>
-      <div style={{ maxWidth: '460px', margin: '0 auto' }}>
-        <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.8rem,5vw,2.4rem)', margin: '8px 0 10px' }}>Entrar no Lume</h1>
-        <p style={{ color: t.cor.cinza, lineHeight: 1.6, margin: '0 0 22px' }}>
-          Você não precisa de conta para usar o site. A conta serve só para levar suas respostas e seus favoritos para
-          outros aparelhos.
-        </p>
-        {/* SEM SENHA, E DIZENDO POR QUÊ (26/09/2026). O Jordy perguntou se a falta de senha não
-            assusta. Assusta quem não sabe o motivo; por isso o motivo vai na tela, antes dos botões. */}
-        <div style={{ background: t.cor.papelQuente, borderRadius: t.raio.md, padding: '14px 18px', margin: '0 0 18px', fontSize: '0.9rem', lineHeight: 1.6, color: t.cor.tinta }}>
-          <strong>Por que não tem senha?</strong> Porque senha é o que mais vaza. Entrando com o Google, quem protege a sua conta
-          é o próprio Google, com a verificação em duas etapas se você usar. Entrando pelo e-mail, mandamos um link que vale uma
-          vez só: só quem abre a sua caixa de entrada consegue entrar. Em nenhum dos dois casos o Lume guarda senha sua.
+      {/* HIERARQUIA (26/09/2026). Antes era uma coluna só: título, texto, um bloco creme e o cartão
+          de login, tudo com peso parecido, e a ação ficava no fim. Agora são três papéis:
+          1) o que é (título e uma frase), 2) a ação (o cartão, única superfície elevada da tela),
+          3) a explicação (por que não tem senha), texto simples, sem caixa competindo com o cartão.
+          No computador: explicação à esquerda, cartão à direita. No celular: título, cartão e
+          depois a explicação. Grade em _app.js (.entrar-grade). */}
+      <div className="entrar-grade">
+        <div className="entrar-texto">
+          <p style={{ margin: '0 0 8px', fontSize: '0.78rem', fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase', color: t.cor.ouroTexto }}>Sua conta</p>
+          <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(2rem,4.5vw,2.8rem)', lineHeight: 1.1, margin: '0 0 14px' }}>Entrar no Lume</h1>
+          <p style={{ color: t.cor.tinta, fontSize: '1.05rem', lineHeight: 1.6, margin: 0, maxWidth: '44ch' }}>
+            Você não precisa de conta para usar o site. A conta serve só para levar suas respostas e seus favoritos para
+            outros aparelhos.
+          </p>
         </div>
 
-        {!perfilDisponivel ? (
-          <div style={caixa}><p style={{ margin: 0 }}>O login está indisponível no momento.</p></div>
-        ) : enviado ? (
-          <div style={caixa}>
-            <p style={{ margin: '0 0 8px', fontWeight: 700 }}>Link enviado</p>
-            <p style={{ margin: 0, color: t.cor.cinza, lineHeight: 1.6 }}>
-              Mandamos um link para <strong style={{ color: t.cor.tinta }}>{email}</strong>. Abra o e-mail neste aparelho e toque
-              no link para entrar. Se não chegar em alguns minutos, olhe a caixa de spam.
-            </p>
-          </div>
-        ) : (
-          <div style={caixa}>
-            <button type="button" onClick={google} disabled={ocupado} style={botaoGoogle(ocupado)}
-              onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}>
-              <LogoGoogle />
-              Continuar com o Google
-            </button>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '20px 0', color: t.cor.cinza, fontSize: '0.84rem' }}>
-              <span style={{ flex: 1, height: '1px', background: t.cor.papelQuente2 }} />ou<span style={{ flex: 1, height: '1px', background: t.cor.papelQuente2 }} />
+        <div className="entrar-acao">
+          {!perfilDisponivel ? (
+            <div style={caixa}><p style={{ margin: 0 }}>O login está indisponível no momento.</p></div>
+          ) : enviado ? (
+            <div style={caixa}>
+              <p style={{ margin: '0 0 8px', fontWeight: 700 }}>Link enviado</p>
+              <p style={{ margin: 0, color: t.cor.cinza, lineHeight: 1.6 }}>
+                Mandamos um link para <strong style={{ color: t.cor.tinta }}>{email}</strong>. Abra o e-mail neste aparelho e toque
+                no link para entrar. Se não chegar em alguns minutos, olhe a caixa de spam.
+              </p>
             </div>
-            <form onSubmit={porEmail}>
-              <label htmlFor="email" style={{ display: 'block', fontWeight: 700, fontSize: '0.9rem', marginBottom: '8px' }}>Receber um link de acesso por e-mail</label>
-              {/* CAMPO DE E-MAIL ACESSÍVEL (26/09/2026). O fundo creme sobre o cartão branco dava 1,08:1:
-                  o campo não aparecia. Nenhum fundo claro chega a 3:1 contra o branco (WCAG 1.4.11), então
-                  o limite do campo é um anel cinza de 3,25:1 (sombra interna, sem borda). No foco vira
-                  anel índigo com halo âmbar. Fonte de 16px: abaixo disso o iPhone dá zoom ao tocar. */}
-              <input id="email" type="email" inputMode="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="seu@email.com"
-                className="campo-email" aria-describedby={erro ? 'erro-entrar' : undefined} aria-invalid={erro ? true : undefined}
-                onFocus={() => setFocoEmail(true)} onBlur={() => setFocoEmail(false)}
-                style={{ width: '100%', minHeight: '48px', padding: '12px 20px', borderRadius: t.raio.pill, border: 'none', outline: 'none',
-                  background: '#FFFFFF', fontSize: '1rem', fontFamily: t.fonte.corpo, color: t.cor.tinta, marginBottom: '14px',
-                  boxShadow: focoEmail ? `inset 0 0 0 2px ${t.cor.verde}, ${t.sombra.anelFoco}` : 'inset 0 0 0 1.5px #8A8F98, inset 0 1px 3px rgba(25,28,32,0.08)',
-                  transition: 'box-shadow .15s' }} />
-              <button type="submit" disabled={ocupado} style={botao(false, ocupado)}
+          ) : (
+            <div style={caixa}>
+              <p style={{ margin: '0 0 16px', fontWeight: 800, fontSize: '1.05rem', color: t.cor.tinta }}>Escolha como entrar</p>
+              <button type="button" onClick={google} disabled={ocupado} style={botaoGoogle(ocupado)}
                 onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}>
-                {ocupado ? 'Enviando…' : 'Enviar link'}
+                <LogoGoogle />
+                Continuar com o Google
               </button>
-            </form>
-          </div>
-        )}
-        {erro && <p id="erro-entrar" role="alert" style={{ color: t.cor.alertaTexto, marginTop: '12px' }}>{erro}</p>}
-        <p style={{ color: t.cor.cinza, fontSize: '0.84rem', lineHeight: 1.6, marginTop: '18px' }}>
-          Ao entrar, nada é guardado no seu perfil sem você autorizar na página seguinte. Veja{' '}
-          <Link href="/privacidade" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>o que guardamos e como apagar</Link>.
-        </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '20px 0', color: t.cor.cinza, fontSize: '0.84rem' }}>
+                <span style={{ flex: 1, height: '1px', background: t.cor.papelQuente2 }} />ou<span style={{ flex: 1, height: '1px', background: t.cor.papelQuente2 }} />
+              </div>
+              <form onSubmit={porEmail}>
+                <label htmlFor="email" style={{ display: 'block', fontWeight: 700, fontSize: '0.9rem', marginBottom: '8px' }}>Receber um link de acesso por e-mail</label>
+                {/* CAMPO DE E-MAIL ACESSÍVEL (26/09/2026). O fundo creme sobre o cartão branco dava 1,08:1:
+                    o campo não aparecia. Nenhum fundo claro chega a 3:1 contra o branco (WCAG 1.4.11), então
+                    o limite do campo é um anel (sombra interna, sem borda) na cor dourada do site, pedido do
+                    Jordy: FINO em repouso, #CC7A22 (3,29:1, o âmbar mais claro que ainda passa 3:1), e
+                    GROSSO no foco, #FF8A00 com halo. Fonte de 16px: abaixo disso o iPhone dá zoom ao tocar. */}
+                <input id="email" type="email" inputMode="email" autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="seu@email.com"
+                  className="campo-email" aria-describedby={erro ? 'erro-entrar' : undefined} aria-invalid={erro ? true : undefined}
+                  onFocus={() => setFocoEmail(true)} onBlur={() => setFocoEmail(false)}
+                  style={{ width: '100%', minHeight: '48px', padding: '12px 20px', borderRadius: t.raio.pill, border: 'none', outline: 'none',
+                    background: '#FFFFFF', fontSize: '1rem', fontFamily: t.fonte.corpo, color: t.cor.tinta, marginBottom: '14px',
+                    boxShadow: focoEmail ? `inset 0 0 0 2.5px ${t.cor.ouro}, ${t.sombra.anelFoco}` : 'inset 0 0 0 1px #CC7A22, inset 0 1px 3px rgba(25,28,32,0.06)',
+                    transition: 'box-shadow .15s' }} />
+                <button type="submit" disabled={ocupado} style={botao(false, ocupado)}
+                  onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}>
+                  {ocupado ? 'Enviando…' : 'Enviar link'}
+                </button>
+              </form>
+            </div>
+          )}
+          {erro && <p id="erro-entrar" role="alert" style={{ color: t.cor.alertaTexto, margin: '12px 4px 0', fontWeight: 600 }}>{erro}</p>}
+          <p style={{ color: t.cor.cinza, fontSize: '0.84rem', lineHeight: 1.6, margin: '14px 4px 0' }}>
+            Ao entrar, nada é guardado no seu perfil sem você autorizar na página seguinte. Veja{' '}
+            <Link href="/privacidade" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>o que guardamos e como apagar</Link>.
+          </p>
+        </div>
+
+        {/* SEM SENHA, E DIZENDO POR QUÊ. A falta de senha assusta quem não sabe o motivo. */}
+        <div className="entrar-porque">
+          <h2 style={{ fontFamily: t.fonte.corpo, fontSize: '1rem', fontWeight: 800, margin: '0 0 6px', color: t.cor.tinta }}>Por que não tem senha?</h2>
+          <p style={{ margin: 0, fontSize: '0.92rem', lineHeight: 1.65, color: t.cor.cinza, maxWidth: '52ch' }}>
+            Porque senha é o que mais vaza. Entrando com o Google, quem protege a sua conta é o próprio Google, com a
+            verificação em duas etapas se você usar. Entrando pelo e-mail, mandamos um link que vale uma vez só: só quem abre
+            a sua caixa de entrada consegue entrar. Em nenhum dos dois casos o Lume guarda senha sua.
+          </p>
+        </div>
       </div>
     </div>
   );

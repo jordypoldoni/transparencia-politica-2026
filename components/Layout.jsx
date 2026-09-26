@@ -119,6 +119,22 @@ export default function Layout({ children, pageProps }) {
 
   useEffect(() => { setMenu(false); setAberto(null); }, [asPath]); // fecha ao navegar
 
+  // MENU MÓVEL TRAVA A PÁGINA (26/09/2026). Com o menu aberto, o dedo rolava a página de baixo
+  // e o menu ia junto, porque era parte do cabeçalho. Agora: a página trava (classe no <html>,
+  // CSS em _app.js), o menu tem rolagem própria até o fim da tela e um fundo escurecido que
+  // fecha ao tocar. Esc também fecha.
+  const topoRef = useRef(null);
+  const [alturaTopo, setAlturaTopo] = useState(0);
+  useEffect(() => {
+    const html = document.documentElement;
+    if (!menu) { html.classList.remove('menu-aberto'); return undefined; }
+    setAlturaTopo(topoRef.current?.offsetHeight || 0);
+    html.classList.add('menu-aberto');
+    const esc = (e) => { if (e.key === 'Escape') setMenu(false); };
+    window.addEventListener('keydown', esc);
+    return () => { html.classList.remove('menu-aberto'); window.removeEventListener('keydown', esc); };
+  }, [menu]);
+
   // ---------------------------------------------------------------------------
   // O SUBMENU NÃO PODE FECHAR ENQUANTO O MOUSE VAI ATÉ ELE. (corrigido em 19/09/2026)
   //
@@ -162,7 +178,7 @@ export default function Layout({ children, pageProps }) {
   return (
     <div style={{ minHeight: '100vh', background: t.cor.papel, color: t.cor.tinta, fontFamily: t.fonte.corpo, display: 'flex', flexDirection: 'column' }}>
       {/* Cabeçalho */}
-      <header style={{ boxShadow: '0 1px 14px rgba(74,52,30,0.06)', background: 'rgba(251,248,242,0.9)', backdropFilter: 'blur(8px)', position: 'sticky', top: 0, zIndex: 50 }}>
+      <header ref={topoRef} style={{ boxShadow: '0 1px 14px rgba(74,52,30,0.06)', background: 'rgba(251,248,242,0.9)', backdropFilter: 'blur(8px)', position: 'sticky', top: 0, zIndex: 50 }}>
         {/* nowrap desde 18/09: com `wrap`, o menu que não coubesse na linha CAÍA para baixo do
             logo em vez de virar hambúrguer. Uma linha extra de menu não é um estado desenhado,
             é um acidente de layout. Ou cabe na linha, ou o hambúrguer assume (ponto de corte
@@ -266,7 +282,12 @@ export default function Layout({ children, pageProps }) {
         {/* Menu mobile. Os grupos viram SEÇÕES abertas, não sanfona: no celular há rolagem de
             sobra, e esconder dois links atrás de mais um toque só acrescenta trabalho. */}
         {menu && (
-          <nav className="menu-mobile" aria-label="Navegação principal" style={{ background: t.cor.papel, padding: '8px 12px 14px', boxShadow: t.sombra.media }}>
+          <div className="menu-mobile" aria-hidden="true" onClick={() => setMenu(false)}
+            style={{ position: 'absolute', top: '100%', left: 0, right: 0, height: `calc(100dvh - ${alturaTopo}px)`, background: 'rgba(25,28,32,0.38)', touchAction: 'none' }} />
+        )}
+        {menu && (
+          <nav className="menu-mobile" aria-label="Navegação principal"
+            style={{ position: 'absolute', top: '100%', left: 0, right: 0, maxHeight: `calc(100dvh - ${alturaTopo}px)`, overflowY: 'auto', overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch', background: t.cor.papel, padding: '8px 12px 14px', boxShadow: t.sombra.media }}>
             {navItens.map((n) => {
               if (!n.filhos) {
                 const ativo = ehAtivo(n.href, pathname);
