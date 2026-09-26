@@ -55,7 +55,7 @@ const pastilha = (ativo) => ({
   borderRadius: t.raio.pill, cursor: 'pointer', border: 'none',
   background: ativo ? t.cor.papelCartao : 'transparent',
   color: ativo ? t.cor.tinta : t.cor.cinza,
-  boxShadow: ativo ? t.sombra.clicavel : 'none',
+  boxShadow: ativo ? t.sombra.botao : 'none',
   transition: 'background .15s',
 });
 
@@ -246,7 +246,7 @@ export default function VotacoesDaCasa({ casa, votacoes, temas = [] }) {
                   padding: '11px 26px', borderRadius: t.raio.pill, border: 'none',
                   background: t.cor.verde, color: t.cor.ouro,
                   fontSize: '0.88rem', fontWeight: 700, fontFamily: t.fonte.corpo,
-                  cursor: 'pointer', boxShadow: t.sombra.clicavel,
+                  cursor: 'pointer', boxShadow: t.sombra.botao,
                 }}
               >
                 Ver mais {Math.min(POR_PAGINA, grupos.length - mostrando)} de {(grupos.length - mostrando).toLocaleString('pt-BR')}

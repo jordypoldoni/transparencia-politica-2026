@@ -15,7 +15,7 @@ const pilula = (ativo) => ({
   padding: '9px 16px', fontSize: '0.9rem', fontWeight: 700, fontFamily: t.fonte.corpo,
   borderRadius: t.raio.pill, cursor: 'pointer', border: 'none',
   background: ativo ? t.cor.verde : '#fff', color: ativo ? t.cor.ouro : t.cor.tinta,
-  boxShadow: t.sombra.clicavel, transition: 'background .15s',
+  boxShadow: t.sombra.botao, transition: 'background .15s',
 });
 
 // Mesmo "Limpar filtros ✕" de /candidatos-2026: texto âmbar escuro, sem fundo e sem borda,
@@ -75,7 +75,7 @@ function Cedula({ uf, cedula }) {
         )}
         <div style={{ marginTop: '14px' }}>
           <Link href={`/candidatos-2026?cargo=deputado-federal&uf=${uf}`}
-            style={{ display: 'inline-block', padding: '11px 20px', borderRadius: t.raio.pill, background: t.cor.verde, color: t.cor.ouro, fontWeight: 700, fontSize: '0.88rem', textDecoration: 'none', boxShadow: t.sombra.clicavel }}>
+            style={{ display: 'inline-block', padding: '11px 20px', borderRadius: t.raio.pill, background: t.cor.verde, color: t.cor.ouro, fontWeight: 700, fontSize: '0.88rem', textDecoration: 'none', boxShadow: t.sombra.botao }}>
             Ver os {federais.total.toLocaleString('pt-BR')} candidatos do {uf} →
           </Link>
         </div>
@@ -89,7 +89,7 @@ function Cedula({ uf, cedula }) {
           <AindaNaoTemos texto="Deputado distrital ainda não está no site." />
         ) : (
           <Link href={`/candidatos-2026?cargo=deputado-estadual&uf=${uf}`}
-            style={{ display: 'inline-block', padding: '11px 20px', borderRadius: t.raio.pill, background: t.cor.verde, color: t.cor.ouro, fontWeight: 700, fontSize: '0.88rem', textDecoration: 'none', boxShadow: t.sombra.clicavel }}>
+            style={{ display: 'inline-block', padding: '11px 20px', borderRadius: t.raio.pill, background: t.cor.verde, color: t.cor.ouro, fontWeight: 700, fontSize: '0.88rem', textDecoration: 'none', boxShadow: t.sombra.botao }}>
             Ver os candidatos a deputado estadual do {uf} →
           </Link>
         )}
@@ -195,7 +195,7 @@ export default function Comecar({ modo, temasDisponiveis, ufSel, temasSel, cedul
             {/* Mesmo botão de limpar de /candidatos-2026. Aqui ele volta ao questionário em
                 branco, e esquece a preferência guardada. */}
             <button type="button" onClick={limparEVoltar} style={limparEstilo}>Limpar filtros ✕</button>
-            <Link href="/comecar" style={{ textDecoration: 'none', color: t.cor.tinta, fontWeight: 700, fontSize: '0.9rem', padding: '9px 16px', borderRadius: t.raio.pill, background: '#fff', boxShadow: t.sombra.clicavel }}>✎ editar</Link>
+            <Link href="/comecar" style={{ textDecoration: 'none', color: t.cor.tinta, fontWeight: 700, fontSize: '0.9rem', padding: '9px 16px', borderRadius: t.raio.pill, background: '#fff', boxShadow: t.sombra.botao }}>✎ editar</Link>
           </div>
         </div>
 
@@ -296,7 +296,7 @@ export default function Comecar({ modo, temasDisponiveis, ufSel, temasSel, cedul
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
         <button onClick={enviar} disabled={!temFiltro}
-          style={{ padding: '16px 30px', fontSize: '1.05rem', fontWeight: 700, fontFamily: t.fonte.corpo, color: !temFiltro ? '#fff' : t.cor.ouro, background: !temFiltro ? t.cor.cinza : t.cor.verde, border: 'none', borderRadius: t.raio.pill, cursor: !temFiltro ? 'not-allowed' : 'pointer', boxShadow: !temFiltro ? 'none' : t.sombra.clicavel }}>
+          style={{ padding: '16px 30px', fontSize: '1.05rem', fontWeight: 700, fontFamily: t.fonte.corpo, color: !temFiltro ? '#fff' : t.cor.ouro, background: !temFiltro ? t.cor.cinza : t.cor.verde, border: 'none', borderRadius: t.raio.pill, cursor: !temFiltro ? 'not-allowed' : 'pointer', boxShadow: !temFiltro ? 'none' : t.sombra.botao }}>
           Ver o que importa pra mim →
         </button>
         {temFiltro && (

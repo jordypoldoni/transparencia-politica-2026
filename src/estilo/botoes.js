@@ -14,13 +14,13 @@ export const pilulaPagina = (desativado) => ({
   padding: '12px 20px', fontSize: '0.86rem', fontWeight: 700, fontFamily: t.fonte.corpo,
   borderRadius: t.raio.pill, cursor: desativado ? 'default' : 'pointer',
   border: 'none', background: t.cor.verde, color: t.cor.ouro,
-  boxShadow: desativado ? 'none' : t.sombra.clicavel,
+  boxShadow: desativado ? 'none' : t.sombra.botao,
   opacity: desativado ? 0.35 : 1,
   transition: 'box-shadow .15s ease, transform .15s ease',
 });
 
 export const realcePagina = (e, ligar) => {
   if (e.currentTarget.disabled) return;
-  e.currentTarget.style.boxShadow = ligar ? t.sombra.hover : t.sombra.clicavel;
+  e.currentTarget.style.boxShadow = ligar ? t.sombra.botaoHover : t.sombra.botao;
   e.currentTarget.style.transform = ligar ? 'translateY(-1px)' : 'none';
 };

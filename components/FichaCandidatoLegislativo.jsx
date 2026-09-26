@@ -323,7 +323,7 @@ export default function FichaCandidatoLegislativo({ candidato, canonical, cargo 
           </div>
 
           <div style={{ marginTop: '14px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-            <Link href={hrefPerfil(m)} style={{ background: t.cor.verde, color: t.cor.ouro, padding: '11px 22px', borderRadius: t.raio.pill, textDecoration: 'none', fontWeight: 700, fontSize: '0.92rem', boxShadow: t.sombra.clicavel }}>
+            <Link href={hrefPerfil(m)} style={{ background: t.cor.verde, color: t.cor.ouro, padding: '11px 22px', borderRadius: t.raio.pill, textDecoration: 'none', fontWeight: 700, fontSize: '0.92rem', boxShadow: t.sombra.botao }}>
               Ver o mandato em detalhe →
             </Link>
             <span style={{ alignSelf: 'center', fontSize: '0.85rem', color: t.cor.cinza }}>

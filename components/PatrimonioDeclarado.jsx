@@ -65,13 +65,13 @@ export default function PatrimonioDeclarado({ ficha }) {
           <button
             onClick={() => setAberto((v) => !v)}
             aria-expanded={aberto}
-            onMouseOver={(e) => { e.currentTarget.style.boxShadow = t.sombra.hover; }}
-            onMouseOut={(e) => { e.currentTarget.style.boxShadow = t.sombra.clicavel; }}
+            onMouseOver={(e) => { e.currentTarget.style.boxShadow = t.sombra.botaoHover; }}
+            onMouseOut={(e) => { e.currentTarget.style.boxShadow = t.sombra.botao; }}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: '8px', minHeight: '44px',
               padding: '10px 20px', borderRadius: t.raio.pill, border: 'none', cursor: 'pointer',
               fontFamily: t.fonte.corpo, fontSize: '0.88rem', fontWeight: 700,
-              background: t.cor.verde, color: t.cor.ouro, boxShadow: t.sombra.clicavel,
+              background: t.cor.verde, color: t.cor.ouro, boxShadow: t.sombra.botao,
               transition: 'box-shadow .15s ease',
             }}>
             {aberto ? 'Ocultar a lista' : `Ver os ${itens.length} bens declarados`}

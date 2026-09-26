@@ -16,7 +16,7 @@ const pilula = (ativa) => ({
   display: 'inline-block', padding: '10px 20px', fontSize: '0.9rem', fontWeight: 700, fontFamily: t.fonte.corpo,
   borderRadius: t.raio.pill, textDecoration: 'none', whiteSpace: 'nowrap',
   background: ativa ? t.cor.verde : '#fff', color: ativa ? t.cor.ouro : t.cor.tinta,
-  boxShadow: t.sombra.clicavel, transition: 'box-shadow .15s, transform .15s',
+  boxShadow: t.sombra.botao, transition: 'box-shadow .15s, transform .15s',
 });
 
 export default function NavPraVoce() {
@@ -27,8 +27,8 @@ export default function NavPraVoce() {
         const ativa = pathname === p.href;
         return (
           <Link key={p.href} href={p.href} aria-current={ativa ? 'page' : undefined} style={pilula(ativa)}
-            onMouseOver={(e) => { e.currentTarget.style.boxShadow = t.sombra.hover; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-            onMouseOut={(e) => { e.currentTarget.style.boxShadow = t.sombra.clicavel; e.currentTarget.style.transform = 'none'; }}>
+            onMouseOver={(e) => { e.currentTarget.style.boxShadow = t.sombra.botaoHover; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+            onMouseOut={(e) => { e.currentTarget.style.boxShadow = t.sombra.botao; e.currentTarget.style.transform = 'none'; }}>
             {p.rotulo}
           </Link>
         );

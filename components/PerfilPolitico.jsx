@@ -146,7 +146,7 @@ const pastilhaAno = (ativo, escuro) => ({
   borderRadius: t.raio.pill, cursor: 'pointer', border: 'none',
   background: ativo ? (escuro ? t.cor.ouro : t.cor.verde) : 'transparent',
   color: ativo ? (escuro ? t.cor.verde : t.cor.ouro) : (escuro ? '#fff' : t.cor.tinta),
-  boxShadow: ativo ? t.sombra.clicavel : 'none',
+  boxShadow: ativo ? t.sombra.botao : 'none',
   transition: 'background .15s',
 });
 
@@ -530,10 +530,10 @@ export default function PerfilPolitico({ dados }) {
               {(perfil.email_oficial || redes.length > 0) && (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', marginTop: '20px' }}>
                   {perfil.email_oficial && (
-                    <a href={`mailto:${perfil.email_oficial}`} style={{ ...pilula, background: t.cor.papelQuente, color: t.cor.tinta, boxShadow: t.sombra.clicavel, fontSize: '0.82rem', padding: '8px 14px' }}>✉ {perfil.email_oficial}</a>
+                    <a href={`mailto:${perfil.email_oficial}`} style={{ ...pilula, background: t.cor.papelQuente, color: t.cor.tinta, boxShadow: t.sombra.botao, fontSize: '0.82rem', padding: '8px 14px' }}>✉ {perfil.email_oficial}</a>
                   )}
                   {redes.map((u, i) => (
-                    <a key={i} href={u} target="_blank" rel="noopener noreferrer" style={{ ...pilula, background: t.cor.papelQuente, color: t.cor.ouroTexto, boxShadow: t.sombra.clicavel, fontSize: '0.82rem', padding: '8px 14px' }}>{redeInfo(u).nome}</a>
+                    <a key={i} href={u} target="_blank" rel="noopener noreferrer" style={{ ...pilula, background: t.cor.papelQuente, color: t.cor.ouroTexto, boxShadow: t.sombra.botao, fontSize: '0.82rem', padding: '8px 14px' }}>{redeInfo(u).nome}</a>
                   ))}
                 </div>
               )}
@@ -898,7 +898,7 @@ export default function PerfilPolitico({ dados }) {
                     type="button"
                     onClick={alternarTodasProposicoes}
                     disabled={carregandoProposicoes}
-                    style={{ padding: '10px 20px', borderRadius: t.raio.pill, border: 'none', background: t.cor.papelQuente2 || t.cor.papelQuente, color: t.cor.ouroTexto, fontWeight: 700, fontSize: '0.86rem', cursor: carregandoProposicoes ? 'progress' : 'pointer', boxShadow: t.sombra.clicavel, opacity: carregandoProposicoes ? 0.7 : 1 }}
+                    style={{ padding: '10px 20px', borderRadius: t.raio.pill, border: 'none', background: t.cor.papelQuente2 || t.cor.papelQuente, color: t.cor.ouroTexto, fontWeight: 700, fontSize: '0.86rem', cursor: carregandoProposicoes ? 'progress' : 'pointer', boxShadow: t.sombra.botao, opacity: carregandoProposicoes ? 0.7 : 1 }}
                   >
                     {carregandoProposicoes
                       ? 'Buscando na fonte oficial…'
@@ -1043,7 +1043,7 @@ export default function PerfilPolitico({ dados }) {
               Para garantir a transparência, você será levado ao portal oficial da <strong>{perfil.casa_legislativa || 'Câmara'}</strong> para auditar os dados na origem.
             </p>
             <div style={{ display: 'flex', gap: '10px' }}>
-              <button onClick={() => setModal(false)} style={{ ...pilula, flex: 1, justifyContent: 'center', background: '#fff', color: t.cor.tinta, boxShadow: t.sombra.clicavel }}>Cancelar</button>
+              <button onClick={() => setModal(false)} style={{ ...pilula, flex: 1, justifyContent: 'center', background: '#fff', color: t.cor.tinta, boxShadow: t.sombra.botao }}>Cancelar</button>
               {linkOficial() && (
                 <a href={linkOficial()} target="_blank" rel="noopener noreferrer" onClick={() => setModal(false)} style={{ ...pilula, flex: 1, justifyContent: 'center', background: t.cor.verde, color: t.cor.ouro }}>Prosseguir →</a>
               )}

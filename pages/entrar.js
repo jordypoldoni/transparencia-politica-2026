@@ -17,7 +17,7 @@ const botao = (claro = false, desligado = false) => ({
   padding: '12px 20px', fontSize: '0.95rem', fontWeight: 700, fontFamily: t.fonte.corpo, border: 'none',
   borderRadius: t.raio.pill, cursor: desligado ? 'not-allowed' : 'pointer', opacity: desligado ? 0.5 : 1,
   background: claro ? '#fff' : t.cor.verde, color: claro ? t.cor.tinta : t.cor.ouro,
-  boxShadow: desligado ? 'none' : t.sombra.clicavel, transition: 'box-shadow .15s, transform .15s',
+  boxShadow: desligado ? 'none' : t.sombra.botao, transition: 'box-shadow .15s, transform .15s',
 });
 // BOTÃO DO GOOGLE (26/09/2026). O branco sumia dentro do cartão branco: a única diferença era
 // a sombra. Agora segue o tema escuro oficial do "Sign in with Google" (fundo #131314, texto
@@ -36,7 +36,7 @@ const LogoGoogle = () => (
 );
 const realce = (e, ligar) => {
   if (e.currentTarget.disabled) return;
-  e.currentTarget.style.boxShadow = ligar ? t.sombra.hover : t.sombra.clicavel;
+  e.currentTarget.style.boxShadow = ligar ? t.sombra.botaoHover : t.sombra.botao;
   e.currentTarget.style.transform = ligar ? 'translateY(-1px)' : 'none';
 };
 

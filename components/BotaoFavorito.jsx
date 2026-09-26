@@ -28,13 +28,13 @@ export default function BotaoFavorito({ tipo, chave, rotulo, detalhe = null, fot
   return (
     <button type="button" aria-pressed={marcado} aria-label={`${acao}: ${rotulo}`} title={acao}
       onClick={(e) => { e.preventDefault(); e.stopPropagation(); alternarFavorito({ tipo, chave, rotulo, detalhe, foto }); }}
-      onMouseOver={(e) => { e.currentTarget.style.boxShadow = t.sombra.hover; e.currentTarget.style.transform = 'translateY(-1px)'; }}
-      onMouseOut={(e) => { e.currentTarget.style.boxShadow = t.sombra.clicavel; e.currentTarget.style.transform = 'none'; }}
+      onMouseOver={(e) => { e.currentTarget.style.boxShadow = t.sombra.botaoHover; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+      onMouseOut={(e) => { e.currentTarget.style.boxShadow = t.sombra.botao; e.currentTarget.style.transform = 'none'; }}
       style={{
         position: 'relative', zIndex: 2, pointerEvents: 'auto', flexShrink: 0, width: '36px', height: '36px', minWidth: '36px',
         display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: 0,
         borderRadius: t.raio.pill, border: 'none', cursor: 'pointer', background: fundo,
-        boxShadow: t.sombra.clicavel, transition: 'box-shadow .15s, transform .15s, background .15s',
+        boxShadow: t.sombra.botao, transition: 'box-shadow .15s, transform .15s, background .15s',
       }}>
       <Coracao cheio={marcado} cor={corIcone} />
     </button>

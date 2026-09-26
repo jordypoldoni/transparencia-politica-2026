@@ -187,7 +187,7 @@ export default function Home({ votacoes, parlamentares = [], uniao = null, estad
           </div>
         </div>
 
-        <Link href="/gastos-publicos" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 24px', fontWeight: 700, fontSize: '0.95rem', borderRadius: t.raio.pill, background: t.cor.verde, color: t.cor.ouro, textDecoration: 'none', boxShadow: t.sombra.clicavel }}>
+        <Link href="/gastos-publicos" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 24px', fontWeight: 700, fontSize: '0.95rem', borderRadius: t.raio.pill, background: t.cor.verde, color: t.cor.ouro, textDecoration: 'none', boxShadow: t.sombra.botao }}>
           Explorar gastos públicos →
         </Link>
       </section>

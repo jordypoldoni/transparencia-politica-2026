@@ -107,7 +107,7 @@ export default function PainelVotacoes({ resumo }) {
                         padding: '10px 20px', borderRadius: t.raio.pill, border: 'none',
                         background: t.cor.verde, color: t.cor.ouro,
                         fontSize: '0.86rem', fontWeight: 700, fontFamily: t.fonte.corpo,
-                        boxShadow: t.sombra.clicavel,
+                        boxShadow: t.sombra.botao,
                       }}>
                         Ver as votações
                       </Link>

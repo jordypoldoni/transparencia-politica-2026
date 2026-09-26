@@ -12,10 +12,10 @@ import { sessaoAtual, aoMudarSessao, sair } from '../src/lib/perfilUsuario';
 const pilulaEntrar = {
   display: 'inline-flex', alignItems: 'center', padding: '7px 16px', fontSize: '0.84rem', fontWeight: 700,
   fontFamily: t.fonte.corpo, borderRadius: t.raio.pill, background: t.cor.verde, color: t.cor.ouro,
-  textDecoration: 'none', boxShadow: t.sombra.clicavel, whiteSpace: 'nowrap', transition: 'box-shadow .15s, transform .15s',
+  textDecoration: 'none', boxShadow: t.sombra.botao, whiteSpace: 'nowrap', transition: 'box-shadow .15s, transform .15s',
 };
 const realce = (e, ligar) => {
-  e.currentTarget.style.boxShadow = ligar ? t.sombra.hover : t.sombra.clicavel;
+  e.currentTarget.style.boxShadow = ligar ? t.sombra.botaoHover : t.sombra.botao;
   e.currentTarget.style.transform = ligar ? 'translateY(-1px)' : 'none';
 };
 
@@ -53,7 +53,7 @@ export default function BotaoConta() {
     <div ref={ref} style={{ position: 'relative' }}>
       <button type="button" aria-expanded={aberto} aria-haspopup="true" aria-label={`Sua conta (${email})`} onClick={() => setAberto((a) => !a)}
         onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}
-        style={{ width: '36px', height: '36px', borderRadius: t.raio.pill, border: 'none', cursor: 'pointer', background: t.cor.verde, color: t.cor.ouro, fontWeight: 800, fontFamily: t.fonte.corpo, fontSize: '0.95rem', boxShadow: t.sombra.clicavel, transition: 'box-shadow .15s, transform .15s' }}>
+        style={{ width: '36px', height: '36px', borderRadius: t.raio.pill, border: 'none', cursor: 'pointer', background: t.cor.verde, color: t.cor.ouro, fontWeight: 800, fontFamily: t.fonte.corpo, fontSize: '0.95rem', boxShadow: t.sombra.botao, transition: 'box-shadow .15s, transform .15s' }}>
         {inicial}
       </button>
       {aberto && (

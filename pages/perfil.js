@@ -31,11 +31,11 @@ const botao = (claro = false, desligado = false) => ({
   display: 'inline-flex', alignItems: 'center', padding: '11px 22px', fontSize: '0.9rem', fontWeight: 700, fontFamily: t.fonte.corpo,
   border: 'none', borderRadius: t.raio.pill, cursor: desligado ? 'not-allowed' : 'pointer', opacity: desligado ? 0.5 : 1,
   background: claro ? t.cor.papelQuente2 : t.cor.verde, color: claro ? t.cor.tinta : t.cor.ouro,
-  boxShadow: desligado ? 'none' : t.sombra.clicavel, textDecoration: 'none', transition: 'box-shadow .15s, transform .15s',
+  boxShadow: desligado ? 'none' : t.sombra.botao, textDecoration: 'none', transition: 'box-shadow .15s, transform .15s',
 });
 const realce = (e, ligar) => {
   if (e.currentTarget.disabled) return;
-  e.currentTarget.style.boxShadow = ligar ? t.sombra.hover : t.sombra.clicavel;
+  e.currentTarget.style.boxShadow = ligar ? t.sombra.botaoHover : t.sombra.botao;
   e.currentTarget.style.transform = ligar ? 'translateY(-1px)' : 'none';
 };
 const dataBR = (iso) => (iso ? new Date(iso).toLocaleDateString('pt-BR') : '');

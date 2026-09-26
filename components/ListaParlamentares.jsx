@@ -186,7 +186,7 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
     padding: '11px 22px', fontSize: '0.95rem', fontWeight: 700, fontFamily: t.fonte.corpo,
     borderRadius: t.raio.pill, cursor: 'pointer', border: 'none',
     background: ativa ? t.cor.verde : '#fff', color: ativa ? t.cor.ouro : t.cor.tinta,
-    boxShadow: t.sombra.clicavel,
+    boxShadow: t.sombra.botao,
   });
 
   // Estas duas telas nao tinham <title> nem descricao nenhuma ate 12/09/2026: o Google

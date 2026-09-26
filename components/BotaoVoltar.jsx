@@ -14,7 +14,7 @@ const estilo = {
   display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 18px',
   fontSize: '0.9rem', fontWeight: 700, fontFamily: t.fonte.corpo, lineHeight: 1.2,
   borderRadius: t.raio.pill, cursor: 'pointer', textDecoration: 'none', border: 'none',
-  background: '#FFFFFF', color: t.cor.tinta, boxShadow: t.sombra.clicavel,
+  background: '#FFFFFF', color: t.cor.tinta, boxShadow: t.sombra.botao,
 };
 
 export default function BotaoVoltar({ href = null, margem = '0 0 20px', style = {} }) {

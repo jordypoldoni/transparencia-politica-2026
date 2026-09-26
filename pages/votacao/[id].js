@@ -23,7 +23,7 @@ const rotuloVoto = (tp) => (tp === 'Sim' ? 'A favor' : tp === 'Não' ? 'Contra' 
 // oficial, tipo de votação), então vira estilo único em vez de três cópias que divergem.
 // Âmbar sobre a caixa translúcida: 4,80:1, passa AA.
 const rotulo = { margin: 0, fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase', color: t.cor.ouro };
-const pilula = { display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 18px', fontSize: '0.9rem', fontWeight: 700, fontFamily: t.fonte.corpo, borderRadius: t.raio.pill, cursor: 'pointer', textDecoration: 'none', border: 'none', background: '#fff', color: t.cor.tinta, boxShadow: t.sombra.clicavel };
+const pilula = { display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 18px', fontSize: '0.9rem', fontWeight: 700, fontFamily: t.fonte.corpo, borderRadius: t.raio.pill, cursor: 'pointer', textDecoration: 'none', border: 'none', background: '#fff', color: t.cor.tinta, boxShadow: t.sombra.botao };
 
 export default function Votacao({ meta, votos }) {
   const router = useRouter();
@@ -94,8 +94,8 @@ export default function Votacao({ meta, votos }) {
                 onClick={() => setVerMais((v) => !v)}
                 aria-expanded={verMais}
                 aria-controls="contexto-votacao"
-                onMouseOver={(e) => { e.currentTarget.style.boxShadow = t.sombra.hover; }}
-                onMouseOut={(e) => { e.currentTarget.style.boxShadow = t.sombra.clicavel; }}
+                onMouseOver={(e) => { e.currentTarget.style.boxShadow = t.sombra.botaoHover; }}
+                onMouseOut={(e) => { e.currentTarget.style.boxShadow = t.sombra.botao; }}
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: '8px', minHeight: '44px',
                   padding: '10px 20px', borderRadius: t.raio.pill, border: 'none', cursor: 'pointer',
@@ -104,7 +104,7 @@ export default function Votacao({ meta, votos }) {
                   // ativo é âmbar com texto índigo (6,43:1). Regra das Diretrizes de Design.
                   background: verMais ? t.cor.ouro : 'rgba(255,255,255,0.14)',
                   color: verMais ? t.cor.verde : '#fff',
-                  boxShadow: t.sombra.clicavel,
+                  boxShadow: t.sombra.botao,
                   transition: 'box-shadow .15s ease, background .15s ease',
                 }}>
                 {verMais ? 'Ocultar' : 'Quero entender melhor'}

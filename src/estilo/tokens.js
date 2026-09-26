@@ -29,6 +29,12 @@ export const t = {
     media: '0 8px 30px rgba(74,52,30,0.12)',
     clicavel: '0 1px 2px rgba(74,52,30,0.05), 0 2px 10px rgba(74,52,30,0.07)',
     hover: '0 12px 30px rgba(74,52,30,0.16)',
+    // BOTÕES (26/09/2026): sombra própria, visível. A `clicavel` (0,05/0,07) sumia embaixo dos
+    // botões; o Jordy exigiu sombreamento padrão e elegante em TODO botão clicável. Duas camadas
+    // em tom índigo: uma curta que assenta o botão, uma difusa que o levanta. `clicavel` segue
+    // só para cartões e campos.
+    botao: '0 1px 2px rgba(36,30,82,0.14), 0 4px 12px rgba(36,30,82,0.16)',
+    botaoHover: '0 2px 4px rgba(36,30,82,0.14), 0 10px 24px rgba(36,30,82,0.22)',
     anelFoco: '0 0 0 3px rgba(255,138,0,0.28)', // anel âmbar p/ foco/ativo (no lugar de borda)
   },
   larguraMax: '1080px',

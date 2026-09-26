@@ -38,7 +38,7 @@ const CARGOS = [
 ];
 
 const cartao = { background: t.cor.papelCartao, borderRadius: t.raio.md, padding: '20px 22px', boxShadow: t.sombra.sutil };
-const fonte = { display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 16px', fontSize: '0.85rem', fontWeight: 700, fontFamily: t.fonte.corpo, borderRadius: t.raio.pill, textDecoration: 'none', background: '#fff', color: t.cor.tinta, boxShadow: t.sombra.clicavel };
+const fonte = { display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 16px', fontSize: '0.85rem', fontWeight: 700, fontFamily: t.fonte.corpo, borderRadius: t.raio.pill, textDecoration: 'none', background: '#fff', color: t.cor.tinta, boxShadow: t.sombra.botao };
 
 export default function Entenda() {
   return (

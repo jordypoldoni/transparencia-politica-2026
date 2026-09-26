@@ -53,18 +53,18 @@ const pilula = (ativa, noCartao = false) => ({
   padding: '10px 20px', fontSize: '0.9rem', fontWeight: 700, fontFamily: t.fonte.corpo,
   borderRadius: t.raio.pill, cursor: 'pointer', border: 'none', whiteSpace: 'nowrap',
   background: ativa ? t.cor.verde : (noCartao ? t.cor.papelQuente2 : '#fff'), color: ativa ? t.cor.ouro : t.cor.tinta,
-  boxShadow: t.sombra.clicavel, transition: 'box-shadow .15s, transform .15s',
+  boxShadow: t.sombra.botao, transition: 'box-shadow .15s, transform .15s',
 });
 const caixa = { background: t.cor.papelCartao, borderRadius: t.raio.md, padding: 'clamp(16px,3vw,22px)', boxShadow: t.sombra.sutil };
 const botaoPadrao = (desligado) => ({
   padding: '12px 24px', fontSize: '0.95rem', fontWeight: 700, fontFamily: t.fonte.corpo, border: 'none',
   borderRadius: t.raio.pill, background: t.cor.verde, color: t.cor.ouro,
-  boxShadow: desligado ? 'none' : t.sombra.clicavel, opacity: desligado ? 0.45 : 1,
+  boxShadow: desligado ? 'none' : t.sombra.botao, opacity: desligado ? 0.45 : 1,
   cursor: desligado ? 'not-allowed' : 'pointer', transition: 'box-shadow .15s, transform .15s',
 });
 const realce = (e, ligar) => {
   if (e.currentTarget.disabled) return;
-  e.currentTarget.style.boxShadow = ligar ? t.sombra.hover : t.sombra.clicavel;
+  e.currentTarget.style.boxShadow = ligar ? t.sombra.botaoHover : t.sombra.botao;
   e.currentTarget.style.transform = ligar ? 'translateY(-1px)' : 'none';
 };
 
