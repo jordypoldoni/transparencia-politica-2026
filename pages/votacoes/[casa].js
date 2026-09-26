@@ -78,11 +78,12 @@ function passaPeriodo(v, periodo) {
   return true;
 }
 
-export default function VotacoesDaCasa({ casa, votacoes, temas = [] }) {
+export default function VotacoesDaCasa({ casa, votacoes, temas = [], temaInicial = '' }) {
   const [busca, setBusca] = useState('');
   const [filtro, setFiltro] = useState('todas');
   const [periodo, setPeriodo] = useState('');
-  const [tema, setTema] = useState('');
+  // ?tema= na URL já abre filtrado (26/09/2026): é para onde vão os links antigos da cédula.
+  const [tema, setTema] = useState(temaInicial);
   const [mostrando, setMostrando] = useState(POR_PAGINA);
 
   const kwsTema = useMemo(() => {
@@ -259,7 +260,7 @@ export default function VotacoesDaCasa({ casa, votacoes, temas = [] }) {
   );
 }
 
-export async function getServerSideProps({ params }) {
+export async function getServerSideProps({ params, query }) {
   const casa = casaVotacaoPorChave(String(params.casa || '').toLowerCase());
   if (!casa) return { notFound: true };
 
@@ -276,6 +277,7 @@ export async function getServerSideProps({ params }) {
       casa,
       votacoes: JSON.parse(JSON.stringify(votacoes)),
       temas: JSON.parse(JSON.stringify(temas)),
+      temaInicial: temas.some((c) => c.nome_categoria === query?.tema) ? String(query.tema) : '',
     },
   };
 }
