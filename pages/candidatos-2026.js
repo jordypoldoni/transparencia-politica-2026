@@ -6,6 +6,7 @@ import { useRouter } from 'next/router';
 import ServicoAPI from '../src/servicos/servico_api';
 import Avatar from '../components/Avatar';
 import CardCandidato from '../components/CardCandidato';
+import BotaoFavorito from '../components/BotaoFavorito';
 import CampoBusca from '../components/CampoBusca';
 import CampoSelect from '../components/CampoSelect';
 import { NOMES_UF } from '../src/lib/cotas';
@@ -47,15 +48,20 @@ function ListaPresidente({ chapas }) {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(300px, 100%), 1fr))', gap: '14px' }}>
       {chapas.map((c) => (
-        <Link key={c.presidente.slug} href={`/presidencial/${c.presidente.slug}`} style={{ textDecoration: 'none', color: 'inherit' }}>
-          <div style={{ background: t.cor.papelCartao, borderRadius: t.raio.md, padding: '18px', height: '100%', minWidth: 0, overflow: 'hidden', boxShadow: t.sombra.clicavel, transition: 'box-shadow .15s ease, transform .15s ease' }}
-            onMouseOver={(e) => { e.currentTarget.style.boxShadow = t.sombra.hover; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-            onMouseOut={(e) => { e.currentTarget.style.boxShadow = t.sombra.clicavel; e.currentTarget.style.transform = 'none'; }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '14px' }}>
+        // CORAÇÃO (26/09/2026): o link virou camada por trás do conteúdo, como no CardCandidato.
+        <div key={c.presidente.slug} style={{ position: 'relative', height: '100%' }}
+          onMouseOver={(e) => { const x = e.currentTarget.firstChild; x.style.boxShadow = t.sombra.hover; x.style.transform = 'translateY(-2px)'; }}
+          onMouseOut={(e) => { const x = e.currentTarget.firstChild; x.style.boxShadow = t.sombra.clicavel; x.style.transform = 'none'; }}>
+          <div style={{ position: 'relative', zIndex: 2, pointerEvents: 'none', background: t.cor.papelCartao, borderRadius: t.raio.md, padding: '18px', height: '100%', minWidth: 0, overflow: 'hidden', boxShadow: t.sombra.clicavel, transition: 'box-shadow .15s ease, transform .15s ease' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px', marginBottom: '14px' }}>
               <span style={{ fontSize: '0.78rem', fontWeight: 700, color: t.cor.cinza }}>{c.presidente.partido_sigla}{c.presidente.coligacao_nome ? ` · ${c.presidente.coligacao_nome}` : ''}</span>
-              {c.nr_candidato && (
-                <span style={{ fontFamily: t.fonte.titulo, fontWeight: 700, fontSize: '1.3rem', color: t.cor.ouroTexto }}>{c.nr_candidato}</span>
-              )}
+              <span style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+                {c.nr_candidato && (
+                  <span style={{ fontFamily: t.fonte.titulo, fontWeight: 700, fontSize: '1.3rem', color: t.cor.ouroTexto }}>{c.nr_candidato}</span>
+                )}
+                <BotaoFavorito tipo="candidato" chave={`/presidencial/${c.presidente.slug}`} rotulo={c.presidente.nome_urna}
+                  detalhe={['Candidato(a) a Presidente', c.presidente.partido_sigla].filter(Boolean).join(' · ')} foto={c.presidente.foto_url} />
+              </span>
             </div>
             <div style={{ display: 'grid', gap: '12px', minWidth: 0 }}>
               <CardCandidatoPresidencial pessoa={c.presidente} papel="Presidente" />
@@ -70,7 +76,8 @@ function ListaPresidente({ chapas }) {
             <SeloSituacao info={{ situacao: c.presidente.situacao_tse }} consultadoEm={c.presidente.ficha_coletada_em} />
             <span style={{ display: 'inline-block', marginTop: '10px', color: t.cor.ouroTexto, fontWeight: 700, fontSize: '0.8rem' }}>Ver ficha e proposta →</span>
           </div>
-        </Link>
+          <Link href={`/presidencial/${c.presidente.slug}`} aria-label={`${c.presidente.nome_urna}, ver ficha e proposta`} style={{ position: 'absolute', inset: 0, zIndex: 1, borderRadius: t.raio.md }} />
+        </div>
       ))}
     </div>
   );

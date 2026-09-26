@@ -11,11 +11,12 @@ import { useState, useMemo, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import Avatar from './Avatar';
+import BotaoFavorito from './BotaoFavorito';
 import CampoSelect from './CampoSelect';
 import CampoBusca from './CampoBusca';
 import { NOMES_UF } from '../src/lib/cotas';
 import { t } from '../src/estilo/tokens';
-import { hrefPerfil } from '../src/lib/casa';
+import { hrefPerfil, casaDoPerfil } from '../src/lib/casa';
 import { pilulaPagina, realcePagina } from '../src/estilo/botoes';
 import { ASSEMBLEIAS, assembleiaDe, caminhoDaCasa } from '../src/lib/assembleias';
 
@@ -475,19 +476,24 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
             a largura. O cartao e enxuto de proposito, para caber 5 numa linha sem espremer o
             nome. O que era a linha "Ver perfil" virou a seta a direita, que nao ocupa altura. */}
         <div className="grade-parl">
+          {/* CORAÇÃO (26/09/2026): o link virou camada por trás do conteúdo, como no CardCandidato,
+              porque botão dentro de link é HTML inválido e o clique no coração abriria o perfil. */}
           {daPagina.map((d) => (
-            <Link key={d.id} href={hrefPerfil(d)} style={{ textDecoration: 'none', color: 'inherit' }}>
-              <div style={{ background: t.cor.papelCartao, borderRadius: t.raio.md, padding: '11px 12px', display: 'flex', gap: '10px', alignItems: 'center', height: '100%', boxShadow: t.sombra.clicavel, transition: 'box-shadow .15s ease, transform .15s ease' }}
-                onMouseOver={(e) => { e.currentTarget.style.boxShadow = t.sombra.hover; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-                onMouseOut={(e) => { e.currentTarget.style.boxShadow = t.sombra.clicavel; e.currentTarget.style.transform = 'none'; }}>
+            <div key={d.id} style={{ position: 'relative', height: '100%' }}
+              onMouseOver={(e) => { const c = e.currentTarget.firstChild; c.style.boxShadow = t.sombra.hover; c.style.transform = 'translateY(-2px)'; }}
+              onMouseOut={(e) => { const c = e.currentTarget.firstChild; c.style.boxShadow = t.sombra.clicavel; c.style.transform = 'none'; }}>
+              <div style={{ position: 'relative', zIndex: 2, pointerEvents: 'none', background: t.cor.papelCartao, borderRadius: t.raio.md, padding: '11px 10px 11px 12px', display: 'flex', gap: '8px', alignItems: 'center', height: '100%', boxShadow: t.sombra.clicavel, transition: 'box-shadow .15s ease, transform .15s ease' }}>
                 <Avatar nome={d.nome} foto={d.foto_url} size={40} />
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <p style={{ margin: 0, fontWeight: 700, fontSize: '0.88rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.nome}</p>
                   <p style={{ margin: '2px 0 0', color: t.cor.cinza, fontSize: '0.76rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.partido} · {d.uf || '-'}</p>
                 </div>
+                <BotaoFavorito tipo="parlamentar" chave={hrefPerfil(d)} rotulo={d.nome}
+                  detalhe={[casaDoPerfil(d).cargoPadrao, d.partido, d.uf].filter(Boolean).join(' · ')} foto={d.foto_url} />
                 <span aria-hidden="true" style={{ flexShrink: 0, color: t.cor.ouroTexto, fontWeight: 700, fontSize: '0.9rem' }}>→</span>
               </div>
-            </Link>
+              <Link href={hrefPerfil(d)} aria-label={`${d.nome}, ver perfil`} style={{ position: 'absolute', inset: 0, zIndex: 1, borderRadius: t.raio.md }} />
+            </div>
           ))}
         </div>
 

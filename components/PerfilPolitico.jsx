@@ -6,9 +6,10 @@ import Avatar from './Avatar';
 import { pctDoTeto } from '../src/lib/cotas';
 import { nomeTipoProposicao, legendaDosTipos } from '../src/lib/proposicoes';
 import { explicarTipo, agruparPorMateria, papelVotacao, situacaoCidada } from '../src/lib/votacao';
-import { casaDoPerfil } from '../src/lib/casa';
+import { casaDoPerfil, hrefPerfil } from '../src/lib/casa';
 import TrajetoriaEleitoral from './TrajetoriaEleitoral';
 import BotaoVoltar from './BotaoVoltar';
+import BotaoFavorito from './BotaoFavorito';
 
 const brl = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v || 0);
 const brlExato = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
@@ -441,6 +442,9 @@ export default function PerfilPolitico({ dados }) {
               <SeletorAno anos={anos_disponiveis} atual={anoSel} aoTrocar={trocarAno} rotulo="Ano dos dados deste perfil" escuro margem="0" />
             </div>
           </div>
+          {/* Coração (26/09/2026): no cartão escuro, o par invertido (âmbar com coração índigo). */}
+          <BotaoFavorito tipo="parlamentar" chave={hrefPerfil(perfil)} rotulo={perfil.nome_urna} escuro
+            detalhe={[perfil.cargo_atual || casaDoPerfil(perfil).cargoPadrao, perfil.partido_atual, perfil.uf_sede].filter(Boolean).join(' · ')} foto={perfil.foto_url} />
           <button type="button" onClick={() => toggleSecao('resumo')} aria-expanded={secoesAbertas.resumo} aria-label={secoesAbertas.resumo ? 'Recolher resumo' : 'Expandir resumo'} style={{ flexShrink: 0, background: 'rgba(255,255,255,0.14)', border: 'none', color: '#fff', cursor: 'pointer', borderRadius: '999px', width: '36px', height: '36px', fontSize: '0.8rem' }}>{secoesAbertas.resumo ? '▲' : '▼'}</button>
         </div>
 

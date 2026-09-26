@@ -8,6 +8,7 @@ import ServicoAPI from '../../src/servicos/servico_api';
 import Avatar from '../../components/Avatar';
 import { t } from '../../src/estilo/tokens';
 import BotaoVoltar from '../../components/BotaoVoltar';
+import BotaoFavorito from '../../components/BotaoFavorito';
 
 function idade(dataNascimento) {
   if (!dataNascimento) return null;
@@ -64,6 +65,9 @@ export default function PerfilPresidenciavel({ candidato, colega, canonical }) {
           <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.6rem,3.6vw,2.3rem)', margin: '0 0 4px' }}>{c.nome_urna}</h1>
           <p style={{ margin: 0, color: t.cor.cinza, fontSize: '0.95rem' }}>{c.partido_sigla}{c.nr_candidato ? ` · nº ${c.nr_candidato}` : ''}{c.coligacao_nome ? ` · ${c.coligacao_nome}` : ''}</p>
         </div>
+        {/* Coração (26/09/2026). */}
+        <BotaoFavorito tipo="candidato" chave={`/presidencial/${c.slug}`} rotulo={c.nome_urna} noCartao={false}
+          detalhe={[`Candidato(a) a ${c.cargo === 'Vice-Presidente' ? 'Vice-Presidente' : 'Presidente'}`, c.partido_sigla].filter(Boolean).join(' · ')} foto={c.foto_url} />
       </div>
 
       {/* ORDEM CORRIGIDA EM 17/09. O link para o colega de chapa estava DEPOIS de

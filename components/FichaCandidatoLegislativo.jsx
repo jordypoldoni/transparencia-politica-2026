@@ -17,6 +17,8 @@ import PatrimonioDeclarado from './PatrimonioDeclarado';
 import DocumentosERedes from './DocumentosERedes';
 import TrajetoriaEleitoral from './TrajetoriaEleitoral';
 import BotaoVoltar from './BotaoVoltar';
+import BotaoFavorito from './BotaoFavorito';
+const caminhoDe = (url) => { try { return new URL(url).pathname; } catch { return String(url || ''); } };
 
 
 const CARGOS = {
@@ -247,6 +249,9 @@ export default function FichaCandidatoLegislativo({ candidato, canonical, cargo 
           <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.5rem,3.4vw,2.1rem)', margin: '0 0 4px' }}>{c.nome_urna}</h1>
           <p style={{ margin: 0, color: t.cor.cinza, fontSize: '0.95rem' }}>{c.partido_sigla}{c.nr_candidato ? ` · nº ${c.nr_candidato}` : ''}{c.coligacao_nome ? ` · ${c.coligacao_nome}` : ''}</p>
         </div>
+        {/* Coração (26/09/2026). A chave é o endereço desta ficha, tirado do canonical. */}
+        <BotaoFavorito tipo="candidato" chave={caminhoDe(canonical)} rotulo={c.nome_urna} noCartao={false}
+          detalhe={[`Candidato(a) a ${cfg.nome}`, c.partido_sigla, c.uf].filter(Boolean).join(' · ')} foto={c.foto_url} />
       </div>
 
       {/* Faixa de identidade: já tem mandato? mudou de partido para esta eleição? */}
