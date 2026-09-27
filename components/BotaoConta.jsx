@@ -30,8 +30,10 @@ export default function BotaoConta() {
 
   // Ao abrir o menu, diz onde estão os dados. Sem autorização eles ficam SÓ neste aparelho, e
   // foi isso que fez o Jordy não achar no computador o que marcou no celular (26/09/2026).
+  // Também ao entrar (27/09/2026): sem autorização, a pílula ganha um ponto âmbar, para a pessoa
+  // perceber que os dados ainda estão só neste aparelho mesmo sem abrir o menu.
   useEffect(() => {
-    if (!aberto || !sessao) return;
+    if (!sessao) { setNoPerfil(null); return; }
     consentimentoEmDia().then(setNoPerfil).catch(() => setNoPerfil(null));
   }, [aberto, sessao]);
 
@@ -65,11 +67,14 @@ export default function BotaoConta() {
   const item = { display: 'block', padding: '10px 12px', borderRadius: t.raio.sm, textDecoration: 'none', color: t.cor.tinta, fontSize: '0.9rem', fontWeight: 700, background: 'transparent', border: 'none', width: '100%', textAlign: 'left', cursor: 'pointer', fontFamily: t.fonte.corpo };
   return (
     <div ref={ref} style={{ position: 'relative' }}>
-      <button type="button" aria-expanded={aberto} aria-haspopup="true" aria-label={`Sua conta: ${nomeCurto || email}`} onClick={() => setAberto((a) => !a)}
+      <button type="button" aria-expanded={aberto} aria-haspopup="true" aria-label={`Sua conta: ${nomeCurto || email}${noPerfil === false ? '. Autorização pendente: seus dados estão só neste aparelho' : ''}`} onClick={() => setAberto((a) => !a)}
         onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}
         style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', height: '36px', padding: '0 14px 0 4px', borderRadius: t.raio.pill, border: 'none', cursor: 'pointer', background: t.cor.verde, color: t.cor.ouro, fontWeight: 700, fontFamily: t.fonte.corpo, fontSize: '0.86rem', boxShadow: t.sombra.botao, transition: 'box-shadow .15s, transform .15s', minWidth: 0 }}>
         <span aria-hidden="true" style={{ flexShrink: 0, width: '28px', height: '28px', borderRadius: '50%', background: t.cor.ouro, color: t.cor.verde, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: '0.85rem' }}>{inicial}</span>
         <span className="conta-nome" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '170px' }}>{nomeCurto || 'Sua conta'}</span>
+        {noPerfil === false && (
+          <span title="Autorização pendente: seus dados estão só neste aparelho" style={{ flexShrink: 0, width: '9px', height: '9px', borderRadius: '50%', background: t.cor.ouro, boxShadow: '0 0 0 2px #241E52, 0 0 0 3.5px rgba(255,138,0,0.55)' }} />
+        )}
       </button>
       {aberto && (
         <div style={{ position: 'absolute', top: '100%', left: 0, paddingTop: '6px', zIndex: 60 }}>

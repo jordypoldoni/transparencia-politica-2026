@@ -84,7 +84,7 @@ export default function Entrar() {
       <div className="entrar-grade">
         <div className="entrar-texto">
           <p style={{ margin: '0 0 8px', fontSize: '0.78rem', fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase', color: t.cor.ouroTexto }}>Sua conta</p>
-          <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(2rem,4.5vw,2.8rem)', lineHeight: 1.1, margin: '0 0 14px' }}>Entrar no Lume</h1>
+          <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(2rem,4.5vw,2.8rem)', lineHeight: 1.1, margin: '0 0 14px' }}>Entrar ou criar conta</h1>
           <p style={{ color: t.cor.tinta, fontSize: '1.05rem', lineHeight: 1.6, margin: 0, maxWidth: '44ch' }}>
             Você não precisa de conta para usar o site. A conta serve só para levar suas respostas e seus favoritos para
             outros aparelhos.
@@ -104,7 +104,7 @@ export default function Entrar() {
             </div>
           ) : (
             <div style={caixa}>
-              <p style={{ margin: '0 0 16px', fontWeight: 800, fontSize: '1.05rem', color: t.cor.tinta }}>{LOGIN_EMAIL_ATIVO ? 'Escolha como entrar' : 'Entre ou crie a sua conta em um clique'}</p>
+              <p style={{ margin: '0 0 16px', fontWeight: 800, fontSize: '1.05rem', color: t.cor.tinta }}>{LOGIN_EMAIL_ATIVO ? 'Escolha como entrar' : 'Um clique, sem senha'}</p>
               <button type="button" onClick={google} disabled={ocupado} style={botaoGoogle(ocupado)}
                 onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}>
                 <LogoGoogle />

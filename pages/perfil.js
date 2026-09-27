@@ -115,16 +115,15 @@ export default function Perfil() {
           </div>
         ) : (
           <>
-            <section style={caixa}>
-              <h2 style={h2}>Sua conta</h2>
-              <p style={{ margin: '0 0 12px', color: t.cor.cinza }}>Entrou como <strong style={{ color: t.cor.tinta }}>{sessao.user.email}</strong>.</p>
-              <button type="button" onClick={() => sair()} style={botao(true)} onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}>Sair</button>
-            </section>
-
-            {!consentimentoEmDia ? (
+            {/* AUTORIZAÇÃO EM PRIMEIRO (27/09/2026, prioridade P0). Ficava depois de "Sua conta", e as duas
+                primeiras contas do Jordy nunca autorizaram: tudo ficou só no aparelho, sem ele saber. Agora, sem
+                autorização em dia, ela é a primeira coisa da página. */}
+            {!consentimentoEmDia && (
               <section style={{ ...caixa, boxShadow: t.sombra.media }}>
                 {/* Destaque por SOMBRA mais forte, nunca por borda lateral (regra do Jordy, 26/09/2026). */}
+                <p style={{ margin: '0 0 4px', fontSize: '0.78rem', fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase', color: t.cor.ouroTexto }}>Último passo</p>
                 <h2 style={h2}>Autorizar o perfil a guardar seus dados</h2>
+                <p style={{ margin: '0 0 10px', lineHeight: 1.6, fontWeight: 700 }}>Sem esta autorização, o que você marcar fica só neste aparelho e não aparece nos outros.</p>
                 <p style={{ margin: '0 0 10px', lineHeight: 1.6 }}>
                   {perfil?.consentimento_em ? 'O texto desta autorização mudou desde que você aceitou: agora ele inclui os candidatos que você escolher na cédula. ' : ''}
                   Para guardar no seu perfil, e levar para outros aparelhos, precisamos da sua autorização. Ficariam guardados:
@@ -146,7 +145,15 @@ export default function Perfil() {
                 </label>
                 <button type="button" onClick={autorizar} disabled={!marcou} style={botao(false, !marcou)} onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}>Guardar no meu perfil</button>
               </section>
-            ) : (
+            )}
+
+            <section style={caixa}>
+              <h2 style={h2}>Sua conta</h2>
+              <p style={{ margin: '0 0 12px', color: t.cor.cinza }}>Entrou como <strong style={{ color: t.cor.tinta }}>{sessao.user.email}</strong>.</p>
+              <button type="button" onClick={() => sair()} style={botao(true)} onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}>Sair</button>
+            </section>
+
+            {consentimentoEmDia && (
               <>
                 <section style={caixa}>
                   <h2 style={h2}>Seu estado</h2>
