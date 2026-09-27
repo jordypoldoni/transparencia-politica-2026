@@ -187,7 +187,7 @@ export default function Perfil() {
             <section style={caixa}>
               <h2 style={h2}>Sua conta</h2>
               <p style={{ margin: '0 0 12px', color: t.cor.cinza }}>Entrou como <strong style={{ color: t.cor.tinta }}>{sessao.user.email}</strong>.</p>
-              <button type="button" onClick={() => sair()} style={botao(true)} onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}>Sair</button>
+              <button type="button" onClick={() => sair()} style={botao()} onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}>Sair</button>
             </section>
 
             {consentimentoEmDia && (
@@ -239,7 +239,7 @@ export default function Perfil() {
                 este navegador. Não dá para desfazer, mas você pode criar uma conta nova depois, até com o mesmo e-mail.
               </p>
               {!confirmarApagar ? (
-                <button type="button" onClick={() => setConfirmarApagar(true)} style={botao(true)} onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}>Apagar minha conta</button>
+                <button type="button" onClick={() => setConfirmarApagar(true)} style={botao()} onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}>Apagar minha conta</button>
               ) : (
                 <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
                   <span style={{ fontWeight: 700 }}>Tem certeza?</span>

@@ -92,11 +92,39 @@ function Entenda({ p }) {
   );
 }
 
-function Pergunta({ p, resposta, aoResponder }) {
+// PERGUNTA RESPONDIDA FICA RECOLHIDA (27/09/2026, pedido do Jordy: "mostrando apenas a opção
+// escolhida"). Com 10 a 14 perguntas, a página virava uma parede, e quem voltava para ver o
+// resultado rolava por tudo de novo. Respondida = cartão curto com a pergunta e a resposta;
+// "Mudar resposta" abre o cartão inteiro. Ao responder num cartão aberto, ele recolhe e o foco vai
+// para o "Mudar resposta" dele, para quem usa teclado ou leitor de tela não se perder.
+function Pergunta({ p, resposta, aoResponder, aberta, aoAbrir, focarMudar }) {
+  const mudarRef = useRef(null);
+  const recolhida = Boolean(resposta) && !aberta;
+  useEffect(() => { if (recolhida && focarMudar) mudarRef.current?.focus(); }, [recolhida, focarMudar]);
+  const titulo = <p style={{ margin: '0 0 8px', fontSize: '1.02rem', fontWeight: 700, color: t.cor.tinta, lineHeight: 1.4 }}>Você é a favor de {p.texto.charAt(0).toLowerCase() + p.texto.slice(1)}?</p>;
+  const tema = <p style={{ margin: '0 0 6px', fontSize: '0.72rem', fontWeight: 800, letterSpacing: '0.05em', textTransform: 'uppercase', color: t.cor.ouroTexto }}>{p.tema}</p>;
+  if (recolhida) {
+    const rotulo = OPCOES_RESPOSTA.find((o) => o.valor === resposta)?.rotulo || resposta;
+    return (
+      <div style={{ ...caixa, marginBottom: '12px' }}>
+        {tema}
+        {titulo}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: '0.86rem', color: t.cor.cinza }}>Sua resposta:</span>
+          {/* A resposta no mesmo visual da pílula ativa, mas sem ser botão (não se clica nela). */}
+          <span style={{ ...pilula(true, true), cursor: 'default', boxShadow: 'none', padding: '7px 16px', fontSize: '0.86rem' }}>{rotulo}</span>
+          <button ref={mudarRef} type="button" aria-expanded="false" onClick={() => aoAbrir(p.id)}
+            style={{ ...pilula(false, true), padding: '7px 16px', fontSize: '0.86rem' }} onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}>
+            Mudar resposta
+          </button>
+        </div>
+      </div>
+    );
+  }
   return (
     <div style={{ ...caixa, marginBottom: '12px' }}>
-      <p style={{ margin: '0 0 6px', fontSize: '0.72rem', fontWeight: 800, letterSpacing: '0.05em', textTransform: 'uppercase', color: t.cor.ouroTexto }}>{p.tema}</p>
-      <p style={{ margin: '0 0 8px', fontSize: '1.02rem', fontWeight: 700, color: t.cor.tinta, lineHeight: 1.4 }}>Você é a favor de {p.texto.charAt(0).toLowerCase() + p.texto.slice(1)}?</p>
+      {tema}
+      {titulo}
       <p style={{ margin: '0 0 10px', fontSize: '0.8rem', color: t.cor.cinza, lineHeight: 1.5 }}>
         {p.proposta}. Votada{' '}
         {p.votacoes.map((v, i) => (
@@ -558,10 +586,18 @@ export default function Afinidade({ ufInicial }) {
   const respondidas = perguntas.filter((p) => respostas[p.id]).length;
   const comPosicao = perguntas.filter((p) => respostas[p.id] === 'a_favor' || respostas[p.id] === 'contra').length;
 
+  // Cartões respondidos que a pessoa abriu para mudar ("Mudar resposta" ou "Abrir todas").
+  const [abertas, setAbertas] = useState(() => new Set());
+  const [todasAbertas, setTodasAbertas] = useState(false);
+  const [focarMudar, setFocarMudar] = useState(null);
   const responder = (id, r) => {
     setRespostas((atual) => ({ ...atual, [id]: r }));
     salvarResposta({ pergunta_id: id, resposta: r, origem: 'escolha' }).catch(() => {});
+    // Respondeu: o cartão recolhe (menos no modo "todas abertas", em que a pessoa quer ver tudo).
+    setAbertas((a) => { if (!a.has(id)) return a; const n = new Set(a); n.delete(id); return n; });
+    if (!todasAbertas) setFocarMudar(id);
   };
+  const abrir = (id) => { setFocarMudar(null); setAbertas((a) => new Set(a).add(id)); };
 
   const calcular = async () => {
     setErro(''); setCalculando(true);
@@ -616,7 +652,21 @@ export default function Afinidade({ ufInicial }) {
           <CampoSelect opcoes={opcoesUf} valor={uf} placeholder="Escolha o estado" aoLabel="Seu estado" aoSelecionar={(u) => { ufEscolhida.current = true; setUf(u); setResultado(null); setParl(null); definirUf(u).catch(() => {}); }} />
         </div>
 
-        {perguntas.map((p) => <Pergunta key={p.id} p={p} resposta={respostas[p.id]} aoResponder={responder} />)}
+        {respondidas > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px 14px', flexWrap: 'wrap', margin: '0 0 12px' }}>
+            <span style={{ fontSize: '0.86rem', color: t.cor.cinza }}>
+              {respondidas} de {perguntas.length} respondidas{todasAbertas ? '' : ', recolhidas com a sua resposta'}.
+            </span>
+            <button type="button" aria-pressed={todasAbertas} onClick={() => { setTodasAbertas((v) => !v); setAbertas(new Set()); setFocarMudar(null); }}
+              style={{ ...pilula(false), padding: '7px 16px', fontSize: '0.84rem' }} onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}>
+              {todasAbertas ? 'Recolher as respondidas' : 'Abrir todas'}
+            </button>
+          </div>
+        )}
+        {perguntas.map((p) => (
+          <Pergunta key={p.id} p={p} resposta={respostas[p.id]} aoResponder={responder}
+            aberta={todasAbertas || abertas.has(p.id)} aoAbrir={abrir} focarMudar={focarMudar === p.id} />
+        ))}
 
         <div style={{ display: 'flex', gap: '14px', alignItems: 'center', flexWrap: 'wrap', marginTop: '18px' }}>
           <button type="button" onClick={calcular} disabled={desligado} style={botaoPadrao(desligado)}
