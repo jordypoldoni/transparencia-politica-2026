@@ -77,14 +77,56 @@ export async function entrarComEmail(email, voltarPara) {
 
 // Entrar com Google (26/09/2026). O Google devolve a pessoa para `voltarPara`, que precisa
 // estar na lista de endereços permitidos do Supabase (Authentication, URL Configuration).
-export async function entrarComGoogle(voltarPara) {
+export async function entrarComGoogle(voltarPara, { email } = {}) {
   const b = banco();
   if (!b) throw new Error('perfil indisponível');
   // ESCOLHER A CONTA SEMPRE (27/09/2026). Sem isto o Google entra direto com a conta já aberta
   // no navegador: quem saiu e quis entrar com outra conta caía de novo na mesma (Jordy chamou de
   // "problema com cookies"). prompt=select_account faz o Google perguntar qual conta usar.
-  const { error } = await b.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: voltarPara, queryParams: { prompt: 'select_account' } } });
+  // Com `email` (a conta lembrada neste aparelho), vai direto para ela: login_hint.
+  const queryParams = email ? { login_hint: email } : { prompt: 'select_account' };
+  const { error } = await b.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: voltarPara, queryParams } });
   if (error) throw error;
+}
+
+// CONTA LEMBRADA NESTE APARELHO (27/09/2026, pedido do Jordy: "facilmente o usuário poderia
+// esquecer que já tem uma conta e entrar com uma conta do Gmail diferente"). O seletor do Google
+// mostra todas as contas do navegador e nada dizia qual foi usada antes; escolher outra cria um
+// perfil novo e vazio. Agora o aparelho lembra o e-mail da última entrada: o /entrar oferece
+// "Continuar com essa conta", e o /perfil avisa quando a conta acabou de ser criada e não é a
+// lembrada. Fica só neste navegador; a tela mostra o e-mail mascarado. Sair não esquece (é o
+// ponto: lembrar na próxima entrada); apagar a conta esquece.
+const CHAVE_CONTA = 'lume:conta-lembrada';
+const JANELA_CONTA_NOVA_MS = 15 * 60 * 1000;
+export function contaLembrada() {
+  try { const c = JSON.parse(window.localStorage.getItem(CHAVE_CONTA) || 'null'); return c?.email ? c : null; } catch { return null; }
+}
+export function lembrarConta(user) {
+  if (!user?.email) return;
+  try { window.localStorage.setItem(CHAVE_CONTA, JSON.stringify({ email: user.email })); } catch { /* nada */ }
+}
+export function esquecerConta() {
+  try { window.localStorage.removeItem(CHAVE_CONTA); } catch { /* nada */ }
+}
+export function mascararEmail(email) {
+  const [usuario, dominio] = String(email || '').split('@');
+  if (!dominio) return String(email || '');
+  return `${usuario.slice(0, 2)}•••@${dominio}`;
+}
+// A conta aberta acabou de ser criada e NÃO é a lembrada? Devolve a lembrada (provável engano);
+// senão, null. Conta antiga com outro e-mail não conta: aí a pessoa só trocou de conta.
+export function contaNovaDiferente(user) {
+  const lembrada = contaLembrada();
+  if (!user?.email || !lembrada) return null;
+  if (lembrada.email.toLowerCase() === String(user.email).toLowerCase()) return null;
+  const criada = Date.parse(user.created_at || '');
+  if (!criada || Date.now() - criada > JANELA_CONTA_NOVA_MS) return null;
+  return lembrada;
+}
+// Guarda a conta aberta como a lembrada, a não ser que ela seja o provável engano acima (aí quem
+// decide é a pessoa, no aviso do /perfil).
+export function lembrarSeNaoForEngano(user) {
+  if (user && !contaNovaDiferente(user)) lembrarConta(user);
 }
 
 // Avisa quem estiver ouvindo (o botão do cabeçalho, a página do perfil) quando a pessoa entra
@@ -266,6 +308,7 @@ export async function apagarMinhaConta() {
   const r = await fetch('/api/apagar-conta', { method: 'POST', headers: { Authorization: `Bearer ${s.access_token}` } });
   if (!r.ok) throw new Error(`apagar-conta ${r.status}`);
   limparAparelho();
+  esquecerConta();
   await b.auth.signOut({ scope: 'local' }).catch(() => {});
 }
 export const apagarMeusDados = apagarMinhaConta; // nome antigo, mesmo efeito

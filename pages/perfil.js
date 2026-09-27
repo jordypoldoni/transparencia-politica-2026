@@ -11,6 +11,7 @@ import { PERGUNTAS_AFINIDADE } from '../src/lib/perguntasAfinidade';
 import {
   sessaoAtual, aoMudarSessao, sair, lerPerfil, registrarConsentimento, atualizarUf, lerRespostas,
   apagarMinhaConta, VERSAO_CONSENTIMENTO, perfilDisponivel,
+  contaNovaDiferente, lembrarConta, mascararEmail, entrarComGoogle,
 } from '../src/lib/perfilUsuario';
 import { sincronizarTudo } from '../src/lib/sincronizacao';
 
@@ -50,10 +51,17 @@ export default function Perfil() {
   const [aviso, setAviso] = useState('');
   const [erro, setErro] = useState('');
   const [confirmarApagar, setConfirmarApagar] = useState(false);
+  const [contaAntiga, setContaAntiga] = useState(null); // conta lembrada, quando esta acabou de ser criada e é outra
 
   const recarregar = useCallback(async () => {
     const s = await sessaoAtual().catch(() => null);
     setSessao(s);
+    // CONTA NOVA POR ENGANO? (27/09/2026, item 6b) Conta criada agora há pouco, com e-mail diferente
+    // do que este aparelho usou da última vez: avisa em vez de seguir em silêncio. Em qualquer outro
+    // caso, esta passa a ser a conta lembrada.
+    const antiga = s ? contaNovaDiferente(s.user) : null;
+    setContaAntiga(antiga);
+    if (s && !antiga) lembrarConta(s.user);
     if (s) {
       const p = await lerPerfil().catch(() => null);
       setPerfil(p);
@@ -92,6 +100,14 @@ export default function Perfil() {
     try { await atualizarUf(uf); } catch (e) { setErro('Não foi possível salvar o estado.'); }
   };
 
+  const entrarNaAntiga = async () => {
+    setErro('');
+    const email = contaAntiga?.email;
+    try { await sair(); await entrarComGoogle(`${window.location.origin}/perfil`, { email }); }
+    catch (e) { setErro('Não foi possível trocar de conta agora. Use Sair e entre de novo.'); }
+  };
+  const ficarNestaConta = () => { lembrarConta(sessao?.user); setContaAntiga(null); };
+
   const apagar = async () => {
     setErro('');
     try { await apagarMinhaConta(); setConfirmarApagar(false); setAviso('Sua conta foi apagada, com tudo o que estava nela, e este navegador foi limpo. Se quiser, pode criar uma conta nova quando quiser, até com o mesmo e-mail.'); await recarregar(); }
@@ -118,6 +134,27 @@ export default function Perfil() {
             {/* AUTORIZAÇÃO EM PRIMEIRO (27/09/2026, prioridade P0). Ficava depois de "Sua conta", e as duas
                 primeiras contas do Jordy nunca autorizaram: tudo ficou só no aparelho, sem ele saber. Agora, sem
                 autorização em dia, ela é a primeira coisa da página. */}
+            {contaAntiga && (
+              <section role="alert" style={{ ...caixa, boxShadow: t.sombra.media }}>
+                <p style={{ margin: '0 0 4px', fontSize: '0.78rem', fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase', color: t.cor.ouroTexto }}>Confira a conta</p>
+                <h2 style={h2}>Esta é uma conta nova</h2>
+                <p style={{ margin: '0 0 10px', lineHeight: 1.6 }}>
+                  Você entrou com <strong style={{ overflowWrap: 'anywhere' }}>{sessao.user?.email}</strong>, que acabou de ser criada. Da última vez,
+                  neste aparelho, você entrou com <strong style={{ overflowWrap: 'anywhere' }}>{mascararEmail(contaAntiga.email)}</strong>.
+                </p>
+                <p style={{ margin: '0 0 14px', lineHeight: 1.6 }}>
+                  São dois perfis separados: o que você guardou na outra conta não aparece nesta. Se quis entrar na outra, troque agora.
+                </p>
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                  <button type="button" onClick={entrarNaAntiga} style={botao()} onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}>
+                    Entrar com {mascararEmail(contaAntiga.email)}
+                  </button>
+                  <button type="button" onClick={ficarNestaConta} style={botao(true)} onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}>
+                    Continuar nesta conta nova
+                  </button>
+                </div>
+              </section>
+            )}
             {!consentimentoEmDia && (
               <section style={{ ...caixa, boxShadow: t.sombra.media }}>
                 {/* Destaque por SOMBRA mais forte, nunca por borda lateral (regra do Jordy, 26/09/2026). */}

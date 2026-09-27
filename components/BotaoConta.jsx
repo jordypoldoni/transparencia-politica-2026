@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { t } from '../src/estilo/tokens';
-import { sessaoAtual, aoMudarSessao, sair, consentimentoEmDia } from '../src/lib/perfilUsuario';
+import { sessaoAtual, aoMudarSessao, sair, consentimentoEmDia, lembrarSeNaoForEngano } from '../src/lib/perfilUsuario';
 
 // ENTRAR / CONTA no cabeçalho, AO LADO DO LOGO (pedido do Jordy, 26/09/2026). No celular o logo
 // perde o texto "Lume Cidadão" e fica só o símbolo, para caber este botão ao lado dele.
@@ -39,8 +39,11 @@ export default function BotaoConta() {
 
   useEffect(() => {
     let vivo = true;
-    sessaoAtual().then((s) => { if (vivo) setSessao(s); }).catch(() => {});
-    const parar = aoMudarSessao((s) => { if (vivo) setSessao(s); });
+    // Quem está com a conta aberta passa a ser a conta lembrada deste aparelho (usada pelo /entrar),
+    // menos quando é a conta nova por engano, que o /perfil pergunta antes (27/09/2026, item 6b).
+    const ver = (s) => { if (!vivo) return; setSessao(s); if (s) lembrarSeNaoForEngano(s.user); };
+    sessaoAtual().then(ver).catch(() => {});
+    const parar = aoMudarSessao(ver);
     return () => { vivo = false; parar(); };
   }, []);
 

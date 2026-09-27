@@ -3,7 +3,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { t } from '../src/estilo/tokens';
-import { entrarComGoogle, entrarComEmail, sessaoAtual, perfilDisponivel } from '../src/lib/perfilUsuario';
+import { entrarComGoogle, entrarComEmail, sessaoAtual, perfilDisponivel, contaLembrada, mascararEmail } from '../src/lib/perfilUsuario';
 
 // ENTRAR (26/09/2026). Duas portas: Google (um clique) e link no e-mail (sem senha). Nenhuma
 // senha passa pelo site. A conta é OPCIONAL: o site inteiro funciona sem ela, e esta página
@@ -53,14 +53,16 @@ export default function Entrar() {
   const [erro, setErro] = useState('');
   const [ocupado, setOcupado] = useState(false);
   const [focoEmail, setFocoEmail] = useState(false);
+  const [lembrada, setLembrada] = useState(null); // conta usada da última vez neste aparelho
+  useEffect(() => { setLembrada(contaLembrada()); }, []);
 
   // Quem já está logado não precisa desta página.
   useEffect(() => { sessaoAtual().then((s) => { if (s) router.replace('/perfil'); }).catch(() => {}); }, [router]);
 
   const destino = () => `${window.location.origin}/perfil`;
-  const google = async () => {
+  const google = async (email) => {
     setErro(''); setOcupado(true);
-    try { await entrarComGoogle(destino()); } catch (e) { setErro('Não foi possível abrir o login do Google. Tente de novo.'); setOcupado(false); }
+    try { await entrarComGoogle(destino(), { email }); } catch (e) { setErro('Não foi possível abrir o login do Google. Tente de novo.'); setOcupado(false); }
   };
   const porEmail = async (e) => {
     e.preventDefault();
@@ -104,12 +106,34 @@ export default function Entrar() {
             </div>
           ) : (
             <div style={caixa}>
-              <p style={{ margin: '0 0 16px', fontWeight: 800, fontSize: '1.05rem', color: t.cor.tinta }}>{LOGIN_EMAIL_ATIVO ? 'Escolha como entrar' : 'Um clique, sem senha'}</p>
-              <button type="button" onClick={google} disabled={ocupado} style={botaoGoogle(ocupado)}
-                onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}>
-                <LogoGoogle />
-                Continuar com o Google
-              </button>
+              {/* CONTA LEMBRADA (27/09/2026, item 6b). Quem já entrou neste aparelho vê com qual conta foi e
+                  entra direto nela; a outra conta fica como segunda opção, com o aviso de que é um perfil
+                  separado. Sem conta lembrada, a tela é a de sempre. */}
+              {lembrada ? (<>
+                <p style={{ margin: '0 0 6px', fontWeight: 800, fontSize: '1.05rem', color: t.cor.tinta }}>Bem-vindo de volta</p>
+                <p style={{ margin: '0 0 16px', fontSize: '0.92rem', lineHeight: 1.55, color: t.cor.tinta }}>
+                  Da última vez, neste aparelho, você entrou com <strong style={{ overflowWrap: 'anywhere' }}>{mascararEmail(lembrada.email)}</strong>.
+                </p>
+                <button type="button" onClick={() => google(lembrada.email)} disabled={ocupado} style={botaoGoogle(ocupado)}
+                  onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}>
+                  <LogoGoogle />
+                  Continuar com essa conta
+                </button>
+                <button type="button" onClick={() => google()} disabled={ocupado} style={{ ...botao(true, ocupado), background: t.cor.papelQuente2, marginTop: '12px' }}
+                  onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}>
+                  Usar outra conta Google
+                </button>
+                <p style={{ margin: '10px 4px 0', fontSize: '0.8rem', lineHeight: 1.5, color: t.cor.cinza }}>
+                  Outra conta é outro perfil: as respostas e os favoritos da conta de antes não aparecem nela.
+                </p>
+              </>) : (<>
+                <p style={{ margin: '0 0 16px', fontWeight: 800, fontSize: '1.05rem', color: t.cor.tinta }}>{LOGIN_EMAIL_ATIVO ? 'Escolha como entrar' : 'Um clique, sem senha'}</p>
+                <button type="button" onClick={() => google()} disabled={ocupado} style={botaoGoogle(ocupado)}
+                  onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}>
+                  <LogoGoogle />
+                  Continuar com o Google
+                </button>
+              </>)}
               {LOGIN_EMAIL_ATIVO && (<>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '20px 0', color: t.cor.cinza, fontSize: '0.84rem' }}>
                 <span style={{ flex: 1, height: '1px', background: t.cor.papelQuente2 }} />ou<span style={{ flex: 1, height: '1px', background: t.cor.papelQuente2 }} />
