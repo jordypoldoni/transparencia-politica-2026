@@ -27,7 +27,7 @@
 // a proposta faz, `pratica` traz o efeito no dia a dia, e `aFavor`/`contra` dão o argumento
 // principal de cada lado, com o mesmo tamanho e o mesmo tom. Fato com fonte na votação; nenhum
 // dos dois lados ganha adjetivo.
-export const VERSAO_PERGUNTAS = '2026-09-25';
+export const VERSAO_PERGUNTAS = '2026-09-27';
 
 export const PERGUNTAS_AFINIDADE = [
   {
@@ -147,21 +147,27 @@ export const PERGUNTAS_AFINIDADE = [
     ],
   },
   {
-    id: 'pec-drogas-porte',
+    // Entrou em 27/09 no lugar da PEC das drogas (pedido do Jordy). A PEC só tinha o voto do
+    // Senado e o tema dependia do enquadramento de um dos lados. A Previdência foi votada nas
+    // duas Casas, com plenário dividido, e cobre Trabalho e Previdência, que não tinha pergunta.
+    // Câmara: 2192459-786, aprovação em 2º turno do texto inteiro (06/08/2019). Os "Mantido o
+    // texto" de 07/08 são destaques. Senado: SF-6046, 2º turno (22/10/2019), 60 a 19.
+    id: 'reforma-previdencia-2019',
     explicacao: {
-      oque: "A Lei de Drogas trata como crime ter droga para consumo próprio, mas sem prisão: a pena é advertência, serviço comunitário ou curso. Enquanto o STF julgava se o porte de maconha para uso pessoal deveria deixar de ser crime, o Senado aprovou esta proposta, em abril de 2024, e ela seguiu para a Câmara. Em junho de 2024, o STF decidiu que ter até 40 gramas de maconha para uso próprio não é crime: continua proibido, mas a punição é administrativa. A proposta coloca na Constituição que ter ou portar qualquer droga sem autorização é crime, em qualquer quantidade. O texto mantém a separação entre usuário e traficante e penas sem prisão para o usuário.",
-      pratica: "Se a Câmara também aprovar, portar qualquer quantidade volta a ser crime, inclusive a maconha para uso próprio que o STF tirou da esfera criminal.",
-      aFavor: "a decisão cabe ao Congresso, não ao STF, e a droga deve continuar proibida.",
-      contra: "isso impede tratar o usuário como questão de saúde e mantém gente sendo processada por pequena quantidade.",
+      oque: "Antes de 2019, quem contribuía para o INSS podia se aposentar por tempo de contribuição (35 anos para homens e 30 para mulheres), sem idade mínima. A reforma da Previdência criou idade mínima de 65 anos para homens e 62 para mulheres, no INSS e no serviço público federal, com regras de transição para quem já trabalhava. O valor da aposentadoria passou a ser calculado pela média de todos os salários, e não mais só pelos 80% maiores. A reforma foi promulgada em novembro de 2019.",
+      pratica: "A pessoa contribui por mais tempo antes de se aposentar, e o valor inicial tende a ser menor para muita gente. A contribuição passou a crescer com o salário: quem ganha menos paga um pouco menos que antes, e quem ganha mais paga mais.",
+      aFavor: "as pessoas vivem mais, e sem a reforma o gasto com aposentadorias tomaria o dinheiro de saúde, educação e investimento.",
+      contra: "quem começa a trabalhar cedo e em serviço pesado é o mais prejudicado, e o valor da aposentadoria caiu para muita gente.",
     },
-    polos: { a_favor: 'que ter ou portar droga seja crime em qualquer quantidade', contra: 'que ter ou portar pequena quantidade não seja crime' },
-    palavras: ['droga', 'maconha', 'entorpecente', 'usuario', 'cannabis'],
-    tema: 'Saúde',
-    texto: 'Pôr na Constituição que ter ou portar droga sem autorização é crime, em qualquer quantidade',
-    proposta: 'PEC 45/2023',
-    // Câmara: sem votação de plenário até 25/09/2026.
-    // Senado: dois turnos no mesmo dia (SF-6824 e SF-6825); vale o segundo, o que aprovou.
-    votacoes: [{ casa: 'senado', id: 'SF-6825', data: '2024-04-16', simE: 'a_favor' }],
+    polos: { a_favor: 'idade mínima e novo cálculo para a aposentadoria', contra: 'manter a aposentadoria por tempo de contribuição, sem idade mínima' },
+    palavras: ['aposent', 'previd', 'inss', 'idade minima', 'contribui', 'pensao', 'velhice', 'idoso'],
+    tema: 'Trabalho e Previdência',
+    texto: 'Aprovar a reforma da Previdência de 2019, que criou idade mínima para se aposentar (65 anos para homens e 62 para mulheres)',
+    proposta: 'PEC 6/2019',
+    votacoes: [
+      { casa: 'senado', id: 'SF-6046', data: '2019-10-22', simE: 'a_favor' },
+      { casa: 'camara', id: '2192459-786', data: '2019-08-06', simE: 'a_favor' },
+    ],
   },
   {
     id: 'despejos-pandemia',
