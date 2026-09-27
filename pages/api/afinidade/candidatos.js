@@ -19,8 +19,7 @@ import { lerPedido } from '../../../src/lib/afinidade/pedido.js';
 import { carregarVotosReais } from '../../../src/lib/afinidade/fonteVotos.js';
 import { posicoesPorPartido, compararPartido, normalizarSigla } from '../../../src/lib/afinidade/partidos.js';
 import { CASAS_AFINIDADE, ASSEMBLEIAS_COM_VOTO } from '../../../src/lib/afinidade/casas.js';
-
-const nome = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/\s+/g, ' ').trim();
+import { mandatoEstadual } from '../../../src/lib/mandatoEstadual.js';
 
 // Mesma fonte de votos do módulo 1, mais o que é só daqui (partidos e mandatos por id).
 let extra = null;
@@ -34,18 +33,7 @@ async function carregarBase() {
   return extra;
 }
 
-// LIGAÇÃO candidato estadual → mandato na assembleia (o TSE não traz ligação nenhuma). Nome de
-// urna igual, no mesmo estado; ou o nome do cadastro COMEÇANDO pelo da urna e o MESMO partido
-// ("ADÃO PRETTO" na urna, "Adão Pretto Filho" no cadastro, os dois do PT). Sem o partido batendo,
-// o começo do nome sozinho não liga: "João Silva" e "João Silva Santos" podem ser duas pessoas.
-function mandatoEstadual(lista, c) {
-  const n = nome(c.nome_urna);
-  if (!n || !lista) return null;
-  const exato = lista.filter((a) => nome(a.nome_urna) === n);
-  if (exato.length === 1) return exato[0];
-  const prefixo = lista.filter((a) => nome(a.nome_urna).startsWith(`${n} `) && normalizarSigla(a.partido_atual) === normalizarSigla(c.partido_sigla));
-  return prefixo.length === 1 ? prefixo[0] : null;
-}
+// Ligação candidato estadual → mandato: src/lib/mandatoEstadual.js (a cédula usa a mesma).
 
 // SELO: só quando a pessoa está na lista do módulo 1 deste estado (mesmos critérios da rota
 // /api/afinidade/parlamentares), senão o selo levaria a uma busca vazia.

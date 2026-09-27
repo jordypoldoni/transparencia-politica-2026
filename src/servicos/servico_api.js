@@ -3,6 +3,8 @@ import { buscarTudo } from '../lib/paginar.js';
 import { garantirResumo } from '../lib/siconfi.js';
 import { agruparPorMateria } from '../lib/votacao.js';
 import { casaDoPerfil } from '../lib/casa.js';
+import { todosCandidatosEstaduais } from '../lib/candidatosEstaduais.js';
+import { mandatoEstadual } from '../lib/mandatoEstadual.js';
 
 const ServicoAPI = {
     // Busca o ranking de maiores gastadores
@@ -1113,7 +1115,7 @@ const ServicoAPI = {
     montarCedula: async ({ uf, ano = 2026 }) => {
         if (!uf) return null;
         const UF = String(uf).toUpperCase().slice(0, 2);
-        const [comMandato, contagem, senadores, governadores, chapas] = await Promise.all([
+        const [comMandato, contagem, senadores, governadores, chapas, estaduais] = await Promise.all([
             // 100 cobre com folga: o maior estado tem 70 cadeiras na Camara.
             ServicoAPI.listarCandidatosDeputadoFederal({ ano, uf: UF, comMandato: true, porPagina: 100 }),
             // porPagina 1 so para ler o count exato do estado sem trazer as centenas de linhas.
@@ -1123,6 +1125,7 @@ const ServicoAPI = {
             // 40 cobre: o estado com mais candidatos a governador tem 11.
             ServicoAPI.listarCandidatosGovernador({ ano, uf: UF, porPagina: 40 }),
             ServicoAPI.listarPresidenciaveis(ano),
+            ServicoAPI.estaduaisDaCedula(UF),
         ].map((pr) => pr.catch((e) => { console.error('montarCedula:', e.message); return null; })));
 
         return {
@@ -1134,7 +1137,28 @@ const ServicoAPI = {
             senadores: senadores?.itens || [],
             governadores: governadores?.itens || [],
             chapas: chapas || [],
+            // null = o TSE não respondeu agora (a cédula mostra o link e avisa, sem inventar "nenhum").
+            estaduais: estaduais || null,
         };
+    },
+
+    // DEPUTADO ESTADUAL NA CÉDULA (27/09/2026, pedido do Jordy: "não estão listados como os demais").
+    // Mesmo desenho do deputado federal: o total do estado e, em cartões, quem JÁ TEM MANDATO na
+    // Assembleia. A lista vem do TSE ao vivo (cache de 6 h em candidatosEstaduais.js) e o mandato
+    // sai do cadastro do site, que hoje tem RS (ALERGS) e SP (ALESP); nos outros estados a cédula
+    // diz que o site ainda não tem o cadastro, em vez de "ninguém tem mandato".
+    estaduaisDaCedula: async (UF) => {
+        if (UF === 'DF') return { total: 0, comMandato: [], temCadastro: false };
+        const [lista, { data: agentes }] = await Promise.all([
+            todosCandidatosEstaduais(UF),
+            supabase.from('agentes_politicos').select('id, nome_urna, partido_atual').eq('uf_sede', UF).in('fonte_api', ['alergs', 'alesp']).neq('em_exercicio', false),
+        ]);
+        const temCadastro = (agentes || []).length > 0;
+        const comMandato = temCadastro
+            ? lista.filter((c) => mandatoEstadual(agentes, c)).map(({ nome_completo, coligacao_nome, situacao_tse, apto_tse, totalizacao_tse, ...c }) => c)
+                .sort((a, b) => a.nome_urna.localeCompare(b.nome_urna, 'pt-BR'))
+            : [];
+        return { total: lista.length, comMandato, temCadastro };
     },
 
     getCandidatoSenadorPorSlug: async (slug) => {

@@ -10,6 +10,7 @@ import BotaoMeuVoto from '../components/BotaoMeuVoto';
 import BotaoFavorito from '../components/BotaoFavorito';
 import CampoBusca from '../components/CampoBusca';
 import CampoSelect from '../components/CampoSelect';
+import EscolhaCompacta from '../components/EscolhaCompacta';
 import { NOMES_UF } from '../src/lib/cotas';
 import { t } from '../src/estilo/tokens';
 import SeloSituacao from '../components/SeloSituacao';
@@ -283,7 +284,17 @@ export default function Candidatos2026({ cargo, chapas, deputados, resumo, resum
         <a href="https://www.tse.jus.br/" target="_blank" rel="noopener noreferrer" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>TSE</a>, sem análise ou opinião, tire suas próprias conclusões com base nos dados.
       </p>
 
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap' }}>
+      {/* Celular (27/09/2026): um campo de escolha no lugar das cinco pílulas, que ocupavam 4 linhas. */}
+      <nav aria-label="Cargo" className="so-celular" style={{ marginBottom: '20px' }}>
+        <EscolhaCompacta rotulo="Cargo" valor={cargo} opcoes={[
+          { valor: 'presidente', rotulo: `Presidente (${totalPresidente})`, href: '/candidatos-2026?cargo=presidente' },
+          { valor: 'senador', rotulo: `Senador (${(resumoSenado.total || 0).toLocaleString('pt-BR')})`, href: '/candidatos-2026?cargo=senador' },
+          { valor: 'governador', rotulo: `Governador (${(resumoGoverno.total || 0).toLocaleString('pt-BR')})`, href: '/candidatos-2026?cargo=governador' },
+          { valor: 'deputado-federal', rotulo: `Deputado Federal (${(resumo.total || 0).toLocaleString('pt-BR')})`, href: '/candidatos-2026?cargo=deputado-federal' },
+          { valor: 'deputado-estadual', rotulo: `Deputado Estadual${resumoEstadual.total != null ? ` (${resumoEstadual.total.toLocaleString('pt-BR')})` : ''}`, href: '/candidatos-2026?cargo=deputado-estadual' },
+        ]} />
+      </nav>
+      <div className="so-computador" style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap' }}>
         <Link href="/candidatos-2026?cargo=presidente" style={abaEstilo(cargo === 'presidente')}>
           Presidente ({totalPresidente})
         </Link>

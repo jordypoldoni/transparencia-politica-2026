@@ -62,6 +62,7 @@ function Cedula({ uf, cedula }) {
   const senadores = cedula?.senadores || [];
   const governadores = cedula?.governadores || [];
   const chapas = cedula?.chapas || [];
+  const estaduais = cedula?.estaduais || null;
 
   return (
     <>
@@ -82,17 +83,33 @@ function Cedula({ uf, cedula }) {
         </div>
       </BlocoCargo>
 
-      {/* 26/09/2026: os estaduais entraram em 25/09, lidos do TSE na hora. O aviso de "ainda não
-          coletamos" passou a ser falso e deu lugar ao link para a lista do estado. */}
+      {/* DEPUTADO ESTADUAL (27/09/2026): igual ao federal, com o total e os cartões de quem já tem
+          mandato na Assembleia (ServicoAPI.estaduaisDaCedula). Antes era só um botão, e parecia que
+          faltava o cargo. */}
       <BlocoCargo ordem={2} cargo="Deputado Estadual"
-        nota={uf === 'DF' ? 'No Distrito Federal o cargo equivalente é o de deputado distrital, que ainda não está no site.' : `Quem disputa a Assembleia Legislativa ${deUf(uf)}. A lista vem direto do TSE, com a ficha de cada candidato.`}>
+        nota={uf === 'DF' ? 'No Distrito Federal o cargo equivalente é o de deputado distrital, que ainda não está no site.'
+          : !estaduais ? `Quem disputa a Assembleia Legislativa ${deUf(uf)}. A lista vem direto do TSE, que não respondeu agora: o botão abaixo abre a lista completa.`
+          : `${estaduais.total.toLocaleString('pt-BR')} pessoas disputam as cadeiras ${deUf(uf)} na Assembleia Legislativa.${estaduais.comMandato.length > 0 ? ` Abaixo, ${estaduais.comMandato.length === 1 ? 'o único que já tem' : `os ${estaduais.comMandato.length} que já têm`} mandato hoje.` : ''}`}>
         {uf === 'DF' ? (
           <AindaNaoTemos texto="Deputado distrital ainda não está no site." />
         ) : (
-          <Link href={`/candidatos-2026?cargo=deputado-estadual&uf=${uf}`}
-            style={{ display: 'inline-block', padding: '11px 20px', borderRadius: t.raio.pill, background: t.cor.verde, color: t.cor.ouro, fontWeight: 700, fontSize: '0.88rem', textDecoration: 'none', boxShadow: t.sombra.botao }}>
-            Ver os candidatos a deputado estadual do {uf} →
-          </Link>
+          <>
+            {estaduais?.comMandato?.length > 0 ? (
+              <div className="grade-parl">
+                {estaduais.comMandato.map((d) => <CardCandidato key={d.slug} d={d} hrefBase="/candidato-estadual" selo="já tem mandato" votar ufVoto={uf} />)}
+              </div>
+            ) : estaduais && !estaduais.temCadastro ? (
+              <AindaNaoTemos texto={`O site ainda não tem o cadastro dos deputados estaduais ${deUf(uf)}, então não dá para marcar quem já tem mandato. Todos os candidatos estão na lista abaixo.`} />
+            ) : estaduais ? (
+              <AindaNaoTemos texto={`Nenhum candidato ${deUf(uf)} tem mandato na Assembleia hoje.`} />
+            ) : null}
+            <div style={{ marginTop: '14px' }}>
+              <Link href={`/candidatos-2026?cargo=deputado-estadual&uf=${uf}`}
+                style={{ display: 'inline-block', padding: '11px 20px', borderRadius: t.raio.pill, background: t.cor.verde, color: t.cor.ouro, fontWeight: 700, fontSize: '0.88rem', textDecoration: 'none', boxShadow: t.sombra.botao }}>
+                {estaduais?.total ? `Ver os ${estaduais.total.toLocaleString('pt-BR')} candidatos do ${uf} →` : `Ver os candidatos a deputado estadual do ${uf} →`}
+              </Link>
+            </div>
+          </>
         )}
       </BlocoCargo>
 

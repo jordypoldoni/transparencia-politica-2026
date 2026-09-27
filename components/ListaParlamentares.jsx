@@ -13,6 +13,7 @@ import Link from 'next/link';
 import Avatar from './Avatar';
 import BotaoFavorito from './BotaoFavorito';
 import CampoSelect from './CampoSelect';
+import EscolhaCompacta from './EscolhaCompacta';
 import CampoBusca from './CampoBusca';
 import { NOMES_UF } from '../src/lib/cotas';
 import { t } from '../src/estilo/tokens';
@@ -221,8 +222,17 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
           endereco na barra diz qual lista esta aberta, o link pode ser compartilhado, e o
           Google indexa as tres. O Next pre-carrega ao passar o mouse, entao a troca segue
           rapida. Ver src/lib/assembleias.js. */}
+      {/* Celular (27/09/2026): campo de escolha no lugar das pílulas (Federais, Estaduais · SP, Estaduais · RS). */}
       {grupo === 'deputado' && (
-        <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }} role="tablist" aria-label="Tipo de deputado">
+        <nav aria-label="Tipo de deputado" className="so-celular" style={{ marginBottom: '16px' }}>
+          <EscolhaCompacta rotulo="Tipo de deputado" valor={casa} opcoes={[
+            { valor: 'Câmara', rotulo: `Federais (${totalCasa('Câmara')})`, href: '/deputados' },
+            ...ASSEMBLEIAS.filter((a) => totalCasa(a.casa) > 0).map((a) => ({ valor: a.casa, rotulo: `Estaduais · ${a.uf} (${totalCasa(a.casa)})`, href: caminhoDaCasa(a.casa) })),
+          ]} />
+        </nav>
+      )}
+      {grupo === 'deputado' && (
+        <div className="so-computador" style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }} role="tablist" aria-label="Tipo de deputado">
           <Link href="/deputados" style={{ ...pilulaCasa(casa === 'Câmara'), textDecoration: 'none', display: 'inline-block' }} role="tab" aria-selected={casa === 'Câmara'}>
             Federais ({totalCasa('Câmara')})
           </Link>
