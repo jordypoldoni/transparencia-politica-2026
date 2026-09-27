@@ -337,6 +337,7 @@ function limparAparelho() {
     guardarUfCookie(''); // conta apagada: o estado também sai do cookie
     window.dispatchEvent(new CustomEvent('lume:meuvoto'));
     window.sessionStorage.removeItem('lume:afinidade:tela');
+    window.sessionStorage.removeItem('lume:afinidade:dados');
     window.dispatchEvent(new CustomEvent('lume:favoritos'));
     window.dispatchEvent(new CustomEvent(EVENTO_RESPOSTAS));
   } catch { /* nada */ }

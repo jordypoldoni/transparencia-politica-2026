@@ -46,7 +46,11 @@ const CARGOS = [
   { valor: 'deputado-federal', rotulo: 'Deputado Federal' },
   { valor: 'deputado-estadual', rotulo: 'Deputado Estadual' },
 ];
+// A tela guardada fica em DUAS chaves (27/09/2026): a leve (estado, cargo, busca, aba, rolagem),
+// gravada a cada mudança, e a pesada (o resultado, ~300 KB), gravada só quando o resultado muda.
+// Antes era uma chave só, e cada letra digitada na busca regravava os 300 KB no celular.
 const CHAVE_TELA = 'lume:afinidade:tela';
+const CHAVE_DADOS = 'lume:afinidade:dados';
 const semAcento = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
 // PÍLULA PADRÃO DO SITE (a de /deputados, "Federais · Estaduais"): pílula, sem borda, ativa em
@@ -544,23 +548,31 @@ export default function Afinidade({ ufInicial }) {
   // vazia por cima da que vai ser restaurada.
   useEffect(() => {
     if (!pronto.current) return;
-    try { sessionStorage.setItem(CHAVE_TELA, JSON.stringify({ uf, resultado, cargo, busca, parl, casa, buscaParl, aba, rolagem: window.scrollY })); } catch (e) {}
-  }, [uf, resultado, cargo, busca, parl, casa, buscaParl, aba]);
+    try { sessionStorage.setItem(CHAVE_TELA, JSON.stringify({ uf, cargo, busca, casa, buscaParl, aba, rolagem: window.scrollY })); } catch (e) {}
+  }, [uf, cargo, busca, casa, buscaParl, aba]);
+  useEffect(() => {
+    if (!pronto.current) return;
+    try { sessionStorage.setItem(CHAVE_DADOS, JSON.stringify({ uf, resultado, parl })); } catch (e) {}
+  }, [resultado, parl]); // eslint-disable-line react-hooks/exhaustive-deps
   // Ao abrir: respostas deste navegador e, se a pessoa está VOLTANDO para esta aba, a tela como
   // ela deixou (resultado, cargo, busca, rolagem).
   useEffect(() => {
     const locais = lerRespostasLocais();
     setRespostas(Object.fromEntries(Object.entries(locais).map(([id, r]) => [id, r.resposta])));
     let tela = null;
+    let dados = null;
     try { tela = JSON.parse(sessionStorage.getItem(CHAVE_TELA) || 'null'); } catch (e) {}
+    try { dados = JSON.parse(sessionStorage.getItem(CHAVE_DADOS) || 'null'); } catch (e) {}
     if (tela && (!ufInicial || tela.uf === ufInicial)) {
       setUf(tela.uf || ufInicial || '');
       ufEscolhida.current = true;
-      // Resultado no formato antigo (antes do módulo 2 refeito, 27/09) não é restaurado.
-      if (tela.resultado && tela.resultado.partidos && !Array.isArray(tela.resultado.partidos)) setResultado(tela.resultado);
+      if (dados && dados.uf === tela.uf) {
+        // Resultado no formato antigo (antes do módulo 2 refeito, 27/09) não é restaurado.
+        if (dados.resultado && dados.resultado.partidos && !Array.isArray(dados.resultado.partidos)) setResultado(dados.resultado);
+        if (dados.parl) setParl(dados.parl);
+      }
       if (tela.cargo) setCargo(tela.cargo);
       if (tela.busca) setBusca(tela.busca);
-      if (tela.parl) setParl(tela.parl);
       if (tela.casa) setCasa(tela.casa);
       if (tela.buscaParl) setBuscaParl(tela.buscaParl);
       if (tela.aba) setAba(tela.aba);

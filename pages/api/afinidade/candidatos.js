@@ -79,6 +79,40 @@ function agrupar(itens) {
   return [...g.values()];
 }
 
+// Monta as listas de candidatos de um estado, agrupadas por partido (cacheadas por listasPorUf).
+const listasPorUf = new Map();
+async function montarListas(uf, estaduais, agentePorId) {
+  const cargos = {};
+  // Os três cargos do banco e a lista do TSE ao mesmo tempo (antes era um depois do outro).
+  const doBanco = Promise.all(CARGOS.map(async (c) => {
+    const linhas = await buscarTudo(() => supabase.from(c.tabela)
+      .select('slug, nome_urna, partido_sigla, nr_candidato, foto_url, agente_id')
+      .eq('ano_eleicao', 2026).eq('uf', uf), `afinidade.${c.tabela}`);
+    cargos[c.chave] = agrupar(linhas.map((l) => ({
+      sigla: l.partido_sigla,
+      c: candidato(l, `${c.href}/${l.slug}`, selo(l.agente_id ? agentePorId.get(l.agente_id) : null, uf)),
+    })));
+  }));
+
+  // Deputado estadual: lido do TSE na hora (DF elege distrital, fica vazio). Se o TSE falhar,
+  // o cargo volta marcado como indisponível, e não como "nenhum candidato".
+  let estadualIndisponivel = false;
+  const doTse = todosCandidatosEstaduais(uf).then((lista) => {
+    cargos['deputado-estadual'] = agrupar(lista.map((l) => ({
+      sigla: l.partido_sigla,
+      c: candidato(l, `/candidato-estadual/${l.slug}`, selo(mandatoEstadual(estaduais[uf], l), uf)),
+    })));
+  }).catch((e) => {
+    console.error('afinidade.candidatos.estaduais:', e.message);
+    cargos['deputado-estadual'] = [];
+    estadualIndisponivel = true;
+  });
+  await Promise.all([doBanco, doTse]);
+  // Ordem fixa das chaves, como antes (a tela lê por nome, mas o JSON fica previsível).
+  const ordenados = Object.fromEntries(['senador', 'governador', 'deputado-federal', 'deputado-estadual'].map((k) => [k, cargos[k] || []]));
+  return { cargos: ordenados, estadualIndisponivel };
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ erro: 'use POST' });
   const pedido = lerPedido(req.body);
@@ -86,33 +120,16 @@ export default async function handler(req, res) {
   const { uf, respostas } = pedido;
 
   try {
-    const { porPartido, estaduais, agentePorId } = await carregarBase();
-    const cargos = {};
-
-    for (const c of CARGOS) {
-      const linhas = await buscarTudo(() => supabase.from(c.tabela)
-        .select('slug, nome_urna, partido_sigla, nr_candidato, foto_url, agente_id')
-        .eq('ano_eleicao', 2026).eq('uf', uf), `afinidade.${c.tabela}`);
-      cargos[c.chave] = agrupar(linhas.map((l) => ({
-        sigla: l.partido_sigla,
-        c: candidato(l, `${c.href}/${l.slug}`, selo(l.agente_id ? agentePorId.get(l.agente_id) : null, uf)),
-      })));
+    const { porPartido, estaduais, agentePorId, em } = await carregarBase();
+    // As listas de candidatos do estado não dependem das respostas: ficam 30 minutos na memória da
+    // função (27/09/2026). Antes, cada cálculo refazia 3 consultas ao banco e a leitura do TSE, e a
+    // resposta levava quase 2 segundos. Só a estimativa dos partidos é refeita a cada pedido.
+    let pronto = listasPorUf.get(uf);
+    if (!pronto || pronto.em !== em || Date.now() - pronto.criado > 30 * 60 * 1000) {
+      pronto = { em, criado: Date.now(), ...(await montarListas(uf, estaduais, agentePorId)) };
+      if (!pronto.estadualIndisponivel) listasPorUf.set(uf, pronto);
     }
-
-    // Deputado estadual: lido do TSE na hora (DF elege distrital, fica vazio). Se o TSE falhar,
-    // o cargo volta marcado como indisponível, e não como "nenhum candidato".
-    let estadualIndisponivel = false;
-    try {
-      const lista = await todosCandidatosEstaduais(uf);
-      cargos['deputado-estadual'] = agrupar(lista.map((l) => ({
-        sigla: l.partido_sigla,
-        c: candidato(l, `/candidato-estadual/${l.slug}`, selo(mandatoEstadual(estaduais[uf], l), uf)),
-      })));
-    } catch (e) {
-      console.error('afinidade.candidatos.estaduais:', e.message);
-      cargos['deputado-estadual'] = [];
-      estadualIndisponivel = true;
-    }
+    const { cargos, estadualIndisponivel } = pronto;
 
     // A estimativa de cada partido na disputa do estado, calculada uma vez para todos os cargos.
     const partidos = {};
