@@ -92,7 +92,15 @@ export async function entrarComGoogle(voltarPara) {
 export function aoMudarSessao(cb) {
   const b = banco();
   if (!b) return () => {};
-  const { data } = b.auth.onAuthStateChange((_evento, sessao) => cb(sessao || null));
+  // TRAVA DO SUPABASE (27/09/2026). O Supabase chama este aviso DE DENTRO da trava da sessão e
+  // ESPERA a função terminar. O /perfil passava uma função que devolvia promessa e, dentro dela,
+  // lia a sessão de novo: a leitura esperava a trava, a trava esperava a leitura, e tudo que
+  // dependia da sessão parava. Foi por isso que "Sair" não saía (Jordy, 27/09). A documentação do
+  // Supabase manda exatamente isto: não chamar o Supabase dentro do aviso e adiar com setTimeout.
+  // Adiando aqui, vale para todo mundo que usa aoMudarSessao, e nada é devolvido para ser esperado.
+  const { data } = b.auth.onAuthStateChange((_evento, sessao) => {
+    setTimeout(() => { try { cb(sessao || null); } catch (e) { console.error('[sessão]', e); } }, 0);
+  });
   return () => data?.subscription?.unsubscribe();
 }
 
@@ -112,8 +120,14 @@ export async function atualizarUf(uf) {
 export async function sair() {
   const b = banco();
   if (!b) return;
-  const guardadoNoPerfil = await consentimentoEmDia().catch(() => false);
-  await b.auth.signOut();
+  // Se a consulta demorar, sai do mesmo jeito e mantém o que está no aparelho (o lado seguro:
+  // nada se perde). Sair vale SÓ para este aparelho (scope local): o global derrubava também a
+  // sessão do celular e dependia da rede para funcionar.
+  const guardadoNoPerfil = await Promise.race([
+    consentimentoEmDia().catch(() => false),
+    new Promise((r) => setTimeout(() => r(false), 3000)),
+  ]);
+  await b.auth.signOut({ scope: 'local' });
   if (guardadoNoPerfil) {
     limparRespostasLocais();
     try {
