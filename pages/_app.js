@@ -122,6 +122,13 @@ export default function App({ Component, pageProps }) {
         @media (max-width: 760px) { input, select, textarea { font-size: 16px !important; } }
         html.menu-aberto { overflow: hidden; overscroll-behavior: none; }
 
+        /* IMPRESSAO (27/09/2026): a cola para a urna (/cola) se imprime para levar no papel. Sai o
+           cabecalho, o rodape e os botoes; fica a lista com os numeros. */
+        @media print {
+          header, footer, .nao-imprimir { display: none !important; }
+          body { background: #fff !important; }
+        }
+
         /* Tela /entrar (26/09/2026). Celular: titulo, cartao de login, explicacao. Computador:
            titulo e explicacao a esquerda, cartao a direita ocupando as duas linhas. */
         .entrar-grade { display: grid; gap: 28px; grid-template-columns: minmax(0, 1fr);
