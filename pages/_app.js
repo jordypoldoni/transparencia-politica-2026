@@ -122,6 +122,11 @@ export default function App({ Component, pageProps }) {
         @media (max-width: 760px) { input, select, textarea { font-size: 16px !important; } }
         html.menu-aberto { overflow: hidden; overscroll-behavior: none; }
 
+        /* Resumo "Suas respostas" do Quem vota como voce (27/09/2026): uma linha por pergunta, duas
+           colunas a partir de 720px para caber na tela sem rolar. */
+        .resumo-respostas { display: grid; grid-template-columns: 1fr; gap: 4px; }
+        @media (min-width: 720px) { .resumo-respostas { grid-template-columns: 1fr 1fr; column-gap: 8px; } }
+
         /* IMPRESSAO (27/09/2026): a cola para a urna (/cola) se imprime para levar no papel. Sai o
            cabecalho, o rodape e os botoes; fica a lista com os numeros. */
         @media print {

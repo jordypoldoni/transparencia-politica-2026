@@ -92,39 +92,12 @@ function Entenda({ p }) {
   );
 }
 
-// PERGUNTA RESPONDIDA FICA RECOLHIDA (27/09/2026, pedido do Jordy: "mostrando apenas a opção
-// escolhida"). Com 10 a 14 perguntas, a página virava uma parede, e quem voltava para ver o
-// resultado rolava por tudo de novo. Respondida = cartão curto com a pergunta e a resposta;
-// "Mudar resposta" abre o cartão inteiro. Ao responder num cartão aberto, ele recolhe e o foco vai
-// para o "Mudar resposta" dele, para quem usa teclado ou leitor de tela não se perder.
-function Pergunta({ p, resposta, aoResponder, aberta, aoAbrir, focarMudar }) {
-  const mudarRef = useRef(null);
-  const recolhida = Boolean(resposta) && !aberta;
-  useEffect(() => { if (recolhida && focarMudar) mudarRef.current?.focus(); }, [recolhida, focarMudar]);
-  const titulo = <p style={{ margin: '0 0 8px', fontSize: '1.02rem', fontWeight: 700, color: t.cor.tinta, lineHeight: 1.4 }}>Você é a favor de {p.texto.charAt(0).toLowerCase() + p.texto.slice(1)}?</p>;
-  const tema = <p style={{ margin: '0 0 6px', fontSize: '0.72rem', fontWeight: 800, letterSpacing: '0.05em', textTransform: 'uppercase', color: t.cor.ouroTexto }}>{p.tema}</p>;
-  if (recolhida) {
-    const rotulo = OPCOES_RESPOSTA.find((o) => o.valor === resposta)?.rotulo || resposta;
-    return (
-      <div style={{ ...caixa, marginBottom: '12px' }}>
-        {tema}
-        {titulo}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-          <span style={{ fontSize: '0.86rem', color: t.cor.cinza }}>Sua resposta:</span>
-          {/* A resposta no mesmo visual da pílula ativa, mas sem ser botão (não se clica nela). */}
-          <span style={{ ...pilula(true, true), cursor: 'default', boxShadow: 'none', padding: '7px 16px', fontSize: '0.86rem' }}>{rotulo}</span>
-          <button ref={mudarRef} type="button" aria-expanded="false" onClick={() => aoAbrir(p.id)}
-            style={{ ...pilula(false, true), padding: '7px 16px', fontSize: '0.86rem' }} onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}>
-            Mudar resposta
-          </button>
-        </div>
-      </div>
-    );
-  }
+// PERGUNTA (cartão inteiro): só as que ainda não foram respondidas, ou todas no modo "Abrir todas".
+function Pergunta({ p, resposta, aoResponder }) {
   return (
-    <div style={{ ...caixa, marginBottom: '12px' }}>
-      {tema}
-      {titulo}
+    <div id={`perg-${p.id}`} style={{ ...caixa, marginBottom: '12px' }}>
+      <p style={{ margin: '0 0 6px', fontSize: '0.72rem', fontWeight: 800, letterSpacing: '0.05em', textTransform: 'uppercase', color: t.cor.ouroTexto }}>{p.tema}</p>
+      <p style={{ margin: '0 0 8px', fontSize: '1.02rem', fontWeight: 700, color: t.cor.tinta, lineHeight: 1.4 }}>Você é a favor de {p.texto.charAt(0).toLowerCase() + p.texto.slice(1)}?</p>
       <p style={{ margin: '0 0 10px', fontSize: '0.8rem', color: t.cor.cinza, lineHeight: 1.5 }}>
         {p.proposta}. Votada{' '}
         {p.votacoes.map((v, i) => (
@@ -135,15 +108,65 @@ function Pergunta({ p, resposta, aoResponder, aberta, aoAbrir, focarMudar }) {
         ))}.
       </p>
       <Entenda p={p} />
-      <div role="radiogroup" aria-label="Sua posição" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-        {OPCOES_RESPOSTA.map((o) => (
-          <button key={o.valor} type="button" role="radio" aria-checked={resposta === o.valor} onClick={() => aoResponder(p.id, o.valor)}
-            style={pilula(resposta === o.valor, true)} onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}>
-            {o.rotulo}
-          </button>
-        ))}
-      </div>
+      <Opcoes p={p} resposta={resposta} aoResponder={aoResponder} />
     </div>
+  );
+}
+function Opcoes({ p, resposta, aoResponder }) {
+  return (
+    <div role="radiogroup" aria-label="Sua posição" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+      {OPCOES_RESPOSTA.map((o) => (
+        <button key={o.valor} type="button" role="radio" aria-checked={resposta === o.valor} onClick={() => aoResponder(p.id, o.valor)}
+          style={pilula(resposta === o.valor, true)} onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}>
+          {o.rotulo}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+// RESUMO "SUAS RESPOSTAS" (27/09/2026, segunda versão, pedido do Jordy). A primeira recolhia cada
+// cartão, mas cada um seguia com 4 linhas, e com 14 perguntas o resultado ficava longe. Agora as
+// respondidas saem da lista e viram UMA LINHA cada, num quadro só: nome curto e a resposta. Duas
+// colunas a partir de 720px (7 linhas para 14 perguntas). Tocar numa linha abre ali mesmo a
+// pergunta inteira para mudar; responder fecha. Quem quiser ver tudo como antes usa "Abrir todas".
+const ROTULO_CURTO = { a_favor: 'A favor', contra: 'Contra', sem_opiniao: 'Sem opinião' };
+function ResumoRespostas({ lista, respostas, aoResponder, aberta, setAberta, total, aoAbrirTodas }) {
+  return (
+    <section aria-label="Suas respostas" style={{ ...caixa, padding: '14px clamp(12px,3vw,18px)', marginBottom: '12px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', margin: '0 0 8px' }}>
+        <h2 style={{ margin: 0, fontFamily: t.fonte.corpo, fontSize: '0.92rem', fontWeight: 800, color: t.cor.tinta }}>
+          Suas respostas <span style={{ fontWeight: 600, color: t.cor.cinza }}>{lista.length}/{total}</span>
+        </h2>
+        <button type="button" onClick={aoAbrirTodas} style={{ ...pilula(false, true), padding: '6px 14px', fontSize: '0.8rem', flexShrink: 0 }}
+          onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}>Abrir todas</button>
+      </div>
+      <ul className="resumo-respostas" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+        {lista.map((p) => {
+          const r = respostas[p.id];
+          const aqui = aberta === p.id;
+          return (
+            <li key={p.id} style={{ gridColumn: aqui ? '1 / -1' : undefined }}>
+              <button type="button" aria-expanded={aqui} onClick={() => setAberta(aqui ? null : p.id)}
+                style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', minHeight: '36px',
+                  padding: '5px 10px', border: 'none', borderRadius: t.raio.sm, cursor: 'pointer', textAlign: 'left', fontFamily: t.fonte.corpo,
+                  background: aqui ? t.cor.papelQuente2 : t.cor.papelQuente, color: t.cor.tinta }}>
+                <span style={{ fontSize: '0.84rem', fontWeight: 600, lineHeight: 1.25 }}>{p.curto || p.texto}</span>
+                <span style={{ flexShrink: 0, fontSize: '0.76rem', fontWeight: 800, padding: '4px 10px', borderRadius: t.raio.pill, whiteSpace: 'nowrap',
+                  background: r === 'sem_opiniao' ? '#fff' : t.cor.verde, color: r === 'sem_opiniao' ? t.cor.tinta : t.cor.ouro }}>{ROTULO_CURTO[r]}</span>
+              </button>
+              {aqui && (
+                <div style={{ padding: '10px 10px 12px' }}>
+                  <p style={{ margin: '0 0 8px', fontSize: '0.95rem', fontWeight: 700, color: t.cor.tinta, lineHeight: 1.4 }}>Você é a favor de {p.texto.charAt(0).toLowerCase() + p.texto.slice(1)}?</p>
+                  <Entenda p={p} />
+                  <Opcoes p={p} resposta={r} aoResponder={(id, v) => { aoResponder(id, v); setAberta(null); }} />
+                </div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    </section>
   );
 }
 
@@ -586,18 +609,21 @@ export default function Afinidade({ ufInicial }) {
   const respondidas = perguntas.filter((p) => respostas[p.id]).length;
   const comPosicao = perguntas.filter((p) => respostas[p.id] === 'a_favor' || respostas[p.id] === 'contra').length;
 
-  // Cartões respondidos que a pessoa abriu para mudar ("Mudar resposta" ou "Abrir todas").
-  const [abertas, setAbertas] = useState(() => new Set());
+  // Resumo das respondidas (uma linha cada) e qual linha está aberta para mudar; "Abrir todas" volta
+  // à lista de cartões inteiros.
   const [todasAbertas, setTodasAbertas] = useState(false);
-  const [focarMudar, setFocarMudar] = useState(null);
+  const [linhaAberta, setLinhaAberta] = useState(null);
   const responder = (id, r) => {
+    const primeira = !respostas[id];
     setRespostas((atual) => ({ ...atual, [id]: r }));
     salvarResposta({ pergunta_id: id, resposta: r, origem: 'escolha' }).catch(() => {});
-    // Respondeu: o cartão recolhe (menos no modo "todas abertas", em que a pessoa quer ver tudo).
-    setAbertas((a) => { if (!a.has(id)) return a; const n = new Set(a); n.delete(id); return n; });
-    if (!todasAbertas) setFocarMudar(id);
+    // Respondeu um cartão: ele vai para o resumo, e o foco segue para a próxima pergunta sem
+    // resposta (quem usa teclado ou leitor de tela continua de onde estava).
+    if (primeira && !todasAbertas) {
+      const proxima = perguntas.find((p) => p.id !== id && !respostas[p.id]);
+      requestAnimationFrame(() => document.querySelector(proxima ? `#perg-${proxima.id} [role=radio]` : '#botao-calcular')?.focus({ preventScroll: true }));
+    }
   };
-  const abrir = (id) => { setFocarMudar(null); setAbertas((a) => new Set(a).add(id)); };
 
   const calcular = async () => {
     setErro(''); setCalculando(true);
@@ -648,36 +674,55 @@ export default function Afinidade({ ufInicial }) {
       <div style={{ maxWidth: '860px' }}>
         <span style={{ fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: t.cor.ouroTexto }}>Pra você</span>
         <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.9rem,5vw,2.6rem)', lineHeight: 1.1, margin: '10px 0 12px' }}>Quem vota como você</h1>
-        <div style={{ ...caixa, background: t.cor.papelQuente, boxShadow: 'none', marginBottom: '22px', fontSize: '0.92rem', color: t.cor.tinta, lineHeight: 1.6 }}>
-          <strong>Cada pergunta abaixo é uma votação que já aconteceu</strong> no plenário da Câmara, do Senado ou da Assembleia do RS.
-          Você diz o que pensa e nós comparamos com o <strong>voto registrado</strong> de cada parlamentar naquela votação: sem
-          interpretação e sem inteligência artificial. Responda só as que quiser; em cada uma há uma explicação simples do assunto.
-          Sem conta, suas respostas ficam só neste navegador. Com conta e autorização no perfil, elas aparecem também nos seus outros aparelhos.
-        </div>
+        {/* Quem já respondeu não precisa reler a explicação: ela vira uma linha que abre (27/09/2026,
+            para o resumo e o resultado ficarem perto do topo). */}
+        {respondidas > 0 ? (
+          <details style={{ marginBottom: '18px' }}>
+            <summary style={{ cursor: 'pointer', fontSize: '0.88rem', fontWeight: 700, color: t.cor.ouroTexto }}>Como funciona a comparação</summary>
+            <div style={{ ...caixa, background: t.cor.papelQuente, boxShadow: 'none', marginTop: '8px', fontSize: '0.92rem', color: t.cor.tinta, lineHeight: 1.6 }}>
+              <strong>Cada pergunta abaixo é uma votação que já aconteceu</strong> no plenário da Câmara, do Senado ou da Assembleia do RS.
+              Você diz o que pensa e nós comparamos com o <strong>voto registrado</strong> de cada parlamentar naquela votação: sem
+              interpretação e sem inteligência artificial. Responda só as que quiser; em cada uma há uma explicação simples do assunto.
+              Sem conta, suas respostas ficam só neste navegador. Com conta e autorização no perfil, elas aparecem também nos seus outros aparelhos.
+            </div>
+          </details>
+        ) : (
+          <div style={{ ...caixa, background: t.cor.papelQuente, boxShadow: 'none', marginBottom: '22px', fontSize: '0.92rem', color: t.cor.tinta, lineHeight: 1.6 }}>
+            <strong>Cada pergunta abaixo é uma votação que já aconteceu</strong> no plenário da Câmara, do Senado ou da Assembleia do RS.
+            Você diz o que pensa e nós comparamos com o <strong>voto registrado</strong> de cada parlamentar naquela votação: sem
+            interpretação e sem inteligência artificial. Responda só as que quiser; em cada uma há uma explicação simples do assunto.
+            Sem conta, suas respostas ficam só neste navegador. Com conta e autorização no perfil, elas aparecem também nos seus outros aparelhos.
+          </div>
+        )}
 
         <div style={{ maxWidth: '420px', marginBottom: '22px' }}>
           <p style={{ margin: '0 0 8px', fontWeight: 700 }}>Seu estado</p>
           <CampoSelect opcoes={opcoesUf} valor={uf} placeholder="Escolha o estado" aoLabel="Seu estado" aoSelecionar={(u) => { ufEscolhida.current = true; setUf(u); setResultado(null); setParl(null); definirUf(u).catch(() => {}); }} />
         </div>
 
-        {respondidas > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px 14px', flexWrap: 'wrap', margin: '0 0 12px' }}>
-            <span style={{ fontSize: '0.86rem', color: t.cor.cinza }}>
-              {respondidas} de {perguntas.length} respondidas{todasAbertas ? '' : ', recolhidas com a sua resposta'}.
-            </span>
-            <button type="button" aria-pressed={todasAbertas} onClick={() => { setTodasAbertas((v) => !v); setAbertas(new Set()); setFocarMudar(null); }}
-              style={{ ...pilula(false), padding: '7px 16px', fontSize: '0.84rem' }} onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}>
-              {todasAbertas ? 'Recolher as respondidas' : 'Abrir todas'}
-            </button>
-          </div>
+        {todasAbertas ? (
+          <>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', margin: '0 0 10px' }}>
+              <button type="button" onClick={() => setTodasAbertas(false)} style={{ ...pilula(false), padding: '7px 16px', fontSize: '0.84rem' }}
+                onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}>Resumir as respondidas</button>
+            </div>
+            {perguntas.map((p) => <Pergunta key={p.id} p={p} resposta={respostas[p.id]} aoResponder={responder} />)}
+          </>
+        ) : (
+          <>
+            {respondidas > 0 && (
+              <ResumoRespostas lista={perguntas.filter((p) => respostas[p.id])} respostas={respostas} aoResponder={responder}
+                aberta={linhaAberta} setAberta={setLinhaAberta} total={perguntas.length} aoAbrirTodas={() => { setLinhaAberta(null); setTodasAbertas(true); }} />
+            )}
+            {respondidas > 0 && respondidas < perguntas.length && (
+              <p style={{ margin: '18px 0 10px', fontSize: '0.86rem', fontWeight: 700, color: t.cor.tinta }}>Faltam {perguntas.length - respondidas}</p>
+            )}
+            {perguntas.filter((p) => !respostas[p.id]).map((p) => <Pergunta key={p.id} p={p} resposta={respostas[p.id]} aoResponder={responder} />)}
+          </>
         )}
-        {perguntas.map((p) => (
-          <Pergunta key={p.id} p={p} resposta={respostas[p.id]} aoResponder={responder}
-            aberta={todasAbertas || abertas.has(p.id)} aoAbrir={abrir} focarMudar={focarMudar === p.id} />
-        ))}
 
         <div style={{ display: 'flex', gap: '14px', alignItems: 'center', flexWrap: 'wrap', marginTop: '18px' }}>
-          <button type="button" onClick={calcular} disabled={desligado} style={botaoPadrao(desligado)}
+          <button id="botao-calcular" type="button" onClick={calcular} disabled={desligado} style={botaoPadrao(desligado)}
             onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}>
             {calculando ? 'Calculando…' : resultado ? 'Atualizar resultado' : 'Ver quem votou como você'}
           </button>
