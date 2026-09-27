@@ -216,16 +216,39 @@ function extrairVotos(html) {
 
 // Id estavel e COMPARTILHADO entre os 55 deputados da mesma votacao: e isso que permite
 // juntar os votos individuais numa votacao so (placar, "quem votou").
-function idVotacao(item) {
+//
+// CORRIGIDO EM 27/09/2026. O id era só dia + proposição, e no MESMO dia a mesma proposição tem
+// mais de uma votação: a do texto e os requerimentos de preferência (de emenda, de bloco). Tudo
+// caía no mesmo id e, para cada deputado, o último voto lido sobrescrevia os outros: a Luciana
+// Genro votou Sim no texto do PL 370/2024 e Não no requerimento, e o banco podia guardar o Não
+// como se fosse o voto no projeto. Agora a votação do TEXTO fica com o id de sempre (as perguntas
+// já gravadas continuam valendo) e cada requerimento ganha um id próprio, com um resumo do texto
+// dele no fim.
+const EH_REQUERIMENTO = /^\s*(o\s+deputado\s+signat[aá]rio\s+)?requer|requerimento\s+de\s+prefer/i;
+// Só conta como requerimento DENTRO de um projeto. Quando a própria proposição é um requerimento
+// (RC, RCE: criar comissão, recurso), o texto dela começa com "Requer" e ela é a votação principal.
+const ehRequerimento = (item) => !/^R/i.test(String(item.tipoProjeto || '').trim()) && EH_REQUERIMENTO.test(String(item.materia || ''));
+const resumo = (texto) => {
+  let h = 5381;
+  for (const c of String(texto).replace(/\s+/g, ' ').trim()) h = ((h * 33) ^ c.codePointAt(0)) >>> 0;
+  return h.toString(36);
+};
+function idBase(item) {
   const iso = paraISO(item.dataVotacao) || '';
   const dia = iso.slice(0, 10) || 'sem-data';
   const tipo = String(item.tipoProjeto || '').trim().replace(/\s+/g, '') || 'XX';
   return `ALERGS-${dia}-${tipo}${item.numProposicao || 0}-${item.anoProposicao || 0}`;
 }
+function idVotacao(item) {
+  return ehRequerimento(item) ? `${idBase(item)}-R${resumo(item.materia)}` : idBase(item);
+}
 
 async function coletarAno(ano, deputados, idPorExterno) {
   const votacoes = new Map(); // votacao_id_externa -> linha de `votacoes`
   const votos = new Map();    // `${votacao}|${agente}` -> linha de `votos_parlamentares`
+  // Ids antigos que misturavam texto e requerimento (ver idVotacao): os votos deles são apagados
+  // e regravados só com o voto no texto. Assim a correção limpa o banco na primeira rodada.
+  const comRequerimento = new Set();
   let semDeputado = 0;
 
   for (const d of deputados) {
@@ -247,6 +270,7 @@ async function coletarAno(ano, deputados, idPorExterno) {
     }
     for (const it of itens) {
       const vid = idVotacao(it);
+      if (ehRequerimento(it)) comRequerimento.add(idBase(it));
       const dataISO = paraISO(it.dataVotacao);
       const resultado = (it.resultadoVotacao || '').trim() || null;
       const aprovacao = resultado ? (/aprovad/i.test(resultado) ? 1 : 0) : null;
@@ -279,6 +303,21 @@ async function coletarAno(ano, deputados, idPorExterno) {
     console.log(`  ${ano} · ${d.nome}: ${itens.length} votos`);
     await dorme(DELAY_MS);
   }
+
+  const misturados = [...comRequerimento];
+  for (let i = 0; i < misturados.length; i += 100) {
+    const lote = misturados.slice(i, i + 100);
+    const { error } = await supabase.from('votos_parlamentares').delete().in('votacao_id_externa', lote);
+    if (error) throw error;
+    // Dia em que só houve requerimento (o texto foi votado em outro dia): o id antigo não tem
+    // mais votação de texto por trás, então a linha de metadados sai também.
+    const orfaos = lote.filter((id) => !votacoes.has(id));
+    if (orfaos.length) {
+      const { error: e2 } = await supabase.from('votacoes').delete().in('votacao_id_externa', orfaos);
+      if (e2) throw e2;
+    }
+  }
+  if (misturados.length) console.log(`  ${ano}: ${misturados.length} votações que misturavam texto e requerimento foram limpas e regravadas.`);
 
   const metas = [...votacoes.values()];
   for (let i = 0; i < metas.length; i += 200) {
