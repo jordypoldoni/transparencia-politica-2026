@@ -603,7 +603,7 @@ export default function Afinidade({ ufInicial }) {
           <strong>Cada pergunta abaixo é uma votação que já aconteceu</strong> no plenário da Câmara, do Senado ou da Assembleia do RS.
           Você diz o que pensa e nós comparamos com o <strong>voto registrado</strong> de cada parlamentar naquela votação: sem
           interpretação e sem inteligência artificial. Responda só as que quiser; em cada uma há uma explicação simples do assunto.
-          Suas respostas ficam apenas neste navegador.
+          Sem conta, suas respostas ficam só neste navegador. Com conta e autorização no perfil, elas aparecem também nos seus outros aparelhos.
         </div>
 
         <div style={{ maxWidth: '420px', marginBottom: '22px' }}>
