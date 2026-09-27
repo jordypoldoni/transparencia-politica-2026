@@ -10,7 +10,8 @@ import NavPraVoce from '../components/NavPraVoce';
 import { t } from '../src/estilo/tokens';
 import { NOMES_UF } from '../src/lib/cotas';
 import { PERGUNTAS_AFINIDADE } from '../src/lib/perguntasAfinidade';
-import { MIN_COMPARAVEIS } from '../src/lib/afinidade/nucleo';
+import { MIN_COMPARAVEIS, ordenarPorConcordancia } from '../src/lib/afinidade/nucleo';
+import { faixaCoesao } from '../src/lib/afinidade/partidos';
 import { CASAS_AFINIDADE } from '../src/lib/afinidade/casas';
 import { lerRespostasLocais, salvarResposta, EVENTO_RESPOSTAS } from '../src/lib/perfilUsuario';
 
@@ -228,18 +229,6 @@ function CartaoComparacao({ c, subtitulo, tipoFavorito, detalheFavorito, semVoto
   );
 }
 
-function CartaoCandidato({ c, cargoRotulo, partido }) {
-  return (
-    <CartaoComparacao c={c} tipoFavorito="candidato"
-      subtitulo={`${cargoRotulo} · ${c.partido_sigla}${c.nr_candidato ? ` · nº ${c.nr_candidato}` : ''}`}
-      detalheFavorito={[`Candidato(a) a ${cargoRotulo}`, c.partido_sigla].filter(Boolean).join(' · ')}
-      semVoto={<>
-        Não votou nenhuma dessas propostas (não tinha mandato na época, ou ainda não temos os votos da casa dele).
-        {partido ? <> A maioria dos atuais parlamentares do {c.partido_sigla} teve a sua posição em <strong style={{ color: t.cor.tinta }}>{partido.iguais}</strong> e posição diferente em <strong style={{ color: t.cor.tinta }}>{partido.comparaveis - partido.iguais}</strong> das suas respostas.</> : ''}
-      </>} />
-  );
-}
-
 // MÓDULO 1: PARLAMENTARES EM EXERCÍCIO (27/09/2026, pedido do Jordy: "uma coisa para cada coisa").
 // Só fatos: o voto registrado de quem HOJE tem mandato pelo estado escolhido. Candidatos de 2026
 // ficam na outra aba, com a lógica deles.
@@ -316,105 +305,167 @@ function ResultadoParlamentares({ r, casa, setCasa, busca, setBusca }) {
   );
 }
 
+// MÓDULO 2: CANDIDATOS 2026 (refeito em 27/09/2026, pedido do Jordy). Quase nenhum candidato
+// votou essas propostas, então a comparação é com o PARTIDO, e a tela é AGRUPADA POR PARTIDO:
+// um cartão por partido, com a estimativa (placar da maioria + coesão) em cima e os candidatos
+// daquele cargo embaixo. Quem hoje tem mandato pelo estado ganha o selo "Tem mandato: ver voto
+// real", que leva à aba de parlamentares já buscando o nome (o voto real mora no módulo 1).
+const MOSTRAR_POR_PARTIDO = 5;
+const MIN_MEMBROS = 3;
+
+function LinhaCandidato({ c, sigla, cargoRotulo, aoVerVotoReal }) {
+  return (
+    <li style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+      <Avatar nome={c.nome_urna} foto={c.foto_url} size={36} />
+      <div style={{ minWidth: 0, flex: 1 }}>
+        <Link href={c.href} style={{ color: t.cor.tinta, fontWeight: 700, textDecoration: 'none', fontSize: '0.92rem', overflowWrap: 'anywhere' }}>{c.nome_urna}</Link>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px 10px', alignItems: 'center', marginTop: '3px', fontSize: '0.78rem', color: t.cor.cinza }}>
+          {c.nr_candidato && <span>nº {c.nr_candidato}</span>}
+          {c.mandato && (
+            <button type="button" onClick={() => aoVerVotoReal(c.mandato)} onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}
+              style={{ padding: '5px 12px', minHeight: '26px', fontSize: '0.74rem', fontWeight: 700, fontFamily: t.fonte.corpo, border: 'none', borderRadius: t.raio.pill,
+                background: t.cor.verde, color: t.cor.ouro, cursor: 'pointer', boxShadow: t.sombra.botao, transition: 'box-shadow .15s, transform .15s' }}>
+              Tem mandato: ver voto real
+            </button>
+          )}
+        </div>
+      </div>
+      <BotaoFavorito tipo="candidato" chave={c.href} rotulo={c.nome_urna} detalhe={[`Candidato(a) a ${cargoRotulo}`, sigla].join(' · ')} foto={c.foto_url} />
+    </li>
+  );
+}
+
+// Uma frase sobre o quanto a estimativa vale. Base pequena vem antes da coesão: com 1 ou 2
+// parlamentares, "100% com a maioria" é só o voto de uma pessoa.
+function Coesao({ p }) {
+  const estilo = { margin: '10px 0 0', fontSize: '0.84rem', color: t.cor.tinta, lineHeight: 1.5 };
+  if (p.membros < MIN_MEMBROS) {
+    return <p style={estilo}><strong>Base pequena:</strong> só {p.membros} {p.membros === 1 ? 'parlamentar de hoje do partido votou' : 'parlamentares de hoje do partido votaram'} essas propostas.</p>;
+  }
+  return (
+    <p style={estilo}>
+      <strong>{faixaCoesao(p.coesao)}:</strong> em média, {Math.round(p.coesao * 100)}% dos {p.membros} parlamentares de hoje do partido votaram com a maioria.
+    </p>
+  );
+}
+
+function CartaoPartido({ g, p, cargoRotulo, filtrado, aoVerVotoReal }) {
+  const [todos, setTodos] = useState(false);
+  const visiveis = todos || filtrado ? g.candidatos : g.candidatos.slice(0, MOSTRAR_POR_PARTIDO);
+  const n = g.candidatos.length;
+  return (
+    <div style={caixa}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px' }}>
+        <div style={{ minWidth: 0 }}>
+          <p style={{ margin: 0, fontWeight: 800, fontSize: '1.05rem', color: t.cor.tinta }}>{g.sigla}</p>
+          <p style={{ margin: '2px 0 0', fontSize: '0.78rem', color: t.cor.cinza }}>
+            {filtrado ? `${n} ${n === 1 ? 'candidato encontrado' : 'candidatos encontrados'}` : `${n} ${n === 1 ? 'candidato' : 'candidatos'} a ${cargoRotulo}`}
+          </p>
+        </div>
+        <BotaoFavorito tipo="partido" chave={g.sigla} rotulo={g.sigla} detalhe="Partido" />
+      </div>
+      {p && p.membros > 0 ? (
+        <>
+          <Placar itens={p.detalhes} campo="maioria" />
+          <Coesao p={p} />
+          <details style={{ marginTop: '8px' }}>
+            <summary style={{ cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700, color: t.cor.ouroTexto }}>Ver voto a voto do partido</summary>
+            <Detalhes itens={p.detalhes} campo="maioria" />
+          </details>
+        </>
+      ) : (
+        <p style={{ margin: '12px 0 0', fontSize: '0.84rem', color: t.cor.cinza, lineHeight: 1.5 }}>
+          Nenhum parlamentar que hoje está no partido votou as propostas que você respondeu. Sem estimativa.
+        </p>
+      )}
+      {/* Rótulo entre a estimativa (do partido) e a lista (das pessoas): são coisas de natureza
+          diferente no mesmo cartão, e sem ele a lista parecia continuação do placar. */}
+      <p style={{ margin: '18px 0 10px', fontSize: '0.72rem', fontWeight: 800, letterSpacing: '0.05em', textTransform: 'uppercase', color: t.cor.ouroTexto }}>
+        {filtrado ? 'Encontrados' : `Candidatos do ${g.sigla}`}
+      </p>
+      <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: '12px' }}>
+        {visiveis.map((c) => <LinhaCandidato key={c.href} c={c} sigla={g.sigla} cargoRotulo={cargoRotulo} aoVerVotoReal={aoVerVotoReal} />)}
+      </ul>
+      {!todos && !filtrado && n > MOSTRAR_POR_PARTIDO && (
+        <button type="button" onClick={() => setTodos(true)} onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}
+          style={{ ...pilula(false, true), marginTop: '14px', padding: '8px 16px', fontSize: '0.84rem' }}>
+          Ver todos os {n} candidatos
+        </button>
+      )}
+    </div>
+  );
+}
+
 function avisoEstadual(uf, indisponivel) {
   if (indisponivel) return 'Não foi possível consultar o TSE agora para listar os candidatos a deputado estadual. Tente de novo em instantes.';
   if (uf === 'DF') return 'No Distrito Federal o cargo é o de deputado distrital, que ainda não está no site.';
-  if (uf === 'RS') return 'Das perguntas, só a das escolas cívico-militares foi votada na Assembleia do RS: os deputados estaduais gaúchos são comparados nela (e nas federais, se já tiveram mandato no Congresso).';
-  if (uf === 'SP') return 'A Assembleia de SP (ALESP) não publica o voto de cada deputado, então não há como comparar os estaduais paulistas.';
-  return `O site ainda não tem os votos da Assembleia Legislativa do ${uf}, então os estaduais daqui aparecem sem comparação.`;
+  return `Para deputado estadual, a estimativa usa sobretudo votos do Congresso${uf === 'RS' ? ' (e a votação das escolas cívico-militares na Assembleia do RS)' : ''}. Na Assembleia, o mesmo partido pode votar diferente.`;
 }
 
-function Resultado({ r, cargo, setCargo, busca, setBusca }) {
-  const lista = r.cargos[cargo] || [];
+function ResultadoCandidatos({ r, cargo, setCargo, busca, setBusca, aoVerVotoReal }) {
+  const grupos = r.cargos[cargo] || [];
   const rotuloCargo = CARGOS.find((c) => c.valor === cargo)?.rotulo || '';
-  const partidoPorSigla = Object.fromEntries(r.partidos.map((p) => [semAcento(p.sigla), p]));
-  const votaram = lista.filter((c) => c.comparaveis > 0);
   const termo = semAcento(busca.trim());
-  const filtrados = termo
-    ? lista.filter((c) => (/^\d+$/.test(termo) ? String(c.nr_candidato || '').startsWith(termo)
-      : semAcento(c.nome_urna).includes(termo) || semAcento(c.partido_sigla) === termo))
-    : votaram;
-  const mostrar = filtrados.slice(0, 60);
-  const opcoesCargo = CARGOS.map((c) => {
-    const n = (r.cargos[c.valor] || []).filter((x) => x.comparaveis > 0).length;
-    return { valor: c.valor, rotulo: `${c.rotulo} (${n})` };
-  });
+  const bate = (c) => (/^\d+$/.test(termo) ? String(c.nr_candidato || '').startsWith(termo) : semAcento(c.nome_urna).includes(termo));
+  // Busca pela sigla mostra o partido inteiro; por nome ou número, só quem bate, dentro do partido.
+  const visiveis = termo
+    ? grupos.map((g) => (semAcento(g.sigla) === termo ? g : { ...g, candidatos: g.candidatos.filter(bate), filtrado: true })).filter((g) => g.candidatos.length)
+    : grupos;
+  const est = (g) => r.partidos[g.sigla];
+  const porConcordancia = (a, b) => ordenarPorConcordancia(est(a), est(b)) || a.sigla.localeCompare(b.sigla, 'pt-BR');
+  const comEstimativa = visiveis.filter((g) => est(g)?.comparaveis >= MIN_COMPARAVEIS).sort(porConcordancia);
+  const poucas = visiveis.filter((g) => est(g)?.comparaveis > 0 && est(g).comparaveis < MIN_COMPARAVEIS).sort(porConcordancia);
+  const sem = visiveis.filter((g) => !(est(g)?.comparaveis > 0)).sort((a, b) => a.sigla.localeCompare(b.sigla, 'pt-BR'));
+  const nCandidatos = visiveis.reduce((s, g) => s + g.candidatos.length, 0);
+  const cartao = (g) => <CartaoPartido key={g.sigla} g={g} p={est(g)} cargoRotulo={rotuloCargo} filtrado={!!g.filtrado} aoVerVotoReal={aoVerVotoReal} />;
+  const subtitulo = { fontFamily: t.fonte.corpo, fontSize: '1rem', fontWeight: 800, margin: '26px 0 4px', color: t.cor.tinta };
+  const explica = { color: t.cor.cinza, fontSize: '0.84rem', lineHeight: 1.5, margin: '0 0 12px', maxWidth: '75ch' };
 
   return (
     <div>
       <p style={{ color: t.cor.cinza, fontSize: '0.88rem', lineHeight: 1.5, margin: '0 0 14px', maxWidth: '75ch' }}>
-        Cada cartão tem uma casa por pergunta que você respondeu. <strong style={{ color: t.cor.tinta }}>Sem voto</strong> quer dizer
-        que a proposta não passou pela casa onde a pessoa estava (três foram votadas só no Senado{r.uf === 'RS' ? ' e uma só na Assembleia do RS' : ''}),
-        ou que ela faltou, se absteve ou ainda não tinha mandato. Isso não conta nem a favor nem contra.
+        Quase nenhum candidato votou essas propostas, então aqui a comparação é com o <strong style={{ color: t.cor.tinta }}>partido</strong>:
+        como votaram os parlamentares que hoje estão nele. É uma <strong style={{ color: t.cor.tinta }}>estimativa</strong>, e cada candidato
+        pode pensar diferente do partido. A frase embaixo do placar diz o quanto ela vale: num partido que vota unido, vale mais do que num
+        partido dividido. Quem hoje tem mandato pelo {r.uf} tem o selo <strong style={{ color: t.cor.tinta }}>Tem mandato</strong>, que mostra o voto real.
       </p>
-      <div style={{ marginBottom: '12px' }}>
-        {/* Mesmas pílulas de /deputados ("Federais · Estaduais"): o padrão do site para separar
-            parlamentares por tipo. */}
-        <div role="tablist" aria-label="Cargo" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-          {opcoesCargo.map((o) => (
-            <button key={o.valor} type="button" role="tab" aria-selected={cargo === o.valor} onClick={() => { setCargo(o.valor); setBusca(''); }}
-              style={pilula(cargo === o.valor)} onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}>
-              {o.rotulo}
+      <div role="tablist" aria-label="Cargo" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '12px' }}>
+        {CARGOS.map((c) => {
+          const n = (r.cargos[c.valor] || []).reduce((s, g) => s + g.candidatos.length, 0);
+          return (
+            <button key={c.valor} type="button" role="tab" aria-selected={cargo === c.valor} onClick={() => { setCargo(c.valor); setBusca(''); }}
+              style={pilula(cargo === c.valor)} onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}>
+              {c.rotulo} ({n.toLocaleString('pt-BR')})
             </button>
-          ))}
-        </div>
+          );
+        })}
       </div>
       <div style={{ maxWidth: '520px', marginBottom: '12px' }}>
         <CampoBusca valor={busca} aoMudar={setBusca} placeholder="Buscar por nome, partido ou número…" aoLabel={`Buscar candidato a ${rotuloCargo}`} />
       </div>
-      {cargo === 'deputado-estadual' && (
-        <p style={{ color: t.cor.cinza, fontSize: '0.84rem', lineHeight: 1.5, margin: '0 0 12px', maxWidth: '75ch' }}>{avisoEstadual(r.uf, r.estadualIndisponivel)}</p>
-      )}
+      {cargo === 'deputado-estadual' && <p style={explica}>{avisoEstadual(r.uf, r.estadualIndisponivel)}</p>}
       <p style={{ color: t.cor.cinza, fontSize: '0.84rem', margin: '0 0 14px' }}>
         {termo
-          ? `${filtrados.length.toLocaleString('pt-BR')} ${filtrados.length === 1 ? 'candidato encontrado' : 'candidatos encontrados'}${filtrados.length > mostrar.length ? `, mostrando ${mostrar.length}: refine a busca` : ''}.`
-          : `${votaram.length.toLocaleString('pt-BR')} de ${lista.length.toLocaleString('pt-BR')} candidatos a ${rotuloCargo} já votaram essas propostas.${lista.length > votaram.length ? ' Para conferir alguém que não aparece, busque pelo nome, partido ou número.' : ''}`}
+          ? `${nCandidatos.toLocaleString('pt-BR')} ${nCandidatos === 1 ? 'candidato encontrado' : 'candidatos encontrados'} em ${visiveis.length} ${visiveis.length === 1 ? 'partido' : 'partidos'}.`
+          : `${nCandidatos.toLocaleString('pt-BR')} candidatos a ${rotuloCargo} no ${r.uf}, em ${visiveis.length} ${visiveis.length === 1 ? 'partido' : 'partidos'}. Partidos mais parecidos com você primeiro.`}
       </p>
-      {mostrar.length === 0 ? (
-        <p style={{ color: t.cor.cinza }}>{termo ? 'Nenhum candidato com essa busca neste cargo.' : `Nenhum candidato a ${rotuloCargo} do ${r.uf} votou as propostas que você respondeu.`}</p>
-      ) : (
-        <div style={{ display: 'grid', gap: '10px', alignItems: 'start', gridTemplateColumns: 'repeat(auto-fill, minmax(min(320px, 100%), 1fr))' }}>
-          {mostrar.filter((c) => c.comparaveis >= MIN_COMPARAVEIS || c.comparaveis === 0).map((c) => <CartaoCandidato key={c.href} c={c} cargoRotulo={rotuloCargo} partido={partidoPorSigla[semAcento(c.partido_sigla)]} />)}
-        </div>
+      {visiveis.length === 0 && (
+        <p style={{ color: t.cor.cinza }}>{termo ? 'Nenhum candidato com essa busca neste cargo.' : `Nenhum candidato a ${rotuloCargo} no ${r.uf}.`}</p>
       )}
-      {/* POUCOS VOTOS (26/09/2026): 1 ou 2 perguntas comparáveis dizem pouco. Ficam depois, em
-          grupo próprio e com o motivo escrito, para "1 de 1" não parecer afinidade total. */}
-      {mostrar.some((c) => c.comparaveis > 0 && c.comparaveis < MIN_COMPARAVEIS) && (
+      {comEstimativa.length > 0 && <div style={grade}>{comEstimativa.map(cartao)}</div>}
+      {poucas.length > 0 && (
         <>
-          <h3 style={{ fontFamily: t.fonte.corpo, fontSize: '1rem', fontWeight: 800, margin: '26px 0 4px', color: t.cor.tinta }}>Votaram poucas dessas propostas</h3>
-          <p style={{ color: t.cor.cinza, fontSize: '0.84rem', lineHeight: 1.5, margin: '0 0 12px', maxWidth: '75ch' }}>
-            Menos de {MIN_COMPARAVEIS} das suas respostas têm voto dessas pessoas. Com tão poucos votos, a comparação diz pouco sobre elas.
-          </p>
-          <div style={{ display: 'grid', gap: '10px', alignItems: 'start', gridTemplateColumns: 'repeat(auto-fill, minmax(min(320px, 100%), 1fr))' }}>
-            {mostrar.filter((c) => c.comparaveis > 0 && c.comparaveis < MIN_COMPARAVEIS).map((c) => <CartaoCandidato key={c.href} c={c} cargoRotulo={rotuloCargo} partido={partidoPorSigla[semAcento(c.partido_sigla)]} />)}
-          </div>
+          <h3 style={subtitulo}>Estimativa com poucas votações</h3>
+          <p style={explica}>Nesses partidos, menos de {MIN_COMPARAVEIS} das suas respostas têm uma maioria definida. A estimativa diz pouco.</p>
+          <div style={grade}>{poucas.map(cartao)}</div>
         </>
       )}
-
-      <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.5rem', margin: '36px 0 6px' }}>Os partidos na disputa do {r.uf}</h2>
-      <p style={{ color: t.cor.cinza, fontSize: '0.88rem', lineHeight: 1.5, margin: '0 0 16px', maxWidth: '75ch' }}>
-        Como votaram os parlamentares que <strong style={{ color: t.cor.tinta }}>hoje</strong> estão em cada partido. Não é a orientação
-        oficial do partido na época nem garante como um candidato sem mandato votaria: é a maioria dos atuais membros que votaram Sim ou Não.
-      </p>
-      <div style={{ display: 'grid', gap: '10px', alignItems: 'start', gridTemplateColumns: 'repeat(auto-fill, minmax(min(320px, 100%), 1fr))' }}>
-        {r.partidos.map((p) => (
-          <div key={p.sigla} style={caixa}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px' }}>
-              <p style={{ margin: 0, fontWeight: 800, color: t.cor.tinta }}>{p.sigla}</p>
-              <BotaoFavorito tipo="partido" chave={p.sigla} rotulo={p.sigla} detalhe="Partido" />
-            </div>
-            <Placar itens={p.detalhes} campo="maioria" />
-            <details style={{ marginTop: '8px' }}>
-              <summary style={{ cursor: 'pointer', fontSize: '0.8rem', fontWeight: 700, color: t.cor.ouroTexto }}>Ver voto a voto</summary>
-              <Detalhes itens={p.detalhes} campo="maioria" />
-            </details>
-          </div>
-        ))}
-      </div>
-      {r.semParlamentares.length > 0 && (
-        <p style={{ color: t.cor.cinza, fontSize: '0.84rem', margin: '14px 0 0', lineHeight: 1.5 }}>
-          Sem parlamentar que tenha votado essas propostas: {r.semParlamentares.join(', ')}.
-        </p>
+      {sem.length > 0 && (
+        <>
+          <h3 style={subtitulo}>Partidos sem estimativa</h3>
+          <p style={explica}>Nenhum parlamentar que hoje está nesses partidos votou as propostas que você respondeu, ou o partido ficou dividido em todas. Os candidatos aparecem sem comparação.</p>
+          <div style={grade}>{sem.map(cartao)}</div>
+        </>
       )}
     </div>
   );
@@ -452,7 +503,8 @@ export default function Afinidade({ ufInicial }) {
     try { tela = JSON.parse(sessionStorage.getItem(CHAVE_TELA) || 'null'); } catch (e) {}
     if (tela && (!ufInicial || tela.uf === ufInicial)) {
       setUf(tela.uf || ufInicial || '');
-      if (tela.resultado) setResultado(tela.resultado);
+      // Resultado no formato antigo (antes do módulo 2 refeito, 27/09) não é restaurado.
+      if (tela.resultado && tela.resultado.partidos && !Array.isArray(tela.resultado.partidos)) setResultado(tela.resultado);
       if (tela.cargo) setCargo(tela.cargo);
       if (tela.busca) setBusca(tela.busca);
       if (tela.parl) setParl(tela.parl);
@@ -522,9 +574,16 @@ export default function Afinidade({ ufInicial }) {
       setBusca(''); setBuscaParl('');
       // Abre na primeira casa e no primeiro cargo que têm alguém com voto para comparar.
       setCasa((CASAS_AFINIDADE.find((c) => (jp.casas[c.id]?.lista || []).some((x) => x.comparaveis > 0)) || CASAS_AFINIDADE[0]).id);
-      setCargo((CARGOS.find((c) => (jc.cargos[c.valor] || []).some((x) => x.comparaveis > 0)) || CARGOS[0]).valor);
+      setCargo((CARGOS.find((c) => (jc.cargos[c.valor] || []).length > 0) || CARGOS[0]).valor);
       requestAnimationFrame(() => document.getElementById('resultado')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
     } catch (e) { setErro(e.message); } finally { setCalculando(false); }
+  };
+
+  // PONTE do módulo 2 para o 1: o selo "Tem mandato" abre a aba de parlamentares na casa da
+  // pessoa, já buscando o nome dela.
+  const verVotoReal = (m) => {
+    setAba('parlamentares'); setCasa(m.casa); setBuscaParl(m.nome);
+    requestAnimationFrame(() => document.getElementById('resultado')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
   };
 
   const opcoesUf = UFS.map((u) => ({ valor: u, rotulo: `${u} · ${NOMES_UF[u] || u}`, busca: `${u} ${NOMES_UF[u] || ''}` }));
@@ -577,7 +636,7 @@ export default function Afinidade({ ufInicial }) {
             ))}
           </div>
           {aba === 'parlamentares' && parl && <ResultadoParlamentares r={parl} casa={casa} setCasa={setCasa} busca={buscaParl} setBusca={setBuscaParl} />}
-          {aba === 'candidatos' && resultado && <Resultado r={resultado} cargo={cargo} setCargo={setCargo} busca={busca} setBusca={setBusca} />}
+          {aba === 'candidatos' && resultado && <ResultadoCandidatos r={resultado} cargo={cargo} setCargo={setCargo} busca={busca} setBusca={setBusca} aoVerVotoReal={verVotoReal} />}
         </div>
       )}
     </div>
