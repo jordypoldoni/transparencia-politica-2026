@@ -11,6 +11,12 @@ import { entrarComGoogle, entrarComEmail, sessaoAtual, perfilDisponivel } from '
 //
 // Depois de entrar, a pessoa cai em /perfil, onde decide (consentimento) se as respostas e os
 // favoritos deste navegador vão para o perfil.
+// LOGIN POR E-MAIL DESLIGADO (27/09/2026, prioridade P0). O servidor de e-mail padrão do Supabase
+// só entrega para os e-mails da equipe do projeto e tem limite por hora (documentação do Supabase,
+// "Send messages only to pre-authorized addresses"). Para qualquer visitante, o "Enviar link"
+// falhava. Volta a ligar (true) quando o banco 2 tiver SMTP próprio configurado (Resend).
+const LOGIN_EMAIL_ATIVO = false;
+
 const caixa = { background: t.cor.papelCartao, borderRadius: t.raio.lg, padding: 'clamp(22px,4vw,32px)', boxShadow: t.sombra.media };
 const botao = (claro = false, desligado = false) => ({
   display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '10px', width: '100%',
@@ -98,12 +104,13 @@ export default function Entrar() {
             </div>
           ) : (
             <div style={caixa}>
-              <p style={{ margin: '0 0 16px', fontWeight: 800, fontSize: '1.05rem', color: t.cor.tinta }}>Escolha como entrar</p>
+              <p style={{ margin: '0 0 16px', fontWeight: 800, fontSize: '1.05rem', color: t.cor.tinta }}>{LOGIN_EMAIL_ATIVO ? 'Escolha como entrar' : 'Entre ou crie a sua conta em um clique'}</p>
               <button type="button" onClick={google} disabled={ocupado} style={botaoGoogle(ocupado)}
                 onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}>
                 <LogoGoogle />
                 Continuar com o Google
               </button>
+              {LOGIN_EMAIL_ATIVO && (<>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '20px 0', color: t.cor.cinza, fontSize: '0.84rem' }}>
                 <span style={{ flex: 1, height: '1px', background: t.cor.papelQuente2 }} />ou<span style={{ flex: 1, height: '1px', background: t.cor.papelQuente2 }} />
               </div>
@@ -126,6 +133,7 @@ export default function Entrar() {
                   {ocupado ? 'Enviando…' : 'Enviar link'}
                 </button>
               </form>
+              </>)}
             </div>
           )}
           {erro && <p id="erro-entrar" role="alert" style={{ color: t.cor.alertaTexto, margin: '12px 4px 0', fontWeight: 600 }}>{erro}</p>}
@@ -140,8 +148,8 @@ export default function Entrar() {
           <h2 style={{ fontFamily: t.fonte.corpo, fontSize: '1rem', fontWeight: 800, margin: '0 0 6px', color: t.cor.tinta }}>Por que não tem senha?</h2>
           <p style={{ margin: 0, fontSize: '0.92rem', lineHeight: 1.65, color: t.cor.cinza, maxWidth: '52ch' }}>
             Porque senha é o que mais vaza. Entrando com o Google, quem protege a sua conta é o próprio Google, com a
-            verificação em duas etapas se você usar. Entrando pelo e-mail, mandamos um link que vale uma vez só: só quem abre
-            a sua caixa de entrada consegue entrar. Em nenhum dos dois casos o Lume guarda senha sua.
+            verificação em duas etapas se você usar.{LOGIN_EMAIL_ATIVO ? ' Entrando pelo e-mail, mandamos um link que vale uma vez só: só quem abre a sua caixa de entrada consegue entrar.' : ''} O
+            Lume não guarda senha sua.
           </p>
         </div>
       </div>

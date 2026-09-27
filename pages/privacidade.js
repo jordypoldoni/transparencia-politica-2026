@@ -43,7 +43,7 @@ export default function Privacidade() {
         </ul>
 
         <h2 style={h2}>Se você entrar com uma conta</h2>
-        <p style={p}>Você pode entrar com Google ou com um link enviado ao seu e-mail. A conta serve só para levar o seu perfil para outros aparelhos. Guardamos:</p>
+        <p style={p}>Você entra com a sua conta Google. A conta serve só para levar o seu perfil para outros aparelhos. Guardamos:</p>
         <ul style={{ paddingLeft: '20px', margin: '0 0 12px' }}>
           <li style={li}><strong style={forte}>Da conta:</strong> seu e-mail e, se entrar com Google, o nome e a foto que o Google envia.</li>
           <li style={li}><strong style={forte}>Do perfil:</strong> o seu estado, a data em que você deu o consentimento abaixo, a sua posição (a favor, contra ou sem opinião) em cada pergunta do questionário, com a indicação de como ela foi dada (marcada por você, ou sugerida pela leitura automática e confirmada ou corrigida por você), os candidatos que você escolheu como seu voto na cédula, e os políticos e partidos que você marcou como favoritos.</li>
