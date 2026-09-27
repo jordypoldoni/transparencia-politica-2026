@@ -629,6 +629,14 @@ export default function Afinidade({ ufInicial }) {
 
   const opcoesUf = UFS.map((u) => ({ valor: u, rotulo: `${u} · ${NOMES_UF[u] || u}`, busca: `${u} ${NOMES_UF[u] || ''}` }));
   const desligado = !uf || comPosicao === 0 || calculando;
+  // ?ver=1 (vem do cartão da cédula, 27/09/2026): quem já respondeu cai direto no resultado. Roda
+  // uma vez, quando o estado e as respostas deste navegador já estão na tela.
+  const verPedido = useRef(false);
+  useEffect(() => {
+    if (verPedido.current || router.query.ver !== '1' || !uf || comPosicao === 0 || resultado || parl) return;
+    verPedido.current = true;
+    calcular();
+  }, [router.query.ver, uf, comPosicao, resultado, parl]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="pagina">

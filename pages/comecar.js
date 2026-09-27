@@ -8,7 +8,8 @@ import ResumoMeuVoto from '../components/ResumoMeuVoto';
 import NavPraVoce from '../components/NavPraVoce';
 import { t } from '../src/estilo/tokens';
 import { NOMES_UF } from '../src/lib/cotas';
-import { definirUf, ufLocal, EVENTO_UF, guardarUfCookie, COOKIE_UF } from '../src/lib/perfilUsuario';
+import { definirUf, ufLocal, EVENTO_UF, guardarUfCookie, COOKIE_UF, lerRespostasLocais, EVENTO_RESPOSTAS } from '../src/lib/perfilUsuario';
+import { PERGUNTAS_AFINIDADE } from '../src/lib/perguntasAfinidade';
 import BotaoCompartilhar from '../components/BotaoCompartilhar';
 
 const UFS = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
@@ -208,13 +209,7 @@ export default function Comecar({ modo, ufSel, ufConexao, cedula, trocando = fal
         </p>
 
         {/* Convite ao questionário, já com o estado: é o próximo passo natural de quem viu a cédula. */}
-        <Link href={`/afinidade?uf=${ufSel}`} style={{ display: 'block', textDecoration: 'none', color: t.cor.tinta, background: '#fff', borderRadius: t.raio.md, padding: '18px 20px', marginBottom: '34px', boxShadow: t.sombra.clicavel, transition: 'box-shadow .15s, transform .15s', maxWidth: '760px' }} onMouseOver={(e) => { e.currentTarget.style.boxShadow = t.sombra.hover; e.currentTarget.style.transform = 'translateY(-2px)'; }} onMouseOut={(e) => { e.currentTarget.style.boxShadow = t.sombra.clicavel; e.currentTarget.style.transform = 'none'; }}>
-          <strong style={{ fontSize: '1.05rem' }}>Quem vota como você?</strong>
-          <span style={{ display: 'block', marginTop: '4px', fontSize: '0.88rem', color: t.cor.cinza, lineHeight: 1.5 }}>
-            Responda votações que já aconteceram no Congresso e veja quais candidatos do {ufSel} votaram como você, pelo voto registrado de cada um.
-          </span>
-          <span style={{ display: 'inline-block', marginTop: '8px', fontSize: '0.85rem', fontWeight: 700, color: t.cor.ouroTexto }}>Responder →</span>
-        </Link>
+        <ConviteAfinidade uf={ufSel} />
 
         {/* MEU VOTO (27/09/2026, pedido do Jordy): em quem a pessoa pretende votar, cargo por cargo. */}
         <section style={{ background: '#fff', borderRadius: t.raio.md, padding: 'clamp(16px,3vw,22px)', boxShadow: t.sombra.sutil, marginBottom: '34px', maxWidth: '760px' }}>
@@ -288,6 +283,44 @@ export default function Comecar({ modo, ufSel, ufConexao, cedula, trocando = fal
         </p>
       </div>
     </div>
+  );
+}
+
+// CONVITE AO "QUEM VOTA COMO VOCÊ" QUE SABE O QUE A PESSOA JÁ FEZ (27/09/2026, pedido do Jordy:
+// quem já respondeu via "Responder" e ficava na dúvida se tinha perdido as respostas). Conta as
+// respostas deste navegador (que já incluem as do perfil, pela sincronização) entre as perguntas
+// que valem para o estado. Três estados do cartão: nenhuma, algumas, todas. Antes de ler o
+// navegador, o cartão mostra só o título e a descrição, para não trocar de texto na frente da pessoa.
+function ConviteAfinidade({ uf }) {
+  const [n, setN] = useState(null);
+  const doEstado = PERGUNTAS_AFINIDADE.filter((p) => !p.uf || p.uf === uf);
+  useEffect(() => {
+    const contar = () => { const r = lerRespostasLocais(); setN(doEstado.filter((p) => r[p.id]).length); };
+    contar();
+    window.addEventListener(EVENTO_RESPOSTAS, contar);
+    return () => window.removeEventListener(EVENTO_RESPOSTAS, contar);
+  }, [uf]); // eslint-disable-line react-hooks/exhaustive-deps
+  const total = doEstado.length;
+  const todas = n != null && n >= total;
+  const algumas = n != null && n > 0 && !todas;
+  // Com respostas, o link já pede o resultado (?ver=1): a página calcula sozinha ao abrir.
+  const href = n > 0 ? `/afinidade?uf=${uf}&ver=1` : `/afinidade?uf=${uf}`;
+  const acao = n == null ? '' : todas ? 'Ver quem votou como você →' : algumas ? 'Ver o resultado ou continuar respondendo →' : 'Responder →';
+  return (
+    <Link href={href} style={{ display: 'block', textDecoration: 'none', color: t.cor.tinta, background: '#fff', borderRadius: t.raio.md, padding: '18px 20px', marginBottom: '34px', boxShadow: t.sombra.clicavel, transition: 'box-shadow .15s, transform .15s', maxWidth: '760px' }} onMouseOver={(e) => { e.currentTarget.style.boxShadow = t.sombra.hover; e.currentTarget.style.transform = 'translateY(-2px)'; }} onMouseOut={(e) => { e.currentTarget.style.boxShadow = t.sombra.clicavel; e.currentTarget.style.transform = 'none'; }}>
+      <strong style={{ fontSize: '1.05rem' }}>Quem vota como você?</strong>
+      {n > 0 ? (
+        <span style={{ display: 'block', marginTop: '4px', fontSize: '0.88rem', color: t.cor.tinta, lineHeight: 1.5 }}>
+          <strong>{todas ? `Você já respondeu as ${total} perguntas.` : `Você já respondeu ${n} de ${total} perguntas.`}</strong>{' '}
+          <span style={{ color: t.cor.cinza }}>Suas respostas estão guardadas{todas ? '' : ', e dá para continuar de onde parou'}. Veja quais parlamentares e candidatos do {uf} votaram como você.</span>
+        </span>
+      ) : (
+        <span style={{ display: 'block', marginTop: '4px', fontSize: '0.88rem', color: t.cor.cinza, lineHeight: 1.5 }}>
+          Responda votações que já aconteceram no Congresso e veja quais candidatos do {uf} votaram como você, pelo voto registrado de cada um.
+        </span>
+      )}
+      {acao && <span style={{ display: 'inline-block', marginTop: '8px', fontSize: '0.85rem', fontWeight: 700, color: t.cor.ouroTexto }}>{acao}</span>}
+    </Link>
   );
 }
 
