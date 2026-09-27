@@ -1,8 +1,11 @@
-// CÁLCULO DA AFINIDADE, sem IA. (26/09/2026)
+// NÚCLEO DA AFINIDADE, sem IA. (26/09/2026; separado em 27/09/2026)
+//
+// Um núcleo só para os dois módulos (pedido do Jordy, 27/09): o módulo PARLAMENTARES (voto real,
+// /api/afinidade/parlamentares) e o módulo CANDIDATOS 2026 (estimativa pelo partido). Aqui mora
+// só a comparação; quem busca voto no banco é src/lib/afinidade/fonteVotos.js.
 //
 // Compara as respostas da pessoa com o VOTO REGISTRADO de cada parlamentar nas votações do
 // catálogo (src/lib/perguntasAfinidade.js). Função pura: recebe os dados, devolve o resultado.
-// Quem busca no banco é a rota /api/afinidade; quem testa é quem quiser, sem banco.
 //
 // REGRAS (cada uma é uma afirmação que a tela faz, então tem de ser verdade):
 // - Só conta voto Sim ou Não. Abstenção, obstrução e ausência não dizem posição: ficam de fora
@@ -10,10 +13,8 @@
 // - "Sem opinião" da pessoa também fica de fora.
 // - Quem votou a mesma pergunta em duas Casas (ex.: foi deputado e hoje é senador) vale o voto
 //   MAIS RECENTE.
-// - PARTIDO: é a maioria dos parlamentares que HOJE estão no partido, entre os que votaram Sim ou
-//   Não. Não é a orientação oficial do partido na época, nem a bancada daquele dia: a tela diz
-//   exatamente isso. Empate não vira posição ("dividido").
-import { PERGUNTAS_AFINIDADE } from './perguntasAfinidade.js';
+// - PARTIDO: regra em src/lib/afinidade/partidos.js.
+import { PERGUNTAS_AFINIDADE } from '../perguntasAfinidade.js';
 
 const oposto = (x) => (x === 'a_favor' ? 'contra' : x === 'contra' ? 'a_favor' : null);
 const semAcento = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().trim();
@@ -58,43 +59,6 @@ export function compararPessoa(posicoes, respostas) {
   return { iguais, comparaveis, detalhes };
 }
 
-// Maioria dos ATUAIS membros de cada partido, por pergunta.
-export function posicoesPorPartido(posicoes, agentes) {
-  const cont = {}; // sigla → pergunta → {a_favor, contra}
-  for (const a of agentes) {
-    const sigla = semAcento(a.partido_atual);
-    const pa = posicoes[a.id];
-    if (!sigla || !pa) continue;
-    for (const [pid, { pos }] of Object.entries(pa)) {
-      const c = ((cont[sigla] ||= {})[pid] ||= { a_favor: 0, contra: 0 });
-      c[pos]++;
-    }
-  }
-  const r = {};
-  for (const [sigla, porPergunta] of Object.entries(cont)) {
-    r[sigla] = {};
-    for (const [pid, c] of Object.entries(porPergunta)) {
-      const pos = c.a_favor > c.contra ? 'a_favor' : c.contra > c.a_favor ? 'contra' : 'dividido';
-      r[sigla][pid] = { pos, a_favor: c.a_favor, contra: c.contra };
-    }
-  }
-  return r;
-}
-
-export function compararPartido(porPergunta, respostas) {
-  const minhas = respostasValidas(respostas);
-  let iguais = 0, comparaveis = 0;
-  const detalhes = [];
-  for (const [pid, voce] of Object.entries(minhas)) {
-    const p = porPergunta?.[pid];
-    if (!p || p.pos === 'dividido') { detalhes.push({ pergunta_id: pid, voce, maioria: p ? 'dividido' : null, placar: p ? { a_favor: p.a_favor, contra: p.contra } : null }); continue; }
-    comparaveis++;
-    if (p.pos === voce) iguais++;
-    detalhes.push({ pergunta_id: pid, voce, maioria: p.pos, placar: { a_favor: p.a_favor, contra: p.contra } });
-  }
-  return { iguais, comparaveis, detalhes };
-}
-
 // ORDEM (revista em 26/09/2026). A primeira versão ordenava pela porcentagem pura, e "1 de 1"
 // (100%) ficava acima de "9 de 10" (90%): pouca evidência ganhava de muita. Agora:
 //   1) quem tem pelo menos MIN_COMPARAVEIS perguntas comparáveis vem antes de quem tem menos
@@ -109,4 +73,3 @@ export const ordenarPorConcordancia = (a, b) =>
   || saldo(b) - saldo(a)
   || b.comparaveis - a.comparaveis;
 
-export { semAcento as normalizarSigla };

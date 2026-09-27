@@ -10,12 +10,13 @@ import NavPraVoce from '../components/NavPraVoce';
 import { t } from '../src/estilo/tokens';
 import { NOMES_UF } from '../src/lib/cotas';
 import { PERGUNTAS_AFINIDADE } from '../src/lib/perguntasAfinidade';
-import { MIN_COMPARAVEIS } from '../src/lib/calcularAfinidade';
+import { MIN_COMPARAVEIS } from '../src/lib/afinidade/nucleo';
+import { CASAS_AFINIDADE } from '../src/lib/afinidade/casas';
 import { lerRespostasLocais, salvarResposta, EVENTO_RESPOSTAS } from '../src/lib/perfilUsuario';
 
 // QUEM VOTA COMO VOCÊ (26/09/2026). Caminho principal do questionário de afinidade, SEM IA:
 // a pessoa responde votações que já aconteceram e o resultado sai do voto registrado de cada
-// parlamentar (src/lib/calcularAfinidade.js, pela rota /api/afinidade).
+// parlamentar (src/lib/afinidade/, pelas rotas /api/afinidade/parlamentares e /candidatos).
 //
 // Pedidos do Jordy na primeira revisão (26/09):
 // - respostas em PÍLULAS no padrão do site (as de /deputados e da página Pra você), com a sombra
@@ -198,17 +199,19 @@ function Detalhes({ itens, campo }) {
 
 // Os cartões ficam numa grade com alignItems 'start': sem isso, abrir o "Ver voto a voto" de um
 // esticava os vizinhos da mesma linha, e parecia que todos tinham aberto (visto pelo Jordy, 26/09).
-function CartaoCandidato({ c, cargoRotulo, partido }) {
+// Cartão de uma pessoa com a comparação. Usado pelos dois módulos: parlamentares (voto real) e
+// candidatos. O que muda entre eles vem por props: a linha de baixo do nome, o tipo do favorito e
+// o texto de quem não tem voto.
+function CartaoComparacao({ c, subtitulo, tipoFavorito, detalheFavorito, semVoto }) {
   return (
     <div style={caixa}>
       <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
         <Avatar nome={c.nome_urna} foto={c.foto_url} size={44} />
         <div style={{ minWidth: 0, flex: 1 }}>
           <Link href={c.href} style={{ color: t.cor.tinta, fontWeight: 700, textDecoration: 'none' }}>{c.nome_urna}</Link>
-          <p style={{ margin: '2px 0 0', fontSize: '0.78rem', color: t.cor.cinza }}>{cargoRotulo} · {c.partido_sigla}{c.nr_candidato ? ` · nº ${c.nr_candidato}` : ''}</p>
+          <p style={{ margin: '2px 0 0', fontSize: '0.78rem', color: t.cor.cinza }}>{subtitulo}</p>
         </div>
-        <BotaoFavorito tipo="candidato" chave={c.href} rotulo={c.nome_urna}
-          detalhe={[`Candidato(a) a ${cargoRotulo}`, c.partido_sigla].filter(Boolean).join(' · ')} foto={c.foto_url} />
+        <BotaoFavorito tipo={tipoFavorito} chave={c.href} rotulo={c.nome_urna} detalhe={detalheFavorito} foto={c.foto_url} />
       </div>
       {c.comparaveis > 0 ? (
         <>
@@ -219,10 +222,95 @@ function CartaoCandidato({ c, cargoRotulo, partido }) {
           </details>
         </>
       ) : (
-        <p style={{ margin: '12px 0 0', fontSize: '0.84rem', color: t.cor.cinza, lineHeight: 1.5 }}>
-          Não votou nenhuma dessas propostas (não tinha mandato na época, ou ainda não temos os votos da casa dele).
-          {partido ? <> A maioria dos atuais parlamentares do {c.partido_sigla} teve a sua posição em <strong style={{ color: t.cor.tinta }}>{partido.iguais}</strong> e posição diferente em <strong style={{ color: t.cor.tinta }}>{partido.comparaveis - partido.iguais}</strong> das suas respostas.</> : ''}
+        <p style={{ margin: '12px 0 0', fontSize: '0.84rem', color: t.cor.cinza, lineHeight: 1.5 }}>{semVoto}</p>
+      )}
+    </div>
+  );
+}
+
+function CartaoCandidato({ c, cargoRotulo, partido }) {
+  return (
+    <CartaoComparacao c={c} tipoFavorito="candidato"
+      subtitulo={`${cargoRotulo} · ${c.partido_sigla}${c.nr_candidato ? ` · nº ${c.nr_candidato}` : ''}`}
+      detalheFavorito={[`Candidato(a) a ${cargoRotulo}`, c.partido_sigla].filter(Boolean).join(' · ')}
+      semVoto={<>
+        Não votou nenhuma dessas propostas (não tinha mandato na época, ou ainda não temos os votos da casa dele).
+        {partido ? <> A maioria dos atuais parlamentares do {c.partido_sigla} teve a sua posição em <strong style={{ color: t.cor.tinta }}>{partido.iguais}</strong> e posição diferente em <strong style={{ color: t.cor.tinta }}>{partido.comparaveis - partido.iguais}</strong> das suas respostas.</> : ''}
+      </>} />
+  );
+}
+
+// MÓDULO 1: PARLAMENTARES EM EXERCÍCIO (27/09/2026, pedido do Jordy: "uma coisa para cada coisa").
+// Só fatos: o voto registrado de quem HOJE tem mandato pelo estado escolhido. Candidatos de 2026
+// ficam na outra aba, com a lógica deles.
+const grade = { display: 'grid', gap: '10px', alignItems: 'start', gridTemplateColumns: 'repeat(auto-fill, minmax(min(320px, 100%), 1fr))' };
+
+function ResultadoParlamentares({ r, casa, setCasa, busca, setBusca }) {
+  const cfg = CASAS_AFINIDADE.find((c) => c.id === casa) || CASAS_AFINIDADE[0];
+  const grupo = r.casas[cfg.id] || { lista: [] };
+  const votaram = grupo.lista.filter((c) => c.comparaveis > 0);
+  const termo = semAcento(busca.trim());
+  const filtrados = termo ? grupo.lista.filter((c) => semAcento(c.nome_urna).includes(termo) || semAcento(c.partido_sigla) === termo) : votaram;
+  const bastante = filtrados.filter((c) => c.comparaveis >= MIN_COMPARAVEIS || c.comparaveis === 0);
+  const poucos = filtrados.filter((c) => c.comparaveis > 0 && c.comparaveis < MIN_COMPARAVEIS);
+  const cartao = (c) => (
+    <CartaoComparacao key={c.href} c={c} tipoFavorito="parlamentar"
+      subtitulo={`${cfg.singular} · ${c.partido_sigla || 'sem partido'} · ${r.uf}`}
+      detalheFavorito={[cfg.singular, c.partido_sigla, r.uf].filter(Boolean).join(' · ')}
+      semVoto="Não votou nenhuma das votações que você respondeu: ou não tinha mandato na época, ou faltou, ou se absteve." />
+  );
+  return (
+    <div>
+      <p style={{ color: t.cor.cinza, fontSize: '0.88rem', lineHeight: 1.5, margin: '0 0 14px', maxWidth: '75ch' }}>
+        Quem hoje tem mandato pelo {r.uf}, comparado pelo <strong style={{ color: t.cor.tinta }}>voto registrado</strong> em cada votação.
+        Cada cartão tem uma casa por pergunta que você respondeu. <strong style={{ color: t.cor.tinta }}>Sem voto</strong> quer dizer que a
+        proposta não passou pela casa onde a pessoa estava, ou que ela faltou, se absteve ou ainda não tinha mandato. Isso não conta
+        nem a favor nem contra.
+      </p>
+      <div role="tablist" aria-label="Casa" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '12px' }}>
+        {CASAS_AFINIDADE.map((c) => {
+          const g = r.casas[c.id] || { lista: [] };
+          const n = g.semDados ? null : g.lista.filter((x) => x.comparaveis > 0).length;
+          return (
+            <button key={c.id} type="button" role="tab" aria-selected={casa === c.id} onClick={() => { setCasa(c.id); setBusca(''); }}
+              style={pilula(casa === c.id)} onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}>
+              {c.rotulo}{n != null ? ` (${n})` : ''}
+            </button>
+          );
+        })}
+      </div>
+      {grupo.semDados ? (
+        <p style={{ ...caixa, background: t.cor.papelQuente, boxShadow: 'none', color: t.cor.tinta, fontSize: '0.9rem', lineHeight: 1.6, maxWidth: '75ch' }}>
+          A Assembleia Legislativa do {r.uf} não publica como cada deputado estadual votou, ou o site ainda não coleta esses votos.
+          Sem o voto registrado não há como comparar. Hoje o site tem os votos da Assembleia do RS.
         </p>
+      ) : (
+        <>
+          <div style={{ maxWidth: '520px', marginBottom: '12px' }}>
+            <CampoBusca valor={busca} aoMudar={setBusca} placeholder="Buscar por nome ou partido…" aoLabel={`Buscar ${cfg.rotulo.toLowerCase()}`} />
+          </div>
+          <p style={{ color: t.cor.cinza, fontSize: '0.84rem', margin: '0 0 14px' }}>
+            {termo
+              ? `${filtrados.length} ${filtrados.length === 1 ? 'encontrado' : 'encontrados'}.`
+              : `${votaram.length} de ${grupo.lista.length} ${cfg.rotulo.toLowerCase()} do ${r.uf} votaram ao menos uma das suas respostas.${grupo.lista.length > votaram.length ? ' Para conferir alguém que não aparece, busque pelo nome.' : ''}`}
+          </p>
+          {filtrados.length === 0 ? (
+            <p style={{ color: t.cor.cinza }}>{termo ? 'Ninguém com essa busca.' : 'Ninguém desta casa votou as propostas que você respondeu.'}</p>
+          ) : (
+            <>
+              {bastante.length > 0 && <div style={grade}>{bastante.map(cartao)}</div>}
+              {poucos.length > 0 && (
+                <>
+                  <h3 style={{ fontFamily: t.fonte.corpo, fontSize: '1rem', fontWeight: 800, margin: '26px 0 4px', color: t.cor.tinta }}>Votaram poucas dessas propostas</h3>
+                  <p style={{ color: t.cor.cinza, fontSize: '0.84rem', lineHeight: 1.5, margin: '0 0 12px', maxWidth: '75ch' }}>
+                    Menos de {MIN_COMPARAVEIS} das suas respostas têm voto dessas pessoas. Com tão poucos votos, a comparação diz pouco sobre elas.
+                  </p>
+                  <div style={grade}>{poucos.map(cartao)}</div>
+                </>
+              )}
+            </>
+          )}
+        </>
       )}
     </div>
   );
@@ -253,8 +341,7 @@ function Resultado({ r, cargo, setCargo, busca, setBusca }) {
   });
 
   return (
-    <div id="resultado" style={{ marginTop: '30px' }}>
-      <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.5rem', margin: '0 0 6px' }}>Candidatos do {r.uf} e como votaram</h2>
+    <div>
       <p style={{ color: t.cor.cinza, fontSize: '0.88rem', lineHeight: 1.5, margin: '0 0 14px', maxWidth: '75ch' }}>
         Cada cartão tem uma casa por pergunta que você respondeu. <strong style={{ color: t.cor.tinta }}>Sem voto</strong> quer dizer
         que a proposta não passou pela casa onde a pessoa estava (três foram votadas só no Senado{r.uf === 'RS' ? ' e uma só na Assembleia do RS' : ''}),
@@ -337,9 +424,13 @@ export default function Afinidade({ ufInicial }) {
   const router = useRouter();
   const [uf, setUf] = useState(ufInicial || '');
   const [respostas, setRespostas] = useState({});
-  const [resultado, setResultado] = useState(null);
+  const [resultado, setResultado] = useState(null); // candidatos 2026 (módulo 2)
   const [cargo, setCargo] = useState('senador');
   const [busca, setBusca] = useState('');
+  const [parl, setParl] = useState(null);           // parlamentares em exercício (módulo 1)
+  const [casa, setCasa] = useState('camara');
+  const [buscaParl, setBuscaParl] = useState('');
+  const [aba, setAba] = useState('parlamentares');
   const [erro, setErro] = useState('');
   const [calculando, setCalculando] = useState(false);
   const rolagemPendente = useRef(null);
@@ -350,8 +441,8 @@ export default function Afinidade({ ufInicial }) {
   // vazia por cima da que vai ser restaurada.
   useEffect(() => {
     if (!pronto.current) return;
-    try { sessionStorage.setItem(CHAVE_TELA, JSON.stringify({ uf, resultado, cargo, busca, rolagem: window.scrollY })); } catch (e) {}
-  }, [uf, resultado, cargo, busca]);
+    try { sessionStorage.setItem(CHAVE_TELA, JSON.stringify({ uf, resultado, cargo, busca, parl, casa, buscaParl, aba, rolagem: window.scrollY })); } catch (e) {}
+  }, [uf, resultado, cargo, busca, parl, casa, buscaParl, aba]);
   // Ao abrir: respostas deste navegador e, se a pessoa está VOLTANDO para esta aba, a tela como
   // ela deixou (resultado, cargo, busca, rolagem).
   useEffect(() => {
@@ -364,6 +455,10 @@ export default function Afinidade({ ufInicial }) {
       if (tela.resultado) setResultado(tela.resultado);
       if (tela.cargo) setCargo(tela.cargo);
       if (tela.busca) setBusca(tela.busca);
+      if (tela.parl) setParl(tela.parl);
+      if (tela.casa) setCasa(tela.casa);
+      if (tela.buscaParl) setBuscaParl(tela.buscaParl);
+      if (tela.aba) setAba(tela.aba);
       rolagemPendente.current = tela.rolagem || null;
     } else if (!ufInicial) {
       try { const p = JSON.parse(localStorage.getItem('prefs') || '{}'); if (p.uf) setUf(p.uf); } catch (e) {}
@@ -394,12 +489,12 @@ export default function Afinidade({ ufInicial }) {
   }, [router]);
   // Volta à posição depois que o resultado restaurado desenhou.
   useEffect(() => {
-    if (resultado && rolagemPendente.current != null) {
+    if ((resultado || parl) && rolagemPendente.current != null) {
       const y = rolagemPendente.current;
       rolagemPendente.current = null;
       requestAnimationFrame(() => window.scrollTo(0, y));
     }
-  }, [resultado]);
+  }, [resultado, parl]);
 
   // A pergunta da Assembleia do RS só compara deputados estaduais gaúchos: só aparece para o RS.
   const perguntas = PERGUNTAS_AFINIDADE.filter((p) => !p.uf || p.uf === uf);
@@ -415,13 +510,19 @@ export default function Afinidade({ ufInicial }) {
     setErro(''); setCalculando(true);
     try {
       const soDestas = Object.fromEntries(perguntas.filter((p) => respostas[p.id]).map((p) => [p.id, respostas[p.id]]));
-      const r = await fetch('/api/afinidade', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ uf, respostas: soDestas }) });
-      const j = await r.json();
-      if (!r.ok) throw new Error(j.erro || 'Falha no cálculo.');
-      setResultado(j);
-      setBusca('');
-      // Abre no primeiro cargo, na ordem das abas, que tem alguém com voto para comparar.
-      setCargo((CARGOS.find((c) => (j.cargos[c.valor] || []).some((x) => x.comparaveis > 0)) || CARGOS[0]).valor);
+      // Os dois módulos em paralelo: parlamentares (voto real) e candidatos 2026.
+      const pedir = async (rota) => {
+        const r = await fetch(rota, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ uf, respostas: soDestas }) });
+        const j = await r.json();
+        if (!r.ok) throw new Error(j.erro || 'Falha no cálculo.');
+        return j;
+      };
+      const [jp, jc] = await Promise.all([pedir('/api/afinidade/parlamentares'), pedir('/api/afinidade/candidatos')]);
+      setParl(jp); setResultado(jc);
+      setBusca(''); setBuscaParl('');
+      // Abre na primeira casa e no primeiro cargo que têm alguém com voto para comparar.
+      setCasa((CASAS_AFINIDADE.find((c) => (jp.casas[c.id]?.lista || []).some((x) => x.comparaveis > 0)) || CASAS_AFINIDADE[0]).id);
+      setCargo((CARGOS.find((c) => (jc.cargos[c.valor] || []).some((x) => x.comparaveis > 0)) || CARGOS[0]).valor);
       requestAnimationFrame(() => document.getElementById('resultado')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
     } catch (e) { setErro(e.message); } finally { setCalculando(false); }
   };
@@ -433,7 +534,7 @@ export default function Afinidade({ ufInicial }) {
     <div className="pagina">
       <Head>
         <title>Quem vota como você | Lume Cidadão</title>
-        <meta name="description" content="Responda votações que já aconteceram no Congresso e veja quais candidatos de 2026 votaram como você, pelo voto registrado de cada um. Sem cadastro." />
+        <meta name="description" content="Responda votações que já aconteceram no Congresso e compare com o voto registrado dos parlamentares do seu estado e com os candidatos de 2026. Sem cadastro." />
       </Head>
       <NavPraVoce />
       <div style={{ maxWidth: '860px' }}>
@@ -448,7 +549,7 @@ export default function Afinidade({ ufInicial }) {
 
         <div style={{ maxWidth: '420px', marginBottom: '22px' }}>
           <p style={{ margin: '0 0 8px', fontWeight: 700 }}>Seu estado</p>
-          <CampoSelect opcoes={opcoesUf} valor={uf} placeholder="Escolha o estado" aoLabel="Seu estado" aoSelecionar={(u) => { setUf(u); setResultado(null); }} />
+          <CampoSelect opcoes={opcoesUf} valor={uf} placeholder="Escolha o estado" aoLabel="Seu estado" aoSelecionar={(u) => { setUf(u); setResultado(null); setParl(null); }} />
         </div>
 
         {perguntas.map((p) => <Pergunta key={p.id} p={p} resposta={respostas[p.id]} aoResponder={responder} />)}
@@ -465,7 +566,20 @@ export default function Afinidade({ ufInicial }) {
         {erro && <p style={{ color: t.cor.alertaTexto, marginTop: '12px' }}>{erro}</p>}
       </div>
 
-      {resultado && <Resultado r={resultado} cargo={cargo} setCargo={setCargo} busca={busca} setBusca={setBusca} />}
+      {(parl || resultado) && (
+        <div id="resultado" style={{ marginTop: '30px' }}>
+          <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.5rem', margin: '0 0 12px' }}>Quem votou como você no {uf}</h2>
+          {/* DOIS MÓDULOS, DUAS ABAS (27/09/2026): quem tem mandato (fato) e quem é candidato em 2026. */}
+          <div role="tablist" aria-label="O que comparar" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '18px' }}>
+            {[['parlamentares', 'Parlamentares em exercício'], ['candidatos', 'Candidatos 2026']].map(([v, rotulo]) => (
+              <button key={v} type="button" role="tab" aria-selected={aba === v} onClick={() => setAba(v)}
+                style={{ ...pilula(aba === v), fontSize: '0.95rem', padding: '11px 22px' }} onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}>{rotulo}</button>
+            ))}
+          </div>
+          {aba === 'parlamentares' && parl && <ResultadoParlamentares r={parl} casa={casa} setCasa={setCasa} busca={buscaParl} setBusca={setBuscaParl} />}
+          {aba === 'candidatos' && resultado && <Resultado r={resultado} cargo={cargo} setCargo={setCargo} busca={busca} setBusca={setBusca} />}
+        </div>
+      )}
     </div>
   );
 }

@@ -1,4 +1,8 @@
-// POST /api/afinidade  { uf: 'RS', respostas: { pergunta_id: 'a_favor'|'contra'|'sem_opiniao' } }
+// POST /api/afinidade/candidatos  { uf: 'RS', respostas: { pergunta_id: 'a_favor'|'contra'|'sem_opiniao' } }
+//
+// MÓDULO 2 DA AFINIDADE: CANDIDATOS 2026. (Movida em 27/09/2026 de /api/afinidade, sem mudar a
+// lógica. Será refeita no passo do módulo 2: estimativa pelo partido, agrupada por partido, com
+// ponte para o módulo 1 quando o candidato tem mandato.)
 //
 // Compara as respostas com o VOTO REGISTRADO dos candidatos de 2026 e com a maioria dos atuais
 // parlamentares de cada partido. SEM IA. (26/09/2026)
@@ -7,28 +11,21 @@
 // Devolve TODOS os candidatos do estado, separados por cargo (a tela mostra um cargo por vez e
 // deixa buscar por nome, partido ou número, inclusive quem nunca votou essas propostas, para a
 // pessoa tirar a dúvida sobre um nome específico). Quem votou vem com a comparação.
-import supabase from '../../src/supabase_cliente.js';
-import { buscarTudo } from '../../src/lib/paginar.js';
-import { PERGUNTAS_AFINIDADE, perguntaPorId } from '../../src/lib/perguntasAfinidade.js';
-import { todosCandidatosEstaduais } from '../../src/lib/candidatosEstaduais.js';
-import {
-  mapaVotacoes, posicoesPorAgente, compararPessoa, posicoesPorPartido, compararPartido,
-  ordenarPorConcordancia, normalizarSigla,
-} from '../../src/lib/calcularAfinidade.js';
+import supabase from '../../../src/supabase_cliente.js';
+import { buscarTudo } from '../../../src/lib/paginar.js';
+import { todosCandidatosEstaduais } from '../../../src/lib/candidatosEstaduais.js';
+import { lerPedido } from '../../../src/lib/afinidade/pedido.js';
+import { carregarVotosReais } from '../../../src/lib/afinidade/fonteVotos.js';
+import { compararPessoa, ordenarPorConcordancia } from '../../../src/lib/afinidade/nucleo.js';
+import { posicoesPorPartido, compararPartido, normalizarSigla } from '../../../src/lib/afinidade/partidos.js';
 
-const UFS = new Set('AC AL AP AM BA CE DF ES GO MA MT MS MG PA PB PR PE PI RJ RN RS RO RR SC SP SE TO'.split(' '));
 const nome = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/\s+/g, ' ').trim();
 
-// Votos e parlamentares mudam só quando um coletor roda: guardados 1 hora na memória da função.
-let base = null;
+// Mesma fonte de votos do módulo 1 (src/lib/afinidade/fonteVotos.js), mais o que é só daqui.
+let extra = null;
 async function carregarBase() {
-  if (base && Date.now() - base.em < 60 * 60 * 1000) return base;
-  const ids = PERGUNTAS_AFINIDADE.flatMap((p) => p.votacoes.map((v) => v.id));
-  const [votos, agentes] = await Promise.all([
-    buscarTudo(() => supabase.from('votos_parlamentares').select('agente_id, votacao_id_externa, voto_tipo, data_voto').in('votacao_id_externa', ids), 'afinidade.votos'),
-    buscarTudo(() => supabase.from('agentes_politicos').select('id, nome_urna, cargo_atual, partido_atual, uf_sede, fonte_api'), 'afinidade.agentes'),
-  ]);
-  const posicoes = posicoesPorAgente(votos, mapaVotacoes());
+  const { posicoes, agentes, em } = await carregarVotosReais();
+  if (extra && extra.em === em) return extra;
   // Deputados estaduais do cadastro, por estado, para ligar ao candidato a deputado estadual
   // (que vem do TSE sem ligação nenhuma com o mandato).
   const estaduais = {};
@@ -37,8 +34,8 @@ async function carregarBase() {
     if (!(f.includes('alergs') || f.includes('alesp') || /estadual/i.test(a.cargo_atual || ''))) continue;
     (estaduais[String(a.uf_sede || '').toUpperCase()] ||= []).push(a);
   }
-  base = { em: Date.now(), posicoes, porPartido: posicoesPorPartido(posicoes, agentes), estaduais };
-  return base;
+  extra = { em, posicoes, porPartido: posicoesPorPartido(posicoes, agentes), estaduais };
+  return extra;
 }
 
 // LIGAÇÃO candidato estadual → mandato na assembleia. Nome de urna igual, no mesmo estado; ou o
@@ -71,13 +68,9 @@ function montar(l, href, posicoesAgente, respostas) {
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ erro: 'use POST' });
-  const uf = String(req.body?.uf || '').toUpperCase();
-  const respostas = {};
-  for (const [id, r] of Object.entries(req.body?.respostas || {})) {
-    if (perguntaPorId(id) && ['a_favor', 'contra', 'sem_opiniao'].includes(r)) respostas[id] = r;
-  }
-  if (!UFS.has(uf)) return res.status(400).json({ erro: 'estado inválido' });
-  if (!Object.values(respostas).some((r) => r !== 'sem_opiniao')) return res.status(400).json({ erro: 'responda ao menos uma pergunta com a favor ou contra' });
+  const pedido = lerPedido(req.body);
+  if (pedido.erro) return res.status(400).json({ erro: pedido.erro });
+  const { uf, respostas } = pedido;
 
   try {
     const { posicoes, porPartido, estaduais } = await carregarBase();

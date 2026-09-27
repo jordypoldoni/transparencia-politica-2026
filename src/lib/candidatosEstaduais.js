@@ -106,7 +106,7 @@ export async function resumoCandidatosEstaduais() {
 }
 
 // Lista inteira de um estado, já enxuta (sem título de eleitor nem CPF), para quem precisa de
-// todos os nomes de uma vez: o cálculo de afinidade (/api/afinidade). Mesmo cache das outras.
+// todos os nomes de uma vez: o cálculo de afinidade (/api/afinidade/candidatos). Mesmo cache das outras.
 export async function todosCandidatosEstaduais(uf) {
   const UF = String(uf || '').toUpperCase();
   if (!UFS.has(UF)) return [];
