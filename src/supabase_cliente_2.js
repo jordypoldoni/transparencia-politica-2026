@@ -21,13 +21,16 @@ import { createClient } from '@supabase/supabase-js';
 const envPath = resolve(process.cwd(), '.env');
 dotenv.config({ path: envPath });
 
-const url = process.env.SUPABASE_URL_2;
+// O endereço nao e segredo e ja existe como NEXT_PUBLIC_SUPABASE_URL_2 (o navegador usa): o
+// servidor usa o mesmo, para nao ter duas variaveis com o mesmo valor (27/09/2026). Segredo aqui
+// e so a chave de servico.
+const url = process.env.SUPABASE_URL_2 || process.env.NEXT_PUBLIC_SUPABASE_URL_2;
 const chave = process.env.SUPABASE_SERVICE_ROLE_KEY_2;
 
 export const banco2Configurado = Boolean(url && chave);
 
 if (!banco2Configurado) {
-    console.warn('[banco 2] SUPABASE_URL_2 / SUPABASE_SERVICE_ROLE_KEY_2 ausentes: o que depende do banco 2 vai voltar vazio.');
+    console.warn('[banco 2] NEXT_PUBLIC_SUPABASE_URL_2 / SUPABASE_SERVICE_ROLE_KEY_2 ausentes: o que depende do banco 2 vai voltar vazio.');
 }
 
 const supabase2 = banco2Configurado ? createClient(url, chave) : null;
