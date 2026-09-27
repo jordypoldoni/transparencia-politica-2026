@@ -7,6 +7,7 @@ import ResumoMeuVoto from '../components/ResumoMeuVoto';
 import NavPraVoce from '../components/NavPraVoce';
 import { t } from '../src/estilo/tokens';
 import { NOMES_UF } from '../src/lib/cotas';
+import { definirUf, ufLocal, EVENTO_UF } from '../src/lib/perfilUsuario';
 
 const UFS = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
 
@@ -161,11 +162,14 @@ export default function Comecar({ modo, ufSel, ufConexao, cedula }) {
 
   useEffect(() => {
     if (modo === 'resultado') {
-      // Guarda só o estado (a página do questionário e o perfil usam o mesmo "prefs").
-      try { localStorage.setItem('prefs', JSON.stringify({ uf: ufSel })); } catch (e) {}
-    } else {
-      try { const p = JSON.parse(localStorage.getItem('prefs') || '{}'); if (UFS.includes(p.uf)) setUfSalva(p.uf); } catch (e) {}
+      // O estado da cédula aberta vira o estado da pessoa (navegador e, com autorização, perfil).
+      definirUf(ufSel).catch(() => {});
+      return undefined;
     }
+    const ler = () => { const u = ufLocal(); if (UFS.includes(u)) setUfSalva(u); };
+    ler();
+    window.addEventListener(EVENTO_UF, ler); // o do perfil pode descer depois de a página abrir
+    return () => window.removeEventListener(EVENTO_UF, ler);
   }, [modo, ufSel]);
 
   // ----- CÉDULA ABERTA -----

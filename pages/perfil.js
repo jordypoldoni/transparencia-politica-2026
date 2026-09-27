@@ -9,9 +9,9 @@ import { t } from '../src/estilo/tokens';
 import { NOMES_UF } from '../src/lib/cotas';
 import { PERGUNTAS_AFINIDADE } from '../src/lib/perguntasAfinidade';
 import {
-  sessaoAtual, aoMudarSessao, sair, lerPerfil, registrarConsentimento, atualizarUf, lerRespostas,
+  sessaoAtual, aoMudarSessao, sair, lerPerfil, registrarConsentimento, lerRespostas,
   apagarMinhaConta, VERSAO_CONSENTIMENTO, perfilDisponivel,
-  contaNovaDiferente, lembrarConta, mascararEmail, entrarComGoogle,
+  contaNovaDiferente, lembrarConta, mascararEmail, entrarComGoogle, definirUf,
 } from '../src/lib/perfilUsuario';
 import { sincronizarTudo } from '../src/lib/sincronizacao';
 
@@ -97,7 +97,7 @@ export default function Perfil() {
 
   const trocarUf = async (uf) => {
     setPerfil((p) => ({ ...p, uf }));
-    try { await atualizarUf(uf); } catch (e) { setErro('Não foi possível salvar o estado.'); }
+    try { await definirUf(uf); } catch (e) { setErro('Não foi possível salvar o estado.'); }
   };
 
   const entrarNaAntiga = async () => {

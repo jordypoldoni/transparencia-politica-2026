@@ -13,7 +13,7 @@ import { PERGUNTAS_AFINIDADE } from '../src/lib/perguntasAfinidade';
 import { MIN_COMPARAVEIS, ordenarPorConcordancia } from '../src/lib/afinidade/nucleo';
 import { faixaCoesao } from '../src/lib/afinidade/partidos';
 import { CASAS_AFINIDADE } from '../src/lib/afinidade/casas';
-import { lerRespostasLocais, salvarResposta, EVENTO_RESPOSTAS } from '../src/lib/perfilUsuario';
+import { lerRespostasLocais, salvarResposta, EVENTO_RESPOSTAS, ufLocal, definirUf, EVENTO_UF } from '../src/lib/perfilUsuario';
 
 // QUEM VOTA COMO VOCÊ (26/09/2026). Caminho principal do questionário de afinidade, SEM IA:
 // a pessoa responde votações que já aconteceram e o resultado sai do voto registrado de cada
@@ -486,6 +486,7 @@ export default function Afinidade({ ufInicial }) {
   const [calculando, setCalculando] = useState(false);
   const rolagemPendente = useRef(null);
   const pronto = useRef(false);
+  const ufEscolhida = useRef(Boolean(ufInicial)); // veio na URL, ou a pessoa escolheu o estado nesta página (ou voltou para um resultado)
 
   // Guarda a tela a cada mudança. Declarado ANTES do efeito que restaura: na montagem os dois
   // rodam em ordem, e este precisa rodar primeiro (com pronto=false) para não gravar a tela
@@ -503,6 +504,7 @@ export default function Afinidade({ ufInicial }) {
     try { tela = JSON.parse(sessionStorage.getItem(CHAVE_TELA) || 'null'); } catch (e) {}
     if (tela && (!ufInicial || tela.uf === ufInicial)) {
       setUf(tela.uf || ufInicial || '');
+      ufEscolhida.current = true;
       // Resultado no formato antigo (antes do módulo 2 refeito, 27/09) não é restaurado.
       if (tela.resultado && tela.resultado.partidos && !Array.isArray(tela.resultado.partidos)) setResultado(tela.resultado);
       if (tela.cargo) setCargo(tela.cargo);
@@ -513,7 +515,7 @@ export default function Afinidade({ ufInicial }) {
       if (tela.aba) setAba(tela.aba);
       rolagemPendente.current = tela.rolagem || null;
     } else if (!ufInicial) {
-      try { const p = JSON.parse(localStorage.getItem('prefs') || '{}'); if (p.uf) setUf(p.uf); } catch (e) {}
+      setUf(ufLocal()); // o estado da pessoa (o do perfil desce para cá na sincronização)
     }
     pronto.current = true;
   }, [ufInicial]);
@@ -524,8 +526,11 @@ export default function Afinidade({ ufInicial }) {
       const locais = lerRespostasLocais();
       setRespostas(Object.fromEntries(Object.entries(locais).map(([id, r]) => [id, r.resposta])));
     };
+    // O estado que desce do perfil vale, a não ser que a pessoa já tenha escolhido nesta página.
+    const atualizarUf = () => { if (!ufEscolhida.current) setUf((atual) => ufLocal() || atual); };
     window.addEventListener(EVENTO_RESPOSTAS, atualizar);
-    return () => window.removeEventListener(EVENTO_RESPOSTAS, atualizar);
+    window.addEventListener(EVENTO_UF, atualizarUf);
+    return () => { window.removeEventListener(EVENTO_RESPOSTAS, atualizar); window.removeEventListener(EVENTO_UF, atualizarUf); };
   }, []);
 
   useEffect(() => {
@@ -608,7 +613,7 @@ export default function Afinidade({ ufInicial }) {
 
         <div style={{ maxWidth: '420px', marginBottom: '22px' }}>
           <p style={{ margin: '0 0 8px', fontWeight: 700 }}>Seu estado</p>
-          <CampoSelect opcoes={opcoesUf} valor={uf} placeholder="Escolha o estado" aoLabel="Seu estado" aoSelecionar={(u) => { setUf(u); setResultado(null); setParl(null); }} />
+          <CampoSelect opcoes={opcoesUf} valor={uf} placeholder="Escolha o estado" aoLabel="Seu estado" aoSelecionar={(u) => { ufEscolhida.current = true; setUf(u); setResultado(null); setParl(null); definirUf(u).catch(() => {}); }} />
         </div>
 
         {perguntas.map((p) => <Pergunta key={p.id} p={p} resposta={respostas[p.id]} aoResponder={responder} />)}

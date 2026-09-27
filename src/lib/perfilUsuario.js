@@ -154,6 +154,38 @@ export async function atualizarUf(uf) {
   if (error) throw error;
 }
 
+// ESTADO DA PESSOA, UM SÓ (27/09/2026). O Jordy escolheu RS no perfil e o "Quem vota como você"
+// abriu com "Escolha o estado": o perfil guardava a UF no banco, a cédula e o questionário liam o
+// `prefs` do navegador, e nada ligava os dois. Agora toda escolha de estado passa por definirUf
+// (grava no navegador e, com autorização em dia, no perfil) e a sincronização desce a UF do perfil
+// para o navegador. O perfil ganha quando os dois divergem: toda troca feita com a conta aberta já
+// sobe na hora, então ele é o mais recente.
+export const EVENTO_UF = 'lume:uf';
+const UF_VALIDA = /^[A-Z]{2}$/;
+export function ufLocal() {
+  try { const u = (JSON.parse(window.localStorage.getItem('prefs') || '{}') || {}).uf; return UF_VALIDA.test(u || '') ? u : ''; } catch { return ''; }
+}
+function gravarUfLocal(uf) {
+  try {
+    const p = JSON.parse(window.localStorage.getItem('prefs') || '{}') || {};
+    window.localStorage.setItem('prefs', JSON.stringify({ ...p, uf }));
+    window.dispatchEvent(new CustomEvent(EVENTO_UF));
+  } catch { /* nada */ }
+}
+export async function definirUf(uf) {
+  const u = String(uf || '').toUpperCase();
+  if (!UF_VALIDA.test(u)) return;
+  if (ufLocal() !== u) gravarUfLocal(u);
+  if (await consentimentoEmDia().catch(() => false)) await atualizarUf(u);
+}
+export async function sincronizarUf() {
+  const p = await lerPerfil();
+  const local = ufLocal();
+  if (p?.uf && p.uf !== local) { gravarUfLocal(p.uf); return { desceu: 1, subiu: 0 }; }
+  if (!p?.uf && local) { await atualizarUf(local); return { desceu: 0, subiu: 1 }; }
+  return { desceu: 0, subiu: 0 };
+}
+
 // SAIR LIMPA O APARELHO (26/09/2026). Com a sincronização, as respostas e os favoritos do perfil
 // descem para o navegador de qualquer aparelho em que a pessoa entrar, inclusive um computador
 // emprestado. Ao sair, se estava tudo guardado no perfil (autorização em dia), a cópia local é

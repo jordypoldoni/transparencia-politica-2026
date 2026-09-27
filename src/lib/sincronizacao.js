@@ -8,7 +8,7 @@
 // ao voltar para a aba depois de um tempo. Com sessão E autorização em dia, junta respostas e
 // favoritos nos dois sentidos. Sem autorização não faz nada: aí o dado existe só no aparelho,
 // por escolha da pessoa, e o menu da conta avisa isso.
-import { sessaoAtual, consentimentoEmDia, sincronizarRespostas } from './perfilUsuario';
+import { sessaoAtual, consentimentoEmDia, sincronizarRespostas, sincronizarUf } from './perfilUsuario';
 import { sincronizarFavoritos } from './favoritos';
 import { sincronizarMeuVoto } from './meuVoto';
 
@@ -24,13 +24,14 @@ export function sincronizarTudo({ forcar = false } = {}) {
       const s = await sessaoAtual().catch(() => null);
       if (!s) return null;
       if (!(await consentimentoEmDia().catch(() => false))) return { semAutorizacao: true };
-      const [respostas, favoritos, voto] = await Promise.all([
+      const [respostas, favoritos, voto, uf] = await Promise.all([
         sincronizarRespostas().catch(() => ({ subiram: 0, desceram: 0 })),
         sincronizarFavoritos().catch(() => ({ subiram: 0, desceram: 0 })),
         sincronizarMeuVoto().catch(() => ({ subiram: 0, desceram: 0 })),
+        sincronizarUf().catch(() => ({ desceu: 0, subiu: 0 })), // o estado escolhido (27/09/2026)
       ]);
       ultima = Date.now();
-      return { respostas, favoritos, voto };
+      return { respostas, favoritos, voto, uf };
     } finally {
       emAndamento = null;
     }
