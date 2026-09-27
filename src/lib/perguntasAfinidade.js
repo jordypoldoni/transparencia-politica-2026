@@ -221,6 +221,73 @@ export const PERGUNTAS_AFINIDADE = [
     uf: 'RS',
     votacoes: [{ casa: 'alergs', id: 'ALERGS-2024-04-09-PL344-2023', data: '2024-04-09', simE: 'a_favor' }],
   },
+  // MAIS QUATRO DO RS (27/09/2026, escolhidas pelo Jordy). Só votação do TEXTO do projeto, com
+  // plenário dividido, depois da correção do coletor da ALERGS (texto e requerimento do mesmo dia
+  // se misturavam). Sim = aprovar o projeto nas quatro.
+  {
+    id: 'invasores-propriedade-rs',
+    explicacao: {
+      oque: "Este projeto cria punições do Estado para quem invade ou ocupa sem autorização uma propriedade rural ou urbana no Rio Grande do Sul. A pessoa fica impedida de receber benefícios e programas sociais estaduais, de assumir cargo na administração do Estado e de fechar contrato com o governo estadual.",
+      pratica: "Quem participar de uma ocupação, de terra no campo ou de prédio na cidade, pode perder o acesso a programas sociais do Estado e ficar de fora de cargos e contratos estaduais.",
+      aFavor: "invadir propriedade é crime, e quem desrespeita a lei não deve receber benefício pago por todos.",
+      contra: "a punição atinge famílias sem moradia ou sem terra que ocupam por necessidade, e a propriedade já é protegida pela Justiça.",
+    },
+    polos: { a_favor: 'punir quem invade propriedade com a perda de benefícios, cargos e contratos do Estado', contra: 'não criar essas punições estaduais' },
+    palavras: ['invas', 'ocupac', 'ocupante', 'propriedade', 'terra', 'sem terra', 'mst', 'moradia', 'reintegra'],
+    tema: 'Segurança Pública',
+    texto: 'Punir quem invade ou ocupa propriedade no RS, tirando o acesso a programas sociais, cargos e contratos do Estado',
+    proposta: 'PL 154/2023 (ALERGS)',
+    uf: 'RS',
+    votacoes: [{ casa: 'alergs', id: 'ALERGS-2024-06-04-PL154-2023', data: '2024-06-04', simE: 'a_favor' }],
+  },
+  {
+    id: 'barragens-app-rs',
+    explicacao: {
+      oque: "Áreas de preservação permanente (APP) são faixas protegidas por lei, como as margens de rios e nascentes, onde em regra não se pode desmatar nem construir. Este projeto muda o Código Estadual do Meio Ambiente para permitir açudes e barragens nessas áreas, para guardar água para a lavoura e a criação de animais, quando não houver alternativa. Virou a Lei 16.111/2024.",
+      pratica: "O produtor pode represar água perto de rios e nascentes para irrigar na estiagem. Em troca, parte da vegetação que protege essas margens pode ser retirada.",
+      aFavor: "as estiagens seguidas quebraram safras no RS, e sem guardar água o produtor, pequeno ou grande, não consegue irrigar.",
+      contra: "a lei estadual contraria o Código Florestal federal, e tirar a proteção das margens agrava a erosão e a falta de água.",
+    },
+    polos: { a_favor: 'permitir açudes e barragens em áreas de preservação permanente', contra: 'manter a proibição nessas áreas' },
+    palavras: ['barragem', 'acude', 'irriga', 'app', 'preservacao', 'estiagem', 'seca', 'agua', 'margem', 'nascente'],
+    tema: 'Meio Ambiente',
+    texto: 'Permitir açudes e barragens para irrigação em áreas de preservação permanente (APP) no RS',
+    proposta: 'PL 151/2023 (ALERGS)',
+    uf: 'RS',
+    votacoes: [{ casa: 'alergs', id: 'ALERGS-2024-03-12-PL151-2023', data: '2024-03-12', simE: 'a_favor' }],
+  },
+  {
+    id: 'organizacoes-sociais-rs',
+    explicacao: {
+      oque: "Organização social é uma entidade privada sem fins lucrativos que recebe dinheiro público para administrar um serviço, com um contrato de metas. Este projeto, do governo do Estado, cria as regras para o RS passar a essas entidades a gestão de serviços em 15 áreas, entre elas saúde, educação, assistência social, cultura, meio ambiente e esporte.",
+      pratica: "Hospitais, escolas, museus e outros serviços estaduais podem passar a ser administrados por uma entidade privada, com o Estado pagando e cobrando as metas do contrato.",
+      aFavor: "a gestão por metas é mais ágil que a máquina pública, e o serviço continua do Estado, que paga e fiscaliza.",
+      contra: "abre caminho para privatizar serviços essenciais, com contratação sem concurso e fiscalização difícil, como auditorias já apontaram.",
+    },
+    polos: { a_favor: 'ampliar a gestão de serviços públicos por organizações sociais', contra: 'manter a gestão direta pelo Estado' },
+    palavras: ['organizac', 'privatiz', 'terceiriz', 'gestao', 'servico publico', 'hospital', 'concurso'],
+    tema: 'Serviços Públicos',
+    texto: 'Ampliar a gestão de serviços públicos do RS por organizações sociais (entidades privadas sem fins lucrativos)',
+    proposta: 'PL 439/2025 (ALERGS)',
+    uf: 'RS',
+    votacoes: [{ casa: 'alergs', id: 'ALERGS-2025-12-09-PL439-2025', data: '2025-12-09', simE: 'a_favor' }],
+  },
+  {
+    id: 'publicidade-bets-rs',
+    explicacao: {
+      oque: "Este projeto limita a propaganda de sites de apostas esportivas (bets) no Rio Grande do Sul. Proíbe anúncio em estádios e ginásios (menos de patrocinador oficial do time ou do evento) e perto de escolas, só permite propaganda em TV, rádio e streaming entre 21h e 6h, e exige aviso de risco em pelo menos 15% do anúncio. Virou a Lei 16.508/2026.",
+      pratica: "Menos propaganda de bets na TV durante o dia e nos lugares com crianças e adolescentes. A empresa que descumprir pode ser multada e ter o registro no Estado cancelado.",
+      aFavor: "a propaganda empurra jovens e famílias para o vício em apostas e para dívidas, e o Estado precisa proteger quem mais se expõe.",
+      contra: "regular apostas é tarefa da União, como apontou o próprio Ministério da Fazenda, e uma lei só do RS cria regra diferente da do resto do país.",
+    },
+    polos: { a_favor: 'restringir a publicidade de apostas no RS', contra: 'não criar restrições estaduais à publicidade de apostas' },
+    palavras: ['aposta', 'bet', 'jogo', 'publicidade', 'propaganda', 'vicio', 'anuncio'],
+    tema: 'Consumo',
+    texto: 'Restringir a publicidade de apostas esportivas (bets) no RS',
+    proposta: 'PL 408/2025 (ALERGS)',
+    uf: 'RS',
+    votacoes: [{ casa: 'alergs', id: 'ALERGS-2026-04-07-PL408-2025', data: '2026-04-07', simE: 'a_favor' }],
+  },
 ];
 
 export const RESPOSTAS_VALIDAS = ['a_favor', 'contra', 'sem_opiniao'];

@@ -399,7 +399,7 @@ function CartaoPartido({ g, p, cargoRotulo, filtrado, aoVerVotoReal }) {
 function avisoEstadual(uf, indisponivel) {
   if (indisponivel) return 'Não foi possível consultar o TSE agora para listar os candidatos a deputado estadual. Tente de novo em instantes.';
   if (uf === 'DF') return 'No Distrito Federal o cargo é o de deputado distrital, que ainda não está no site.';
-  return `Para deputado estadual, a estimativa usa sobretudo votos do Congresso${uf === 'RS' ? ' (e a votação das escolas cívico-militares na Assembleia do RS)' : ''}. Na Assembleia, o mesmo partido pode votar diferente.`;
+  return `Para deputado estadual, a estimativa usa sobretudo votos do Congresso${uf === 'RS' ? ' (e as cinco votações da Assembleia do RS)' : ''}. Na Assembleia, o mesmo partido pode votar diferente.`;
 }
 
 function ResultadoCandidatos({ r, cargo, setCargo, busca, setBusca, aoVerVotoReal }) {
