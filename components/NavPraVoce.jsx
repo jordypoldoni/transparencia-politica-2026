@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { t } from '../src/estilo/tokens';
+import EscolhaCompacta from './EscolhaCompacta';
 
 // NAVEGAÇÃO INTERNA DE "PRA VOCÊ" (26/09/2026). Decisão do Jordy: "Pra você" é um grupo de
 // páginas, cada uma com endereço próprio, e dentro delas estas pílulas levam de uma para a outra.
@@ -22,7 +23,14 @@ const pilula = (ativa) => ({
 export default function NavPraVoce() {
   const { pathname } = useRouter();
   return (
-    <nav aria-label="Páginas de Pra você" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '22px' }}>
+    <>
+    {/* Celular (até 640px, 27/09/2026): as quatro pílulas ocupavam duas linhas; viram um campo de
+        escolha com a página atual. Computador: as pílulas de sempre. Troca por CSS (_app.js). */}
+    <nav aria-label="Páginas de Pra você" className="so-celular" style={{ marginBottom: '16px' }}>
+      <EscolhaCompacta rotulo="Pra você" valor={pathname}
+        opcoes={PAGINAS_PRA_VOCE.map((p) => ({ valor: p.href, rotulo: p.rotulo, href: p.href }))} />
+    </nav>
+    <nav aria-label="Páginas de Pra você" className="so-computador" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '22px' }}>
       {PAGINAS_PRA_VOCE.map((p) => {
         const ativa = pathname === p.href;
         return (
@@ -34,5 +42,6 @@ export default function NavPraVoce() {
         );
       })}
     </nav>
+    </>
   );
 }

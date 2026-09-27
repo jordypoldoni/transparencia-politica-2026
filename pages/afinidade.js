@@ -7,6 +7,7 @@ import CampoSelect from '../components/CampoSelect';
 import CampoBusca from '../components/CampoBusca';
 import BotaoFavorito from '../components/BotaoFavorito';
 import NavPraVoce from '../components/NavPraVoce';
+import EscolhaCompacta from '../components/EscolhaCompacta';
 import { t } from '../src/estilo/tokens';
 import { NOMES_UF } from '../src/lib/cotas';
 import { PERGUNTAS_AFINIDADE } from '../src/lib/perguntasAfinidade';
@@ -311,7 +312,12 @@ function ResultadoParlamentares({ r, casa, setCasa, busca, setBusca }) {
         proposta não passou pela casa onde a pessoa estava, ou que ela faltou, se absteve ou ainda não tinha mandato. Isso não conta
         nem a favor nem contra.
       </p>
-      <div role="tablist" aria-label="Casa" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '12px' }}>
+      {/* Celular: um campo de escolha no lugar das três pílulas (27/09/2026). */}
+      <div className="so-celular" style={{ marginBottom: '12px' }}>
+        <EscolhaCompacta rotulo="Casa" valor={casa} aoEscolher={(v) => { setCasa(v); setBusca(''); }}
+          opcoes={CASAS_AFINIDADE.map((c) => { const g = r.casas[c.id] || { lista: [] }; const n = g.semDados ? null : g.lista.filter((x) => x.comparaveis > 0).length; return { valor: c.id, rotulo: `${c.rotulo}${n != null ? ` (${n})` : ''}` }; })} />
+      </div>
+      <div role="tablist" aria-label="Casa" className="so-computador" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '12px' }}>
         {CASAS_AFINIDADE.map((c) => {
           const g = r.casas[c.id] || { lista: [] };
           const n = g.semDados ? null : g.lista.filter((x) => x.comparaveis > 0).length;
@@ -484,7 +490,11 @@ function ResultadoCandidatos({ r, cargo, setCargo, busca, setBusca, aoVerVotoRea
         pode pensar diferente do partido. A frase embaixo do placar diz o quanto ela vale: num partido que vota unido, vale mais do que num
         partido dividido. Quem hoje tem mandato pelo {r.uf} tem o selo <strong style={{ color: t.cor.tinta }}>Tem mandato</strong>, que mostra o voto real.
       </p>
-      <div role="tablist" aria-label="Cargo" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '12px' }}>
+      <div className="so-celular" style={{ marginBottom: '12px' }}>
+        <EscolhaCompacta rotulo="Cargo" valor={cargo} aoEscolher={(v) => { setCargo(v); setBusca(''); }}
+          opcoes={CARGOS.map((c) => ({ valor: c.valor, rotulo: `${c.rotulo} (${(r.cargos[c.valor] || []).reduce((s2, g) => s2 + g.candidatos.length, 0).toLocaleString('pt-BR')})` }))} />
+      </div>
+      <div role="tablist" aria-label="Cargo" className="so-computador" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '12px' }}>
         {CARGOS.map((c) => {
           const n = (r.cargos[c.valor] || []).reduce((s, g) => s + g.candidatos.length, 0);
           return (
@@ -749,7 +759,11 @@ export default function Afinidade({ ufInicial }) {
         <div id="resultado" style={{ marginTop: '30px' }}>
           <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.5rem', margin: '0 0 12px' }}>Quem votou como você no {uf}</h2>
           {/* DOIS MÓDULOS, DUAS ABAS (27/09/2026): quem tem mandato (fato) e quem é candidato em 2026. */}
-          <div role="tablist" aria-label="O que comparar" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '18px' }}>
+          <div className="so-celular" style={{ marginBottom: '14px' }}>
+            <EscolhaCompacta rotulo="O que comparar" valor={aba} aoEscolher={setAba}
+              opcoes={[{ valor: 'parlamentares', rotulo: 'Parlamentares em exercício' }, { valor: 'candidatos', rotulo: 'Candidatos 2026' }]} />
+          </div>
+          <div role="tablist" aria-label="O que comparar" className="so-computador" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '18px' }}>
             {[['parlamentares', 'Parlamentares em exercício'], ['candidatos', 'Candidatos 2026']].map(([v, rotulo]) => (
               <button key={v} type="button" role="tab" aria-selected={aba === v} onClick={() => setAba(v)}
                 style={{ ...pilula(aba === v), fontSize: '0.95rem', padding: '11px 22px' }} onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}>{rotulo}</button>

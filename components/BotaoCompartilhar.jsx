@@ -35,7 +35,7 @@ export default function BotaoCompartilhar({ url, titulo, texto, rotulo = 'Compar
   };
   return (
     <div style={{ display: 'inline-flex', flexDirection: 'column', gap: '6px', maxWidth: '100%' }}>
-      <button type="button" onClick={clicar} disabled={desligado} onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}
+      <button type="button" className="botao-compacto" onClick={clicar} disabled={desligado} onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}
         style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '9px 18px', fontSize: '0.9rem', fontWeight: 700,
           fontFamily: t.fonte.corpo, border: 'none', borderRadius: t.raio.pill, cursor: desligado ? 'not-allowed' : 'pointer',
           opacity: desligado ? 0.5 : 1, background: claro ? '#fff' : t.cor.verde, color: claro ? t.cor.tinta : t.cor.ouro,

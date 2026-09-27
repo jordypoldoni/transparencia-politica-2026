@@ -216,7 +216,10 @@ export default function Layout({ children, pageProps }) {
           {/* LOGO + CONTA, juntos à esquerda (pedido do Jordy, 26/09/2026). No celular (mesmo
               ponto de corte do hambúrguer, em _app.js) o logotipo sai e fica só o símbolo, menor,
               para o botão de entrar caber ao lado sem apertar. */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', minWidth: 0 }}>
+          {/* flexShrink 0 (27/09/2026): este bloco encolhia abaixo do tamanho da pílula da conta e a
+              pílula passava POR CIMA do nome da página (visto pelo Jordy em ~410px). Quem cede
+              espaço é o nome da página, que já termina em reticências. */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flexShrink: 0 }}>
             <Link href="/" aria-label="Lume Cidadão, ir para a página inicial"
               style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', flexShrink: 0 }}>
               {/* Marca em SVG de contorno: símbolo + logotipo (Plus Jakarta Sans 700/500 vetorizada),

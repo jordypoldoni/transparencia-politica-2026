@@ -196,10 +196,12 @@ export default function Comecar({ modo, ufSel, ufConexao, cedula, trocando = fal
             <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.7rem,4vw,2.4rem)', margin: '6px 0 0' }}>Sua cédula {emUf(ufSel)}</h1>
           </div>
           {/* Controles irmãos juntos (regra do site): compartilhar a cédula do estado e trocar de estado. */}
+          {/* Celular (27/09/2026): lado a lado, menores, e "Compartilhar" sem o complemento. */}
           <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
             <BotaoCompartilhar url={() => `${window.location.origin}/comecar?uf=${ufSel}`} titulo={`Cédula ${deUf(ufSel)} em 2026`}
-              texto={`Quem disputa cada cargo ${emUf(ufSel)} em 4 de outubro, com a ficha de cada candidato`} rotulo="Compartilhar a cédula" claro />
-            <Link href="/comecar?trocar=1" style={{ textDecoration: 'none', color: t.cor.tinta, fontWeight: 700, fontSize: '0.9rem', padding: '9px 16px', borderRadius: t.raio.pill, background: '#fff', boxShadow: t.sombra.botao }}
+              texto={`Quem disputa cada cargo ${emUf(ufSel)} em 4 de outubro, com a ficha de cada candidato`} claro
+              rotulo={<><span className="so-computador-inline">Compartilhar a cédula</span><span className="so-celular-inline">Compartilhar</span></>} />
+            <Link href="/comecar?trocar=1" className="botao-compacto" style={{ textDecoration: 'none', color: t.cor.tinta, fontWeight: 700, fontSize: '0.9rem', padding: '9px 16px', borderRadius: t.raio.pill, background: '#fff', boxShadow: t.sombra.botao, whiteSpace: 'nowrap' }}
               onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}>Trocar estado</Link>
           </div>
         </div>

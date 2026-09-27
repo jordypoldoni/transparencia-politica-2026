@@ -127,6 +127,29 @@ export default function App({ Component, pageProps }) {
         .resumo-respostas { display: grid; grid-template-columns: 1fr; gap: 4px; }
         @media (min-width: 720px) { .resumo-respostas { grid-template-columns: 1fr 1fr; column-gap: 8px; } }
 
+        /* CELULAR MAIS APROVEITADO (27/09/2026, pedido do Jordy: "diminuir o tamanho das fontes na
+           tela mobile para usar melhor o espaco"). Ate 640px:
+           1) a base do texto vai de 16px para 15px. Tudo que esta em rem (quase todo o site) diminui
+              ~6%. Nao mais que isso: o publico inclui gente mais velha, e o menor texto do site
+              (0,72rem) fica em ~11px. Campo de digitar continua em 16px (abaixo disso o iPhone
+              da zoom ao tocar);
+           2) menos margem nas laterais e titulos de pagina menores;
+           3) pilulas irmas (paginas de Pra voce, casas, cargos) viram um campo de escolha
+              (EscolhaCompacta): .so-celular / .so-computador trocam uma pela outra;
+           4) botoes com .botao-compacto encolhem o respiro. */
+        .so-celular, .so-celular-inline { display: none; }
+        @media (max-width: 640px) {
+          html { font-size: 15px; }
+          .pagina { padding: 16px 14px; }
+          .pagina h1 { font-size: 1.75rem !important; line-height: 1.15 !important; }
+          .topo-linha { padding: 10px 14px !important; }
+          .so-computador { display: none !important; }
+          .so-computador-inline { display: none !important; }
+          .so-celular { display: block; }
+          .so-celular-inline { display: inline; }
+          .botao-compacto { padding: 8px 14px !important; font-size: 0.86rem !important; }
+        }
+
         /* IMPRESSAO (27/09/2026): a cola para a urna (/cola) se imprime para levar no papel. Sai o
            cabecalho, o rodape e os botoes; fica a lista com os numeros. */
         @media print {
