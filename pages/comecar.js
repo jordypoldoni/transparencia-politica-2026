@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
 import ServicoAPI from '../src/servicos/servico_api';
@@ -7,7 +8,7 @@ import ResumoMeuVoto from '../components/ResumoMeuVoto';
 import NavPraVoce from '../components/NavPraVoce';
 import { t } from '../src/estilo/tokens';
 import { NOMES_UF } from '../src/lib/cotas';
-import { definirUf, ufLocal, EVENTO_UF } from '../src/lib/perfilUsuario';
+import { definirUf, ufLocal, EVENTO_UF, guardarUfCookie, COOKIE_UF } from '../src/lib/perfilUsuario';
 import BotaoCompartilhar from '../components/BotaoCompartilhar';
 
 const UFS = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
@@ -158,8 +159,9 @@ const realce = (e, ligar) => {
   e.currentTarget.style.transform = ligar ? 'translateY(-1px)' : 'none';
 };
 
-export default function Comecar({ modo, ufSel, ufConexao, cedula }) {
-  const [ufSalva, setUfSalva] = useState('');
+export default function Comecar({ modo, ufSel, ufConexao, cedula, trocando = false, ufAtual = '' }) {
+  const router = useRouter();
+  const [ufSalva, setUfSalva] = useState(ufAtual);
 
   useEffect(() => {
     if (modo === 'resultado') {
@@ -169,9 +171,13 @@ export default function Comecar({ modo, ufSel, ufConexao, cedula }) {
     }
     const ler = () => { const u = ufLocal(); if (UFS.includes(u)) setUfSalva(u); };
     ler();
+    // Quem tem estado guardado só no navegador (de antes do cookie, 27/09/2026): grava o cookie e
+    // vai direto para a cédula, como o servidor faria. Na troca de estado, fica aqui.
+    const salvo = ufLocal();
+    if (!trocando && UFS.includes(salvo)) { guardarUfCookie(salvo); router.replace(`/comecar?uf=${salvo}`); return undefined; }
     window.addEventListener(EVENTO_UF, ler); // o do perfil pode descer depois de a página abrir
     return () => window.removeEventListener(EVENTO_UF, ler);
-  }, [modo, ufSel]);
+  }, [modo, ufSel, trocando, router]);
 
   // ----- CÉDULA ABERTA -----
   if (modo === 'resultado') {
@@ -221,10 +227,17 @@ export default function Comecar({ modo, ufSel, ufConexao, cedula }) {
   }
 
   // ----- ESCOLHA DO ESTADO -----
-  // Sugestão: o estado escolhido da última vez; se não houver, o da conexão (cabeçalho da
-  // Vercel, nada é guardado). A pessoa sempre pode tocar em outro logo abaixo.
-  const sugerida = ufSalva || ufConexao || '';
-  const origem = ufSalva ? 'o estado que você escolheu da última vez' : 'estado estimado pela sua conexão';
+  // REVISTA EM 27/09/2026 (análise de UX pedida pelo Jordy). Antes a tela misturava dois jeitos de
+  // usar: o estado sugerido aparecia no botão grande E destacado na lista, o que lê como "já está
+  // selecionado, confirme", mas tocar numa sigla já abria a cédula. E quem já tinha estado passava
+  // por esta tela à toa. Agora:
+  // - com estado conhecido, o servidor (cookie lume_uf) ou o navegador vão direto para a cédula;
+  //   esta tela só aparece para quem não tem estado ou veio de "Trocar estado";
+  // - sem estado: o palpite pela conexão (pode errar: VPN, viagem) é o botão, com o aviso; as
+  //   siglas ficam todas iguais;
+  // - trocando: sem botão grande; a sigla atual marcada, com a legenda "seu estado agora".
+  const atual = trocando ? ufSalva : '';
+  const sugerida = trocando ? '' : ufConexao;
   return (
     <div className="surgir pagina">
       <Head>
@@ -236,11 +249,12 @@ export default function Comecar({ modo, ufSel, ufConexao, cedula }) {
       <div style={{ maxWidth: '760px' }}>
         <span style={{ fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: t.cor.ouroTexto }}>Eleição de 4 de outubro de 2026</span>
         <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.9rem,5vw,2.8rem)', lineHeight: 1.1, margin: '10px 0 10px' }}>
-          Sua cédula, <span style={{ color: t.cor.ouroTexto }}>cargo por cargo</span>.
+          {trocando ? 'Trocar de estado' : <>Sua cédula, <span style={{ color: t.cor.ouroTexto }}>cargo por cargo</span>.</>}
         </h1>
         <p style={{ color: t.cor.cinza, fontSize: '1.05rem', margin: '0 0 28px', lineHeight: 1.55 }}>
-          Quem disputa cada um dos cinco cargos no seu estado, na ordem em que a urna vai perguntar: deputado federal,
-          deputado estadual, senador, governador e presidente. Sem cadastro.
+          {trocando
+            ? 'Toque no estado em que você vota. A cédula dele abre na hora.'
+            : 'Quem disputa cada um dos cinco cargos no seu estado, na ordem em que a urna vai perguntar: deputado federal, deputado estadual, senador, governador e presidente. Sem cadastro.'}
         </p>
 
         {sugerida && (
@@ -248,19 +262,25 @@ export default function Comecar({ modo, ufSel, ufConexao, cedula }) {
             <Link href={`/comecar?uf=${sugerida}`} style={botaoPrimario} onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}>
               Ver a cédula {deUf(sugerida)} →
             </Link>
-            <p style={{ margin: '8px 0 0 6px', fontSize: '0.82rem', color: t.cor.cinza }}>{origem}</p>
+            <p style={{ margin: '8px 0 0 6px', fontSize: '0.82rem', color: t.cor.cinza }}>estado estimado pela sua conexão; se não for o seu, escolha abaixo</p>
           </div>
         )}
 
-        <h2 style={{ fontSize: '1.1rem', margin: '0 0 14px' }}>{sugerida ? 'Ou escolha outro estado' : 'Em que estado você vota?'}</h2>
+        <h2 style={{ fontSize: '1.1rem', margin: '0 0 14px' }}>{trocando ? 'Estados' : sugerida ? 'Ou escolha outro estado' : 'Em que estado você vota?'}</h2>
         {/* Tocar no estado já abre a cédula: uma pergunta só não precisa de botão de enviar. */}
         <nav aria-label="Estados" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
           {UFS.map((u) => (
-            <Link key={u} href={`/comecar?uf=${u}`} aria-label={NOMES_UF[u] || u} title={NOMES_UF[u] || u}
-              style={{ ...pilula(u === sugerida), textDecoration: 'none', minWidth: '52px', textAlign: 'center' }}
+            <Link key={u} href={`/comecar?uf=${u}`} aria-label={`${NOMES_UF[u] || u}${u === atual ? ', seu estado agora' : ''}`} title={NOMES_UF[u] || u}
+              aria-current={u === atual ? 'true' : undefined}
+              style={{ ...pilula(u === atual), textDecoration: 'none', minWidth: '52px', textAlign: 'center' }}
               onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}>{u}</Link>
           ))}
         </nav>
+        {atual && (
+          <p style={{ margin: '12px 0 0 4px', fontSize: '0.84rem', color: t.cor.cinza }}>
+            Em destaque, o seu estado agora: <strong style={{ color: t.cor.tinta }}>{nomeDe(atual)}</strong>.
+          </p>
+        )}
 
         <p style={{ margin: '34px 0 0', padding: '14px 18px', borderRadius: t.raio.md, background: t.cor.papelQuente, fontSize: '0.9rem', lineHeight: 1.55, color: t.cor.tinta }}>
           Procurando votações sobre um tema, como saúde ou educação? Elas estão em{' '}
@@ -284,11 +304,17 @@ export async function getServerSideProps({ query, req }) {
   }
 
   if (!UF_VALIDA.has(ufSel)) {
+    // Estado já conhecido (cookie gravado quando a pessoa escolhe um estado): vai direto para a
+    // cédula dele. "Trocar estado" (?trocar=1) é o único caminho que fica nesta tela com estado.
+    const trocando = Boolean(query.trocar);
+    const ufCookie = String(req.cookies?.[COOKIE_UF] || '').toUpperCase();
+    const ufAtual = UF_VALIDA.has(ufCookie) ? ufCookie : '';
+    if (ufAtual && !trocando) return { redirect: { destination: `/comecar?uf=${ufAtual}`, permanent: false } };
     // Estado da conexão (x-vercel-ip-country-region), só como sugestão. Não guardamos nada.
     const pais = String(req.headers['x-vercel-ip-country'] || '').toUpperCase();
     const regiao = String(req.headers['x-vercel-ip-country-region'] || '').toUpperCase();
     const ufConexao = pais === 'BR' && UF_VALIDA.has(regiao) ? regiao : '';
-    return { props: { modo: 'quiz', ufSel: '', ufConexao, cedula: null } };
+    return { props: { modo: 'quiz', ufSel: '', ufConexao, cedula: null, trocando, ufAtual } };
   }
 
   const cedula = await ServicoAPI.montarCedula({ uf: ufSel, ano: 2026 }).catch(() => null);

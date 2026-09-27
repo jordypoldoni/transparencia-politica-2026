@@ -165,12 +165,23 @@ const UF_VALIDA = /^[A-Z]{2}$/;
 export function ufLocal() {
   try { const u = (JSON.parse(window.localStorage.getItem('prefs') || '{}') || {}).uf; return UF_VALIDA.test(u || '') ? u : ''; } catch { return ''; }
 }
+// COOKIE COM A UF (27/09/2026): só a sigla, para o SERVIDOR saber o estado e abrir "Sua cédula"
+// direto na cédula dele, sem mostrar a tela de escolha e sem piscar a página. Sigla de estado não é
+// dado sensível; o voto e as respostas nunca vão para cookie.
+export const COOKIE_UF = 'lume_uf';
+export function guardarUfCookie(uf) {
+  try {
+    if (UF_VALIDA.test(uf || '')) document.cookie = `${COOKIE_UF}=${uf}; path=/; max-age=31536000; samesite=lax; secure`;
+    else document.cookie = `${COOKIE_UF}=; path=/; max-age=0; samesite=lax; secure`;
+  } catch { /* nada */ }
+}
 function gravarUfLocal(uf) {
   try {
     const p = JSON.parse(window.localStorage.getItem('prefs') || '{}') || {};
     window.localStorage.setItem('prefs', JSON.stringify({ ...p, uf }));
     window.dispatchEvent(new CustomEvent(EVENTO_UF));
   } catch { /* nada */ }
+  guardarUfCookie(uf);
 }
 export async function definirUf(uf) {
   const u = String(uf || '').toUpperCase();
@@ -323,6 +334,7 @@ function limparAparelho() {
   limparRespostasLocais();
   try {
     ['lume:favoritos', 'lume:favoritos:sinc', 'lume:meuvoto', 'lume:meuvoto:sinc', 'prefs'].forEach((k) => window.localStorage.removeItem(k));
+    guardarUfCookie(''); // conta apagada: o estado também sai do cookie
     window.dispatchEvent(new CustomEvent('lume:meuvoto'));
     window.sessionStorage.removeItem('lume:afinidade:tela');
     window.dispatchEvent(new CustomEvent('lume:favoritos'));
