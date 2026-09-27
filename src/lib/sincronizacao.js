@@ -10,6 +10,7 @@
 // por escolha da pessoa, e o menu da conta avisa isso.
 import { sessaoAtual, consentimentoEmDia, sincronizarRespostas } from './perfilUsuario';
 import { sincronizarFavoritos } from './favoritos';
+import { sincronizarMeuVoto } from './meuVoto';
 
 let emAndamento = null;
 let ultima = 0;
@@ -23,12 +24,13 @@ export function sincronizarTudo({ forcar = false } = {}) {
       const s = await sessaoAtual().catch(() => null);
       if (!s) return null;
       if (!(await consentimentoEmDia().catch(() => false))) return { semAutorizacao: true };
-      const [respostas, favoritos] = await Promise.all([
+      const [respostas, favoritos, voto] = await Promise.all([
         sincronizarRespostas().catch(() => ({ subiram: 0, desceram: 0 })),
         sincronizarFavoritos().catch(() => ({ subiram: 0, desceram: 0 })),
+        sincronizarMeuVoto().catch(() => ({ subiram: 0, desceram: 0 })),
       ]);
       ultima = Date.now();
-      return { respostas, favoritos };
+      return { respostas, favoritos, voto };
     } finally {
       emAndamento = null;
     }

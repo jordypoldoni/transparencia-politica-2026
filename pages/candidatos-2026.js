@@ -6,6 +6,7 @@ import { useRouter } from 'next/router';
 import ServicoAPI from '../src/servicos/servico_api';
 import Avatar from '../components/Avatar';
 import CardCandidato from '../components/CardCandidato';
+import BotaoMeuVoto from '../components/BotaoMeuVoto';
 import BotaoFavorito from '../components/BotaoFavorito';
 import CampoBusca from '../components/CampoBusca';
 import CampoSelect from '../components/CampoSelect';
@@ -59,6 +60,8 @@ function ListaPresidente({ chapas }) {
                 {c.nr_candidato && (
                   <span style={{ fontFamily: t.fonte.titulo, fontWeight: 700, fontSize: '1.3rem', color: t.cor.ouroTexto }}>{c.nr_candidato}</span>
                 )}
+                <BotaoMeuVoto compacto cargo="presidente" chave={`/presidencial/${c.presidente.slug}`} rotulo={c.presidente.nome_urna}
+                  foto={c.presidente.foto_url} detalhe={[c.presidente.partido_sigla, c.nr_candidato ? `nº ${c.nr_candidato}` : null].filter(Boolean).join(' · ')} />
                 <BotaoFavorito tipo="candidato" chave={`/presidencial/${c.presidente.slug}`} rotulo={c.presidente.nome_urna}
                   detalhe={['Candidato(a) a Presidente', c.presidente.partido_sigla].filter(Boolean).join(' · ')} foto={c.presidente.foto_url} />
               </span>
@@ -223,7 +226,7 @@ function ListaDeputadoFederal({ dadosIniciais, resumo, filtrosIniciais, paginaIn
         <div className="grade-parl" style={{ opacity: carregando ? 0.5 : 1, transition: 'opacity .15s' }}>
           {/* .grade-parl (CSS em _app.js): a mesma grade de /deputados e /senadores, 5 colunas
               no desktop caindo para 4, 3 e 2. Aqui era auto-fill com 280px, que dava 4. */}
-          {dados.itens.map((d) => <CardCandidato key={d.id} d={d} hrefBase={cfg.hrefBase} />)}
+          {dados.itens.map((d) => <CardCandidato key={d.id} d={d} hrefBase={cfg.hrefBase} votar />)}
         </div>
       )}
 

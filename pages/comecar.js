@@ -3,6 +3,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import ServicoAPI from '../src/servicos/servico_api';
 import CardCandidato from '../components/CardCandidato';
+import ResumoMeuVoto from '../components/ResumoMeuVoto';
 import NavPraVoce from '../components/NavPraVoce';
 import { t } from '../src/estilo/tokens';
 import { NOMES_UF } from '../src/lib/cotas';
@@ -64,7 +65,7 @@ function Cedula({ uf, cedula }) {
         nota={`${federais.total.toLocaleString('pt-BR')} pessoas disputam as cadeiras ${deUf(uf)} na Câmara.${federais.comMandato.length > 0 ? ` Abaixo, ${federais.comMandato.length === 1 ? 'o único que já tem' : `os ${federais.comMandato.length} que já têm`} mandato hoje: desses o site mostra também em que gastaram a cota e como votaram.` : ''}`}>
         {federais.comMandato.length > 0 ? (
           <div className="grade-parl">
-            {federais.comMandato.map((d) => <CardCandidato key={d.id} d={d} hrefBase="/deputado-federal" selo="já tem mandato" />)}
+            {federais.comMandato.map((d) => <CardCandidato key={d.id} d={d} hrefBase="/deputado-federal" selo="já tem mandato" votar ufVoto={uf} />)}
           </div>
         ) : (
           <AindaNaoTemos texto={`Nenhum candidato ${deUf(uf)} tem mandato na Câmara hoje.`} />
@@ -95,7 +96,7 @@ function Cedula({ uf, cedula }) {
         nota={`Em 2026 cada estado elege dois senadores, e você vota em dois nomes diferentes. Cada candidato traz dois suplentes, que assumem a cadeira se ele sair: os suplentes estão na ficha de cada um. São ${senadores.length} candidatos ${emUf(uf)}.`}>
         {senadores.length > 0 ? (
           <div className="grade-parl">
-            {senadores.map((s) => <CardCandidato key={s.id} d={s} hrefBase="/candidato-senador" selo={s.agente_id ? 'já tem mandato' : null} />)}
+            {senadores.map((s) => <CardCandidato key={s.id} d={s} hrefBase="/candidato-senador" selo={s.agente_id ? 'já tem mandato' : null} votar ufVoto={uf} />)}
           </div>
         ) : (
           <AindaNaoTemos texto={`Nenhum candidato ao Senado coletado ${paraUf(uf)} até agora.`} />
@@ -106,7 +107,7 @@ function Cedula({ uf, cedula }) {
         nota={`Você vota em um nome. Cada chapa leva um vice, que assume o governo se o titular sair: o vice está na ficha de cada candidato. São ${governadores.length} ${emUf(uf)}.`}>
         {governadores.length > 0 ? (
           <div className="grade-parl">
-            {governadores.map((g) => <CardCandidato key={g.id} d={g} hrefBase="/candidato-governador" />)}
+            {governadores.map((g) => <CardCandidato key={g.id} d={g} hrefBase="/candidato-governador" votar ufVoto={uf} />)}
           </div>
         ) : (
           <AindaNaoTemos texto={`Nenhum candidato a governador coletado ${paraUf(uf)} até agora.`} />
@@ -120,7 +121,7 @@ function Cedula({ uf, cedula }) {
             {chapas.map((c) => (
               <CardCandidato key={c.presidente.slug} hrefBase="/presidencial"
                 d={{ ...c.presidente, nr_candidato: c.nr_candidato, uf: null }}
-                selo={c.vice ? `vice: ${c.vice.nome_urna}` : null} />
+                selo={c.vice ? `vice: ${c.vice.nome_urna}` : null} votar />
             ))}
           </div>
         ) : (
@@ -198,6 +199,11 @@ export default function Comecar({ modo, ufSel, ufConexao, cedula }) {
           </span>
           <span style={{ display: 'inline-block', marginTop: '8px', fontSize: '0.85rem', fontWeight: 700, color: t.cor.ouroTexto }}>Responder →</span>
         </Link>
+
+        {/* MEU VOTO (27/09/2026, pedido do Jordy): em quem a pessoa pretende votar, cargo por cargo. */}
+        <section style={{ background: '#fff', borderRadius: t.raio.md, padding: 'clamp(16px,3vw,22px)', boxShadow: t.sombra.sutil, marginBottom: '34px', maxWidth: '760px' }}>
+          <ResumoMeuVoto uf={ufSel} />
+        </section>
 
         <Cedula uf={ufSel} cedula={cedula} />
       </div>

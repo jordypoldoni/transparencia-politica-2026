@@ -9,6 +9,7 @@ import Avatar from '../../components/Avatar';
 import { t } from '../../src/estilo/tokens';
 import BotaoVoltar from '../../components/BotaoVoltar';
 import BotaoFavorito from '../../components/BotaoFavorito';
+import BotaoMeuVoto from '../../components/BotaoMeuVoto';
 
 function idade(dataNascimento) {
   if (!dataNascimento) return null;
@@ -66,6 +67,11 @@ export default function PerfilPresidenciavel({ candidato, colega, canonical }) {
           <p style={{ margin: 0, color: t.cor.cinza, fontSize: '0.95rem' }}>{c.partido_sigla}{c.nr_candidato ? ` · nº ${c.nr_candidato}` : ''}{c.coligacao_nome ? ` · ${c.coligacao_nome}` : ''}</p>
         </div>
         {/* Coração (26/09/2026). */}
+        {/* Meu voto (27/09/2026). Só para quem encabeça a chapa: o vice não recebe voto próprio. */}
+        {c.cargo !== 'Vice-Presidente' && (
+          <BotaoMeuVoto cargo="presidente" chave={`/presidencial/${c.slug}`} rotulo={c.nome_urna} foto={c.foto_url} noCartao={false}
+            detalhe={[c.partido_sigla, c.nr_candidato ? `nº ${c.nr_candidato}` : null].filter(Boolean).join(' · ')} />
+        )}
         <BotaoFavorito tipo="candidato" chave={`/presidencial/${c.slug}`} rotulo={c.nome_urna} noCartao={false}
           detalhe={[`Candidato(a) a ${c.cargo === 'Vice-Presidente' ? 'Vice-Presidente' : 'Presidente'}`, c.partido_sigla].filter(Boolean).join(' · ')} foto={c.foto_url} />
       </div>

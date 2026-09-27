@@ -2,6 +2,8 @@ import Link from 'next/link';
 import Avatar from './Avatar';
 import { t } from '../src/estilo/tokens';
 import BotaoFavorito from './BotaoFavorito';
+import BotaoMeuVoto from './BotaoMeuVoto';
+import { cargoPelaRota } from '../src/lib/meuVoto';
 
 // Cartao de candidato das grades do site. Fonte UNICA: nasceu dentro de
 // /candidatos-2026 e passou a ser usado tambem pela cedula do eleitor (/comecar).
@@ -23,7 +25,9 @@ const CARGO_DA_ROTA = {
 // trás do conteúdo (posição absoluta cobrindo o cartão), e o coração fica por cima dela. Antes o
 // cartão inteiro era o <a>, e botão dentro de link é HTML inválido: o clique no coração abriria
 // a ficha. O texto do link vai no aria-label, então o leitor de tela continua ouvindo o nome.
-export default function CardCandidato({ d, hrefBase = '/deputado-federal', selo = null }) {
+// `votar` (27/09/2026): mostra a pílula "Escolher / ✓ Meu voto" embaixo do nome. `ufVoto` é o
+// estado do voto (a cédula passa o estado escolhido; nas listas vale o do candidato).
+export default function CardCandidato({ d, hrefBase = '/deputado-federal', selo = null, votar = false, ufVoto = null }) {
   const href = `${hrefBase}/${d.slug}`;
   const cargo = CARGO_DA_ROTA[hrefBase] || 'Candidato(a)';
   // O conteúdo fica ACIMA do link (zIndex 2) mas deixa o clique passar (pointerEvents none), menos
@@ -41,6 +45,12 @@ export default function CardCandidato({ d, hrefBase = '/deputado-federal', selo 
           <p style={{ margin: '2px 0 0', fontSize: '0.76rem', color: t.cor.cinza, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.partido_sigla || 'S/P'}{d.nr_candidato ? ` · nº ${d.nr_candidato}` : ''}{d.uf ? ` · ${d.uf}` : ''}</p>
           {selo && (
             <p style={{ margin: '4px 0 0', fontSize: '0.7rem', fontWeight: 700, color: t.cor.ouroTexto, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{selo}</p>
+          )}
+          {votar && cargoPelaRota(hrefBase) && (
+            <div style={{ marginTop: '8px' }}>
+              <BotaoMeuVoto compacto cargo={cargoPelaRota(hrefBase)} chave={href} rotulo={d.nome_urna} foto={d.foto_url}
+                uf={ufVoto || d.uf || null} detalhe={[d.partido_sigla, d.nr_candidato ? `nº ${d.nr_candidato}` : null].filter(Boolean).join(' · ')} />
+            </div>
           )}
         </div>
         <BotaoFavorito tipo="candidato" chave={href} rotulo={d.nome_urna}

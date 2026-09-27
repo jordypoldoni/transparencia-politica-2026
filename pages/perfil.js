@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import NavPraVoce from '../components/NavPraVoce';
+import ResumoMeuVoto from '../components/ResumoMeuVoto';
 import SeusFavoritos from '../components/SeusFavoritos';
 import CampoSelect from '../components/CampoSelect';
 import { t } from '../src/estilo/tokens';
@@ -125,13 +126,14 @@ export default function Perfil() {
                 {/* Destaque por SOMBRA mais forte, nunca por borda lateral (regra do Jordy, 26/09/2026). */}
                 <h2 style={h2}>Autorizar o perfil a guardar seus dados</h2>
                 <p style={{ margin: '0 0 10px', lineHeight: 1.6 }}>
-                  {perfil?.consentimento_em ? 'O texto desta autorização mudou desde que você aceitou: agora ele inclui os favoritos. ' : ''}
+                  {perfil?.consentimento_em ? 'O texto desta autorização mudou desde que você aceitou: agora ele inclui os candidatos que você escolher na cédula. ' : ''}
                   Para guardar no seu perfil, e levar para outros aparelhos, precisamos da sua autorização. Ficariam guardados:
                 </p>
                 <ul style={{ margin: '0 0 12px', paddingLeft: '20px', lineHeight: 1.6 }}>
                   <li>o seu estado;</li>
                   <li>a sua posição (a favor, contra ou sem opinião) nas perguntas do questionário, e como ela foi dada;</li>
-                  <li>os políticos e partidos que você marcar como favoritos.</li>
+                  <li>os políticos e partidos que você marcar como favoritos;</li>
+                  <li>os candidatos que você escolher como seu voto na cédula, cargo por cargo.</li>
                 </ul>
                 <p style={{ margin: '0 0 14px', lineHeight: 1.6, color: t.cor.cinza, fontSize: '0.9rem' }}>
                   Isso é <strong style={{ color: t.cor.tinta }}>dado pessoal sensível</strong> pela LGPD (opinião política). Só você vê, ninguém
@@ -172,6 +174,10 @@ export default function Perfil() {
                       <p style={{ margin: '12px 0 0' }}><Link href="/afinidade" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>Mudar respostas no questionário</Link></p>
                     </>
                   )}
+                </section>
+
+                <section style={caixa}>
+                  <ResumoMeuVoto titulo="Seu voto" vazioLink={<Link href="/comecar" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>Abrir a sua cédula</Link>} />
                 </section>
 
                 <section style={caixa}>

@@ -37,7 +37,7 @@ export default function Privacidade() {
 
         <h2 style={h2}>Navegando sem conta</h2>
         <ul style={{ paddingLeft: '20px', margin: '0 0 12px' }}>
-          <li style={li}><strong style={forte}>No seu próprio navegador</strong> ficam o estado e os temas que você escolheu, as respostas do questionário da página "Pra você", os políticos e partidos que você marcou com o coração (favoritos) e o último filtro das listas. Isso não sai do seu aparelho e some se você limpar os dados do navegador.</li>
+          <li style={li}><strong style={forte}>No seu próprio navegador</strong> ficam o estado e os temas que você escolheu, as respostas do questionário da página "Pra você", os políticos e partidos que você marcou com o coração (favoritos), os candidatos que você escolheu como seu voto na cédula e o último filtro das listas. Isso não sai do seu aparelho e some se você limpar os dados do navegador.</li>
           <li style={li}><strong style={forte}>Estado aproximado pela conexão:</strong> na lista de candidatos a deputado estadual, o site usa a região aproximada que a hospedagem informa a partir do seu endereço de internet para abrir já no seu estado. Essa informação é usada naquele momento e não é guardada.</li>
           <li style={li}><strong style={forte}>Registros técnicos da hospedagem</strong> (Vercel), como em qualquer site: endereço de internet e página acessada, mantidos pela própria hospedagem por prazo curto, para segurança e funcionamento.</li>
         </ul>
@@ -46,10 +46,10 @@ export default function Privacidade() {
         <p style={p}>Você pode entrar com Google ou com um link enviado ao seu e-mail. A conta serve só para levar o seu perfil para outros aparelhos. Guardamos:</p>
         <ul style={{ paddingLeft: '20px', margin: '0 0 12px' }}>
           <li style={li}><strong style={forte}>Da conta:</strong> seu e-mail e, se entrar com Google, o nome e a foto que o Google envia.</li>
-          <li style={li}><strong style={forte}>Do perfil:</strong> o seu estado, a data em que você deu o consentimento abaixo, a sua posição (a favor, contra ou sem opinião) em cada pergunta do questionário, com a indicação de como ela foi dada (marcada por você, ou sugerida pela leitura automática e confirmada ou corrigida por você), e os políticos e partidos que você marcou como favoritos.</li>
+          <li style={li}><strong style={forte}>Do perfil:</strong> o seu estado, a data em que você deu o consentimento abaixo, a sua posição (a favor, contra ou sem opinião) em cada pergunta do questionário, com a indicação de como ela foi dada (marcada por você, ou sugerida pela leitura automática e confirmada ou corrigida por você), os candidatos que você escolheu como seu voto na cédula, e os políticos e partidos que você marcou como favoritos.</li>
         </ul>
         <p style={p}>
-          A sua posição sobre temas políticos, e também quais políticos e partidos você favorita, é <strong style={forte}>dado pessoal sensível</strong> pela Lei Geral de Proteção de Dados.
+          A sua posição sobre temas políticos, e também quais políticos e partidos você favorita e em quem você pretende votar, é <strong style={forte}>dado pessoal sensível</strong> pela Lei Geral de Proteção de Dados.
           Por isso ela só é guardada no perfil depois que você marca, na própria página, que concorda com isso (LGPD, art. 11, I).
           Sem esse consentimento, o sistema recusa gravar.
         </p>
@@ -86,8 +86,8 @@ export default function Privacidade() {
         <h2 style={h2}>Seus direitos</h2>
         <p style={p}>
           Você pode ver, corrigir e apagar os seus dados, e retirar o consentimento quando quiser (LGPD, art. 18). Na página{' '}
-          <Link href="/comecar" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>Pra você</Link>, a opção "Apagar meus dados"
-          remove o perfil, as respostas e os favoritos de uma vez. Para apagar também a conta, ou para qualquer outro pedido, escreva para{' '}
+          <Link href="/perfil" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>Seu perfil</Link>, a opção "Apagar minha conta"
+          apaga a conta inteira de uma vez: perfil, respostas, favoritos e candidatos escolhidos. Para qualquer outro pedido, escreva para{' '}
           <a href={`mailto:${CONTATO}`} style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>{CONTATO}</a>.
         </p>
 

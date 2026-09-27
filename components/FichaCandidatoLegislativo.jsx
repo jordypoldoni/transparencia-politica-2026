@@ -18,6 +18,7 @@ import DocumentosERedes from './DocumentosERedes';
 import TrajetoriaEleitoral from './TrajetoriaEleitoral';
 import BotaoVoltar from './BotaoVoltar';
 import BotaoFavorito from './BotaoFavorito';
+import BotaoMeuVoto from './BotaoMeuVoto';
 const caminhoDe = (url) => { try { return new URL(url).pathname; } catch { return String(url || ''); } };
 
 
@@ -250,8 +251,13 @@ export default function FichaCandidatoLegislativo({ candidato, canonical, cargo 
           <p style={{ margin: 0, color: t.cor.cinza, fontSize: '0.95rem' }}>{c.partido_sigla}{c.nr_candidato ? ` · nº ${c.nr_candidato}` : ''}{c.coligacao_nome ? ` · ${c.coligacao_nome}` : ''}</p>
         </div>
         {/* Coração (26/09/2026). A chave é o endereço desta ficha, tirado do canonical. */}
-        <BotaoFavorito tipo="candidato" chave={caminhoDe(canonical)} rotulo={c.nome_urna} noCartao={false}
-          detalhe={[`Candidato(a) a ${cfg.nome}`, c.partido_sigla, c.uf].filter(Boolean).join(' · ')} foto={c.foto_url} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          {/* Meu voto (27/09/2026): marcar esta pessoa como o voto para o cargo. */}
+          <BotaoMeuVoto cargo={cargo} chave={caminhoDe(canonical)} rotulo={c.nome_urna} foto={c.foto_url} uf={c.uf} noCartao={false}
+            detalhe={[c.partido_sigla, c.nr_candidato ? `nº ${c.nr_candidato}` : null].filter(Boolean).join(' · ')} />
+          <BotaoFavorito tipo="candidato" chave={caminhoDe(canonical)} rotulo={c.nome_urna} noCartao={false}
+            detalhe={[`Candidato(a) a ${cfg.nome}`, c.partido_sigla, c.uf].filter(Boolean).join(' · ')} foto={c.foto_url} />
+        </div>
       </div>
 
       {/* Faixa de identidade: já tem mandato? mudou de partido para esta eleição? */}

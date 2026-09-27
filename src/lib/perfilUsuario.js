@@ -19,7 +19,8 @@ import { createClient } from '@supabase/supabase-js';
 import { RESPOSTAS_VALIDAS, perguntaPorId } from './perguntasAfinidade';
 
 // 2026-09-26: o texto do consentimento passou a citar os FAVORITOS (supabase/banco2/003_favoritos.sql).
-export const VERSAO_CONSENTIMENTO = '2026-09-26';
+// 2026-09-27: passou a citar os CANDIDATOS ESCOLHIDOS na cédula (supabase/banco2/004_meu_voto.sql).
+export const VERSAO_CONSENTIMENTO = '2026-09-27';
 const CHAVE_LOCAL = 'lume:afinidade';
 
 const URL2 = process.env.NEXT_PUBLIC_SUPABASE_URL_2;
@@ -79,7 +80,10 @@ export async function entrarComEmail(email, voltarPara) {
 export async function entrarComGoogle(voltarPara) {
   const b = banco();
   if (!b) throw new Error('perfil indisponível');
-  const { error } = await b.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: voltarPara } });
+  // ESCOLHER A CONTA SEMPRE (27/09/2026). Sem isto o Google entra direto com a conta já aberta
+  // no navegador: quem saiu e quis entrar com outra conta caía de novo na mesma (Jordy chamou de
+  // "problema com cookies"). prompt=select_account faz o Google perguntar qual conta usar.
+  const { error } = await b.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: voltarPara, queryParams: { prompt: 'select_account' } } });
   if (error) throw error;
 }
 
@@ -113,8 +117,9 @@ export async function sair() {
   if (guardadoNoPerfil) {
     limparRespostasLocais();
     try {
-      ['lume:favoritos', 'lume:favoritos:sinc'].forEach((k) => window.localStorage.removeItem(k));
+      ['lume:favoritos', 'lume:favoritos:sinc', 'lume:meuvoto', 'lume:meuvoto:sinc'].forEach((k) => window.localStorage.removeItem(k));
       window.dispatchEvent(new CustomEvent('lume:favoritos'));
+      window.dispatchEvent(new CustomEvent('lume:meuvoto'));
       window.dispatchEvent(new CustomEvent(EVENTO_RESPOSTAS));
     } catch { /* nada */ }
   }
@@ -229,7 +234,8 @@ export async function levarRespostasLocaisProPerfil() {
 function limparAparelho() {
   limparRespostasLocais();
   try {
-    ['lume:favoritos', 'lume:favoritos:sinc', 'prefs'].forEach((k) => window.localStorage.removeItem(k));
+    ['lume:favoritos', 'lume:favoritos:sinc', 'lume:meuvoto', 'lume:meuvoto:sinc', 'prefs'].forEach((k) => window.localStorage.removeItem(k));
+    window.dispatchEvent(new CustomEvent('lume:meuvoto'));
     window.sessionStorage.removeItem('lume:afinidade:tela');
     window.dispatchEvent(new CustomEvent('lume:favoritos'));
     window.dispatchEvent(new CustomEvent(EVENTO_RESPOSTAS));
