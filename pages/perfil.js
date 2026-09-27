@@ -9,7 +9,7 @@ import { NOMES_UF } from '../src/lib/cotas';
 import { PERGUNTAS_AFINIDADE } from '../src/lib/perguntasAfinidade';
 import {
   sessaoAtual, aoMudarSessao, sair, lerPerfil, registrarConsentimento, atualizarUf, lerRespostas,
-  apagarMeusDados, VERSAO_CONSENTIMENTO, perfilDisponivel,
+  apagarMinhaConta, VERSAO_CONSENTIMENTO, perfilDisponivel,
 } from '../src/lib/perfilUsuario';
 import { sincronizarTudo } from '../src/lib/sincronizacao';
 
@@ -93,7 +93,7 @@ export default function Perfil() {
 
   const apagar = async () => {
     setErro('');
-    try { await apagarMeusDados(); setConfirmarApagar(false); setAviso('Seus dados foram apagados do perfil e deste navegador. A conta de acesso continua existindo; para apagá-la também, escreva para o contato da página de privacidade.'); await recarregar(); }
+    try { await apagarMinhaConta(); setConfirmarApagar(false); setAviso('Sua conta foi apagada, com tudo o que estava nela, e este navegador foi limpo. Se quiser, pode criar uma conta nova quando quiser, até com o mesmo e-mail.'); await recarregar(); }
     catch (e) { setErro('Não foi possível apagar agora. Tente de novo.'); }
   };
 
@@ -183,13 +183,13 @@ export default function Perfil() {
             )}
 
             <section style={caixa}>
-              <h2 style={h2}>Apagar seus dados</h2>
+              <h2 style={h2}>Apagar sua conta</h2>
               <p style={{ margin: '0 0 12px', lineHeight: 1.6, color: t.cor.cinza }}>
-                Apaga do perfil e deste navegador o seu estado, as suas respostas e os seus favoritos, e desfaz a autorização.
-                Não dá para desfazer.
+                Apaga a sua conta e tudo o que está nela: o estado, as respostas, os favoritos e a autorização. Também limpa
+                este navegador. Não dá para desfazer, mas você pode criar uma conta nova depois, até com o mesmo e-mail.
               </p>
               {!confirmarApagar ? (
-                <button type="button" onClick={() => setConfirmarApagar(true)} style={botao(true)} onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}>Apagar meus dados</button>
+                <button type="button" onClick={() => setConfirmarApagar(true)} style={botao(true)} onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}>Apagar minha conta</button>
               ) : (
                 <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
                   <span style={{ fontWeight: 700 }}>Tem certeza?</span>

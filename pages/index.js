@@ -10,6 +10,7 @@ import { Lupa, Pino } from '../components/icones';
 import { NOMES_UF } from '../src/lib/cotas';
 import { t } from '../src/estilo/tokens';
 import { hrefPerfil } from '../src/lib/casa';
+import Avatar from '../components/Avatar';
 
 const ESTADOS = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
 const ESTADOS_OPCOES = ESTADOS.map((uf) => ({ valor: uf, rotulo: `${uf} · ${NOMES_UF[uf] || uf}`, busca: `${uf} ${NOMES_UF[uf] || ''}` }));
@@ -126,9 +127,11 @@ export default function Home({ votacoes, parlamentares = [], uniao = null, estad
             {chapas.slice(0, 8).map((c) => (
               <Link key={c.nr_candidato || c.presidente.slug} href={`/presidencial/${c.presidente.slug}`}
                 style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '12px', background: t.cor.papelCartao, borderRadius: t.raio.md, padding: '14px', boxShadow: t.sombra.clicavel }}>
-                <span aria-hidden style={{ width: '40px', height: '40px', borderRadius: '50%', background: t.cor.verde, color: t.cor.ouro, display: 'grid', placeItems: 'center', fontFamily: t.fonte.titulo, fontWeight: 700, flexShrink: 0 }}>
-                  {c.presidente.foto_url ? <img src={c.presidente.foto_url} alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} /> : (c.nr_candidato || '·')}
-                </span>
+                {/* FOTO VAZANDO NO IPHONE (27/09/2026): a foto era um <img> com altura de 100% dentro de
+                    um círculo em grid, sem overflow hidden. No Safari do iPhone o 100% não resolvia e a
+                    foto saía do círculo e do cartão. O Avatar do site já resolve isso (e tem as iniciais
+                    quando a foto falha). */}
+                <Avatar nome={c.presidente.nome_urna} foto={c.presidente.foto_url} size={44} />
                 <div style={{ minWidth: 0 }}>
                   <p style={{ margin: 0, fontWeight: 700, fontSize: '0.92rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.presidente.nome_urna}</p>
                   <p style={{ margin: 0, color: t.cor.cinza, fontSize: '0.78rem' }}>{c.presidente.partido_sigla}{c.nr_candidato ? ` · ${c.nr_candidato}` : ''}</p>

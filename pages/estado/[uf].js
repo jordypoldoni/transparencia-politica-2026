@@ -2,6 +2,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import ServicoAPI from '../../src/servicos/servico_api';
 import { t } from '../../src/estilo/tokens';
+import Avatar from '../../components/Avatar';
 import { hrefPerfil, casaDoPerfil } from '../../src/lib/casa';
 
 const NOMES = { AC:'Acre', AL:'Alagoas', AP:'Amapá', AM:'Amazonas', BA:'Bahia', CE:'Ceará', DF:'Distrito Federal', ES:'Espírito Santo', GO:'Goiás', MA:'Maranhão', MT:'Mato Grosso', MS:'Mato Grosso do Sul', MG:'Minas Gerais', PA:'Pará', PB:'Paraíba', PR:'Paraná', PE:'Pernambuco', PI:'Piauí', RJ:'Rio de Janeiro', RN:'Rio Grande do Norte', RS:'Rio Grande do Sul', RO:'Rondônia', RR:'Roraima', SC:'Santa Catarina', SP:'São Paulo', SE:'Sergipe', TO:'Tocantins' };
@@ -46,7 +47,7 @@ function Linha({ d, posicao }) {
         onMouseOver={(e) => { e.currentTarget.style.boxShadow = t.sombra.hover; e.currentTarget.style.transform = 'translateY(-1px)'; }}
         onMouseOut={(e) => { e.currentTarget.style.boxShadow = t.sombra.clicavel; e.currentTarget.style.transform = 'none'; }}>
         <span style={{ flexShrink: 0, width: '26px', fontFamily: t.fonte.titulo, fontWeight: 600, color: t.cor.cinza }}>{posicao}</span>
-        <img src={d.foto_url || 'https://via.placeholder.com/80'} alt={d.nome_urna} loading="lazy" style={{ width: '46px', height: '46px', borderRadius: '50%', objectFit: 'cover', objectPosition: 'top', flexShrink: 0, background: '#eee' }} />
+        <Avatar nome={d.nome_urna} foto={d.foto_url} size={46} />
         <span style={{ flex: 1, minWidth: 0 }}>
           <span style={{ display: 'block', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.nome_urna}</span>
           <span style={{ fontSize: '0.82rem', color: t.cor.cinza }}>{d.partido_atual} · {detalhe}</span>

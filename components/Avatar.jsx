@@ -7,6 +7,8 @@ function iniciais(nome) {
 }
 
 // Foto com fallback elegante para iniciais (sem placeholder quebrado).
+// Tamanho da foto em px, e nao em 100% (27/09/2026): no Safari do iPhone, 100% de altura dentro
+// de grid nem sempre resolve e a foto sai do circulo.
 export default function Avatar({ nome, foto, size = 56, borda }) {
   const [erro, setErro] = useState(false);
   const base = {
@@ -17,7 +19,7 @@ export default function Avatar({ nome, foto, size = 56, borda }) {
     return (
       <div style={{ ...base, background: '#ECE9E1' }}>
         <img src={foto} alt={nome} loading="lazy" onError={() => setErro(true)}
-          style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'top' }} />
+          style={{ display: 'block', width: size, height: size, objectFit: 'cover', objectPosition: 'top' }} />
       </div>
     );
   }

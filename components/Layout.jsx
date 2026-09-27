@@ -5,7 +5,7 @@ import { t } from '../src/estilo/tokens';
 import BotaoConta from './BotaoConta';
 import { PAGINAS_PRA_VOCE } from './NavPraVoce';
 import { sincronizarTudo } from '../src/lib/sincronizacao';
-import { aoMudarSessao } from '../src/lib/perfilUsuario';
+import { aoMudarSessao, validarSessao } from '../src/lib/perfilUsuario';
 
 // ============================================================================
 // MENU PRINCIPAL, REORGANIZADO EM 19/09/2026
@@ -141,7 +141,7 @@ export default function Layout({ children, pageProps }) {
   // Respostas e favoritos entre aparelhos (src/lib/sincronizacao.js): ao abrir o site, ao entrar
   // na conta e ao voltar para a aba. Sem sessão ou sem autorização, não faz nada.
   useEffect(() => {
-    sincronizarTudo({ forcar: true });
+    validarSessao().catch(() => null).finally(() => sincronizarTudo({ forcar: true }));
     const parar = aoMudarSessao((s) => { if (s) sincronizarTudo({ forcar: true }); });
     const aoVoltar = () => { if (document.visibilityState === 'visible') sincronizarTudo(); };
     document.addEventListener('visibilitychange', aoVoltar);

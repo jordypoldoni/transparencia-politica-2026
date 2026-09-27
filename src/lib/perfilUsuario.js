@@ -226,14 +226,44 @@ export async function levarRespostasLocaisProPerfil() {
   return subir.length;
 }
 
-// Apaga respostas e perfil no banco e no navegador. A conta de login em si sai por outro
-// caminho (servidor, chave de serviço), ainda a construir.
-export async function apagarMeusDados() {
+function limparAparelho() {
   limparRespostasLocais();
-  try { ['lume:favoritos', 'lume:favoritos:sinc'].forEach((k) => window.localStorage.removeItem(k)); window.dispatchEvent(new CustomEvent('lume:favoritos')); } catch { /* nada */ }
+  try {
+    ['lume:favoritos', 'lume:favoritos:sinc', 'prefs'].forEach((k) => window.localStorage.removeItem(k));
+    window.sessionStorage.removeItem('lume:afinidade:tela');
+    window.dispatchEvent(new CustomEvent('lume:favoritos'));
+    window.dispatchEvent(new CustomEvent(EVENTO_RESPOSTAS));
+  } catch { /* nada */ }
+}
+
+// APAGAR A CONTA (27/09/2026). Antes apagava respostas e perfil e deixava a conta de login de
+// pé (e os favoritos no banco, que a função do SQL não cobria). Agora a rota do servidor apaga a
+// conta inteira, e com ela tudo o que é da pessoa; aqui o navegador é limpo e a sessão encerrada.
+export async function apagarMinhaConta() {
   const b = banco();
   const s = await sessaoAtual();
-  if (!b || !s) return;
-  const { error } = await b.rpc('apagar_meus_dados');
-  if (error) throw error;
+  if (!b || !s) { limparAparelho(); return; }
+  const r = await fetch('/api/apagar-conta', { method: 'POST', headers: { Authorization: `Bearer ${s.access_token}` } });
+  if (!r.ok) throw new Error(`apagar-conta ${r.status}`);
+  limparAparelho();
+  await b.auth.signOut({ scope: 'local' }).catch(() => {});
+}
+export const apagarMeusDados = apagarMinhaConta; // nome antigo, mesmo efeito
+
+// SESSÃO DE CONTA QUE NÃO EXISTE MAIS (27/09/2026). O navegador guarda a sessão; se a conta for
+// apagada (pelo botão, em outro aparelho, ou no painel do Supabase), a sessão guardada continua
+// parecendo válida: o site mostrava a pessoa logada numa conta fantasma, o /entrar mandava direto
+// para o /perfil e não havia como entrar com outra conta. Aqui a sessão é conferida no servidor
+// do Supabase; se a conta sumiu, a sessão local é encerrada.
+export async function validarSessao() {
+  const b = banco();
+  if (!b) return null;
+  const { data } = await b.auth.getSession();
+  if (!data.session) return null;
+  const { data: u, error } = await b.auth.getUser();
+  if (error && (error.status === 401 || error.status === 403 || /not.?found|does not exist/i.test(error.message || ''))) {
+    await b.auth.signOut({ scope: 'local' }).catch(() => {});
+    return null;
+  }
+  return u?.user || data.session.user;
 }
