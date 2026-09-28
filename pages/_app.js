@@ -262,6 +262,17 @@ export default function App({ Component, pageProps }) {
         .radar-valor { flex-shrink: 0; text-align: right; }
         .radar-valor .rv-total { display: block; }
         .radar-valor .rv-total + span { white-space: nowrap; }
+        /* Paginacao (components/Paginacao.jsx), 28/09/2026: sempre numa linha so, juntos no centro. */
+        .paginacao { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: nowrap; }
+        .paginacao-botao { min-width: 124px; padding: 12px 20px; }
+        .paginacao-info { font-size: 0.85rem; font-weight: 600; text-align: center; white-space: nowrap; }
+        @media (max-width: 520px) {
+          .paginacao { gap: 10px; }
+          .paginacao-botao { min-width: 0; flex: 1 1 0; max-width: 150px; padding: 12px 14px; }
+          .paginacao-info { line-height: 1.25; }
+          .pg-rotulo { display: block; font-size: 0.72rem; font-weight: 600; }
+        }
+        @media (pointer: coarse) { .paginacao-botao { min-height: 40px; } }
         .radar-titulo { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 6px; }
         /* Recolher o ranking e so do celular: no computador o painel nao empurra a lista. */
         .radar-alternar { display: none; }

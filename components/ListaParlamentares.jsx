@@ -18,7 +18,7 @@ import CampoBusca from './CampoBusca';
 import { NOMES_UF } from '../src/lib/cotas';
 import { t } from '../src/estilo/tokens';
 import { hrefPerfil, casaDoPerfil } from '../src/lib/casa';
-import { pilulaPagina, realcePagina } from '../src/estilo/botoes';
+import Paginacao from './Paginacao';
 import { ASSEMBLEIAS, assembleiaDe, caminhoDaCasa } from '../src/lib/assembleias';
 
 // Botao sobre o painel escuro: indigo sobre indigo nao aparece, entao segue a regra das
@@ -552,21 +552,8 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
         </div>
 
         {/* Paginacao. O texto diz o intervalo real, nunca um numero fixo. */}
-        {totalPaginas > 1 && (
-          <div style={{ marginTop: '16px', display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-            <button onClick={() => irPara(paginaAtual - 1)} disabled={paginaAtual === 1} style={pilulaPagina(paginaAtual === 1)}
-              onMouseOver={(e) => realcePagina(e, true)} onMouseOut={(e) => realcePagina(e, false)}>
-              Anterior
-            </button>
-            <button onClick={() => irPara(paginaAtual + 1)} disabled={paginaAtual === totalPaginas} style={pilulaPagina(paginaAtual === totalPaginas)}
-              onMouseOver={(e) => realcePagina(e, true)} onMouseOut={(e) => realcePagina(e, false)}>
-              Próxima
-            </button>
-            <span style={{ fontSize: '0.85rem', color: t.cor.cinza }}>
-              Página {paginaAtual} de {totalPaginas} · mostrando {(paginaAtual - 1) * POR_PAGINA + 1} a {(paginaAtual - 1) * POR_PAGINA + daPagina.length} de {filtrados.length}
-            </span>
-          </div>
-        )}
+        <Paginacao pagina={paginaAtual} total={totalPaginas} aoMudar={irPara} margem="16px 0 0"
+          detalhe={`Mostrando ${(paginaAtual - 1) * POR_PAGINA + 1} a ${(paginaAtual - 1) * POR_PAGINA + daPagina.length} de ${filtrados.length}`} />
         </>
       ) : (
         <p style={{ color: t.cor.cinza }}>Nenhum parlamentar encontrado com esse filtro.</p>

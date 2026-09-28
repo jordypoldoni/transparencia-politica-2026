@@ -14,7 +14,7 @@ import EscolhaCompacta from '../components/EscolhaCompacta';
 import { NOMES_UF } from '../src/lib/cotas';
 import { t } from '../src/estilo/tokens';
 import SeloSituacao from '../components/SeloSituacao';
-import { pilulaPagina, realcePagina } from '../src/estilo/botoes';
+import Paginacao from '../components/Paginacao';
 import { listarCandidatosEstaduais, UFS_ESTADUAL } from '../src/lib/candidatosEstaduais';
 
 const UFS = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
@@ -234,23 +234,8 @@ function ListaDeputadoFederal({ dadosIniciais, resumo, filtrosIniciais, paginaIn
       </>
       )}
 
-      {!semEstado && totalPaginas > 1 && (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '14px', marginTop: '28px', flexWrap: 'wrap' }}>
-          {/* Botao padrao do site (src/estilo/botoes.js). Os dois aqui tinham cores diferentes
-              entre si (um cinza claro, outro indigo com texto branco) e setas, destoando da
-              paginacao de /deputados. */}
-          <button type="button" disabled={pagina <= 1} onClick={() => aoMudarPagina(pagina - 1)}
-            style={pilulaPagina(pagina <= 1)}
-            onMouseOver={(e) => realcePagina(e, true)} onMouseOut={(e) => realcePagina(e, false)}>
-            Anterior
-          </button>
-          <span style={{ fontSize: '0.85rem', color: t.cor.cinza, fontWeight: 600 }}>Página {pagina} de {totalPaginas.toLocaleString('pt-BR')}</span>
-          <button type="button" disabled={pagina >= totalPaginas} onClick={() => aoMudarPagina(pagina + 1)}
-            style={pilulaPagina(pagina >= totalPaginas)}
-            onMouseOver={(e) => realcePagina(e, true)} onMouseOut={(e) => realcePagina(e, false)}>
-            Próxima
-          </button>
-        </div>
+      {!semEstado && (
+        <Paginacao pagina={pagina} total={totalPaginas} aoMudar={aoMudarPagina} />
       )}
     </div>
   );
