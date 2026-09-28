@@ -21,6 +21,21 @@ import { hrefPerfil, casaDoPerfil } from '../src/lib/casa';
 import { pilulaPagina, realcePagina } from '../src/estilo/botoes';
 import { ASSEMBLEIAS, assembleiaDe, caminhoDaCasa } from '../src/lib/assembleias';
 
+// Botao sobre o painel escuro: indigo sobre indigo nao aparece, entao segue a regra das
+// Diretrizes para cartao escuro (superficie branca translucida, texto branco, pilula, sem
+// borda, sombra que cresce no hover).
+const pilulaNoEscuro = {
+  alignItems: 'center', justifyContent: 'center', flexShrink: 0, lineHeight: 1,
+  padding: '10px 16px', minHeight: '40px', fontSize: '0.84rem', fontWeight: 700, fontFamily: t.fonte.corpo,
+  borderRadius: t.raio.pill, border: 'none', cursor: 'pointer',
+  background: 'rgba(255,255,255,0.14)', color: '#fff',
+  boxShadow: t.sombra.botao, transition: 'box-shadow .15s ease, transform .15s ease',
+};
+const realceNoEscuro = (e, ligar) => {
+  e.currentTarget.style.boxShadow = ligar ? t.sombra.botaoHover : t.sombra.botao;
+  e.currentTarget.style.transform = ligar ? 'translateY(-1px)' : 'none';
+};
+
 const brl = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v || 0);
 
 
@@ -53,6 +68,18 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
   // 'maiores' | 'menores'. Mostrar so quem mais gastou sugere que gastar mais e a historia;
   // as duas pontas dao ao leitor a referencia para julgar sozinho, que e a regra do site.
   const [sentido, setSentido] = useState('maiores');
+  // Ranking recolhivel no celular (28/09/2026, pedido do Jordy): abre aberto, como sempre, e
+  // ganha "Recolher" para quem ja leu e quer chegar na lista de parlamentares sem rolar dez
+  // cartoes. No computador o botao nao aparece (CSS .radar-alternar em _app.js).
+  const [radarAberto, setRadarAberto] = useState(true);
+  const alternarRadar = (rolar) => {
+    setRadarAberto((v) => !v);
+    // Recolher pelo botao do FIM da lista: sem rolar, a pessoa fica olhando o que estava
+    // abaixo do painel e perde o lugar. Leva o topo do painel para a tela.
+    if (rolar && typeof document !== 'undefined') {
+      requestAnimationFrame(() => document.getElementById('painel-radar')?.scrollIntoView({ block: 'start', behavior: 'smooth' }));
+    }
+  };
   // Ao trocar de aba, volta para o ano padrão daquela casa: cada fonte publica até um ponto
   // diferente, então fixar o ano entre abas mostraria ranking vazio sem motivo aparente.
   useEffect(() => { setAno(anoPadrao(radarCasa.anos, radarCasa.totais)); }, [casa]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -288,7 +315,7 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
       {/* Ranking de gastos — quem mais usou a verba (casa ativa) */}
       {mostraRanking && (
       <section style={{ margin: '0 0 28px' }}>
-        <div style={{ background: t.cor.verde, borderRadius: t.raio.lg, padding: 'clamp(20px,3.5vw,32px)', color: '#fff' }}>
+        <div id="painel-radar" className={radarAberto ? 'painel-radar' : 'painel-radar radar-recolhido'} style={{ background: t.cor.verde, borderRadius: t.raio.lg, padding: 'clamp(20px,3.5vw,32px)', color: '#fff', scrollMarginTop: '84px' }}>
           {/* CABECALHO DO PAINEL: identidade a esquerda, numero do conjunto a direita.
               O contador ("508 com gasto registrado") vivia solto ao lado das pilulas de ano,
               competindo com elas: ele NAO e controle, e um dado sobre o conjunto, entao subiu
@@ -297,10 +324,17 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
             <div style={{ minWidth: 0 }}>
               {/* Titulo neutro: ele dizia "Quem mais usou a verba publica" e o botao aceso
                   repetia a mesma frase 40px abaixo. Quem responde a pergunta e o controle. */}
-              <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.3rem,2.6vw,1.7rem)', margin: '0 0 6px' }}>
-                Uso da verba pública
-              </h2>
-              <p style={{ color: 'rgba(255,255,255,0.78)', maxWidth: '58ch', lineHeight: 1.55, margin: 0, fontSize: '0.92rem' }}>
+              <div className="radar-titulo">
+                <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.3rem,2.6vw,1.7rem)', margin: 0 }}>
+                  Uso da verba pública
+                </h2>
+                <button type="button" className="radar-alternar" aria-expanded={radarAberto} aria-controls="radar-corpo"
+                  onClick={() => alternarRadar(false)} style={pilulaNoEscuro}
+                  onMouseOver={(e) => realceNoEscuro(e, true)} onMouseOut={(e) => realceNoEscuro(e, false)}>
+                  {radarAberto ? 'Recolher' : 'Mostrar ranking'}
+                </button>
+              </div>
+              <p className="radar-descricao" style={{ color: 'rgba(255,255,255,0.78)', maxWidth: '58ch', lineHeight: 1.55, margin: 0, fontSize: '0.92rem' }}>
                 {(() => {
                   const verbo = sentido === 'menores' ? 'menos usaram' : 'mais usaram';
                   if (casa === 'Senado') return `Senadores que ${verbo} a cota (CEAPS) em ${anoAtivo}.`;
@@ -321,6 +355,7 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
             )}
           </div>
 
+          <div id="radar-corpo" className="radar-corpo">
           {/* BARRA DE CONTROLES: os dois seletores como segmented control, cada um no seu
               trilho, lado a lado e juntos a esquerda.
               Versao anterior (12/09/2026, rejeitada): as pilulas soltas nas duas pontas de uma
@@ -392,9 +427,9 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
                 <li key={p.id}>
                   {/* .radar-linha (CSS em _app.js): no celular a linha quebra e o valor desce
                       para a linha de baixo. Sem isso o valor era empurrado para fora da tela. */}
-                  <Link href={hrefPerfil(p)} className="radar-linha" style={{ textDecoration: 'none', color: 'inherit', background: 'rgba(255,255,255,0.07)', borderRadius: '6px', padding: '12px 16px' }}>
-                    <span style={{ flexShrink: 0, width: '26px', fontFamily: t.fonte.titulo, fontWeight: 600, color: t.cor.ouro, fontSize: '1.2rem' }}>{i + 1}</span>
-                    <Avatar nome={p.nome_urna} foto={p.foto_url} size={44} />
+                  <Link href={hrefPerfil(p)} className="radar-linha" style={{ textDecoration: 'none', color: 'inherit', background: 'rgba(255,255,255,0.07)', borderRadius: '6px' }}>
+                    <span className="radar-pos" style={{ fontFamily: t.fonte.titulo, fontWeight: 600, color: t.cor.ouro, fontSize: '1.2rem' }}>{i + 1}</span>
+                    <span className="radar-foto"><Avatar nome={p.nome_urna} foto={p.foto_url} size={44} /></span>
                     <span className="radar-nome" style={{ flex: 1, minWidth: 0 }}>
                       <span style={{ display: 'block', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.nome_urna}</span>
                       <span style={{ fontSize: '0.82rem', opacity: 0.75 }}>
@@ -414,8 +449,11 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
                         </span>
                       )}
                     </span>
-                    <span className="radar-valor" style={{ flexShrink: 0, textAlign: 'right' }}>
-                      <span style={{ display: 'block', fontWeight: 800, fontSize: '1.05rem' }}>{brl(p.total)}</span>
+                    {/* Alinhamento e quebra do valor ficam no CSS (.radar-valor): estilo escrito
+                        aqui vence o CSS, e foi assim que o valor foi parar na ponta direita do
+                        cartao no celular, em diagonal com o nome (corrigido 28/09/2026). */}
+                    <span className="radar-valor">
+                      <span className="rv-total" style={{ fontWeight: 800, fontSize: '1.05rem' }}>{brl(p.total)}</span>
                       <span style={{ fontSize: '0.72rem', opacity: 0.7 }}>ver no quê →</span>
                     </span>
                   </Link>
@@ -454,8 +492,14 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
                   Não deu para buscar agora. Tente de novo.
                 </span>
               )}
+              <button type="button" className="radar-alternar" aria-expanded={radarAberto} aria-controls="radar-corpo"
+                onClick={() => alternarRadar(true)} style={pilulaNoEscuro}
+                onMouseOver={(e) => realceNoEscuro(e, true)} onMouseOut={(e) => realceNoEscuro(e, false)}>
+                Recolher ranking
+              </button>
             </div>
           )}
+          </div>
         </div>
       </section>
       )}
