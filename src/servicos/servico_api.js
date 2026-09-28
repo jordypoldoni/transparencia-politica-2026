@@ -1151,7 +1151,11 @@ const ServicoAPI = {
         if (UF === 'DF') return { total: 0, comMandato: [], temCadastro: false };
         const [lista, { data: agentes }] = await Promise.all([
             todosCandidatosEstaduais(UF),
-            supabase.from('agentes_politicos').select('id, nome_urna, partido_atual').eq('uf_sede', UF).in('fonte_api', ['alergs', 'alesp']).neq('em_exercicio', false),
+            supabase.from('agentes_politicos').select('id, nome_urna, partido_atual').eq('uf_sede', UF).in('fonte_api', ['alergs', 'alesp'])
+                // NULO conta como em exercicio: e o que os coletores da ALERGS e da ALESP gravam.
+                // `.neq('em_exercicio', false)` vira `<> false` no SQL, que descarta o nulo, e a
+                // cedula do RS dizia "o site ainda nao tem o cadastro" (achado no ar em 28/09).
+                .or('em_exercicio.is.null,em_exercicio.eq.true'),
         ]);
         const temCadastro = (agentes || []).length > 0;
         const comMandato = temCadastro
