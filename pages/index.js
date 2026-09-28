@@ -97,7 +97,9 @@ export default function Home({ votacoes, parlamentares = [], uniao = null, estad
             {[
               { href: '/deputados?casa=Câmara', titulo: 'Deputados', desc: '513 federais' },
               { href: '/deputados?casa=Senado', titulo: 'Senadores', desc: '81 no total' },
-              { href: '/comecar', titulo: 'Montar minha página', desc: 'responda 2 perguntas', destaque: true },
+              // 28/09/2026 (Jordy): era "Montar minha página / responda 2 perguntas", nome e
+              // descricao de uma versao que nao existe mais. Nome e nota iguais aos do menu Pra voce.
+              { href: '/afinidade', titulo: 'Quem vota como você', desc: 'suas posições comparadas aos votos', destaque: true },
             ].map((c, i) => (
               <Link key={c.href} href={c.href}
                 style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', padding: '18px 22px', background: c.destaque ? t.cor.alertaBg : (i % 2 === 1 ? t.cor.papelQuente : '#fff'), transition: 'background .15s' }}
