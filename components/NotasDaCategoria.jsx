@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { t } from '../src/estilo/tokens';
 import { pilulaPagina, realcePagina } from '../src/estilo/botoes';
 import { dataBr } from '../src/lib/datas';
@@ -45,7 +45,20 @@ function Nota({ it, anoSel }) {
   );
 }
 
+// RECOLHER O TIPO (29/09/2026, pedido do Jordy): o cabeçalho de cada tipo abre e fecha, para a
+// pessoa passar ao tipo seguinte sem rolar as notas do anterior. Abre aberto, como antes. Mesmo
+// desenho do cabeçalho da categoria (linha inteira clicável, ▲ aberto, ▼ fechado). Ao recolher,
+// o cabeçalho volta para a tela: com a lista longa aberta, ele podia estar lá em cima, fora da vista.
 function BlocoDoTipo({ tipo, notas, subtotal, anoSel, palavraNota, sozinho }) {
+  const [aberto, setAberto] = useState(true);
+  const cabecalho = useRef(null);
+  const alternar = () => {
+    setAberto((v) => !v);
+    if (aberto && cabecalho.current) {
+      const topo = cabecalho.current.getBoundingClientRect().top;
+      if (topo < 0) cabecalho.current.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    }
+  };
   const [visiveis, setVisiveis] = useState(INICIAIS);
   const mostradas = notas.slice(0, visiveis);
   const faltam = notas.length - mostradas.length;
@@ -53,12 +66,16 @@ function BlocoDoTipo({ tipo, notas, subtotal, anoSel, palavraNota, sozinho }) {
   return (
     // Separação entre tipos por espaço, não por linha (Diretrizes: separação sem borda).
     <div style={{ padding: sozinho ? '10px 0 6px' : '22px 0 6px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'baseline', flexWrap: 'wrap' }}>
+      <button type="button" ref={cabecalho} onClick={alternar} aria-expanded={aberto}
+        style={{ width: '100%', display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'baseline', flexWrap: 'wrap',
+          border: 'none', background: 'transparent', padding: '4px 0', margin: 0, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', scrollMarginTop: '84px' }}>
         <span style={{ fontSize: '0.88rem', fontWeight: 700, color: t.cor.tinta, minWidth: 0 }}>{tipo}</span>
-        <span style={{ fontSize: '0.82rem', color: t.cor.cinza, flexShrink: 0 }}>
-          <strong style={{ color: t.cor.tinta, fontSize: '0.9rem' }}>{brlExato(subtotal)}</strong> em {plural(notas.length)}
+        <span style={{ fontSize: '0.82rem', color: t.cor.cinza, flexShrink: 0, display: 'flex', alignItems: 'baseline', gap: '10px' }}>
+          <span><strong style={{ color: t.cor.tinta, fontSize: '0.9rem' }}>{brlExato(subtotal)}</strong> em {plural(notas.length)}</span>
+          <span aria-hidden style={{ fontSize: '12px' }}>{aberto ? '▲' : '▼'}</span>
         </span>
-      </div>
+      </button>
+      {aberto && (<>
       {mostradas.map((it, i) => <Nota key={i} it={it} anoSel={anoSel} />)}
       <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap', marginTop: '6px' }}>
         <span style={{ fontSize: '0.78rem', color: t.cor.cinza }}>
@@ -72,6 +89,7 @@ function BlocoDoTipo({ tipo, notas, subtotal, anoSel, palavraNota, sozinho }) {
           </button>
         )}
       </div>
+      </>)}
     </div>
   );
 }
