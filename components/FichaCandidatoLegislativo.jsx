@@ -19,6 +19,7 @@ import TrajetoriaEleitoral from './TrajetoriaEleitoral';
 import BotaoVoltar from './BotaoVoltar';
 import BotaoFavorito from './BotaoFavorito';
 import BotaoMeuVoto from './BotaoMeuVoto';
+import { idadeEm } from '../src/lib/datas';
 const caminhoDe = (url) => { try { return new URL(url).pathname; } catch { return String(url || ''); } };
 
 
@@ -164,16 +165,8 @@ const mesmaSigla = (a, b) => {
   return limpa(a) === limpa(b);
 };
 
-function idade(dataNascimento) {
-  if (!dataNascimento) return null;
-  const n = new Date(dataNascimento);
-  if (isNaN(n)) return null;
-  const hoje = new Date();
-  let a = hoje.getFullYear() - n.getFullYear();
-  const aindaNaoFezAno = (hoje.getMonth() < n.getMonth()) || (hoje.getMonth() === n.getMonth() && hoje.getDate() < n.getDate());
-  if (aindaNaoFezAno) a--;
-  return a;
-}
+// (29/09/2026: sai de src/lib/datas.js; o cálculo local lia a data em UTC e errava na véspera do aniversário)
+const idade = idadeEm;
 
 function DadoBio({ rotulo, valor }) {
   if (!valor) return null;

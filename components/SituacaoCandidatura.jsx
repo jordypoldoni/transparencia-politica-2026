@@ -1,4 +1,5 @@
 import { t } from '../src/estilo/tokens';
+import { dataBr } from '../src/lib/datas';
 
 // Seção "Situação da candidatura" da ficha do presidenciável. (16/09/2026)
 //
@@ -40,7 +41,7 @@ export default function SituacaoCandidatura({ ficha }) {
   if (!d.situacao) return null;
 
   const deferido = /^deferido$/i.test(String(d.situacao).trim());
-  const data = d.consultadoEm ? new Date(d.consultadoEm).toLocaleDateString('pt-BR') : null;
+  const data = d.consultadoEm ? dataBr(d.consultadoEm) : null;
   const rotulo = { margin: 0, fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.05em', textTransform: 'uppercase', color: t.cor.cinza };
 
   return (

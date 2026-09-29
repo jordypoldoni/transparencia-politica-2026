@@ -26,9 +26,9 @@ import { CASAS_VOTACAO } from '../src/lib/casa';
 import { explicarProposicao, naSuaVida } from '../src/lib/proposicoes';
 import { agruparPorMateria, humanizarVotacao, papelVotacao } from '../src/lib/votacao';
 import { t } from '../src/estilo/tokens';
+import { dataBr, anoDe } from '../src/lib/datas';
 
-const dataBR = (d) => (d ? new Date(d).toLocaleDateString('pt-BR') : '');
-const anoDe = (d) => (d ? new Date(d).getFullYear() : null);
+const dataBR = dataBr; // src/lib/datas.js (29/09/2026)
 
 function statusDoGrupo(g) {
   const principais = g.votacoes.filter((v) => /texto principal|reda/i.test(papelVotacao(v.descricao)));

@@ -11,6 +11,7 @@ import TrajetoriaEleitoral from './TrajetoriaEleitoral';
 import BotaoVoltar from './BotaoVoltar';
 import BotaoFavorito from './BotaoFavorito';
 import NotasDaCategoria from './NotasDaCategoria';
+import { dataBr, idadeEm } from '../src/lib/datas';
 
 const brl = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v || 0);
 const brlExato = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
@@ -58,16 +59,8 @@ const MES_NOME = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'J
 const pilula = { display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 18px', fontSize: '0.9rem', fontWeight: 700, fontFamily: t.fonte.corpo, borderRadius: t.raio.pill, cursor: 'pointer', textDecoration: 'none', border: 'none' };
 
 // Idade em anos cheios a partir da data de nascimento (YYYY-MM-DD)
-function idadeDe(iso) {
-  if (!iso) return null;
-  const d = new Date(iso);
-  if (isNaN(d)) return null;
-  const hoje = new Date();
-  let a = hoje.getFullYear() - d.getFullYear();
-  const m = hoje.getMonth() - d.getMonth();
-  if (m < 0 || (m === 0 && hoje.getDate() < d.getDate())) a--;
-  return a >= 0 && a < 120 ? a : null;
-}
+// (29/09/2026: sai de src/lib/datas.js; o cálculo local lia a data em UTC e errava na véspera do aniversário)
+const idadeDe = idadeEm;
 
 // Detecta a rede social pela URL (rótulo cidadão, sem depender de biblioteca de ícones)
 function redeInfo(url) {
@@ -990,7 +983,7 @@ export default function PerfilPolitico({ dados }) {
                               <span style={{ flexShrink: 0, fontSize: '0.78rem', fontWeight: 800, padding: '4px 10px', borderRadius: '6px', background: corVoto(v.voto_tipo).bg, color: corVoto(v.voto_tipo).fg, minWidth: '54px', textAlign: 'center' }}>{v.voto_tipo}</span>
                               <span style={{ flex: 1, minWidth: 0, fontSize: '0.8rem', fontWeight: 600, color: t.cor.tinta }}>{papel}</span>
                               {res && <span style={{ flexShrink: 0, fontSize: '0.74rem', color: res === 'Aprovado' ? t.cor.sim : t.cor.nao, fontWeight: 600 }}>{res} no plenário</span>}
-                              <span style={{ flexShrink: 0, fontSize: '0.72rem', color: t.cor.cinza }}>{v.data_voto ? new Date(v.data_voto).toLocaleDateString('pt-BR') : ''}</span>
+                              <span style={{ flexShrink: 0, fontSize: '0.72rem', color: t.cor.cinza }}>{dataBr(v.data_voto)}</span>
                               {linkavel && <span style={{ flexShrink: 0, fontSize: '0.72rem', fontWeight: 700, color: t.cor.ouroTexto }}>ver →</span>}
                             </>
                           );

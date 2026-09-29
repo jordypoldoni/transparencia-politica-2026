@@ -10,17 +10,10 @@ import { t } from '../../src/estilo/tokens';
 import BotaoVoltar from '../../components/BotaoVoltar';
 import BotaoFavorito from '../../components/BotaoFavorito';
 import BotaoMeuVoto from '../../components/BotaoMeuVoto';
+import { idadeEm } from '../../src/lib/datas';
 
-function idade(dataNascimento) {
-  if (!dataNascimento) return null;
-  const n = new Date(dataNascimento);
-  if (isNaN(n)) return null;
-  const hoje = new Date();
-  let a = hoje.getFullYear() - n.getFullYear();
-  const aindaNaoFezAno = (hoje.getMonth() < n.getMonth()) || (hoje.getMonth() === n.getMonth() && hoje.getDate() < n.getDate());
-  if (aindaNaoFezAno) a--;
-  return a;
-}
+// (29/09/2026: sai de src/lib/datas.js; o cálculo local lia a data em UTC e errava na véspera do aniversário)
+const idade = idadeEm;
 
 function DadoBio({ rotulo, valor }) {
   if (!valor) return null;

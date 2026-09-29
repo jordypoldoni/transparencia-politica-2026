@@ -1,4 +1,5 @@
 import { t } from '../src/estilo/tokens';
+import { dataBr } from '../src/lib/datas';
 
 // Selo da situação da candidatura. Só aparece quando NÃO é "Deferido": 12 dos 14 estão
 // deferidos, e carimbar o normal em todo mundo vira ruído. O que informa é a exceção.
@@ -10,7 +11,7 @@ import { t } from '../src/estilo/tokens';
 export default function SeloSituacao({ info, consultadoEm, compacto = false }) {
   if (!info || !info.situacao) return null;
   if (/^deferido$/i.test(info.situacao.trim())) return null;
-  const data = consultadoEm ? new Date(consultadoEm).toLocaleDateString('pt-BR') : null;
+  const data = consultadoEm ? dataBr(consultadoEm) : null;
   return (
     <p style={{
       margin: compacto ? '10px 0 0' : '14px 0 0', fontSize: '0.76rem', lineHeight: 1.5,

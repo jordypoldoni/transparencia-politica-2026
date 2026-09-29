@@ -14,6 +14,7 @@ import {
   contaNovaDiferente, lembrarConta, mascararEmail, entrarComGoogle, definirUf,
 } from '../src/lib/perfilUsuario';
 import { sincronizarTudo } from '../src/lib/sincronizacao';
+import { dataBr } from '../src/lib/datas';
 
 // SEU PERFIL (26/09/2026). Página de "Pra você" onde a pessoa vê e controla o que é dela.
 //
@@ -40,7 +41,7 @@ const realce = (e, ligar) => {
   e.currentTarget.style.boxShadow = ligar ? t.sombra.botaoHover : t.sombra.botao;
   e.currentTarget.style.transform = ligar ? 'translateY(-1px)' : 'none';
 };
-const dataBR = (iso) => (iso ? new Date(iso).toLocaleDateString('pt-BR') : '');
+const dataBR = dataBr; // src/lib/datas.js (29/09/2026)
 
 export default function Perfil() {
   const [carregando, setCarregando] = useState(true);

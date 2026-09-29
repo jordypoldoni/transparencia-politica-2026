@@ -24,11 +24,12 @@ import { CASAS_VOTACAO, casaVotacaoPorChave } from '../../src/lib/casa';
 import CampoBusca from '../../components/CampoBusca';
 import CampoSelect from '../../components/CampoSelect';
 import { t } from '../../src/estilo/tokens';
+import { dataBr, anoDe } from '../../src/lib/datas';
 
 const POR_PAGINA = 20;
 
 const hv = (v) => humanizarVotacao({ descricao_votacao: v.descricao, aprovacao: v.aprovacao });
-const dataBR = (d) => (d ? new Date(d).toLocaleDateString('pt-BR') : '');
+const dataBR = dataBr; // src/lib/datas.js (29/09/2026)
 
 function statusGrupo(g) {
   const principais = g.votacoes.filter((v) => /texto principal|reda/i.test(papelVotacao(v.descricao)));
@@ -72,7 +73,7 @@ function passaPeriodo(v, periodo) {
   if (!periodo) return true;
   if (!v.data_voto) return false;
   const dt = new Date(v.data_voto);
-  if (periodo === '2026' || periodo === '2025') return dt.getFullYear() === parseInt(periodo, 10);
+  if (periodo === '2026' || periodo === '2025') return anoDe(v.data_voto) === parseInt(periodo, 10);
   const dias = parseInt(periodo, 10);
   if (!Number.isNaN(dias)) return (Date.now() - dt.getTime()) <= dias * 86400000;
   return true;

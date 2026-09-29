@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { t } from '../src/estilo/tokens';
+import { dataBr } from '../src/lib/datas';
 
 const brl = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
 
@@ -37,7 +38,7 @@ export default function PatrimonioDeclarado({ ficha }) {
 
   const itens = Array.isArray(d.bens) ? d.bens : [];
   const zerado = !d.totalDeBens;
-  const data = d.consultadoEm ? new Date(d.consultadoEm).toLocaleDateString('pt-BR') : null;
+  const data = d.consultadoEm ? dataBr(d.consultadoEm) : null;
 
   return (
     <section style={{ background: t.cor.papelCartao, borderRadius: t.raio.md, padding: '18px 20px', marginBottom: '24px', boxShadow: t.sombra.sutil }}>

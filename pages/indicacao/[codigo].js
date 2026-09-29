@@ -4,6 +4,7 @@ import Head from 'next/head';
 import ServicoAPI from '../../src/servicos/servico_api';
 import { t } from '../../src/estilo/tokens';
 import BotaoVoltar from '../../components/BotaoVoltar';
+import { dataBr } from '../../src/lib/datas';
 
 // /indicacao/[codigo] — a ficha de uma indicação. (18/09/2026)
 //
@@ -19,7 +20,7 @@ import BotaoVoltar from '../../components/BotaoVoltar';
 // como ninguém votou. Um leitor que saia daqui achando que viu o voto do senador dele teria
 // sido enganado pela nossa tela, ainda que cada dado estivesse correto.
 
-const dataBR = (d) => (d ? new Date(d + 'T12:00:00').toLocaleDateString('pt-BR') : '');
+const dataBR = dataBr; // src/lib/datas.js (29/09/2026)
 
 const badgeResultado = (r) => ({
   fontSize: '0.8rem', fontWeight: 800, padding: '6px 14px', borderRadius: '6px',

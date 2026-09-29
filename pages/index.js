@@ -11,6 +11,7 @@ import { NOMES_UF } from '../src/lib/cotas';
 import { t } from '../src/estilo/tokens';
 import { hrefPerfil } from '../src/lib/casa';
 import Avatar from '../components/Avatar';
+import { dataBr } from '../src/lib/datas';
 
 const ESTADOS = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
 const ESTADOS_OPCOES = ESTADOS.map((uf) => ({ valor: uf, rotulo: `${uf} · ${NOMES_UF[uf] || uf}`, busca: `${uf} ${NOMES_UF[uf] || ''}` }));
@@ -215,7 +216,7 @@ export default function Home({ votacoes, parlamentares = [], uniao = null, estad
               const urgencia = /urg[êe]ncia/i.test(g.regime || '');
               const p = votoPrincipal(g);
               const h = humanizarVotacao({ descricao_votacao: p?.descricao, aprovacao: p?.aprovacao });
-              const dataTxt = p?.data_voto ? new Date(p.data_voto).toLocaleDateString('pt-BR') : '';
+              const dataTxt = p?.data_voto ? dataBr(p.data_voto) : '';
               return (
                 <Link key={g.chave} href={`/votacao/${p?.votacao_id_externa}`} style={{ textDecoration: 'none', color: 'inherit' }}>
                   <div style={{ background: t.cor.papelCartao, borderRadius: t.raio.md, padding: '16px 18px', cursor: 'pointer', boxShadow: t.sombra.clicavel, transition: 'transform .15s, box-shadow .15s' }}

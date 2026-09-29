@@ -9,6 +9,7 @@ import Termo from '../../components/Termo';
 import CampoBusca from '../../components/CampoBusca';
 import { t } from '../../src/estilo/tokens';
 import BotaoVoltar from '../../components/BotaoVoltar';
+import { dataBr } from '../../src/lib/datas';
 
 const ORDEM = ['Sim', 'Não', 'Abstenção', 'Obstrução'];
 const corVoto = (tp) => {
@@ -80,7 +81,7 @@ export default function Votacao({ meta, votos }) {
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap' }}>
             <span style={{ fontSize: '0.74rem', fontWeight: 800, padding: '4px 12px', borderRadius: '6px', background: h.status ? (aprovado ? '#E7F3EC' : '#FBEAE7') : '#EEEDE8', color: h.status ? (aprovado ? t.cor.sim : t.cor.nao) : t.cor.tinta, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{h.status || 'Sem resultado'}</span>
             {meta.proposicao_titulo && <span style={{ fontSize: '0.74rem', fontWeight: 700, padding: '4px 12px', borderRadius: '6px', background: 'rgba(255,255,255,0.14)' }}>{meta.proposicao_titulo}</span>}
-            <span style={{ opacity: 0.8, fontSize: '0.85rem' }}>{meta.data_voto ? new Date(meta.data_voto).toLocaleDateString('pt-BR') : ''}</span>
+            <span style={{ opacity: 0.8, fontSize: '0.85rem' }}>{dataBr(meta.data_voto)}</span>
           </div>
 
           {/* TÍTULO: o resumo em linguagem comum quando existe; a ementa quando ainda não. */}
@@ -120,7 +121,7 @@ export default function Votacao({ meta, votos }) {
                   <p style={{ margin: '12px 0 0', fontSize: '0.78rem', lineHeight: 1.5, opacity: 0.72 }}>
                     {resumo ? 'Resumo e contexto escritos' : 'Contexto escrito'} por inteligência artificial
                     {meta.explicacao_modelo ? ` (modelo ${meta.explicacao_modelo})` : ''}
-                    {meta.explicacao_gerada_em ? `, em ${new Date(meta.explicacao_gerada_em).toLocaleDateString('pt-BR')}` : ''}
+                    {meta.explicacao_gerada_em ? `, em ${dataBr(meta.explicacao_gerada_em)}` : ''}
                     , a partir da ementa oficial. Descrevem o que o texto faz, sem opinar sobre mérito.
                     {meta.url_inteiro_teor ? ' Em caso de dúvida, vale o documento.' : ''}
                   </p>

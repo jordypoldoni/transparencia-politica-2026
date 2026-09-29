@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { t } from '../src/estilo/tokens';
 import { pilulaPagina, realcePagina } from '../src/estilo/botoes';
+import { dataBr } from '../src/lib/datas';
 
 // NOTAS DE UMA CATEGORIA, SEPARADAS POR TIPO DE DESPESA (29/09/2026).
 //
@@ -19,13 +20,7 @@ import { pilulaPagina, realcePagina } from '../src/estilo/botoes';
 // informação).
 
 const brlExato = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
-// DATA SEM FUSO (29/09/2026): a coluna é `date` ("2026-05-19"). `new Date("2026-05-19")` lê
-// como meia-noite UTC, e no Brasil (UTC-3) isso é 18/05 às 21h: toda nota aparecia UM DIA ANTES
-// (a CASCOL do Bibo Nunes, emitida em 19/05, saía 18/05). Aqui a data é só remontada.
-const dataBr = (v) => {
-  const m = String(v || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
-  return m ? `${m[3]}/${m[2]}/${m[1]}` : '';
-};
+// Data das notas: src/lib/datas.js (a coluna é `date`; new Date() mostrava um dia antes).
 const INICIAIS = 5;   // notas visíveis por tipo ao abrir a categoria
 const PASSO = 20;     // quantas a mais a cada clique
 

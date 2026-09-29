@@ -5,6 +5,7 @@ import ServicoAPI from '../src/servicos/servico_api';
 import CampoBusca from '../components/CampoBusca';
 import CampoSelect from '../components/CampoSelect';
 import { t } from '../src/estilo/tokens';
+import { dataBr } from '../src/lib/datas';
 
 // /indicacoes — as indicações do presidente e o que o Senado fez com elas. (18/09/2026)
 //
@@ -24,7 +25,7 @@ import { t } from '../src/estilo/tokens';
 // NEUTRALIDADE: nenhum adjetivo, nenhum ranking, nenhuma leitura política. Nome, cargo,
 // órgão, data, resultado e placar, como a fonte publica. Quem lê tira a conclusão.
 
-const dataBR = (d) => (d ? new Date(d + 'T12:00:00').toLocaleDateString('pt-BR') : '');
+const dataBR = dataBr; // src/lib/datas.js (29/09/2026)
 
 const RESULTADOS = [
   { valor: '', rotulo: 'Qualquer resultado' },
