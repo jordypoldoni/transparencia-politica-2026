@@ -13,13 +13,14 @@ import Link from 'next/link';
 import Avatar from './Avatar';
 import BotaoFavorito from './BotaoFavorito';
 import CampoSelect from './CampoSelect';
-import EscolhaCompacta from './EscolhaCompacta';
+import { useRouter } from 'next/router';
+import { Pino } from './icones';
 import CampoBusca from './CampoBusca';
 import { NOMES_UF } from '../src/lib/cotas';
 import { t } from '../src/estilo/tokens';
 import { hrefPerfil, casaDoPerfil } from '../src/lib/casa';
 import Paginacao from './Paginacao';
-import { ASSEMBLEIAS, assembleiaDe, caminhoDaCasa } from '../src/lib/assembleias';
+import { ASSEMBLEIAS, assembleiaDe } from '../src/lib/assembleias';
 
 // Botao sobre o painel escuro: indigo sobre indigo nao aparece, entao segue a regra das
 // Diretrizes para cartao escuro (superficie branca translucida, texto branco, pilula, sem
@@ -56,6 +57,7 @@ function anoPadrao(anos, totais) {
 export default function ListaParlamentares({ deputados, qInicial, ufInicial, casaInicial, radares = {}, canonical = null, falhaNaLista = false }) {
   const [busca, setBusca] = useState(qInicial || '');
   const [uf, setUf] = useState(ufInicial || '');
+  const router = useRouter();
   const [casa, setCasa] = useState(casaInicial || 'Câmara');
   // Sincroniza ao navegar entre Deputados/Senadores (mesma rota, props mudam no cliente).
   useEffect(() => { setCasa(casaInicial || 'Câmara'); setUf(ufInicial || ''); }, [casaInicial, ufInicial]);
@@ -185,8 +187,6 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
     }
   };
 
-  const totalCasa = (c) => deputados.filter((d) => d.casa === c).length;
-
   // Botao do site: indigo com texto ambar, SEM borda, com sombra. Os proprios tokens ja
   // pedem isso ("diferenciacao sem bordas coloridas"); a versao anterior deste botao usava
   // uma linha cinza de contorno e destoava do resto.
@@ -208,13 +208,6 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
     e.currentTarget.style.background = dentro ? 'rgba(255,255,255,0.12)' : 'transparent';
     e.currentTarget.style.color = dentro ? '#fff' : 'rgba(255,255,255,0.82)';
   };
-
-  const pilulaCasa = (ativa) => ({
-    padding: '11px 22px', fontSize: '0.95rem', fontWeight: 700, fontFamily: t.fonte.corpo,
-    borderRadius: t.raio.pill, cursor: 'pointer', border: 'none',
-    background: ativa ? t.cor.verde : '#fff', color: ativa ? t.cor.ouro : t.cor.tinta,
-    boxShadow: t.sombra.botao,
-  });
 
   // Estas duas telas nao tinham <title> nem descricao nenhuma ate 12/09/2026: o Google
   // indexava a lista principal do site sem titulo.
@@ -248,24 +241,23 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
           endereco na barra diz qual lista esta aberta, o link pode ser compartilhado, e o
           Google indexa as tres. O Next pre-carrega ao passar o mouse, entao a troca segue
           rapida. Ver src/lib/assembleias.js. */}
-      {/* 29/09/2026 (decisão do Jordy): federais, estaduais e senadores são três páginas no menu
-          Parlamentares. A pílula "Federais" saiu daqui; nas páginas estaduais ficam só os
-          estados, e a página federal não tem alternância nenhuma.
-          Celular (27/09/2026): campo de escolha no lugar das pílulas. */}
+      {/* ESTADO NO TOPO (29/09/2026, pedido do Jordy): nas páginas estaduais, o campo de estado
+          vem logo abaixo do título e troca a página inteira (ranking e lista), porque cada estado
+          é uma rota (/deputados/sp, /deputados/rs). Mesmo campo "Seu estado" da home. A busca
+          por nome ou partido continua abaixo do ranking e filtra só a lista.
+          Substituiu as pílulas de estado (e antes delas a pílula "Federais", que saiu quando
+          federais e estaduais viraram páginas separadas). Hoje só aparecem os estados com
+          Assembleia coletada; os outros 25 entram no passo seguinte. */}
       {assembleia && (
-        <nav aria-label="Estado" className="so-celular" style={{ marginBottom: '16px' }}>
-          <EscolhaCompacta rotulo="Estado" valor={casa} opcoes={
-            ASSEMBLEIAS.filter((a) => totalCasa(a.casa) > 0).map((a) => ({ valor: a.casa, rotulo: `${NOMES_UF[a.uf] || a.uf} (${totalCasa(a.casa)})`, href: caminhoDaCasa(a.casa) }))
-          } />
-        </nav>
-      )}
-      {assembleia && (
-        <div className="so-computador" style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }} role="tablist" aria-label="Estado">
-          {ASSEMBLEIAS.filter((a) => totalCasa(a.casa) > 0).map((a) => (
-            <Link key={a.casa} href={caminhoDaCasa(a.casa)} style={{ ...pilulaCasa(casa === a.casa), textDecoration: 'none', display: 'inline-block' }} role="tab" aria-selected={casa === a.casa}>
-              {NOMES_UF[a.uf] || a.uf} ({totalCasa(a.casa)})
-            </Link>
-          ))}
+        <div style={{ maxWidth: '420px', marginBottom: '20px' }}>
+          <CampoSelect
+            opcoes={ASSEMBLEIAS.map((a) => ({ valor: a.uf, rotulo: `${a.uf} · ${NOMES_UF[a.uf] || a.uf}`, busca: `${a.uf} ${NOMES_UF[a.uf] || ''}` }))}
+            valor={assembleia.uf}
+            placeholder="Escolha o estado"
+            aoLabel="Estado dos deputados estaduais"
+            icone={<Pino />}
+            aoSelecionar={(novaUf) => { if (novaUf && novaUf !== assembleia.uf) router.push(`/deputados/${novaUf.toLowerCase()}`); }}
+          />
         </div>
       )}
 

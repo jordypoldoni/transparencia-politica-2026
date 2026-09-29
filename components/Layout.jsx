@@ -5,7 +5,7 @@ import { t } from '../src/estilo/tokens';
 import BotaoConta from './BotaoConta';
 import { PAGINAS_PRA_VOCE } from './NavPraVoce';
 import { sincronizarTudo } from '../src/lib/sincronizacao';
-import { aoMudarSessao, validarSessao } from '../src/lib/perfilUsuario';
+import { aoMudarSessao, validarSessao, ufLocal, guardarUfCookie, COOKIE_UF } from '../src/lib/perfilUsuario';
 
 // ============================================================================
 // MENU PRINCIPAL, REORGANIZADO EM 19/09/2026
@@ -147,6 +147,12 @@ export default function Layout({ children, pageProps }) {
   // Respostas e favoritos entre aparelhos (src/lib/sincronizacao.js): ao abrir o site, ao entrar
   // na conta e ao voltar para a aba. Sem sessão ou sem autorização, não faz nada.
   useEffect(() => {
+    // ESTADO DA PESSOA NO COOKIE (29/09/2026). O servidor só enxerga o cookie lume_uf, e é por ele
+    // que "Deputados estaduais" e "Sua cédula" abrem no estado do perfil. Quem escolheu o estado
+    // antes de o cookie existir (27/09) tinha a UF só no navegador; aqui o cookie é refeito a
+    // partir dela. A UF do PERFIL desce para o navegador (e para o cookie) na sincronização abaixo.
+    const u = ufLocal();
+    if (u && !document.cookie.split('; ').includes(`${COOKIE_UF}=${u}`)) guardarUfCookie(u);
     validarSessao().catch(() => null).finally(() => sincronizarTudo({ forcar: true }));
     const parar = aoMudarSessao((s) => { if (s) sincronizarTudo({ forcar: true }); });
     const aoVoltar = () => { if (document.visibilityState === 'visible') sincronizarTudo(); };
