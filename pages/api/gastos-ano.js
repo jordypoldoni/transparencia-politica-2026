@@ -13,6 +13,7 @@
 // Cache na borda: nota fiscal de ano passado nao muda, e a do ano corrente muda uma vez por dia,
 // quando o coletor roda.
 import { createClient } from '@supabase/supabase-js';
+import { buscarTudo } from '../../src/lib/paginar';
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 const TETO = 4000; // teto de seguranca por parlamentar/ano (o maior real em 2026 tem ~900)
@@ -23,14 +24,20 @@ export default async function handler(req, res) {
     return res.status(400).json({ erro: 'informe id (uuid do parlamentar) e ano (AAAA)' });
   }
   try {
-    const { data, error } = await supabase
-      .from('despesas_parlamentares')
-      .select('categoria_normalizada, tipo_despesa, fornecedor_nome, fornecedor_cnpj_cpf, valor_liquido, data_emissao, id_externo_documento, url_documento, mes, ano')
-      .eq('agente_id', id)
-      .eq('ano', Number(ano))
-      .order('data_emissao', { ascending: false })
-      .limit(TETO);
-    if (error) throw new Error(error.message);
+    // buscarTudo (29/09/2026): o `.limit(4000)` nao passava de 1.000, que e o teto do servidor.
+    // O maior parlamentar tem 3.408 notas no historico; num ano com mais de mil, a lista vinha
+    // cortada sem aviso. Ordem por id alem da data para a paginacao nao repetir nem pular linha.
+    const data = await buscarTudo(
+      () => supabase
+        .from('despesas_parlamentares')
+        .select('categoria_normalizada, tipo_despesa, fornecedor_nome, fornecedor_cnpj_cpf, valor_liquido, data_emissao, id_externo_documento, url_documento, mes, ano')
+        .eq('agente_id', id)
+        .eq('ano', Number(ano))
+        .order('data_emissao', { ascending: false })
+        .order('id', { ascending: true }),
+      `gastos-ano(${id},${ano})`,
+      { teto: TETO },
+    );
     res.setHeader('Cache-Control', 's-maxage=21600, stale-while-revalidate=86400');
     return res.status(200).json({ ano: Number(ano), gastos: data || [] });
   } catch (e) {

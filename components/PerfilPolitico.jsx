@@ -10,6 +10,7 @@ import { casaDoPerfil, hrefPerfil } from '../src/lib/casa';
 import TrajetoriaEleitoral from './TrajetoriaEleitoral';
 import BotaoVoltar from './BotaoVoltar';
 import BotaoFavorito from './BotaoFavorito';
+import NotasDaCategoria from './NotasDaCategoria';
 
 const brl = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v || 0);
 const brlExato = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
@@ -657,25 +658,11 @@ export default function PerfilPolitico({ dados }) {
                         Não foi possível carregar as notas de {anoSel} agora. O total por categoria acima continua valendo.
                       </p>
                     )}
-                    {(notasDoAno || []).filter((g) => g.categoria_normalizada === cat).slice(0, 60).map((it, i) => (
-                      <div key={i} style={{ padding: '10px 0' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px', alignItems: 'flex-start' }}>
-                          <span style={{ color: t.cor.tinta, fontSize: '0.86rem', fontWeight: 600 }}>
-                            {it.data_emissao ? new Date(it.data_emissao).toLocaleDateString('pt-BR') : ''} · {it.fornecedor_nome || '-'}
-                          </span>
-                          <span style={{ display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0 }}>
-                            <strong style={{ fontSize: '0.88rem' }}>{brlExato(it.valor_liquido)}</strong>
-                            {it.url_documento && <a href={it.url_documento} target="_blank" rel="noopener noreferrer" title="Documento oficial na fonte" style={{ textDecoration: 'none' }}>🔗</a>}
-                          </span>
-                        </div>
-                        <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginTop: '3px', fontSize: '0.72rem', color: t.cor.cinza }}>
-                          <span><strong style={{ color: t.cor.tinta }}>Tipo:</strong> {it.tipo_despesa || '-'}</span>
-                          <span><strong style={{ color: t.cor.tinta }}>Período:</strong> {it.mes ? `${String(it.mes).padStart(2, '0')}/${it.ano || anoSel}` : '-'}</span>
-                          {it.id_externo_documento && <span><strong style={{ color: t.cor.tinta }}>Doc:</strong> {String(it.id_externo_documento).split('-')[0]}</span>}
-                          {it.fornecedor_cnpj_cpf && <span><strong style={{ color: t.cor.tinta }}>CNPJ/CPF:</strong> {it.fornecedor_cnpj_cpf}</span>}
-                        </div>
-                      </div>
-                    ))}
+                    {/* Separadas por tipo de despesa, da maior para a menor, sem corte escondido
+                        (29/09/2026): antes eram as 60 primeiras por data, sem aviso. Ver o componente. */}
+                    {notasDoAno && (
+                      <NotasDaCategoria notas={notasDoAno.filter((g) => g.categoria_normalizada === cat)} anoSel={anoSel} temNotaFiscal={temNotaFiscal} />
+                    )}
                   </div>
                 )}
               </div>
