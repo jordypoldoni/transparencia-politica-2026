@@ -10,9 +10,13 @@ export async function carregarParlamentares({ query = {}, req, casaFixa = null }
         // Uma consulta só traz o top 10 de TODAS as casas e TODOS os anos: a view radar_gastos é
         // pequena, e assim o seletor de ano troca no cliente, sem ida ao servidor.
         ServicoAPI.getRadaresPorCasaEAno(10),
+        // Só na página dos estaduais: os eleitos de 2022 dos estados sem cadastro da Assembleia.
+        casaFixa === 'Estaduais' ? ServicoAPI.listarEleitosSemCadastro() : Promise.resolve([]),
     ]);
     const get = (i) => (settled[i].status === 'fulfilled' ? settled[i].value : []);
-    const deputados = get(0);
+    const deputados = casaFixa === 'Estaduais'
+        ? [...get(0), ...get(2)].sort((a, b) => String(a.nome).localeCompare(String(b.nome), 'pt-BR'))
+        : get(0);
     // Falha na consulta e lista legitimamente vazia sao coisas diferentes, e a tela precisa
     // saber qual das duas aconteceu: dizer "0 deputados federais" quando a consulta caiu e
     // afirmar um numero falso.

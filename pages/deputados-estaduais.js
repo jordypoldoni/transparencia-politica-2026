@@ -1,6 +1,6 @@
 import ListaParlamentares from '../components/ListaParlamentares';
 import { carregarParlamentares } from '../src/servicos/carregar_parlamentares';
-import { ASSEMBLEIAS } from '../src/lib/assembleias';
+const UF_VALIDA = /^(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)$/;
 import { COOKIE_UF } from '../src/lib/perfilUsuario';
 
 // Deputados estaduais: UMA pagina, igual a dos federais (29/09/2026, decisao do Jordy). No topo o
@@ -8,7 +8,7 @@ import { COOKIE_UF } from '../src/lib/perfilUsuario';
 // nome ou partido e o campo de estado, que filtram so a lista de parlamentares.
 //
 // ESTADO PADRAO = o do perfil da pessoa (cookie lume_uf, que a sincronizacao do perfil atualiza),
-// se o site tem deputados estaduais daquele estado. Senao, todos os estados. ?uf= na URL vence.
+// ?uf= na URL vence. Sem estado, todos.
 export default function PaginaDeputadosEstaduais(props) {
   return <ListaParlamentares {...props} />;
 }
@@ -16,7 +16,8 @@ export default function PaginaDeputadosEstaduais(props) {
 export async function getServerSideProps({ query, req }) {
   const ufCookie = String(req.cookies?.[COOKIE_UF] || '').toUpperCase();
   const ufDaUrl = String(query.uf || '').toUpperCase();
-  const ufPadrao = ASSEMBLEIAS.some((a) => a.uf === ufCookie) ? ufCookie : '';
-  const uf = ASSEMBLEIAS.some((a) => a.uf === ufDaUrl) ? ufDaUrl : ufPadrao;
+  // Desde 29/09 a lista tem os 27 estados (os sem cadastro vêm com os eleitos de 2022).
+  const ufPadrao = UF_VALIDA.test(ufCookie) ? ufCookie : '';
+  const uf = UF_VALIDA.test(ufDaUrl) ? ufDaUrl : ufPadrao;
   return { props: await carregarParlamentares({ query: { ...query, uf }, req, casaFixa: 'Estaduais' }) };
 }

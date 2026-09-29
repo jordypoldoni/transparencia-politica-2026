@@ -35,6 +35,9 @@ const realceNoEscuro = (e, ligar) => {
   e.currentTarget.style.transform = ligar ? 'translateY(-1px)' : 'none';
 };
 
+// Foto do eleito de 2022 no próprio TSE, montada pelo id (o payload não traz o endereço).
+const fotoEleito2022 = (d) => `https://divulgacandcontas.tse.jus.br/divulga/rest/arquivo/img/2040602022/${String(d.id).replace(/^tse-/, '')}/${d.uf}`;
+
 const brl = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v || 0);
 
 
@@ -64,7 +67,8 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
   // Assembleias numa lista só, igual à dos federais. O ranking é do Brasil inteiro e o campo de
   // estado, abaixo do ranking, filtra só a lista de parlamentares.
   const ehEstaduais = casa === 'Estaduais';
-  const daCasa = (d) => (ehEstaduais ? String(d.casa || '').startsWith('Assembleia') : d.casa === casa);
+  // `soEleito`: eleitos de 2022 nos estados sem cadastro da Assembleia (vêm do TSE, sem perfil).
+  const daCasa = (d) => (ehEstaduais ? (String(d.casa || '').startsWith('Assembleia') || d.soEleito) : d.casa === casa);
   // As Assembleias cuja ressalva aparece na tela: todas na página única, uma na lista de um estado.
   const assembleiasDaTela = ehEstaduais ? ASSEMBLEIAS : (assembleia ? [assembleia] : []);
   // Ranking de gastos da casa ativa (troca junto com as abas e com a rota Senadores).
@@ -513,6 +517,17 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
       </div>
 
       <div id="grade-parlamentares" style={{ scrollMarginTop: '96px' }}>
+      {/* POR QUE ALGUNS CARTÕES NÃO ABREM (29/09/2026, decisão do Jordy: sem clique, com o motivo
+          na tela). Aparece só quando a lista mostrada tem eleitos de 2022. */}
+      {filtrados.some((d) => d.soEleito) && (
+        <p style={{ margin: '0 0 16px', padding: '12px 16px', borderRadius: t.raio.md, background: t.cor.papelQuente, color: t.cor.tinta, fontSize: '0.85rem', lineHeight: 1.55 }}>
+          <strong>Por que alguns cartões não abrem.</strong> Nos estados em que o site ainda não tem o cadastro
+          da Assembleia ({`todos menos ${ASSEMBLEIAS.map((a) => a.uf).join(' e ')}`}), a lista mostra quem foi
+          eleito em 2022, segundo o TSE. Esses cartões não abrem uma ficha porque ainda não coletamos os
+          gastos nem os votos dessas Assembleias. Quem foi eleito pode não estar no cargo hoje (suplentes que
+          assumiram não aparecem), e o partido mostrado é o da eleição.
+        </p>
+      )}
       {filtrados.length > 0 ? (
         <>
         {/* .grade-parl (CSS em _app.js): 5 colunas no desktop, caindo para 4, 3 e 2 conforme
@@ -521,7 +536,19 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
         <div className="grade-parl">
           {/* CORAÇÃO (26/09/2026): o link virou camada por trás do conteúdo, como no CardCandidato,
               porque botão dentro de link é HTML inválido e o clique no coração abriria o perfil. */}
-          {daPagina.map((d) => (
+          {daPagina.map((d) => d.soEleito ? (
+            // Eleito de 2022 sem cadastro da Assembleia: cartão SEM clique, sem coração e sem
+            // seta (não há perfil para abrir nem para guardar). O motivo está no aviso acima.
+            <div key={d.id} title="Eleito em 2022. Ainda sem ficha no site: veja o aviso acima da lista."
+              style={{ background: t.cor.papelCartao, borderRadius: t.raio.md, padding: '11px 12px', display: 'flex', gap: '8px', alignItems: 'center', height: '100%', boxShadow: t.sombra.clicavel, cursor: 'default' }}>
+              <Avatar nome={d.nome} foto={fotoEleito2022(d)} size={40} />
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <p style={{ margin: 0, fontWeight: 700, fontSize: '0.88rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.nome}</p>
+                <p style={{ margin: '2px 0 0', color: t.cor.cinza, fontSize: '0.76rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.partido} · {d.uf || '-'}</p>
+                <p style={{ margin: '2px 0 0', color: t.cor.cinza, fontSize: '0.72rem' }}>{d.cargo === 'Deputado Distrital' ? 'Eleito distrital em 2022' : 'Eleito em 2022'}</p>
+              </div>
+            </div>
+          ) : (
             <div key={d.id} style={{ position: 'relative', height: '100%' }}
               onMouseOver={(e) => { const c = e.currentTarget.firstChild; c.style.boxShadow = t.sombra.hover; c.style.transform = 'translateY(-2px)'; }}
               onMouseOut={(e) => { const c = e.currentTarget.firstChild; c.style.boxShadow = t.sombra.clicavel; c.style.transform = 'none'; }}>

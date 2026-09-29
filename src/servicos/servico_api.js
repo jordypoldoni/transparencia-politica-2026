@@ -5,6 +5,7 @@ import { agruparPorMateria } from '../lib/votacao.js';
 import { casaDoPerfil } from '../lib/casa.js';
 import { todosCandidatosEstaduais } from '../lib/candidatosEstaduais.js';
 import { mandatoEstadual } from '../lib/mandatoEstadual.js';
+import { ASSEMBLEIAS } from '../lib/assembleias.js';
 
 const ServicoAPI = {
     // Busca o ranking de maiores gastadores
@@ -341,6 +342,40 @@ const ServicoAPI = {
                 cargo,
             };
         });
+    },
+
+    // ELEITOS EM 2022 NOS ESTADOS SEM CADASTRO DA ASSEMBLEIA (29/09/2026). Vêm da tabela
+    // deputados_estaduais_eleitos (TSE). RS e SP ficam de fora: lá o site tem o cadastro de quem
+    // está em exercício, com gastos e votos. No mesmo formato de listarDeputados, com `soEleito`
+    // para a tela saber que NÃO há perfil (cartão sem clique, com a explicação na tela).
+    listarEleitosSemCadastro: async () => {
+        const comCadastro = ASSEMBLEIAS.map((a) => a.uf);
+        const linhas = await buscarTudo(
+            () => supabase.from('deputados_estaduais_eleitos')
+                .select('sq_candidato, nome_urna, partido_sigla, uf, cargo')
+                .eq('ano_eleicao', 2022)
+                .not('uf', 'in', `(${comCadastro.join(',')})`)
+                .order('sq_candidato', { ascending: true }),
+            'listarEleitosSemCadastro',
+        );
+        // O TSE grava o nome de urna em maiúsculas ("DELEGADA NADINE"); na lista, que mistura com
+        // os cadastros das Assembleias ("Adão Pretto Filho"), vai com iniciais maiúsculas.
+        const MINUSCULAS = new Set(['de', 'da', 'do', 'dos', 'das', 'e']);
+        const nomeProprio = (s) => String(s || '').trim().toLowerCase().split(/\s+/)
+            .map((p, i) => (i > 0 && MINUSCULAS.has(p) ? p : p.charAt(0).toUpperCase() + p.slice(1))).join(' ');
+        return linhas.map((e) => ({
+            id: `tse-${e.sq_candidato}`,
+            slug: null,
+            nome: nomeProprio(e.nome_urna),
+            partido: e.partido_sigla || 'S/P',
+            uf: e.uf || '',
+            // Sem foto_url no payload: são ~910 endereços longos que a tela monta sozinha a partir
+            // do id (fotoEleito2022 em ListaParlamentares). Economiza ~75 kB por visita.
+            foto_url: '',
+            casa: 'Eleitos 2022',
+            cargo: e.cargo,
+            soEleito: true,
+        }));
     },
 
     // Votações nominais mais recentes (deduplicadas) para a home
