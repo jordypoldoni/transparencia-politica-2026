@@ -49,8 +49,10 @@ const navItens = [
     filhos: [
       // 29/09/2026 (decisão do Jordy): federais e estaduais viram páginas separadas. Os
       // estaduais eram abas dentro de /deputados, ao lado dos federais.
-      { href: '/deputados', rotulo: 'Deputados federais', nota: 'os 513 da Câmara' },
-      { href: '/deputados-estaduais', rotulo: 'Deputados estaduais', nota: 'as Assembleias dos estados' },
+      // `curto`: nome no cabeçalho do CELULAR, ao lado da pílula da conta. Medido em 29/09 a
+      // 360px: logado, "Deputados estaduais" (151px) virava "Deputados es…".
+      { href: '/deputados', rotulo: 'Deputados federais', curto: 'Dep. federais', nota: 'os 513 da Câmara' },
+      { href: '/deputados-estaduais', rotulo: 'Deputados estaduais', curto: 'Dep. estaduais', nota: 'as Assembleias dos estados' },
       { href: '/senadores', rotulo: 'Senadores', nota: 'os 81 em exercício' },
     ],
   },
@@ -73,7 +75,7 @@ function ehAtivo(href, pathname) {
   // vivia em /deputados?casa=senado, e esta funcao tinha de deduzir a casa pela query e,
   // dentro de um perfil, pela casa do proprio parlamentar.
   if (hp === '/senadores') return pathname === '/senadores' || pathname.startsWith('/senador/');
-  // /deputados/sp e /deputados/rs sao as listas ESTADUAIS. O perfil (/deputado/) serve as duas
+  // /deputados/sp e /deputados/rs (enderecos antigos) redirecionam para os ESTADUAIS. O perfil (/deputado/) serve as duas
   // casas; fica com os federais, que sao a maioria.
   if (hp === '/deputados') return pathname === '/deputados' || pathname.startsWith('/deputado/');
   if (hp === '/deputados-estaduais') return pathname === '/deputados-estaduais' || pathname.startsWith('/deputados/');
@@ -92,7 +94,7 @@ const FORA_DO_MENU = [
 ];
 function nomeDaPagina(pathname) {
   for (const n of navItens) {
-    if (n.filhos) { const f = n.filhos.find((x) => ehAtivo(x.href, pathname)); if (f) return f.rotulo; }
+    if (n.filhos) { const f = n.filhos.find((x) => ehAtivo(x.href, pathname)); if (f) return f.curto || f.rotulo; }
     else if (ehAtivo(n.href, pathname)) return n.rotulo;
   }
   const extra = FORA_DO_MENU.find(([p]) => (p.endsWith('/') ? pathname.startsWith(p) : pathname === p));

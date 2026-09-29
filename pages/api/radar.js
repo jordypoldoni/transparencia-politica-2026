@@ -3,7 +3,7 @@ import ServicoAPI from '../../src/servicos/servico_api';
 // Fatia seguinte do ranking de gastos, para o botao "ver mais 10" em /deputados e /senadores.
 // Os 10 primeiros ja vem no payload da pagina; daqui em diante e sob demanda, pelo mesmo
 // motivo das proposicoes: guardar tudo no payload penaliza quem nunca clica.
-const CASAS = ['Câmara', 'Senado', 'Assembleia (SP)', 'Assembleia (RS)'];
+const CASAS = ['Câmara', 'Senado', 'Assembleia (SP)', 'Assembleia (RS)', 'Estaduais']; // 'Estaduais' = todas as Assembleias (29/09/2026)
 const LIMITE_MAX = 50;
 
 export default async function handler(req, res) {

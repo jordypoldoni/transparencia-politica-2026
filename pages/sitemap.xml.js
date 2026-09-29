@@ -1,6 +1,5 @@
 import ServicoAPI from '../src/servicos/servico_api';
 import { hrefPerfil, CASAS_VOTACAO } from '../src/lib/casa';
-import { ASSEMBLEIAS } from '../src/lib/assembleias';
 
 // Páginas fixas do site. Até 12/09/2026 faltavam aqui /gastos-publicos, /candidatos-2026
 // e /presidenciaveis, que existem e são públicas.
@@ -13,9 +12,9 @@ const escapar = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').re
 function gerarXml(base, perfis) {
   const caminhos = [
     ...FIXAS,
-    // Uma lista por assembleia. Enquanto as abas dividiam a URL /deputados, estas telas
-    // nao existiam para o Google.
-    ...ASSEMBLEIAS.map((a) => `/deputados/${a.uf.toLowerCase()}`),
+    // Deputados estaduais: uma pagina so desde 29/09/2026 (antes uma por assembleia, em
+    // /deputados/sp e /deputados/rs, que agora redirecionam para ela).
+    '/deputados-estaduais',
     // Uma lista de votacoes por casa, desde 19/09/2026. Antes /votacoes era uma lista unica
     // com as tres casas misturadas; agora e um painel, e a lista de cada casa e uma rota
     // propria. Sem estas linhas, as tres telas novas nao existiriam para o Google, que e

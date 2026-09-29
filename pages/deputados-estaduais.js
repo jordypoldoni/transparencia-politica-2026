@@ -1,22 +1,22 @@
-import { ASSEMBLEIAS, caminhoDaCasa } from '../src/lib/assembleias';
+import ListaParlamentares from '../components/ListaParlamentares';
+import { carregarParlamentares } from '../src/servicos/carregar_parlamentares';
+import { ASSEMBLEIAS } from '../src/lib/assembleias';
 import { COOKIE_UF } from '../src/lib/perfilUsuario';
 
-// Deputados estaduais: entrada do menu Parlamentares (29/09/2026, decisão do Jordy: federais,
-// estaduais e senadores em páginas separadas).
+// Deputados estaduais: UMA pagina, igual a dos federais (29/09/2026, decisao do Jordy). No topo o
+// ranking de gastos do pais inteiro (todas as assembleias que o site tem); abaixo dele a busca por
+// nome ou partido e o campo de estado, que filtram so a lista de parlamentares.
 //
-// POR ENQUANTO SÓ REDIRECIONA para a lista de um estado com Assembleia coletada (SP e RS): a
-// página que reúne os 27 estados, com os eleitos de 2022 da tabela deputados_estaduais_eleitos,
-// é o passo seguinte. Redirecionamento temporário (302) de propósito: quando a página existir,
-// este endereço passa a ser ela, e o Google não pode ter guardado o desvio como definitivo.
-//
-// Estado da pessoa (cookie lume_uf, gravado quando ela escolhe um estado no site) manda, se for
-// um dos coletados; senão, o primeiro da lista.
-export default function DeputadosEstaduais() {
-  return null;
+// ESTADO PADRAO = o do perfil da pessoa (cookie lume_uf, que a sincronizacao do perfil atualiza),
+// se o site tem deputados estaduais daquele estado. Senao, todos os estados. ?uf= na URL vence.
+export default function PaginaDeputadosEstaduais(props) {
+  return <ListaParlamentares {...props} />;
 }
 
-export async function getServerSideProps({ req }) {
+export async function getServerSideProps({ query, req }) {
   const ufCookie = String(req.cookies?.[COOKIE_UF] || '').toUpperCase();
-  const casa = ASSEMBLEIAS.find((a) => a.uf === ufCookie) || ASSEMBLEIAS[0];
-  return { redirect: { destination: caminhoDaCasa(casa.casa), permanent: false } };
+  const ufDaUrl = String(query.uf || '').toUpperCase();
+  const ufPadrao = ASSEMBLEIAS.some((a) => a.uf === ufCookie) ? ufCookie : '';
+  const uf = ASSEMBLEIAS.some((a) => a.uf === ufDaUrl) ? ufDaUrl : ufPadrao;
+  return { props: await carregarParlamentares({ query: { ...query, uf }, req, casaFixa: 'Estaduais' }) };
 }

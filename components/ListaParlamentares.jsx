@@ -13,8 +13,6 @@ import Link from 'next/link';
 import Avatar from './Avatar';
 import BotaoFavorito from './BotaoFavorito';
 import CampoSelect from './CampoSelect';
-import { useRouter } from 'next/router';
-import { Pino } from './icones';
 import CampoBusca from './CampoBusca';
 import { NOMES_UF } from '../src/lib/cotas';
 import { t } from '../src/estilo/tokens';
@@ -57,12 +55,18 @@ function anoPadrao(anos, totais) {
 export default function ListaParlamentares({ deputados, qInicial, ufInicial, casaInicial, radares = {}, canonical = null, falhaNaLista = false }) {
   const [busca, setBusca] = useState(qInicial || '');
   const [uf, setUf] = useState(ufInicial || '');
-  const router = useRouter();
   const [casa, setCasa] = useState(casaInicial || 'Câmara');
   // Sincroniza ao navegar entre Deputados/Senadores (mesma rota, props mudam no cliente).
   useEffect(() => { setCasa(casaInicial || 'Câmara'); setUf(ufInicial || ''); }, [casaInicial, ufInicial]);
   // "Senadores" é uma página própria; "Deputados" agrupa federais + estaduais.
-  const assembleia = assembleiaDe(casa); // null quando a aba é federal ou Senado
+  const assembleia = assembleiaDe(casa); // null quando a aba é federal, Senado ou Estaduais
+  // PÁGINA ÚNICA DOS ESTADUAIS (29/09/2026, decisão do Jordy): 'Estaduais' junta todas as
+  // Assembleias numa lista só, igual à dos federais. O ranking é do Brasil inteiro e o campo de
+  // estado, abaixo do ranking, filtra só a lista de parlamentares.
+  const ehEstaduais = casa === 'Estaduais';
+  const daCasa = (d) => (ehEstaduais ? String(d.casa || '').startsWith('Assembleia') : d.casa === casa);
+  // As Assembleias cuja ressalva aparece na tela: todas na página única, uma na lista de um estado.
+  const assembleiasDaTela = ehEstaduais ? ASSEMBLEIAS : (assembleia ? [assembleia] : []);
   // Ranking de gastos da casa ativa (troca junto com as abas e com a rota Senadores).
   const radarCasa = radares[casa] || { anos: [], porAno: {}, porAnoMenores: {}, totais: {} };
   const [ano, setAno] = useState(null);
@@ -153,14 +157,14 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
   const mostraRanking = (!assembleia || assembleia.gastos) && radarCasa.anos.length > 0;
 
   const ufs = useMemo(
-    () => Array.from(new Set(deputados.filter((d) => d.casa === casa).map((d) => d.uf).filter(Boolean))).sort(),
+    () => Array.from(new Set(deputados.filter(daCasa).map((d) => d.uf).filter(Boolean))).sort(),
     [deputados, casa]
   );
 
   const filtrados = useMemo(() => {
     const termo = busca.trim().toLowerCase();
     return deputados.filter((d) => {
-      const okCasa = d.casa === casa;
+      const okCasa = daCasa(d);
       const okNome = !termo || d.nome.toLowerCase().includes(termo) || d.partido.toLowerCase().includes(termo);
       const okUf = !uf || d.uf === uf;
       return okCasa && okNome && okUf;
@@ -212,10 +216,12 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
   // Estas duas telas nao tinham <title> nem descricao nenhuma ate 12/09/2026: o Google
   // indexava a lista principal do site sem titulo.
   const tituloPagina = casa === 'Senado' ? 'Senadores: quanto cada um gastou e como votou | Lume'
+    : ehEstaduais ? 'Deputados estaduais: quanto cada um gastou e como votou | Lume'
     : assembleia ? `Deputados estaduais ${assembleia.nomeCom}: gastos e votos | Lume`
     : 'Deputados federais: quanto cada um gastou e como votou | Lume';
   const descPagina = casa === 'Senado'
     ? 'Os 81 senadores e os suplentes em exercicio: quanto cada um usou da cota do Senado, como votou e a fidelidade ao partido. Fonte oficial do Senado Federal.'
+    : ehEstaduais ? `Os deputados estaduais: quanto cada um usou da verba de gabinete e o que cada assembleia publica sobre o mandato. Fontes: ${ASSEMBLEIAS.map((a) => a.sigla).join(' e ')}.`
     : assembleia ? `Os deputados estaduais ${assembleia.nomeCom}: quanto cada um usou da verba de gabinete e o que a assembleia publica sobre o mandato. Fonte: ${assembleia.sigla}.`
     : 'Os 513 deputados federais: quanto cada um usou da cota parlamentar, como votou e a fidelidade ao partido. Fonte oficial da Camara dos Deputados.';
 
@@ -231,35 +237,17 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
       <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.8rem,4vw,2.6rem)', margin: '0 0 16px' }}>
         {casa === 'Senado'
           ? 'Senadores'
+          : ehEstaduais
+          ? 'Deputados Estaduais'
           : assembleia
           ? `Deputados Estaduais ${assembleia.nomeCom}`
           : 'Deputados Federais'}
       </h1>
 
-      {/* Alternância só entre deputados (federais x estaduais). Senadores é página própria.
-          Sao LINKS, nao botoes: cada aba e uma rota de verdade desde 12/09/2026, entao o
-          endereco na barra diz qual lista esta aberta, o link pode ser compartilhado, e o
-          Google indexa as tres. O Next pre-carrega ao passar o mouse, entao a troca segue
-          rapida. Ver src/lib/assembleias.js. */}
-      {/* ESTADO NO TOPO (29/09/2026, pedido do Jordy): nas páginas estaduais, o campo de estado
-          vem logo abaixo do título e troca a página inteira (ranking e lista), porque cada estado
-          é uma rota (/deputados/sp, /deputados/rs). Mesmo campo "Seu estado" da home. A busca
-          por nome ou partido continua abaixo do ranking e filtra só a lista.
-          Substituiu as pílulas de estado (e antes delas a pílula "Federais", que saiu quando
-          federais e estaduais viraram páginas separadas). Hoje só aparecem os estados com
-          Assembleia coletada; os outros 25 entram no passo seguinte. */}
-      {assembleia && (
-        <div style={{ maxWidth: '420px', marginBottom: '20px' }}>
-          <CampoSelect
-            opcoes={ASSEMBLEIAS.map((a) => ({ valor: a.uf, rotulo: `${a.uf} · ${NOMES_UF[a.uf] || a.uf}`, busca: `${a.uf} ${NOMES_UF[a.uf] || ''}` }))}
-            valor={assembleia.uf}
-            placeholder="Escolha o estado"
-            aoLabel="Estado dos deputados estaduais"
-            icone={<Pino />}
-            aoSelecionar={(novaUf) => { if (novaUf && novaUf !== assembleia.uf) router.push(`/deputados/${novaUf.toLowerCase()}`); }}
-          />
-        </div>
-      )}
+      {/* 29/09/2026: sem alternância no topo. Federais, estaduais e senadores são páginas
+          próprias no menu Parlamentares, e nos estaduais o estado é escolhido abaixo do ranking,
+          no mesmo campo dos federais (o campo de estado no topo durou um deploy: o Jordy preferiu
+          o ranking do país inteiro, igual ao dos federais). */}
 
       {/* A pagina carrega duas consultas em paralelo. Quando a da lista falha, dizer
           "0 deputados federais" e afirmar um numero falso: a verdade e que nao carregou. */}
@@ -273,10 +261,14 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
         {filtrados.length}{' '}
         {casa === 'Senado'
           ? 'senadores'
+          : ehEstaduais
+          ? 'deputados estaduais'
           : assembleia
           ? `deputados estaduais de ${assembleia.uf}`
           : 'deputados federais'}
-        . Clique para ver {assembleia
+        . Clique para ver {ehEstaduais
+          ? 'gastos de gabinete e o que cada assembleia publica'
+          : assembleia
           ? (assembleia.votos ? 'como cada um votou' : 'os gastos de gabinete')
           : 'gastos, votos e coerência'}.
       </p>
@@ -286,8 +278,8 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
           e padding proprio: o padding empurrava o texto para dentro e desalinhava com a linha
           de cima, e o fundo dava a essa ressalva mais peso do que a propria descricao da
           pagina. Agora e texto corrido, na mesma margem do paragrafo anterior. */}
-      {assembleia && (
-        <p className="nota-casa">
+      {assembleiasDaTela.map((assembleia) => (
+        <p key={assembleia.uf} className="nota-casa">
           <strong>{NOMES_UF[assembleia.uf] || assembleia.uf} ({assembleia.sigla}).</strong>{' '}
           {/* o nome do estado aqui abre a frase, então vai sem preposição */}
           {assembleia.votos
@@ -300,7 +292,7 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
             : 'Os gastos de gabinete estão no ar, mas a assembleia publica apenas o total de cada mês por categoria: dá para ver quanto e em quê, não para quem o dinheiro foi.'}
           {' '}Fonte: {assembleia.sigla}.
         </p>
-      )}
+      ))}
 
       {/* Ranking de gastos — quem mais usou a verba (casa ativa) */}
       {mostraRanking && (
@@ -328,13 +320,20 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
                 {(() => {
                   const verbo = sentido === 'menores' ? 'menos usaram' : 'mais usaram';
                   if (casa === 'Senado') return `Senadores que ${verbo} a cota (CEAPS) em ${anoAtivo}.`;
+                  if (ehEstaduais) {
+                    // Só os estados que TÊM gasto naquele ano (o RS só tem 2026): dizer "SP e RS"
+                    // num ano em que só SP publicou seria afirmar um dado que não está ali.
+                    const ufsAno = [...(radarCasa.ufsPorAno?.[anoAtivo] || [])].sort();
+                    const onde = ufsAno.length === 1 ? `só de ${ufsAno[0]}, a única assembleia com gasto publicado nesse ano` : `das assembleias que o site já tem (${ufsAno.join(' e ')})`;
+                    return `Deputados estaduais que ${verbo} a verba de gabinete em ${anoAtivo}, ${onde}. Cada assembleia tem regras e valores próprios de verba.`;
+                  }
                   if (assembleia) return `Deputados estaduais de ${assembleia.uf} que ${verbo} a verba de gabinete em ${anoAtivo}.`;
                   return `Deputados federais que ${verbo} a cota parlamentar em ${anoAtivo}.`;
                 })()}{' '}
                 {assembleia && !assembleia.gastoDetalhado
                   ? 'Toque para ver em quê: o valor é o somado das categorias que a assembleia publica a cada mês, sem detalhe de nota.'
                   : <>Toque para ver <em>em quê</em>.</>}{' '}
-                Fonte: {casa === 'Senado' ? 'Senado Federal' : assembleia ? assembleia.sigla : 'Câmara dos Deputados'}.
+                Fonte: {casa === 'Senado' ? 'Senado Federal' : ehEstaduais ? ASSEMBLEIAS.map((a) => a.sigla).join(' e ') : assembleia ? assembleia.sigla : 'Câmara dos Deputados'}.
               </p>
             </div>
             {radarCasa.totais[anoAtivo] > 0 && (
@@ -423,7 +422,7 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
                     <span className="radar-nome" style={{ flex: 1, minWidth: 0 }}>
                       <span style={{ display: 'block', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.nome_urna}</span>
                       <span style={{ fontSize: '0.82rem', opacity: 0.75 }}>
-                        {p.partido_atual} · {p.uf_sede} · em {p.n_notas} {assembleia && !assembleia.gastoDetalhado ? 'lançamentos' : 'notas'}
+                        {p.partido_atual} · {p.uf_sede} · em {p.n_notas} {(assembleiaDe(p.casa) || assembleia) && !(assembleiaDe(p.casa) || assembleia).gastoDetalhado ? 'lançamentos' : 'notas'}
                         {/* Meses com lançamento distingue quem gastou pouco de quem esteve pouco
                             tempo em exercício. Só aparece na ponta de baixo, que é onde a dúvida
                             existe; no topo seria ruído. */}
@@ -499,7 +498,7 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
         <div style={{ flex: 1, minWidth: '240px' }}>
           <CampoBusca valor={busca} aoMudar={setBusca} placeholder="Buscar por nome ou partido…" aoLabel="Buscar parlamentar" />
         </div>
-        {/* Nas abas estaduais só existe uma UF, então o seletor some sozinho. */}
+        {/* Numa lista de um estado só, o seletor some sozinho. Nos estaduais ele traz os estados com assembleia. */}
         {ufs.length > 1 && (
           <div style={{ flex: '0 1 240px', minWidth: '180px' }}>
             <CampoSelect

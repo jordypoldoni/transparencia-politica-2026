@@ -20,8 +20,11 @@ export const assembleiaPorUf = (uf) => ASSEMBLEIAS.find((a) => a.uf === String(u
 // telas (federais, SP, RS) dividiam a URL /deputados, entao nao dava para mandar o link dos
 // estaduais do RS para ninguem, recarregar voltava para federais, e o Google so enxergava a
 // aba federal - as outras duas nao existiam para ele.
+// Desde 29/09/2026 os estaduais sao UMA pagina (/deputados-estaduais), com o ranking do pais e
+// o estado escolhido abaixo dele; a lista de uma assembleia e essa pagina com ?uf=.
 export function caminhoDaCasa(casa) {
   if (casa === 'Senado') return '/senadores';
+  if (casa === 'Estaduais') return '/deputados-estaduais';
   const a = assembleiaDe(casa);
-  return a ? `/deputados/${a.uf.toLowerCase()}` : '/deputados';
+  return a ? `/deputados-estaduais?uf=${a.uf}` : '/deputados';
 }
