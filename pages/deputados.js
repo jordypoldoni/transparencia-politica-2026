@@ -12,8 +12,7 @@ export async function getServerSideProps({ query, req }) {
   const c = String(query.casa || '').toLowerCase();
   if (c.includes('sen')) return { redirect: { destination: '/senadores', permanent: true } };
   if (c.includes('alergs') || c === 'rs') return { redirect: { destination: '/deputados/rs', permanent: true } };
-  if (c.includes('alesp') || c === 'sp' || c.includes('estad') || c.includes('assembleia')) {
-    return { redirect: { destination: '/deputados/sp', permanent: true } };
-  }
+  if (c.includes('alesp') || c === 'sp') return { redirect: { destination: '/deputados/sp', permanent: true } };
+  if (c.includes('estad') || c.includes('assembleia')) return { redirect: { destination: '/deputados-estaduais', permanent: false } };
   return { props: await carregarParlamentares({ query, req }) };
 }

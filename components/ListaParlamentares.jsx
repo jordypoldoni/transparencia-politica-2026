@@ -60,7 +60,6 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
   // Sincroniza ao navegar entre Deputados/Senadores (mesma rota, props mudam no cliente).
   useEffect(() => { setCasa(casaInicial || 'Câmara'); setUf(ufInicial || ''); }, [casaInicial, ufInicial]);
   // "Senadores" é uma página própria; "Deputados" agrupa federais + estaduais.
-  const grupo = casa === 'Senado' ? 'senador' : 'deputado';
   const assembleia = assembleiaDe(casa); // null quando a aba é federal ou Senado
   // Ranking de gastos da casa ativa (troca junto com as abas e com a rota Senadores).
   const radarCasa = radares[casa] || { anos: [], porAno: {}, porAnoMenores: {}, totais: {} };
@@ -249,23 +248,22 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
           endereco na barra diz qual lista esta aberta, o link pode ser compartilhado, e o
           Google indexa as tres. O Next pre-carrega ao passar o mouse, entao a troca segue
           rapida. Ver src/lib/assembleias.js. */}
-      {/* Celular (27/09/2026): campo de escolha no lugar das pílulas (Federais, Estaduais · SP, Estaduais · RS). */}
-      {grupo === 'deputado' && (
-        <nav aria-label="Tipo de deputado" className="so-celular" style={{ marginBottom: '16px' }}>
-          <EscolhaCompacta rotulo="Tipo de deputado" valor={casa} opcoes={[
-            { valor: 'Câmara', rotulo: `Federais (${totalCasa('Câmara')})`, href: '/deputados' },
-            ...ASSEMBLEIAS.filter((a) => totalCasa(a.casa) > 0).map((a) => ({ valor: a.casa, rotulo: `Estaduais · ${a.uf} (${totalCasa(a.casa)})`, href: caminhoDaCasa(a.casa) })),
-          ]} />
+      {/* 29/09/2026 (decisão do Jordy): federais, estaduais e senadores são três páginas no menu
+          Parlamentares. A pílula "Federais" saiu daqui; nas páginas estaduais ficam só os
+          estados, e a página federal não tem alternância nenhuma.
+          Celular (27/09/2026): campo de escolha no lugar das pílulas. */}
+      {assembleia && (
+        <nav aria-label="Estado" className="so-celular" style={{ marginBottom: '16px' }}>
+          <EscolhaCompacta rotulo="Estado" valor={casa} opcoes={
+            ASSEMBLEIAS.filter((a) => totalCasa(a.casa) > 0).map((a) => ({ valor: a.casa, rotulo: `${NOMES_UF[a.uf] || a.uf} (${totalCasa(a.casa)})`, href: caminhoDaCasa(a.casa) }))
+          } />
         </nav>
       )}
-      {grupo === 'deputado' && (
-        <div className="so-computador" style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }} role="tablist" aria-label="Tipo de deputado">
-          <Link href="/deputados" style={{ ...pilulaCasa(casa === 'Câmara'), textDecoration: 'none', display: 'inline-block' }} role="tab" aria-selected={casa === 'Câmara'}>
-            Federais ({totalCasa('Câmara')})
-          </Link>
+      {assembleia && (
+        <div className="so-computador" style={{ display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }} role="tablist" aria-label="Estado">
           {ASSEMBLEIAS.filter((a) => totalCasa(a.casa) > 0).map((a) => (
             <Link key={a.casa} href={caminhoDaCasa(a.casa)} style={{ ...pilulaCasa(casa === a.casa), textDecoration: 'none', display: 'inline-block' }} role="tab" aria-selected={casa === a.casa}>
-              Estaduais · {a.uf} ({totalCasa(a.casa)})
+              {NOMES_UF[a.uf] || a.uf} ({totalCasa(a.casa)})
             </Link>
           ))}
         </div>
