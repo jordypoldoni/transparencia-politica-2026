@@ -527,20 +527,13 @@ const ServicoAPI = {
         // a regua que falta para julgar se um valor e alto ou baixo, e o site nao precisa
         // opinar. O custo e zero: as ~1.560 linhas ja foram todas baixadas aqui.
         const fora = {};
-        // 'Estaduais' (29/09/2026): balde que junta todas as Assembleias, para a página única de
-        // deputados estaduais ter o ranking do país, como a dos federais. As linhas já vêm
-        // ordenadas pelo total, então o balde junto sai ordenado sem conta extra.
-        const baldesDa = (casa) => (String(casa).startsWith('Assembleia') ? [casa, 'Estaduais'] : [casa]);
+        // (29 a 30/09/2026 existiu aqui um balde 'Estaduais' juntando as assembleias. Saiu: o
+        // ranking dos estaduais passou a ser de um estado por vez, ver ListaParlamentares.)
         for (const linha of todas) {
             if (!linha.casa || !linha.ano) continue;
-            for (const chave of baldesDa(linha.casa)) {
-            fora[chave] = fora[chave] || { anos: [], porAno: {}, porAnoMenores: {}, totais: {}, ufsPorAno: {} };
-            const balde = fora[chave];
-            // Que estados entram no ranking de cada ano. Só faz diferença no balde 'Estaduais':
-            // o RS só tem 2026, então em 2025 e 2024 o ranking "dos estaduais" é só de SP, e a
-            // tela precisa dizer isso em vez de "SP e RS".
-            balde.ufsPorAno[linha.ano] = balde.ufsPorAno[linha.ano] || [];
-            if (linha.uf_sede && !balde.ufsPorAno[linha.ano].includes(linha.uf_sede)) balde.ufsPorAno[linha.ano].push(linha.uf_sede);
+            {
+            fora[linha.casa] = fora[linha.casa] || { anos: [], porAno: {}, porAnoMenores: {}, totais: {} };
+            const balde = fora[linha.casa];
             balde.porAno[linha.ano] = balde.porAno[linha.ano] || [];
             balde.porAnoMenores[linha.ano] = balde.porAnoMenores[linha.ano] || [];
             balde.totais[linha.ano] = (balde.totais[linha.ano] || 0) + 1;
@@ -573,8 +566,7 @@ const ServicoAPI = {
         const base = supabase
             .from('radar_gastos')
             .select('id, slug, nome_urna, partido_atual, uf_sede, foto_url, casa, ano, total, n_notas, meses_com_gasto, situacao_atual, condicao_eleitoral');
-        // 'Estaduais' = todas as Assembleias juntas (mesmo balde do getRadaresPorCasaEAno).
-        const { data, error } = await (casa === 'Estaduais' ? base.like('casa', 'Assembleia%') : base.eq('casa', casa))
+        const { data, error } = await base.eq('casa', casa)
             .eq('ano', ano)
             .order('total', { ascending: asc })
             .range(offset, offset + limite - 1);

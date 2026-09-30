@@ -8,22 +8,14 @@ import ResumoMeuVoto from '../components/ResumoMeuVoto';
 import NavPraVoce from '../components/NavPraVoce';
 import { t } from '../src/estilo/tokens';
 import { NOMES_UF } from '../src/lib/cotas';
+import { ARTIGO_UF, nomeDe, emUf, deUf, paraUf } from '../src/lib/ufs';
 import { definirUf, ufLocal, EVENTO_UF, guardarUfCookie, COOKIE_UF, lerRespostasLocais, EVENTO_RESPOSTAS } from '../src/lib/perfilUsuario';
 import { PERGUNTAS_AFINIDADE } from '../src/lib/perguntasAfinidade';
 import BotaoCompartilhar from '../components/BotaoCompartilhar';
 
 const UFS = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
 
-// Preposição certa para cada estado (26/09/2026): "no Rio Grande do Sul", "na Bahia",
-// "em São Paulo". O texto antigo dizia "no São Paulo" e "do Minas Gerais".
-const ARTIGO_UF = {
-  AC: 'o', AP: 'o', AM: 'o', CE: 'o', DF: 'o', ES: 'o', MA: 'o', MT: 'o', MS: 'o', PA: 'o', PR: 'o', PI: 'o',
-  RJ: 'o', RN: 'o', RS: 'o', TO: 'o', BA: 'a', PB: 'a',
-};
-const nomeDe = (uf) => NOMES_UF[uf] || uf;
-const emUf = (uf) => ({ o: 'no ', a: 'na ' }[ARTIGO_UF[uf]] || 'em ') + nomeDe(uf);
-const deUf = (uf) => ({ o: 'do ', a: 'da ' }[ARTIGO_UF[uf]] || 'de ') + nomeDe(uf);
-const paraUf = (uf) => ({ o: 'para o ', a: 'para a ' }[ARTIGO_UF[uf]] || 'para ') + nomeDe(uf);
+// Preposição por estado: src/lib/ufs.js (saiu daqui em 30/09/2026).
 
 const pilula = (ativo) => ({
   padding: '9px 16px', fontSize: '0.9rem', fontWeight: 700, fontFamily: t.fonte.corpo,

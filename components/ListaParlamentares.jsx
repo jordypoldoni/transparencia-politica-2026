@@ -18,7 +18,10 @@ import { NOMES_UF } from '../src/lib/cotas';
 import { t } from '../src/estilo/tokens';
 import { hrefPerfil, casaDoPerfil } from '../src/lib/casa';
 import Paginacao from './Paginacao';
-import { ASSEMBLEIAS, assembleiaDe } from '../src/lib/assembleias';
+import { ASSEMBLEIAS, assembleiaDe, assembleiaPorUf } from '../src/lib/assembleias';
+import { deUf } from '../src/lib/ufs';
+import { useRouter } from 'next/router';
+import { Pino } from './icones';
 
 // Botao sobre o painel escuro: indigo sobre indigo nao aparece, entao segue a regra das
 // Diretrizes para cartao escuro (superficie branca translucida, texto branco, pilula, sem
@@ -69,10 +72,23 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
   const ehEstaduais = casa === 'Estaduais';
   // `soEleito`: eleitos de 2022 nos estados sem cadastro da Assembleia (vêm do TSE, sem perfil).
   const daCasa = (d) => (ehEstaduais ? (String(d.casa || '').startsWith('Assembleia') || d.soEleito) : d.casa === casa);
-  // As Assembleias cuja ressalva aparece na tela: todas na página única, uma na lista de um estado.
-  const assembleiasDaTela = ehEstaduais ? ASSEMBLEIAS : (assembleia ? [assembleia] : []);
+  // RANKING DO ESTADO ESCOLHIDO (30/09/2026, decisão do Jordy). Por um dia o ranking dos estaduais
+  // juntou todas as assembleias e mostrou só SP: o RS tinha 6 meses publicados contra 8 de SP, e
+  // cada assembleia tem teto de verba próprio, então o total comparava coisas diferentes. Agora o
+  // campo de estado, no alto da página, escolhe de qual assembleia é o ranking E a lista.
+  const assembleiaDoUf = ehEstaduais ? assembleiaPorUf(uf) : null;
+  const casaRanking = ehEstaduais ? (assembleiaDoUf?.casa || null) : casa;
+  const assembleiaRanking = ehEstaduais ? assembleiaDoUf : assembleia;
+  const router = useRouter();
+  const escolherUf = (v) => {
+    setUf(v || '');
+    // O estado vai para o endereço, para o link compartilhado abrir no mesmo estado.
+    router.replace({ pathname: router.pathname, query: v ? { uf: v } : {} }, undefined, { shallow: true, scroll: false });
+  };
+  // A ressalva de cada assembleia: só a do estado escolhido; sem estado, todas.
+  const assembleiasDaTela = ehEstaduais ? (uf ? [assembleiaDoUf].filter(Boolean) : ASSEMBLEIAS) : (assembleia ? [assembleia] : []);
   // Ranking de gastos da casa ativa (troca junto com as abas e com a rota Senadores).
-  const radarCasa = radares[casa] || { anos: [], porAno: {}, porAnoMenores: {}, totais: {} };
+  const radarCasa = (casaRanking && radares[casaRanking]) || { anos: [], porAno: {}, porAnoMenores: {}, totais: {} };
   const [ano, setAno] = useState(null);
   // 'maiores' | 'menores'. Mostrar so quem mais gastou sugere que gastar mais e a historia;
   // as duas pontas dao ao leitor a referencia para julgar sozinho, que e a regra do site.
@@ -91,7 +107,7 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
   };
   // Ao trocar de aba, volta para o ano padrão daquela casa: cada fonte publica até um ponto
   // diferente, então fixar o ano entre abas mostraria ranking vazio sem motivo aparente.
-  useEffect(() => { setAno(anoPadrao(radarCasa.anos, radarCasa.totais)); }, [casa]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { setAno(anoPadrao(radarCasa.anos, radarCasa.totais)); }, [casaRanking]); // eslint-disable-line react-hooks/exhaustive-deps
   const padraoDaCasa = anoPadrao(radarCasa.anos, radarCasa.totais);
   const anoAtivo = ano ?? padraoDaCasa;
   const radar = anoAtivo
@@ -119,7 +135,7 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
   const [carregandoMais, setCarregandoMais] = useState(false);
   const [erroMais, setErroMais] = useState(false);
   // Trocar de casa, de ano ou de ponta abre outro ranking: o que ja foi expandido nao vale.
-  useEffect(() => { setExtras([]); setErroMais(false); }, [casa, anoAtivo, sentido]);
+  useEffect(() => { setExtras([]); setErroMais(false); }, [casaRanking, anoAtivo, sentido]);
 
   const linhas = useMemo(() => {
     // Empate no valor pode fazer a mesma pessoa vir nas duas consultas (a do payload e a da
@@ -143,7 +159,7 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
       // devolver uma linha repetida, `linhas` tem menos itens que o buscado, e usar o tamanho
       // dela como offset puliria uma pessoa do ranking.
       const buscados = radar.length + extras.length;
-      const q = new URLSearchParams({ casa, ano: String(anoAtivo), sentido, offset: String(buscados), limite: String(PASSO) });
+      const q = new URLSearchParams({ casa: casaRanking, ano: String(anoAtivo), sentido, offset: String(buscados), limite: String(PASSO) });
       const r = await fetch(`/api/radar?${q.toString()}`);
       if (!r.ok) throw new Error(`resposta ${r.status}`);
       const dados = await r.json();
@@ -158,7 +174,7 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
 
   // Assembleia sem gasto coletado não mostra ranking: sairia um bloco vazio parecendo erro.
   // O aviso da aba explica o que existe e o que não existe ali.
-  const mostraRanking = (!assembleia || assembleia.gastos) && radarCasa.anos.length > 0;
+  const mostraRanking = Boolean(casaRanking) && (!assembleiaRanking || assembleiaRanking.gastos) && radarCasa.anos.length > 0;
 
   const ufs = useMemo(
     () => Array.from(new Set(deputados.filter(daCasa).map((d) => d.uf).filter(Boolean))).sort(),
@@ -238,7 +254,11 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
         <meta property="og:title" content={tituloPagina} />
         <meta property="og:description" content={descPagina} />
       </Head>
-      <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.8rem,4vw,2.6rem)', margin: '0 0 16px' }}>
+      {/* TÍTULO E ESTADO NA MESMA FAIXA (30/09/2026, pedido do Jordy): nos estaduais o campo de
+          estado fica no alto, à direita, e manda no ranking e na lista. No celular desce para
+          baixo do título. */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px 24px', flexWrap: 'wrap', margin: '0 0 16px' }}>
+      <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.8rem,4vw,2.6rem)', margin: 0 }}>
         {casa === 'Senado'
           ? 'Senadores'
           : ehEstaduais
@@ -247,6 +267,19 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
           ? `Deputados Estaduais ${assembleia.nomeCom}`
           : 'Deputados Federais'}
       </h1>
+      {ehEstaduais && (
+        <div style={{ flex: '0 1 300px', minWidth: '220px', marginLeft: 'auto' }}>
+          <CampoSelect
+            valor={uf}
+            aoLabel="Estado dos deputados estaduais"
+            placeholder="Escolha o estado"
+            icone={<Pino />}
+            aoSelecionar={escolherUf}
+            opcoes={[{ valor: '', rotulo: 'Todos os estados' }, ...ufs.map((u) => ({ valor: u, rotulo: `${u} · ${NOMES_UF[u] || u}`, busca: `${u} ${NOMES_UF[u] || ''}` }))]}
+          />
+        </div>
+      )}
+      </div>
 
       {/* 29/09/2026: sem alternância no topo. Federais, estaduais e senadores são páginas
           próprias no menu Parlamentares, e nos estaduais o estado é escolhido abaixo do ranking,
@@ -266,15 +299,15 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
         {casa === 'Senado'
           ? 'senadores'
           : ehEstaduais
-          ? 'deputados estaduais'
+          ? (!uf ? 'deputados estaduais em todos os estados' : assembleiaDoUf ? `deputados estaduais ${deUf(uf)}` : `deputados estaduais eleitos em 2022 ${deUf(uf)}`)
           : assembleia
           ? `deputados estaduais de ${assembleia.uf}`
           : 'deputados federais'}
-        . Clique para ver {ehEstaduais
-          ? 'gastos de gabinete e o que cada assembleia publica'
-          : assembleia
+        {/* "Clique para ver..." saiu dos estaduais em 30/09: os cartões dos eleitos de 2022 não
+            abrem, e a frase prometia um clique que não existe. */}
+        {ehEstaduais ? '.' : <>. Clique para ver {assembleia
           ? (assembleia.votos ? 'como cada um votou' : 'os gastos de gabinete')
-          : 'gastos, votos e coerência'}.
+          : 'gastos, votos e coerência'}.</>}
       </p>
       )}
 
@@ -297,6 +330,13 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
           {' '}Fonte: {assembleia.sigla}.
         </p>
       ))}
+
+      {/* Sem estado escolhido não há ranking: cada assembleia tem teto e calendário próprios. */}
+      {ehEstaduais && !uf && (
+        <p style={{ margin: '0 0 24px', color: t.cor.cinza, fontSize: '0.92rem' }}>
+          Escolha o estado no alto da página para ver o ranking de gastos da assembleia.
+        </p>
+      )}
 
       {/* Ranking de gastos — quem mais usou a verba (casa ativa) */}
       {mostraRanking && (
@@ -324,20 +364,13 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
                 {(() => {
                   const verbo = sentido === 'menores' ? 'menos usaram' : 'mais usaram';
                   if (casa === 'Senado') return `Senadores que ${verbo} a cota (CEAPS) em ${anoAtivo}.`;
-                  if (ehEstaduais) {
-                    // Só os estados que TÊM gasto naquele ano (o RS só tem 2026): dizer "SP e RS"
-                    // num ano em que só SP publicou seria afirmar um dado que não está ali.
-                    const ufsAno = [...(radarCasa.ufsPorAno?.[anoAtivo] || [])].sort();
-                    const onde = ufsAno.length === 1 ? `só de ${ufsAno[0]}, a única assembleia com gasto publicado nesse ano` : `das assembleias que o site já tem (${ufsAno.join(' e ')})`;
-                    return `Deputados estaduais que ${verbo} a verba de gabinete em ${anoAtivo}, ${onde}. Cada assembleia tem regras e valores próprios de verba.`;
-                  }
-                  if (assembleia) return `Deputados estaduais de ${assembleia.uf} que ${verbo} a verba de gabinete em ${anoAtivo}.`;
+                  if (assembleiaRanking) return `Deputados estaduais ${deUf(assembleiaRanking.uf)} que ${verbo} a verba de gabinete em ${anoAtivo}.`;
                   return `Deputados federais que ${verbo} a cota parlamentar em ${anoAtivo}.`;
                 })()}{' '}
-                {assembleia && !assembleia.gastoDetalhado
+                {assembleiaRanking && !assembleiaRanking.gastoDetalhado
                   ? 'Toque para ver em quê: o valor é o somado das categorias que a assembleia publica a cada mês, sem detalhe de nota.'
                   : <>Toque para ver <em>em quê</em>.</>}{' '}
-                Fonte: {casa === 'Senado' ? 'Senado Federal' : ehEstaduais ? ASSEMBLEIAS.map((a) => a.sigla).join(' e ') : assembleia ? assembleia.sigla : 'Câmara dos Deputados'}.
+                Fonte: {casa === 'Senado' ? 'Senado Federal' : assembleiaRanking ? assembleiaRanking.sigla : 'Câmara dos Deputados'}.
               </p>
             </div>
             {radarCasa.totais[anoAtivo] > 0 && (
@@ -503,7 +536,7 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
           <CampoBusca valor={busca} aoMudar={setBusca} placeholder="Buscar por nome ou partido…" aoLabel="Buscar parlamentar" />
         </div>
         {/* Numa lista de um estado só, o seletor some sozinho. Nos estaduais ele traz os estados com assembleia. */}
-        {ufs.length > 1 && (
+        {!ehEstaduais && ufs.length > 1 && (
           <div style={{ flex: '0 1 240px', minWidth: '180px' }}>
             <CampoSelect
               valor={uf}
@@ -521,11 +554,23 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
           na tela). Aparece só quando a lista mostrada tem eleitos de 2022. */}
       {filtrados.some((d) => d.soEleito) && (
         <p style={{ margin: '0 0 16px', padding: '12px 16px', borderRadius: t.raio.md, background: t.cor.papelQuente, color: t.cor.tinta, fontSize: '0.85rem', lineHeight: 1.55 }}>
-          <strong>Por que alguns cartões não abrem.</strong> Nos estados em que o site ainda não tem o cadastro
-          da Assembleia ({`todos menos ${ASSEMBLEIAS.map((a) => a.uf).join(' e ')}`}), a lista mostra quem foi
-          eleito em 2022, segundo o TSE. Esses cartões não abrem uma ficha porque ainda não coletamos os
-          gastos nem os votos dessas Assembleias. Quem foi eleito pode não estar no cargo hoje (suplentes que
-          assumiram não aparecem), e o partido mostrado é o da eleição.
+          {uf ? (
+            <>
+              <strong>Por que os cartões não abrem.</strong> O site ainda não tem o cadastro da Assembleia
+              Legislativa {deUf(uf)}, então a lista mostra quem foi eleito em 2022, segundo o TSE, e não há
+              ranking de gastos. Os cartões não abrem uma ficha porque ainda não coletamos os gastos nem os
+              votos dessa Assembleia. Quem foi eleito pode não estar no cargo hoje (suplentes que assumiram
+              não aparecem), e o partido mostrado é o da eleição.
+            </>
+          ) : (
+            <>
+              <strong>Por que alguns cartões não abrem.</strong> Nos estados em que o site ainda não tem o cadastro
+              da Assembleia ({`todos menos ${ASSEMBLEIAS.map((a) => a.uf).join(' e ')}`}), a lista mostra quem foi
+              eleito em 2022, segundo o TSE. Esses cartões não abrem uma ficha porque ainda não coletamos os
+              gastos nem os votos dessas Assembleias. Quem foi eleito pode não estar no cargo hoje (suplentes que
+              assumiram não aparecem), e o partido mostrado é o da eleição.
+            </>
+          )}
         </p>
       )}
       {filtrados.length > 0 ? (
