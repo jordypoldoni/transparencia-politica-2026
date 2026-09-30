@@ -294,8 +294,8 @@ export default function PerfilPolitico({ dados }) {
   // todo perfil de deputado do RS creditava o dado a assembleia de Sao Paulo - inclusive na
   // imagem de compartilhamento. Num site de transparencia isso e erro factual, nao cosmetico.
   // A regra mora em src/lib/casa.js (fonte unica, tambem usada pelas rotas de perfil).
-  const { fonteApi, ehAlesp, ehAlergs, ehEstadual, ehSenado, fonteNome, fonteNomeCom, temNotaFiscal } = casaDoPerfil(perfil);
-  const rotuloCota = ehEstadual ? 'cota (verba de gabinete) ?' : 'cota parlamentar ?';
+  const { fonteApi, ehAlesp, ehAlergs, ehAlmg, ehEstadual, ehSenado, fonteNome, fonteNomeCom, temNotaFiscal, nomeVerba } = casaDoPerfil(perfil);
+  const rotuloCota = ehEstadual ? `cota (${nomeVerba}) ?` : 'cota parlamentar ?';
   // % do teto mensal da cota — federal (CEAP), senador (CEAPS) e estadual-SP (verba ALESP)
   const tetoInfo = pctDoTeto({ fonteApi: perfil.fonte_api, casa: perfil.casa_legislativa, uf: perfil.uf_sede }, mediaAno || media_mensal);
   // Valores do ANO SELECIONADO (reativo ao seletor de ano)
@@ -340,6 +340,8 @@ export default function PerfilPolitico({ dados }) {
     // Assembleia do RS: o portal usa /deputados/<id>, e o id e o mesmo numero que guardamos
     // em id_externo_api ('ALERGS-2144' -> 2144). Formato conferido no portal em 10/09/2026.
     if (ehAlergs) return `https://ww4.al.rs.gov.br/deputados/${id}`;
+    // ALMG: id_externo_api é o código do deputado na API; página conferida em 30/09/2026.
+    if (ehAlmg) return `https://www.almg.gov.br/a-assembleia/deputados/deputado/?id=${id}&legislatura=20`;
     return null;
   };
 
@@ -1005,6 +1007,13 @@ export default function PerfilPolitico({ dados }) {
                   <p style={{ margin: '0 0 6px', fontWeight: 600, color: t.cor.tinta, fontSize: '0.92rem' }}>Votações da ALESP ainda não disponíveis</p>
                   <p style={{ margin: 0, color: t.cor.cinza, fontSize: '0.86rem', lineHeight: 1.5 }}>
                     Ainda não coletamos as votações nominais da Assembleia Legislativa de SP automaticamente. Para consultar os votos, acesse o <a href="https://www.al.sp.gov.br/alesp/pesquisa-proposicoes/" target="_blank" rel="noopener noreferrer" style={{ color: t.cor.ouroTexto, fontWeight: 600 }}>portal da ALESP</a>.
+                  </p>
+                </>
+              ) : ehAlmg ? (
+                <>
+                  <p style={{ margin: '0 0 6px', fontWeight: 600, color: t.cor.tinta, fontSize: '0.92rem' }}>Votações da ALMG ainda não disponíveis</p>
+                  <p style={{ margin: 0, color: t.cor.cinza, fontSize: '0.86rem', lineHeight: 1.5 }}>
+                    Os votos da Assembleia Legislativa de Minas Gerais ainda não entraram no site. Para acompanhar o plenário, acesse o <a href="https://www.almg.gov.br/atividade-parlamentar/plenario/inicial/" target="_blank" rel="noopener noreferrer" style={{ color: t.cor.ouroTexto, fontWeight: 600 }}>portal da ALMG</a>.
                   </p>
                 </>
               ) : (

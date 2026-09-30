@@ -21,13 +21,15 @@ export function casaDoPerfil(perfil) {
   // radar_gastos usam; nesses objetos nao ha fonte_api para consultar.
   const ehAlesp = fonteApi.includes('alesp') || casaCampo === 'assembleia (sp)';
   const ehAlergs = fonteApi.includes('alergs') || casaCampo === 'assembleia (rs)';
+  const ehAlmg = fonteApi === 'almg' || casaCampo === 'assembleia (mg)';
   const ehSenado = fonteApi.includes('senado') || casaCampo.includes('senado') || cargo.startsWith('senador');
-  const ehEstadual = !ehSenado && (casaCampo === 'estadual' || casaCampo.startsWith('assembleia') || ehAlesp || ehAlergs);
+  const ehEstadual = !ehSenado && (casaCampo === 'estadual' || casaCampo.startsWith('assembleia') || ehAlesp || ehAlergs || ehAlmg);
 
   // A sigla oficial da assembleia gaucha e ALRS (tambem grafada AL-RS); "ALERGS" e forma
   // corrente mas incorreta. No credito vai por extenso: "AL-RS" nao diz nada ao leitor comum,
   // e a regra do site e nao pressupor conhecimento. ALESP fica na sigla porque e reconhecida.
   const fonteNome = ehAlergs ? 'Assembleia Legislativa do RS'
+    : ehAlmg ? 'Assembleia Legislativa de MG'
     : ehAlesp ? 'ALESP'
     : ehEstadual ? 'Assembleia Legislativa'
     : ehSenado ? 'Senado Federal'
@@ -43,11 +45,14 @@ export function casaDoPerfil(perfil) {
   // A ALRS publica APENAS o agregado mensal por categoria: nao ha nota fiscal nem fornecedor.
   const temNotaFiscal = !ehAlergs;
 
+  // Nome do dinheiro na casa: em MG a ALMG chama de "verba indenizatória".
+  const nomeVerba = ehAlmg ? 'verba indenizatória' : ehEstadual ? 'verba de gabinete' : 'cota parlamentar';
+
   // Rota canonica do perfil. Senador em /deputado/ e erro factual na porta de entrada do
   // Google, que e a URL. Estadual continua em /deputado/ porque ele e, de fato, deputado.
   const rota = ehSenado ? 'senador' : 'deputado';
 
-  return { fonteApi, ehAlesp, ehAlergs, ehSenado, ehEstadual, fonteNome, fonteNomeCom, cargoPadrao, temNotaFiscal, rota };
+  return { fonteApi, ehAlesp, ehAlergs, ehAlmg, nomeVerba, ehSenado, ehEstadual, fonteNome, fonteNomeCom, cargoPadrao, temNotaFiscal, rota };
 }
 
 // Link para o perfil, ja na rota certa da casa. Use SEMPRE isto em vez de escrever

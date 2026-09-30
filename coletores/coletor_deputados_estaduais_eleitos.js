@@ -38,7 +38,7 @@ const UA = { 'User-Agent': 'Mozilla/5.0', Accept: 'application/json' };
 const CADEIRAS = { AC: 24, AL: 27, AP: 24, AM: 24, BA: 63, CE: 46, DF: 24, ES: 30, GO: 41, MA: 42, MT: 24, MS: 24, MG: 77,
   PA: 41, PB: 36, PR: 54, PE: 49, PI: 30, RJ: 70, RN: 24, RS: 55, RO: 24, RR: 24, SC: 40, SP: 94, SE: 24, TO: 24 };
 // Estados com cadastro de mandato no site (fonte_api em agentes_politicos), para ligar eleito e mandato.
-const CADASTRO = { RS: 'alergs', SP: 'alesp' };
+const CADASTRO = { RS: 'alergs', SP: 'alesp', MG: 'almg' };
 
 const args = process.argv.slice(2);
 const opcao = (nome) => { const a = args.find((x) => x.startsWith(`--${nome}=`)); return a ? a.split('=')[1] : null; };

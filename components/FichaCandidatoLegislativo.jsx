@@ -58,7 +58,7 @@ const CARGOS = {
     chaveLista: 'deputado-estadual',
     listaPadrao: '/candidatos-2026?cargo=deputado-estadual',
     listaParlamentares: null,
-    semMandato: 'Esta ficha ainda não está ligada ao mandato que o(a) candidato(a) possa exercer hoje, então gastos e votos não aparecem aqui. A trajetória eleitoral abaixo mostra se já foi eleito(a) antes. Das Assembleias Legislativas, o site acompanha por enquanto as de SP e do RS, no menu Parlamentares.',
+    semMandato: 'Esta ficha ainda não está ligada ao mandato que o(a) candidato(a) possa exercer hoje, então gastos e votos não aparecem aqui. A trajetória eleitoral abaixo mostra se já foi eleito(a) antes. Das Assembleias Legislativas, o site acompanha por enquanto as de SP, do RS e de MG, no menu Parlamentares.',
     semPlano: 'Deputado(a) Estadual não é obrigado(a) por lei a apresentar um plano de governo na Justiça Eleitoral: essa exigência vale só para cargos majoritários do Executivo (Presidente, Governador, Prefeito). Por isso não há um documento de propostas aqui.',
   },
 };

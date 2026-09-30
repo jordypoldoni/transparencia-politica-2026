@@ -15,7 +15,7 @@ export default function PerfilSEO({ dados, canonical }) {
   const casa = casaDoPerfil(p);
   const ufp = `${p.partido_atual || ''}-${p.uf_sede || 'BR'}`;
   const titulo = `${p.nome_urna} (${ufp}): gastos e votos | Lume`;
-  const verba = casa.ehEstadual ? 'da verba de gabinete' : 'da cota parlamentar';
+  const verba = `da ${casa.nomeVerba}`;
   const desc = `Quanto ${p.nome_urna} usou ${verba} em 2026 (${brl(dados.total_geral)}), como votou e a fidelidade ao ${p.partido_atual || 'partido'}. Em linguagem clara, com a fonte oficial ${casa.fonteNomeCom}.`;
 
   const jsonLd = {

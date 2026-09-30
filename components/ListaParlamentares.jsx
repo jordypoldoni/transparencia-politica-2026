@@ -18,7 +18,7 @@ import { NOMES_UF } from '../src/lib/cotas';
 import { t } from '../src/estilo/tokens';
 import { hrefPerfil, casaDoPerfil } from '../src/lib/casa';
 import Paginacao from './Paginacao';
-import { ASSEMBLEIAS, assembleiaDe, assembleiaPorUf } from '../src/lib/assembleias';
+import { ASSEMBLEIAS, assembleiaDe, assembleiaPorUf, verbaDe } from '../src/lib/assembleias';
 import { deUf } from '../src/lib/ufs';
 import { useRouter } from 'next/router';
 import { Pino } from './icones';
@@ -241,7 +241,7 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
     : 'Deputados federais: quanto cada um gastou e como votou | Lume';
   const descPagina = casa === 'Senado'
     ? 'Os 81 senadores e os suplentes em exercicio: quanto cada um usou da cota do Senado, como votou e a fidelidade ao partido. Fonte oficial do Senado Federal.'
-    : ehEstaduais ? `Os deputados estaduais: quanto cada um usou da verba de gabinete e o que cada assembleia publica sobre o mandato. Fontes: ${ASSEMBLEIAS.map((a) => a.sigla).join(' e ')}.`
+    : ehEstaduais ? `Os deputados estaduais: quanto cada um usou da verba de gabinete e o que cada assembleia publica sobre o mandato. Fontes: ${ASSEMBLEIAS.map((a) => a.sigla).join(', ').replace(/, ([^,]*)$/, ' e $1')}.`
     : assembleia ? `Os deputados estaduais ${assembleia.nomeCom}: quanto cada um usou da verba de gabinete e o que a assembleia publica sobre o mandato. Fonte: ${assembleia.sigla}.`
     : 'Os 513 deputados federais: quanto cada um usou da cota parlamentar, como votou e a fidelidade ao partido. Fonte oficial da Camara dos Deputados.';
 
@@ -321,11 +321,13 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
           {/* o nome do estado aqui abre a frase, então vai sem preposição */}
           {assembleia.votos
             ? 'A assembleia publica o voto de cada deputado, matéria por matéria, e é isso que mostramos aqui. '
+            : assembleia.votosPendentes
+            ? 'Os votos de cada deputado ainda não entraram no site. '
             : 'A assembleia não divulga votação nominal, então não há como mostrar como cada deputado votou. '}
           {!assembleia.gastos
             ? 'Os gastos de gabinete ainda não entraram.'
             : assembleia.gastoDetalhado
-            ? 'Os gastos de gabinete estão no ar, nota a nota, com fornecedor e CNPJ.'
+            ? `Os gastos da ${verbaDe(assembleia)} estão no ar, nota a nota, com fornecedor e CNPJ.`
             : 'Os gastos de gabinete estão no ar, mas a assembleia publica apenas o total de cada mês por categoria: dá para ver quanto e em quê, não para quem o dinheiro foi.'}
           {' '}Fonte: {assembleia.sigla}.
         </p>
@@ -364,7 +366,7 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
                 {(() => {
                   const verbo = sentido === 'menores' ? 'menos usaram' : 'mais usaram';
                   if (casa === 'Senado') return `Senadores que ${verbo} a cota (CEAPS) em ${anoAtivo}.`;
-                  if (assembleiaRanking) return `Deputados estaduais ${deUf(assembleiaRanking.uf)} que ${verbo} a verba de gabinete em ${anoAtivo}.`;
+                  if (assembleiaRanking) return `Deputados estaduais ${deUf(assembleiaRanking.uf)} que ${verbo} a ${verbaDe(assembleiaRanking)} em ${anoAtivo}.`;
                   return `Deputados federais que ${verbo} a cota parlamentar em ${anoAtivo}.`;
                 })()}{' '}
                 {assembleiaRanking && !assembleiaRanking.gastoDetalhado

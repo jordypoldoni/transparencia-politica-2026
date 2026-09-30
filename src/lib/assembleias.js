@@ -11,7 +11,14 @@
 export const ASSEMBLEIAS = [
   { casa: 'Assembleia (SP)', uf: 'SP', sigla: 'ALESP', nomeCom: 'de São Paulo', gastos: true, gastoDetalhado: true, votos: false },
   { casa: 'Assembleia (RS)', uf: 'RS', sigla: 'AL-RS', nomeCom: 'do Rio Grande do Sul', gastos: true, gastoDetalhado: false, votos: true },
+  // MG (30/09/2026): a ALMG publica a verba indenizatória nota a nota, com fornecedor e CNPJ,
+  // pela API de dados abertos (coletor_almg.js, anos 2025 e 2026). Os votos ainda não foram
+  // levantados: `votosPendentes` faz a tela dizer "ainda não entraram no site", e não "a
+  // assembleia não divulga", que seria afirmar sobre a ALMG algo que não conferimos.
+  // `verba`: o nome que a própria casa dá ao dinheiro (em MG não é "verba de gabinete").
+  { casa: 'Assembleia (MG)', uf: 'MG', sigla: 'ALMG', nomeCom: 'de Minas Gerais', gastos: true, gastoDetalhado: true, votos: false, votosPendentes: true, verba: 'verba indenizatória' },
 ];
+export const verbaDe = (a) => (a && a.verba) || 'verba de gabinete';
 export const assembleiaDe = (casa) => ASSEMBLEIAS.find((a) => a.casa === casa) || null;
 
 export const assembleiaPorUf = (uf) => ASSEMBLEIAS.find((a) => a.uf === String(uf || '').toUpperCase()) || null;

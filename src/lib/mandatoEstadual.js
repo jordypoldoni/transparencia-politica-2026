@@ -5,7 +5,7 @@
 // - o nome do cadastro COMEÇANDO pelo da urna e o MESMO partido ("ADÃO PRETTO" na urna, "Adão
 //   Pretto Filho" no cadastro, os dois do PT). Sem o partido batendo, o começo do nome sozinho
 //   não liga: "João Silva" e "João Silva Santos" podem ser duas pessoas.
-// Hoje o site tem o cadastro dos deputados estaduais do RS (ALERGS) e de SP (ALESP).
+// Hoje o site tem o cadastro dos deputados estaduais do RS (ALERGS), de SP (ALESP) e de MG (ALMG).
 const nome = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/\s+/g, ' ').trim();
 const sigla = (s) => nome(s).replace(/\s+/g, '');
 

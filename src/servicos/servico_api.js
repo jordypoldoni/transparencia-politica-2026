@@ -309,7 +309,7 @@ const ServicoAPI = {
         const { data, error } = await supabase
             .from('agentes_politicos')
             .select('id, slug, nome_urna, partido_atual, uf_sede, foto_url, cargo_atual, fonte_api, em_exercicio')
-            .or('fonte_api.ilike.%camara%,fonte_api.ilike.%senado%,fonte_api.ilike.%alesp%,fonte_api.ilike.%alergs%')
+            .or('fonte_api.ilike.%camara%,fonte_api.ilike.%senado%,fonte_api.ilike.%alesp%,fonte_api.ilike.%alergs%,fonte_api.eq.almg')
             .order('nome_urna', { ascending: true });
         if (error) { console.error('listarDeputados:', error.message); return []; }
 
@@ -328,6 +328,7 @@ const ServicoAPI = {
             const casa = fonte.includes('senado') ? 'Senado'
                 : fonte.includes('alesp') ? 'Assembleia (SP)'
                 : fonte.includes('alergs') ? 'Assembleia (RS)'
+                : fonte === 'almg' ? 'Assembleia (MG)'
                 : 'Câmara';
             const ehEstadual = casa.startsWith('Assembleia');
             const cargo = d.cargo_atual || (casa === 'Senado' ? 'Senador(a)' : ehEstadual ? 'Deputado(a) Estadual' : 'Deputado(a) Federal');
@@ -1190,7 +1191,7 @@ const ServicoAPI = {
         if (UF === 'DF') return { total: 0, comMandato: [], temCadastro: false };
         const [lista, { data: agentes }] = await Promise.all([
             todosCandidatosEstaduais(UF),
-            supabase.from('agentes_politicos').select('id, nome_urna, partido_atual').eq('uf_sede', UF).in('fonte_api', ['alergs', 'alesp'])
+            supabase.from('agentes_politicos').select('id, nome_urna, partido_atual').eq('uf_sede', UF).in('fonte_api', ['alergs', 'alesp', 'almg'])
                 // NULO conta como em exercicio: e o que os coletores da ALERGS e da ALESP gravam.
                 // `.neq('em_exercicio', false)` vira `<> false` no SQL, que descarta o nulo, e a
                 // cedula do RS dizia "o site ainda nao tem o cadastro" (achado no ar em 28/09).
