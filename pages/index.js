@@ -96,8 +96,12 @@ export default function Home({ votacoes, parlamentares = [], uniao = null, estad
           <aside style={{ background: t.cor.papelCartao, borderRadius: t.raio.lg, overflow: 'hidden', boxShadow: t.sombra.media }}>
             <p style={{ margin: 0, padding: '15px 22px', fontWeight: 700, color: t.cor.cinza, fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.07em', background: t.cor.papelQuente }}>Ir direto para</p>
             {[
-              { href: '/deputados?casa=Câmara', titulo: 'Deputados', desc: '513 federais' },
-              { href: '/deputados?casa=Senado', titulo: 'Senadores', desc: '81 no total' },
+              // 01/10/2026 (Jordy): as tres paginas de Parlamentares do menu (desde 29/09), com os
+              // mesmos nomes e notas do menu (Layout.jsx). Antes: "Deputados / 513 federais" e
+              // Senadores, por enderecos antigos (/deputados?casa=...).
+              { href: '/deputados', titulo: 'Deputados federais', desc: 'os 513 da Câmara' },
+              { href: '/deputados-estaduais', titulo: 'Deputados estaduais', desc: 'as Assembleias dos estados' },
+              { href: '/senadores', titulo: 'Senadores', desc: 'os 81 em exercício' },
               // 28/09/2026 (Jordy): era "Montar minha página / responda 2 perguntas", nome e
               // descricao de uma versao que nao existe mais. Nome e nota iguais aos do menu Pra voce.
               { href: '/afinidade', titulo: 'Quem vota como você', desc: 'suas posições comparadas aos votos', destaque: true },
