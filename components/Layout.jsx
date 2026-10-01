@@ -5,6 +5,7 @@ import { t } from '../src/estilo/tokens';
 import BotaoConta from './BotaoConta';
 import { PAGINAS_PRA_VOCE } from './NavPraVoce';
 import { sincronizarTudo } from '../src/lib/sincronizacao';
+import { casaDoPerfil } from '../src/lib/casa';
 import { aoMudarSessao, validarSessao, ufLocal, guardarUfCookie, COOKIE_UF } from '../src/lib/perfilUsuario';
 
 // ============================================================================
@@ -76,7 +77,7 @@ function ehAtivo(href, pathname) {
   // dentro de um perfil, pela casa do proprio parlamentar.
   if (hp === '/senadores') return pathname === '/senadores' || pathname.startsWith('/senador/');
   // /deputados/sp e /deputados/rs (enderecos antigos) redirecionam para os ESTADUAIS. O perfil (/deputado/) serve as duas
-  // casas; fica com os federais, que sao a maioria.
+  // casas: o Layout troca a rota por /deputados-estaduais quando o perfil é de estadual (rotaMenu).
   if (hp === '/deputados') return pathname === '/deputados' || pathname.startsWith('/deputado/');
   if (hp === '/deputados-estaduais') return pathname === '/deputados-estaduais' || pathname.startsWith('/deputados/');
   if (hp === '/indicacoes') return pathname === '/indicacoes' || pathname.startsWith('/indicacao/');
@@ -139,6 +140,10 @@ function Seta({ aberto }) {
 
 export default function Layout({ children, pageProps }) {
   const { pathname, asPath } = useRouter();
+  // O perfil /deputado/ serve federais e estaduais (01/10/2026, achado do Jordy: estadual aparecia
+  // como "Dep. federais" no cabeçalho do celular). A casa vem do próprio perfil da página.
+  const rotaMenu = pathname === '/deputado/[slug]' && casaDoPerfil(pageProps?.dados?.perfil).ehEstadual
+    ? '/deputados-estaduais' : pathname;
   const [menu, setMenu] = useState(false);       // hambúrguer
   const [aberto, setAberto] = useState(null);    // rótulo do grupo aberto, ou null
   const navRef = useRef(null);
@@ -247,14 +252,14 @@ export default function Layout({ children, pageProps }) {
           <nav ref={navRef} className="nav-desktop" aria-label="Navegação principal" style={{ gap: '0' }}>
             {navItens.map((n) => {
               if (!n.filhos) {
-                const ativo = ehAtivo(n.href, pathname);
+                const ativo = ehAtivo(n.href, rotaMenu);
                 return (
                   <Link key={n.rotulo} href={n.href} aria-current={ativo ? 'page' : undefined} style={itemTopo(ativo)}>
                     {n.rotulo}
                   </Link>
                 );
               }
-              const ativo = grupoAtivo(n, pathname);
+              const ativo = grupoAtivo(n, rotaMenu);
               const estaAberto = aberto === n.rotulo;
               return (
                 <div key={n.rotulo} style={{ position: 'relative' }}
@@ -285,7 +290,7 @@ export default function Layout({ children, pageProps }) {
                         borderRadius: t.raio.md, boxShadow: t.sombra.media, padding: '6px',
                       }}>
                         {n.filhos.map((f) => {
-                          const fAtivo = ehAtivo(f.href, pathname);
+                          const fAtivo = ehAtivo(f.href, rotaMenu);
                           return (
                             <Link key={f.href} href={f.href} aria-current={fAtivo ? 'page' : undefined}
                               onClick={() => setAberto(null)}
@@ -317,10 +322,10 @@ export default function Layout({ children, pageProps }) {
               (pedido do Jordy, 26/09/2026: numa segunda linha embaixo do logo ficou solto e feio).
               Ocupa o espaço que sobra entre a conta e o menu, alinhado à direita; se não couber,
               termina em reticências e o nome inteiro fica no title. */}
-          {nomeDaPagina(pathname) && (
-            <span className="titulo-pagina-movel" title={nomeDaPagina(pathname)}
+          {nomeDaPagina(rotaMenu) && (
+            <span className="titulo-pagina-movel" title={nomeDaPagina(rotaMenu)}
               style={{ flex: '1 1 auto', minWidth: 0, textAlign: 'right', fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1rem', lineHeight: 1.2, color: t.cor.tinta, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {nomeDaPagina(pathname)}
+              {nomeDaPagina(rotaMenu)}
             </span>
           )}
 
@@ -347,7 +352,7 @@ export default function Layout({ children, pageProps }) {
             style={{ position: 'absolute', top: '100%', left: 0, right: 0, maxHeight: `calc(100dvh - ${alturaTopo}px)`, overflowY: 'auto', overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch', background: t.cor.papel, padding: '8px 12px 14px', boxShadow: t.sombra.media }}>
             {navItens.map((n) => {
               if (!n.filhos) {
-                const ativo = ehAtivo(n.href, pathname);
+                const ativo = ehAtivo(n.href, rotaMenu);
                 return (
                   <Link key={n.rotulo} href={n.href} aria-current={ativo ? 'page' : undefined}
                     style={{
@@ -366,7 +371,7 @@ export default function Layout({ children, pageProps }) {
                     {n.rotulo}
                   </p>
                   {n.filhos.map((f) => {
-                    const fAtivo = ehAtivo(f.href, pathname);
+                    const fAtivo = ehAtivo(f.href, rotaMenu);
                     return (
                       <Link key={f.href} href={f.href} aria-current={fAtivo ? 'page' : undefined}
                         style={{
