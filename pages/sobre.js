@@ -1,3 +1,4 @@
+import Head from 'next/head';
 import { t } from '../src/estilo/tokens';
 
 const principios = [
@@ -10,6 +11,11 @@ const principios = [
 export default function Sobre() {
   return (
     <div className="pagina">
+      <Head>
+        <title>Sobre o Lume Cidadão: o que é e de onde vêm os dados | Lume</title>
+        <meta name="description" content="O Lume reúne dados oficiais sobre deputados, senadores e candidatos em linguagem simples, sem lado e com link para a fonte de cada número." />
+        <link rel="canonical" href="https://www.lumecidadao.com.br/sobre" />
+      </Head>
       <div className="leitura">
       <span style={{ fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: t.cor.verde }}>Sobre o projeto</span>
       <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(2rem,5vw,3rem)', lineHeight: 1.1, margin: '12px 0 20px' }}>

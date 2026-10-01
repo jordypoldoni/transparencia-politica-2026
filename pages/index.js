@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useRouter } from 'next/router';
+import Head from 'next/head';
 import Link from 'next/link';
 import ServicoAPI from '../src/servicos/servico_api';
 import { humanizarVotacao, explicarTipo, papelVotacao, situacaoCidada } from '../src/lib/votacao';
@@ -12,6 +13,9 @@ import { t } from '../src/estilo/tokens';
 import { hrefPerfil } from '../src/lib/casa';
 import Avatar from '../components/Avatar';
 import { dataBr } from '../src/lib/datas';
+
+const DESCRICAO_HOME = 'Quanto cada deputado e senador gastou da verba pública, como votou e quem são os candidatos de 2026 no seu estado. Dados oficiais da Câmara, do Senado, das Assembleias e do TSE, sempre com link para a fonte.';
+const DADOS_ESTRUTURADOS_HOME = {"@context": "https://schema.org", "@type": "WebSite", "name": "Lume Cidadão", "alternateName": "Lume", "url": "https://www.lumecidadao.com.br/", "inLanguage": "pt-BR", "description": "Gastos, votos e candidatos 2026 dos políticos do Brasil, com dados oficiais e link para a fonte."};
 
 const ESTADOS = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
 const ESTADOS_OPCOES = ESTADOS.map((uf) => ({ valor: uf, rotulo: `${uf} · ${NOMES_UF[uf] || uf}`, busca: `${uf} ${NOMES_UF[uf] || ''}` }));
@@ -63,6 +67,22 @@ export default function Home({ votacoes, parlamentares = [], uniao = null, estad
 
   return (
     <div>
+      {/* SEO (01/10/2026): a página inicial ia ao ar SEM título, descrição e canônico, e é a porta
+          que o Google e as IAs leem primeiro. Endereço fixo no www (o domínio sem www redireciona). */}
+      <Head>
+        <title>Lume Cidadão: gastos, votos e candidatos 2026 dos políticos do Brasil</title>
+        <meta name="description" content={DESCRICAO_HOME} />
+        <link rel="canonical" href="https://www.lumecidadao.com.br/" />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="Lume Cidadão" />
+        <meta property="og:locale" content="pt_BR" />
+        <meta property="og:url" content="https://www.lumecidadao.com.br/" />
+        <meta property="og:title" content="Lume Cidadão: gastos, votos e candidatos 2026 dos políticos do Brasil" />
+        <meta property="og:description" content={DESCRICAO_HOME} />
+        <meta property="og:image" content="https://www.lumecidadao.com.br/og-image.png" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(DADOS_ESTRUTURADOS_HOME) }} />
+      </Head>
       {/* HERO */}
       <section className="surgir pagina">
         <div className="hero-grid">
