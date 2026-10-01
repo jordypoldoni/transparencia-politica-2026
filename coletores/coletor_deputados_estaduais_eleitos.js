@@ -39,6 +39,14 @@ const CADEIRAS = { AC: 24, AL: 27, AP: 24, AM: 24, BA: 63, CE: 46, DF: 24, ES: 3
   PA: 41, PB: 36, PR: 54, PE: 49, PI: 30, RJ: 70, RN: 24, RS: 55, RO: 24, RR: 24, SC: 40, SP: 94, SE: 24, TO: 24 };
 // Estados com cadastro de mandato no site (fonte_api em agentes_politicos), para ligar eleito e mandato.
 const CADASTRO = { RS: 'alergs', SP: 'alesp', MG: 'almg' };
+// Ligações conferidas à mão, quando o nome na urna e o da Assembleia não batem: sq do TSE -> id da Assembleia (id_externo_api).
+const LIGACOES_CONFERIDAS = {
+  MG: {
+    '130001596299': '26152', // DR. PAULO = Doutor Paulo
+    '130001605806': '28868', // GREGO = Grego da Fundação
+    '130001607410': '26119', // PROFESSOR CLEITON (CLEITINHO) = Professor Cleiton
+  },
+};
 
 const args = process.argv.slice(2);
 const opcao = (nome) => { const a = args.find((x) => x.startsWith(`--${nome}=`)); return a ? a.split('=')[1] : null; };
@@ -82,7 +90,7 @@ const normNome = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '')
 const palavras = (s) => normNome(s).split(' ').filter((p) => p.length > 1 && !TIRAR.has(p));
 const contem = (grande, pequeno) => pequeno.length > 0 && pequeno.every((p) => grande.includes(p));
 
-function ligarEleitosAoMandato(eleitos, agentes) {
+function ligarEleitosAoMandato(eleitos, agentes, conferidas = {}) {
   const regras = [
     (e, a) => normNome(e.nome_urna) === normNome(a.nome_urna),
     (e, a) => { const pa = palavras(a.nome_urna); return pa.length >= 2 && contem([...palavras(e.nome_completo), ...palavras(e.nome_urna)], pa); },
@@ -90,6 +98,11 @@ function ligarEleitosAoMandato(eleitos, agentes) {
   ];
   const ligacao = new Map(); // sq do eleito -> agente
   const usados = new Set();
+  for (const [sq, idExterno] of Object.entries(conferidas)) {
+    const e = eleitos.find((x) => x.sq_candidato === sq);
+    const a = agentes.find((x) => String(x.id_externo_api) === idExterno);
+    if (e && a) { ligacao.set(sq, a); usados.add(a.id); }
+  }
   for (const regra of regras) {
     for (const a of agentes) {
       if (usados.has(a.id)) continue;
@@ -156,10 +169,10 @@ async function main() {
 
     // Liga ao mandato onde o site tem cadastro da Assembleia.
     if (CADASTRO[uf]) {
-      const { data: agentes, error } = await supabase.from('agentes_politicos').select('id, nome_urna').eq('uf_sede', uf).eq('fonte_api', CADASTRO[uf]);
+      const { data: agentes, error } = await supabase.from('agentes_politicos').select('id, nome_urna, id_externo_api').eq('uf_sede', uf).eq('fonte_api', CADASTRO[uf]);
       if (error) { problemas.push(`${uf}: cadastro não lido (${error.message})`); }
       else {
-        const { ligacao, eleitosSemMandato, mandatosSemEleito } = ligarEleitosAoMandato(eleitos, agentes || []);
+        const { ligacao, eleitosSemMandato, mandatosSemEleito } = ligarEleitosAoMandato(eleitos, agentes || [], LIGACOES_CONFERIDAS[uf]);
         for (const e of eleitos) e.agente_id = ligacao.get(e.sq_candidato)?.id || null;
         console.log(`   ligados ao cadastro ${CADASTRO[uf]}: ${ligacao.size} de ${eleitos.length}`);
         if (eleitosSemMandato.length) console.log(`   eleitos sem mandato no cadastro (saíram ou nome diferente): ${eleitosSemMandato.map((e) => e.nome_urna).join(', ')}`);
