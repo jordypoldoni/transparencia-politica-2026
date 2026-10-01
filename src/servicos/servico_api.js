@@ -719,6 +719,23 @@ const ServicoAPI = {
         return todos;
     },
 
+    // Fichas dos candidatos 2026 para o sitemap (01/10/2026). Até aqui só os perfis de quem tem
+    // mandato entravam, e as ~8 mil fichas de candidato (o que mais se procura antes da eleição)
+    // não existiam para o Google. Deputado estadual fica de fora: vem ao vivo do TSE, sem tabela.
+    listarCandidatosParaSitemap: async () => {
+        const fontes = [
+            ['candidatos_presidenciais', '/presidencial/'],
+            ['candidatos_governador', '/candidato-governador/'],
+            ['candidatos_senador', '/candidato-senador/'],
+            ['candidatos_deputado_federal', '/deputado-federal/'],
+        ];
+        const listas = await Promise.all(fontes.map(([tabela, rota]) => buscarTudo(
+            () => supabase.from(tabela).select('slug').not('slug', 'is', null).order('slug', { ascending: true }),
+            `listarCandidatosParaSitemap(${tabela})`,
+        ).then((linhas) => linhas.map((l) => rota + l.slug))));
+        return [...new Set(listas.flat())];
+    },
+
     // ============ PANORAMA FISCAL (SICONFI: União, estados, DF, municípios) ============
 
     // Resumo + despesa por função de um ente. Município ainda não coletado: busca sob demanda e cacheia.

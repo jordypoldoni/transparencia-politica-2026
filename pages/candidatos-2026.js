@@ -259,6 +259,7 @@ export default function Candidatos2026({ cargo, chapas, deputados, resumo, resum
       <Head>
         <title>Candidatos 2026: Presidente, Governador, Senador, Deputado Federal e Estadual | Lume</title>
         <meta name="description" content="Todos os candidatos à Presidência, aos governos estaduais, ao Senado, à Câmara dos Deputados e às Assembleias Legislativas em 2026: partido, coligação e situação da candidatura de cada um, sem análise ou opinião, direto da fonte oficial (TSE)." />
+        <link rel="canonical" href="https://www.lumecidadao.com.br/candidatos-2026" />
       </Head>
 
       <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.8rem,4vw,2.6rem)', margin: '0 0 10px' }}>

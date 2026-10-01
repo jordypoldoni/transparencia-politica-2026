@@ -58,6 +58,7 @@ export default function PainelVotacoes({ resumo }) {
       <Head>
         <title>{`Votações da Câmara, do Senado e da Assembleia do RS | Lume`}</title>
         <meta name="description" content={`${totalGeral} votações em plenário, separadas por casa, com o que cada tipo de decisão alcança na sua vida e quem votou o quê.`} />
+        <link rel="canonical" href="https://www.lumecidadao.com.br/votacoes" />
       </Head>
 
       <div className="pagina">

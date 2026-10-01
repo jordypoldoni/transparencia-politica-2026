@@ -46,6 +46,7 @@ export default function Entenda() {
       <Head>
         <title>Entenda: o que faz cada político e quanto custa a cota | Lume</title>
         <meta name="description" content="Em linguagem simples: o que faz um vereador, deputado e senador, e os valores e tetos da cota parlamentar por estado, com fontes oficiais." />
+        <link rel="canonical" href="https://www.lumecidadao.com.br/entenda" />
       </Head>
 
       <div className="pagina">

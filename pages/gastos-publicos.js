@@ -58,6 +58,7 @@ export default function GastosPublicos({ uniao, estados = [], gastosFuncao = [] 
       <Head>
         <title>Gastos públicos: União, estados, DF e municípios | Lume</title>
         <meta name="description" content="Quanto a União, os estados, o DF e os municípios arrecadam e gastam, e para onde vai o dinheiro, por área e por habitante. Fonte: SICONFI/Tesouro Nacional." />
+        <link rel="canonical" href="https://www.lumecidadao.com.br/gastos-publicos" />
       </Head>
 
       <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.8rem,4vw,2.6rem)', margin: '0 0 8px' }}>Gastos públicos</h1>
