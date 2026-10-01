@@ -22,6 +22,10 @@ const CHAVE_SINC = 'lume:favoritos:sinc';
 const EVENTO = 'lume:favoritos';
 export const TIPOS = ['parlamentar', 'candidato', 'partido'];
 const id = (tipo, chave) => `${tipo}|${chave}`;
+// FOTO (01/10/2026): vai junto para o perfil (supabase/banco2/005_favoritos_foto.sql). Antes os
+// favoritos que desciam do perfil chegavam sem foto. O banco só aceita https e até 400 caracteres;
+// fora disso a foto fica de fora, para o favorito nunca ser recusado por causa dela.
+const fotoValida = (f) => (typeof f === 'string' && /^https:\/\//.test(f) && f.length <= 400 ? f : null);
 
 export function lerFavoritos() {
   try { return JSON.parse(window.localStorage.getItem(CHAVE_LOCAL) || '{}') || {}; } catch { return {}; }
@@ -54,7 +58,7 @@ async function espelharNoPerfil(acao, fav) {
     // Postgres recusa inteiro sem essa permissão. Resultado: NENHUM favorito chegava ao banco.
     // Com ignoreDuplicates vira ON CONFLICT DO NOTHING, que só precisa de INSERT.
     const { error } = await b.from('favoritos').upsert(
-      { user_id: s.user.id, tipo: fav.tipo, chave: fav.chave, rotulo: fav.rotulo, detalhe: fav.detalhe || null },
+      { user_id: s.user.id, tipo: fav.tipo, chave: fav.chave, rotulo: fav.rotulo, detalhe: fav.detalhe || null, foto: fotoValida(fav.foto) },
       { onConflict: 'user_id,tipo,chave', ignoreDuplicates: true });
     if (!error) { sinc.add(k); gravarSinc(sinc); }
   }
@@ -113,22 +117,34 @@ export async function sincronizarFavoritos() {
   const b = banco();
   const s = await sessaoAtual().catch(() => null);
   if (!b || !s) return { subiram: 0, desceram: 0 };
-  const { data, error } = await b.from('favoritos').select('tipo, chave, rotulo, detalhe, criado_em');
+  const { data, error } = await b.from('favoritos').select('tipo, chave, rotulo, detalhe, foto, criado_em');
   if (error) throw error;
   const locais = lerFavoritos();
   const antes = lerSinc();
   const remotos = Object.fromEntries((data || []).map((f) => [id(f.tipo, f.chave), f]));
 
   const subir = [];
+  const completarNoPerfil = [];
   let apagadosAqui = 0;
+  let fotosDesceram = 0;
   for (const [k, f] of Object.entries(locais)) {
-    if (remotos[k]) continue;
+    if (remotos[k]) {
+      // Nos dois lados: quem tem a foto completa o outro (favoritos de antes de 01/10 estão sem).
+      const fotoAqui = fotoValida(f.foto);
+      if (!fotoAqui && remotos[k].foto) { locais[k] = { ...f, foto: remotos[k].foto }; fotosDesceram++; }
+      else if (fotoAqui && !remotos[k].foto) completarNoPerfil.push({ tipo: f.tipo, chave: f.chave, foto: fotoAqui });
+      continue;
+    }
     if (antes.has(k)) { delete locais[k]; apagadosAqui++; }
-    else subir.push({ user_id: s.user.id, tipo: f.tipo, chave: f.chave, rotulo: f.rotulo, detalhe: f.detalhe || null });
+    else subir.push({ user_id: s.user.id, tipo: f.tipo, chave: f.chave, rotulo: f.rotulo, detalhe: f.detalhe || null, foto: fotoValida(f.foto) });
   }
   if (subir.length) {
     const { error: e2 } = await b.from('favoritos').upsert(subir, { onConflict: 'user_id,tipo,chave', ignoreDuplicates: true });
     if (e2) throw e2;
+  }
+  // Só a coluna foto pode ser atualizada (005_favoritos_foto.sql). Falha aqui não para o resto.
+  for (const c of completarNoPerfil) {
+    await b.from('favoritos').update({ foto: c.foto }).match({ user_id: s.user.id, tipo: c.tipo, chave: c.chave });
   }
   let desceram = 0;
   for (const [k, f] of Object.entries(remotos)) {
@@ -139,10 +155,10 @@ export async function sincronizarFavoritos() {
       delete remotos[k];
       continue;
     }
-    locais[k] = { ...f, foto: null };
+    locais[k] = { ...f, foto: f.foto || null };
     desceram++;
   }
-  if (desceram || apagadosAqui) gravar(locais);
+  if (desceram || apagadosAqui || fotosDesceram) gravar(locais);
   gravarSinc(new Set([...Object.keys(remotos), ...subir.map((f) => id(f.tipo, f.chave))]));
   return { subiram: subir.length, desceram };
 }
