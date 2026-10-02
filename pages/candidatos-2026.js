@@ -16,6 +16,7 @@ import { t } from '../src/estilo/tokens';
 import SeloSituacao from '../components/SeloSituacao';
 import Paginacao from '../components/Paginacao';
 import ApuracaoEleicao from '../components/ApuracaoEleicao';
+import ConferenciaUrnas from '../components/ConferenciaUrnas';
 import { listarCandidatosEstaduais, UFS_ESTADUAL } from '../src/lib/candidatosEstaduais';
 
 const UFS = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
@@ -285,6 +286,7 @@ function PaginaApuracao({ cargo, ufInicial }) {
           <Link key={c.valor} href={hrefDe(c.valor)} style={abaEstilo(cargo === c.valor)}>{c.rotulo}</Link>
         ))}
       </div>
+      <ConferenciaUrnas />
       <ApuracaoEleicao key={cargo} cargo={cargo} ufInicial={ufInicial} />
     </div>
   );
