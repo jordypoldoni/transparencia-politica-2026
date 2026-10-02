@@ -75,7 +75,7 @@ async function montarListas(uf, estaduais, agentePorId) {
   const doBanco = Promise.all(CARGOS.map(async (c) => {
     const linhas = await buscarTudo(() => supabase.from(c.tabela)
       .select('slug, nome_urna, partido_sigla, nr_candidato, foto_url, agente_id')
-      .eq('ano_eleicao', 2026).eq('uf', uf), `afinidade.${c.tabela}`);
+      .eq('ano_eleicao', 2026).eq('uf', uf).eq('oculta', false), `afinidade.${c.tabela}`);
     cargos[c.chave] = agrupar(linhas.map((l) => ({
       sigla: l.partido_sigla,
       c: candidato(l, `${c.href}/${l.slug}`, selo(l.agente_id ? agentePorId.get(l.agente_id) : null, uf)),

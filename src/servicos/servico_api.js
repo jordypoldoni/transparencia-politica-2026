@@ -273,6 +273,7 @@ const ServicoAPI = {
                 .from('candidatos_deputado_federal')
                 .select('slug, uf, nr_candidato, partido_sigla, situacao_tse, eleicoes_anteriores')
                 .eq('agente_id', id)
+                .eq('oculta', false)
                 .limit(1)
                 .maybeSingle();
             candidatura_2026 = cand || null;
@@ -730,7 +731,11 @@ const ServicoAPI = {
             ['candidatos_deputado_federal', '/deputado-federal/'],
         ];
         const listas = await Promise.all(fontes.map(([tabela, rota]) => buscarTudo(
-            () => supabase.from(tabela).select('slug').not('slug', 'is', null).order('slug', { ascending: true }),
+            () => {
+                let q = supabase.from(tabela).select('slug').not('slug', 'is', null);
+                if (tabela !== 'candidatos_presidenciais') q = q.eq('oculta', false); // duplicadas fora do sitemap
+                return q.order('slug', { ascending: true });
+            },
             `listarCandidatosParaSitemap(${tabela})`,
         ).then((linhas) => linhas.map((l) => rota + l.slug))));
         return [...new Set(listas.flat())];
@@ -941,7 +946,8 @@ const ServicoAPI = {
         const { count: total, error: erroTotal } = await supabase
             .from('candidatos_deputado_federal')
             .select('id', { count: 'exact', head: true })
-            .eq('ano_eleicao', ano);
+            .eq('ano_eleicao', ano)
+            .eq('oculta', false);
         if (erroTotal) { console.error('resumoCandidatosDeputadoFederal (total):', erroTotal.message); return { total: 0, porUf: {} }; }
 
         const UFS = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
@@ -950,6 +956,7 @@ const ServicoAPI = {
                 .from('candidatos_deputado_federal')
                 .select('id', { count: 'exact', head: true })
                 .eq('ano_eleicao', ano)
+                .eq('oculta', false)
                 .eq('uf', uf);
             if (error) { console.error(`resumoCandidatosDeputadoFederal (${uf}):`, error.message); return [uf, 0]; }
             return [uf, count || 0];
@@ -964,7 +971,8 @@ const ServicoAPI = {
         let q = supabase
             .from('candidatos_deputado_federal')
             .select('id, slug, uf, nr_candidato, nome_urna, partido_sigla, coligacao_nome, situacao_candidatura, reeleicao, agente_id, foto_url', { count: 'exact' })
-            .eq('ano_eleicao', ano);
+            .eq('ano_eleicao', ano)
+            .eq('oculta', false); // 02/10/2026: registro repetido que nao consta da urna (supabase/banco1/006)
         if (uf) q = q.eq('uf', uf.toUpperCase());
         if (partido) q = q.eq('partido_sigla', partido.toUpperCase());
         if (reeleicao) q = q.eq('reeleicao', true);
@@ -1095,7 +1103,8 @@ const ServicoAPI = {
         let q = supabase
             .from('candidatos_senador')
             .select('id, slug, uf, nr_candidato, nome_urna, partido_sigla, coligacao_nome, situacao_tse, reeleicao, agente_id, foto_url', { count: 'exact' })
-            .eq('ano_eleicao', ano);
+            .eq('ano_eleicao', ano)
+            .eq('oculta', false); // 02/10/2026: registro repetido que nao consta da urna (supabase/banco1/006)
         if (uf) q = q.eq('uf', uf.toUpperCase());
         // Mesma regra de busca do deputado: só dígitos = começo do número (o número de senador tem
         // três dígitos e começa pelo do partido); texto = nome, nome do partido ou sigla exata.
@@ -1113,7 +1122,7 @@ const ServicoAPI = {
     },
 
     resumoCandidatosSenador: async (ano = 2026) => {
-        const { data, error } = await supabase.from('candidatos_senador').select('uf').eq('ano_eleicao', ano);
+        const { data, error } = await supabase.from('candidatos_senador').select('uf').eq('ano_eleicao', ano).eq('oculta', false);
         if (error) { console.error('resumoCandidatosSenador:', error.message); return { total: 0, porUf: {} }; }
         const porUf = {};
         for (const r of data || []) porUf[r.uf] = (porUf[r.uf] || 0) + 1;
@@ -1127,7 +1136,8 @@ const ServicoAPI = {
         let q = supabase
             .from('candidatos_governador')
             .select('id, slug, uf, nr_candidato, nome_urna, partido_sigla, coligacao_nome, situacao_tse, reeleicao, agente_id, foto_url', { count: 'exact' })
-            .eq('ano_eleicao', ano);
+            .eq('ano_eleicao', ano)
+            .eq('oculta', false); // 02/10/2026: registro repetido que nao consta da urna (supabase/banco1/006)
         if (uf) q = q.eq('uf', uf.toUpperCase());
         // Mesma regra de busca dos outros cargos: so digitos = comeco do numero (o de
         // governador tem dois digitos, os do proprio partido); texto = nome, nome do partido
@@ -1146,7 +1156,7 @@ const ServicoAPI = {
     },
 
     resumoCandidatosGovernador: async (ano = 2026) => {
-        const { data, error } = await supabase.from('candidatos_governador').select('uf').eq('ano_eleicao', ano);
+        const { data, error } = await supabase.from('candidatos_governador').select('uf').eq('ano_eleicao', ano).eq('oculta', false);
         if (error) { console.error('resumoCandidatosGovernador:', error.message); return { total: 0, porUf: {} }; }
         const porUf = {};
         for (const r of data || []) porUf[r.uf] = (porUf[r.uf] || 0) + 1;

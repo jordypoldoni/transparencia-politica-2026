@@ -330,6 +330,7 @@ async function main() {
   }
 
   console.log(`\n✅ Deputados Federais: ${totalOk} gravados, ${totalFalhou} com erro. Fotos: ${totalFotosOk} casadas, ${totalFotosNao} sem candidato correspondente.`);
+  await supabase.rpc('marcar_candidaturas_duplicadas').then(({ error }) => { if (error) console.warn('⚠️  duplicadas (rode supabase/banco1/006):', error.message); }); // 02/10/2026: esconde registro repetido que nao consta da urna
   console.log('   Confira no banco (tabela candidatos_deputado_federal) e depois rode o site local pra ver /candidatos-2026?cargo=deputado-federal.');
 }
 

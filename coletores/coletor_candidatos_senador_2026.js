@@ -209,6 +209,7 @@ async function main() {
   }
 
   console.log(`\n📊 ${ok} candidatos${SIMULAR ? ' lidos' : ' gravados'}, ${fotos} fotos novas, ${falhou.length} falhas`);
+  if (!SIMULAR) await supabase.rpc('marcar_candidaturas_duplicadas').then(({ error }) => { if (error) console.warn('⚠️  duplicadas (rode supabase/banco1/006):', error.message); }); // 02/10/2026: esconde registro repetido que nao consta da urna
   if (semSuplente) console.log(`   ${semSuplente} sem suplente na ficha (a tela não inventa: mostra que a fonte não informa)`);
   if (semFoto.length) console.warn(`⚠️  ${semFoto.length} fotos não baixaram: ${semFoto.slice(0, 8).join(', ')}${semFoto.length > 8 ? '…' : ''}`);
   if (ok === 0) {
