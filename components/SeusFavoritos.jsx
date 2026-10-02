@@ -1,8 +1,9 @@
+import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Avatar from './Avatar';
 import BotaoFavorito from './BotaoFavorito';
 import { t } from '../src/estilo/tokens';
-import { useFavoritos } from '../src/lib/favoritos';
+import { useFavoritos, completarFotosLocais } from '../src/lib/favoritos';
 
 // "SEUS FAVORITOS" na página Pra você (26/09/2026): quem a pessoa marcou com o coração em
 // qualquer cartão do site. Some quando não há nenhum (uma seção vazia só ocupa espaço).
@@ -16,6 +17,17 @@ const GRUPOS = [
 
 export default function SeusFavoritos({ semTitulo = false }) {
   const lista = useFavoritos();
+  // Favoritos antigos (antes de 01/10) ficaram sem foto: busca no servidor uma vez por endereço.
+  const tentadas = useRef(new Set());
+  useEffect(() => {
+    const faltam = lista.filter((f) => f.tipo !== 'partido' && !f.foto && !tentadas.current.has(f.chave)).map((f) => f.chave);
+    if (!faltam.length) return;
+    faltam.forEach((c) => tentadas.current.add(c));
+    fetch('/api/fotos-favoritos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ chaves: faltam }) })
+      .then((r) => (r.ok ? r.json() : {}))
+      .then((fotos) => completarFotosLocais(fotos))
+      .catch(() => {});
+  }, [lista]);
   if (!lista.length) return null;
   return (
     <section style={{ marginBottom: '32px' }}>

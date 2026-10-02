@@ -76,6 +76,20 @@ export function alternarFavorito({ tipo, chave, rotulo, detalhe = null, foto = n
   return agora;
 }
 
+// FOTO QUE FALTAVA (02/10/2026): completa os favoritos deste navegador que estão sem foto, com o
+// que a página "Seus favoritos" buscou no servidor ({ chave: url }). Só preenche quem está vazio.
+// A próxima sincronização leva a foto ao perfil (ver completarNoPerfil em sincronizarFavoritos).
+export function completarFotosLocais(fotosPorChave) {
+  const mapa = lerFavoritos();
+  let mudou = false;
+  for (const f of Object.values(mapa)) {
+    const url = fotosPorChave && fotosPorChave[f.chave];
+    if (!f.foto && typeof url === 'string' && /^https:\/\//.test(url)) { f.foto = url; mudou = true; }
+  }
+  if (mudou) gravar(mapa);
+  return mudou;
+}
+
 // Hook para um coração: diz se está marcado e acompanha mudanças feitas em outros cartões.
 export function useFavorito(tipo, chave) {
   const [marcado, setMarcado] = useState(false);
