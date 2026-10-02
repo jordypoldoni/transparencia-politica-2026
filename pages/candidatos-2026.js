@@ -15,6 +15,7 @@ import { NOMES_UF } from '../src/lib/cotas';
 import { t } from '../src/estilo/tokens';
 import SeloSituacao from '../components/SeloSituacao';
 import Paginacao from '../components/Paginacao';
+import ApuracaoEleicao from '../components/ApuracaoEleicao';
 import { listarCandidatosEstaduais, UFS_ESTADUAL } from '../src/lib/candidatosEstaduais';
 
 const UFS = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
@@ -241,7 +242,59 @@ function ListaDeputadoFederal({ dadosIniciais, resumo, filtrosIniciais, paginaIn
   );
 }
 
-export default function Candidatos2026({ cargo, chapas, deputados, resumo, resumoSenado, resumoGoverno, filtros, pagina }) {
+// ALTERNADOR "Candidatos | Apuração" (02/10/2026): as duas visões moram na mesma página de
+// Eleições 2026. A apuração é a mesma rota com ?visao=apuracao, para não criar menu nem página nova.
+function AlternarVisao({ visao, cargo }) {
+  return (
+    <div role="group" aria-label="Visão da página" style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
+      <Link href={`/candidatos-2026?cargo=${cargo}`} style={abaEstilo(visao !== 'apuracao')}>Candidatos</Link>
+      <Link href={`/candidatos-2026?visao=apuracao&cargo=${cargo}`} style={abaEstilo(visao === 'apuracao')}>Apuração</Link>
+    </div>
+  );
+}
+
+const CARGOS_APURACAO = [
+  { valor: 'presidente', rotulo: 'Presidente' },
+  { valor: 'governador', rotulo: 'Governador' },
+  { valor: 'senador', rotulo: 'Senador' },
+  { valor: 'deputado-federal', rotulo: 'Deputado Federal' },
+  { valor: 'deputado-estadual', rotulo: 'Deputado Estadual' },
+];
+
+function PaginaApuracao({ cargo, ufInicial }) {
+  const hrefDe = (c) => `/candidatos-2026?visao=apuracao&cargo=${c}`;
+  return (
+    <div className="pagina">
+      <Head>
+        <title>Apuração 2026: resultados das eleições, seção por seção | Lume</title>
+        <meta name="description" content="Resultado oficial da apuração das eleições de 2026, lido do TSE: seções apuradas, comparecimento, votos válidos, brancos, nulos e candidatos por votos. Atualiza sozinho." />
+        <link rel="canonical" href="https://www.lumecidadao.com.br/candidatos-2026?visao=apuracao" />
+      </Head>
+      <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.8rem,4vw,2.6rem)', margin: '0 0 10px' }}>
+        Apuração 2026
+      </h1>
+      <p style={{ color: t.cor.cinza, margin: '0 0 22px', maxWidth: '70ch', lineHeight: 1.5 }}>
+        O resultado oficial das eleições de 4 de outubro, lido do TSE conforme as seções são apuradas. Só número e fonte, sem análise ou opinião.
+      </p>
+      <AlternarVisao visao="apuracao" cargo={cargo} />
+      <nav aria-label="Cargo" className="so-celular" style={{ marginBottom: '20px' }}>
+        <EscolhaCompacta rotulo="Cargo" valor={cargo} opcoes={CARGOS_APURACAO.map((c) => ({ ...c, href: hrefDe(c.valor) }))} />
+      </nav>
+      <div className="so-computador" style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap' }}>
+        {CARGOS_APURACAO.map((c) => (
+          <Link key={c.valor} href={hrefDe(c.valor)} style={abaEstilo(cargo === c.valor)}>{c.rotulo}</Link>
+        ))}
+      </div>
+      <ApuracaoEleicao key={cargo} cargo={cargo} ufInicial={ufInicial} />
+    </div>
+  );
+}
+
+export default function Candidatos2026(props) {
+  return props.visao === 'apuracao' ? <PaginaApuracao cargo={props.cargo} ufInicial={props.ufInicial} /> : <PaginaCandidatos {...props} />;
+}
+
+function PaginaCandidatos({ cargo, chapas, deputados, resumo, resumoSenado, resumoGoverno, filtros, pagina }) {
   const totalPresidente = chapas.length;
   // Contagem dos estaduais vem DEPOIS de a página abrir (/api/resumo-deputado-estadual): exige as
   // 26 listas do TSE. Enquanto não chega, ou se algum estado falhar, a aba fica sem número.
@@ -269,6 +322,8 @@ export default function Candidatos2026({ cargo, chapas, deputados, resumo, resum
         Quem disputa a Presidência, os governos estaduais, o Senado, a Câmara dos Deputados e as Assembleias Legislativas em 2026: partido, coligação e a situação da candidatura de cada um(a). Dados oficiais do{' '}
         <a href="https://www.tse.jus.br/" target="_blank" rel="noopener noreferrer" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>TSE</a>, sem análise ou opinião, tire suas próprias conclusões com base nos dados.
       </p>
+
+      <AlternarVisao visao="candidatos" cargo={cargo} />
 
       {/* Celular (27/09/2026): um campo de escolha no lugar das cinco pílulas, que ocupavam 4 linhas. */}
       <nav aria-label="Cargo" className="so-celular" style={{ marginBottom: '20px' }}>
@@ -316,6 +371,14 @@ export default function Candidatos2026({ cargo, chapas, deputados, resumo, resum
 
 export async function getServerSideProps({ query, req }) {
   const cargo = ['deputado-federal', 'senador', 'governador', 'deputado-estadual'].includes(query.cargo) ? query.cargo : 'presidente';
+  // APURAÇÃO (02/10/2026): não lê o banco. O resultado vem de /api/apuracao no navegador. O estado
+  // abre pelo endereço, senão pela região aproximada de quem visita (cabeçalho da Vercel), senão SP.
+  if (query.visao === 'apuracao') {
+    const pedida = String(query.uf || '').toUpperCase();
+    const regiao = String(req.headers['x-vercel-ip-country-region'] || '').toUpperCase();
+    const local = String(req.headers['x-vercel-ip-country'] || '').toUpperCase() === 'BR' && UFS.includes(regiao) ? regiao : '';
+    return { props: { visao: 'apuracao', cargo, ufInicial: UFS.includes(pedida) ? pedida : (local || 'SP') } };
+  }
   const filtros = {
     uf: query.uf ? String(query.uf).toUpperCase().slice(0, 2) : '',
     partido: query.partido ? String(query.partido).toUpperCase() : '',
