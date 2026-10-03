@@ -1,0 +1,15 @@
+alter table agentes_politicos
+  add column if not exists data_nascimento date,
+  add column if not exists naturalidade_uf varchar(2),
+  add column if not exists naturalidade_municipio text,
+  add column if not exists escolaridade text,
+  add column if not exists profissao text,
+  add column if not exists email_oficial text,
+  add column if not exists situacao text,
+  add column if not exists condicao_eleitoral text,
+  add column if not exists website text,
+  add column if not exists comissoes jsonb default '[]'::jsonb,
+  add column if not exists frentes jsonb default '[]'::jsonb,
+  add column if not exists proposicoes jsonb default '[]'::jsonb,
+  add column if not exists n_proposicoes integer,
+  add column if not exists bio_atualizada_em timestamptz;
