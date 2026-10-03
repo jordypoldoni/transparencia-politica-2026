@@ -20,10 +20,14 @@ export const CARGOS = {
   governador: { cd: '0003', nacional: false, proporcional: false },
   senador: { cd: '0005', nacional: false, proporcional: false },
   'deputado-federal': { cd: '0006', nacional: false, proporcional: true },
-  'deputado-estadual': { cd: '0007', nacional: false, proporcional: true }, // no DF o TSE chama de distrital
+  'deputado-estadual': { cd: '0007', nacional: false, proporcional: true }, // no DF o cargo é distrital e o TSE usa o código 0008 (ver CD_DISTRITAL)
 };
 
 const BASE_PADRAO = 'https://resultados.tse.jus.br/oficial';
+
+// 03/10/2026: no DF não existe deputado estadual, existe o distrital, e o arquivo dele é c0008.
+// Conferido no TSE: df-c0007 devolve 404 (NoSuchKey) e df-c0008 devolve 200 "Deputado Distrital".
+const CD_DISTRITAL = '0008';
 
 // Devolve { url, cfg } ou null se cargo/UF não existe (nesse caso NÃO se fala com o TSE).
 export function urlDoResultado(cargo, uf, env = process.env) {
@@ -34,7 +38,8 @@ export function urlDoResultado(cargo, uf, env = process.env) {
   const base = (env.TSE_RESULTADOS_BASE || BASE_PADRAO).replace(/\/+$/, '');
   const ele = String(cfg.nacional ? (env.TSE_ELEICAO_FEDERAL || '6257') : (env.TSE_ELEICAO_ESTADUAL || '6259'));
   const pasta = cfg.nacional ? 'br' : sigla.toLowerCase();
-  return { cfg, url: `${base}/ele2026/${ele}/dados/${pasta}/${pasta}-c${cfg.cd}-e${ele.padStart(6, '0')}-u.json` };
+  const cd = cargo === 'deputado-estadual' && sigla === 'DF' ? CD_DISTRITAL : cfg.cd;
+  return { cfg, url: `${base}/ele2026/${ele}/dados/${pasta}/${pasta}-c${cd}-e${ele.padStart(6, '0')}-u.json` };
 }
 
 const num = (x) => {
