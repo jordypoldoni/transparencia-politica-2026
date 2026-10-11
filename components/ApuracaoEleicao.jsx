@@ -27,12 +27,13 @@ function useApuracao(cargo, uf, turno) {
         const r = await fetch(url, { signal: ctrl.signal });
         const corpo = await r.json().catch(() => ({}));
         if (!vivo) return;
-        if (!r.ok) throw new Error(corpo.erro || `erro ${r.status}`);
+        if (!r.ok) throw Object.assign(new Error(corpo.erro || `erro ${r.status}`), { codigo: corpo.erro });
         setEstado({ chave, dados: corpo, erro: null });
       } catch (e) {
         if (!vivo || e.name === 'AbortError') return;
         // Mantém o que já estava na tela; só avisa que a última atualização falhou.
-        setEstado((antes) => ({ chave, dados: antes.chave === chave ? antes.dados : null, erro: 'falhou' }));
+        // `nao_publicado`: o TSE ainda não divulgou o arquivo deste cargo/estado (não é falha de leitura).
+        setEstado((antes) => ({ chave, dados: antes.chave === chave ? antes.dados : null, erro: e.codigo === 'tse_nao_publicou' ? 'nao_publicado' : 'falhou' }));
       }
     };
     setEstado((antes) => (antes.chave === chave ? antes : { chave, dados: null, erro: null }));
@@ -115,7 +116,13 @@ export default function ApuracaoEleicao({ cargo, ufInicial, turno = 1 }) {
       )}
 
       {!d && !erro && <p style={{ color: t.cor.cinza }}>Buscando o resultado no TSE…</p>}
-      {!d && erro && (
+      {!d && erro === 'nao_publicado' && (
+        <p style={{ color: t.cor.alertaTexto, lineHeight: 1.5 }}>
+          O TSE ainda não publicou o resultado deste cargo neste estado. Esta tela confere de novo sozinha a cada 30 segundos. Você também pode consultar direto no{' '}
+          <a href="https://resultados.tse.jus.br/" target="_blank" rel="noopener noreferrer" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>portal de resultados do TSE</a>.
+        </p>
+      )}
+      {!d && erro && erro !== 'nao_publicado' && (
         <p style={{ color: t.cor.alertaTexto, lineHeight: 1.5 }}>
           Não foi possível ler o resultado do TSE agora. A tela tenta de novo sozinha a cada 30 segundos. Você também pode consultar direto no{' '}
           <a href="https://resultados.tse.jus.br/" target="_blank" rel="noopener noreferrer" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>portal de resultados do TSE</a>.

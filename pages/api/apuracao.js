@@ -6,6 +6,7 @@
 // deputado-estadual. Presidente não leva uf. turno: 1 (padrão) ou 2; o 2º turno só existe para
 // presidente e governador de AC, AM, DF, ES, RN e TO (regras em src/lib/turnos.js).
 //
+// Arquivo ainda não publicado (404 do TSE): resposta 404 `tse_nao_publicou`, sem insistir por 60 s.
 // Se a Vercel for recusada pelo TSE (o DivulgaCandContas recusa com 403), a resposta diz
 // `tse_recusou` com o status: é assim que descobrimos, e o plano B é a tse-ponte do Supabase.
 import { urlDoResultado, reduzirResultado } from '../../src/lib/apuracaoTse';
@@ -13,6 +14,15 @@ import { urlDoResultado, reduzirResultado } from '../../src/lib/apuracaoTse';
 const UA = { 'User-Agent': 'Mozilla/5.0', Accept: 'application/json' };
 const emVoo = new Map(); // url -> Promise: visitantes simultâneos no mesmo servidor dividem 1 pedido
 const recente = new Map(); // url -> { em, corpo }
+// 404 do TSE = arquivo ainda não publicado (ex.: um estado do 2º turno antes da zerésima). Lembrado por 60 s
+// para não repetir o pedido: 404 em excesso bloqueia o IP por 10 minutos.
+const NAO_PUBLICADO_MS = 60000;
+const naoPublicado = new Map(); // url -> instante do último 404
+
+function responderNaoPublicado(res) {
+  res.setHeader('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=120');
+  return res.status(404).json({ erro: 'tse_nao_publicou', status_tse: 404 });
+}
 
 async function buscar(url) {
   const r = await fetch(url, { headers: UA, signal: AbortSignal.timeout(15000) });
@@ -32,6 +42,8 @@ export default async function handler(req, res) {
   const chave = `${alvo.url}|${limite}`;
 
   try {
+    const quando404 = naoPublicado.get(alvo.url);
+    if (quando404 && Date.now() - quando404 < NAO_PUBLICADO_MS) return responderNaoPublicado(res);
     const r0 = recente.get(chave);
     if (r0 && Date.now() - r0.em < 15000) {
       res.setHeader('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=60');
@@ -46,6 +58,10 @@ export default async function handler(req, res) {
     res.setHeader('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=60');
     return res.status(200).json(corpo);
   } catch (e) {
+    if (e.status === 404) {
+      naoPublicado.set(alvo.url, Date.now());
+      return responderNaoPublicado(res);
+    }
     console.error('apuracao:', alvo.url, e.message);
     // Erro também fica na borda por pouco tempo, para uma pane do TSE não virar uma enxurrada.
     res.setHeader('Cache-Control', 'public, s-maxage=10');
