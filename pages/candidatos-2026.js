@@ -17,6 +17,7 @@ import SeloSituacao from '../components/SeloSituacao';
 import Paginacao from '../components/Paginacao';
 import ApuracaoEleicao from '../components/ApuracaoEleicao';
 import ConferenciaUrnas from '../components/ConferenciaUrnas';
+import { turnoValido, disponivelNoTurno, SEGUNDO_TURNO } from '../src/lib/turnos';
 import { listarCandidatosEstaduais, UFS_ESTADUAL } from '../src/lib/candidatosEstaduais';
 
 const UFS = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
@@ -262,8 +263,21 @@ const CARGOS_APURACAO = [
   { valor: 'deputado-estadual', rotulo: 'Deputado Estadual' },
 ];
 
-function PaginaApuracao({ cargo, ufInicial }) {
-  const hrefDe = (c) => `/candidatos-2026?visao=apuracao&cargo=${c}`;
+// SELETOR DE TURNO (11/10/2026): mesmo padrão das abas da página (abaEstilo). O 1º turno é o padrão e
+// não leva `turno` no endereço, então os links antigos continuam iguais. O 2º turno só tem presidente
+// e governador (src/lib/turnos.js); se o cargo não existir nele, a página abre em presidente.
+function SeletorTurno({ turno, cargo }) {
+  return (
+    <div role="group" aria-label="Turno da apuração" style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
+      <Link href={`/candidatos-2026?visao=apuracao&cargo=${cargo}`} style={abaEstilo(turno === 1)}>1º turno</Link>
+      <Link href={`/candidatos-2026?visao=apuracao&cargo=${cargo}&turno=2`} style={abaEstilo(turno === 2)}>2º turno</Link>
+    </div>
+  );
+}
+
+function PaginaApuracao({ cargo, ufInicial, turno }) {
+  const hrefDe = (c) => `/candidatos-2026?visao=apuracao&cargo=${c}${turno === 2 ? '&turno=2' : ''}`;
+  const cargosDoTurno = CARGOS_APURACAO.filter((c) => disponivelNoTurno(turno, c.valor, SEGUNDO_TURNO.ufs[0]));
   return (
     <div className="pagina">
       <Head>
@@ -275,25 +289,26 @@ function PaginaApuracao({ cargo, ufInicial }) {
         Apuração 2026
       </h1>
       <p style={{ color: t.cor.cinza, margin: '0 0 22px', maxWidth: '70ch', lineHeight: 1.5 }}>
-        O resultado oficial das eleições de 4 de outubro, lido do TSE conforme as seções são apuradas. Só número e fonte, sem análise ou opinião.
+        {turno === 2 ? 'O resultado oficial do 2º turno, em 25 de outubro, lido do TSE conforme as seções são apuradas.' : 'O resultado oficial das eleições de 4 de outubro, lido do TSE conforme as seções são apuradas.'} Só número e fonte, sem análise ou opinião.
       </p>
       <AlternarVisao visao="apuracao" cargo={cargo} />
+      <SeletorTurno turno={turno} cargo={cargo} />
       <nav aria-label="Cargo" className="so-celular" style={{ marginBottom: '20px' }}>
-        <EscolhaCompacta rotulo="Cargo" valor={cargo} opcoes={CARGOS_APURACAO.map((c) => ({ ...c, href: hrefDe(c.valor) }))} />
+        <EscolhaCompacta rotulo="Cargo" valor={cargo} opcoes={cargosDoTurno.map((c) => ({ ...c, href: hrefDe(c.valor) }))} />
       </nav>
       <div className="so-computador" style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap' }}>
-        {CARGOS_APURACAO.map((c) => (
+        {cargosDoTurno.map((c) => (
           <Link key={c.valor} href={hrefDe(c.valor)} style={abaEstilo(cargo === c.valor)}>{c.rotulo}</Link>
         ))}
       </div>
       <ConferenciaUrnas />
-      <ApuracaoEleicao key={cargo} cargo={cargo} ufInicial={ufInicial} />
+      <ApuracaoEleicao key={`${cargo}|${turno}`} cargo={cargo} ufInicial={ufInicial} turno={turno} />
     </div>
   );
 }
 
 export default function Candidatos2026(props) {
-  return props.visao === 'apuracao' ? <PaginaApuracao cargo={props.cargo} ufInicial={props.ufInicial} /> : <PaginaCandidatos {...props} />;
+  return props.visao === 'apuracao' ? <PaginaApuracao cargo={props.cargo} ufInicial={props.ufInicial} turno={props.turno} /> : <PaginaCandidatos {...props} />;
 }
 
 function PaginaCandidatos({ cargo, chapas, deputados, resumo, resumoSenado, resumoGoverno, filtros, pagina }) {
@@ -379,7 +394,13 @@ export async function getServerSideProps({ query, req }) {
     const pedida = String(query.uf || '').toUpperCase();
     const regiao = String(req.headers['x-vercel-ip-country-region'] || '').toUpperCase();
     const local = String(req.headers['x-vercel-ip-country'] || '').toUpperCase() === 'BR' && UFS.includes(regiao) ? regiao : '';
-    return { props: { visao: 'apuracao', cargo, ufInicial: UFS.includes(pedida) ? pedida : (local || 'SP') } };
+    // Turno inválido cai no 1º turno. No 2º, cargo fora de presidente/governador vira presidente, e o
+    // estado precisa ser um dos que têm disputa (senão o primeiro da lista).
+    const turno = turnoValido(query.turno) || 1;
+    const cargoDoTurno = turno === 2 && !SEGUNDO_TURNO.cargos.includes(cargo) ? 'presidente' : cargo;
+    const ufsDoTurno = turno === 2 ? SEGUNDO_TURNO.ufs : UFS;
+    const ufInicial = ufsDoTurno.includes(pedida) ? pedida : (ufsDoTurno.includes(local) ? local : (turno === 2 ? ufsDoTurno[0] : 'SP'));
+    return { props: { visao: 'apuracao', cargo: cargoDoTurno, ufInicial, turno } };
   }
   const filtros = {
     uf: query.uf ? String(query.uf).toUpperCase().slice(0, 2) : '',

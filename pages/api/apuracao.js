@@ -1,9 +1,10 @@
-// APURAÇÃO ao vivo. GET /api/apuracao?cargo=governador&uf=RS[&limite=30]  (02/10/2026)
+// APURAÇÃO ao vivo. GET /api/apuracao?cargo=governador&uf=RS[&limite=30][&turno=2]  (02/10/2026)
 //
 // Lê o arquivo oficial do TSE, reduz (src/lib/apuracaoTse.js) e entrega com cache na borda da
 // Vercel: o TSE é consultado, no máximo, uma vez a cada ~30 s por cargo e estado, não uma vez por
 // visitante. Nada vai ao banco. cargo: presidente | governador | senador | deputado-federal |
-// deputado-estadual. Presidente não leva uf.
+// deputado-estadual. Presidente não leva uf. turno: 1 (padrão) ou 2; o 2º turno só existe para
+// presidente e governador de AC, AM, DF, ES, RN e TO (regras em src/lib/turnos.js).
 //
 // Se a Vercel for recusada pelo TSE (o DivulgaCandContas recusa com 403), a resposta diz
 // `tse_recusou` com o status: é assim que descobrimos, e o plano B é a tse-ponte do Supabase.
@@ -24,9 +25,9 @@ async function buscar(url) {
 export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ erro: 'use GET' });
   const cargo = String(req.query.cargo || '');
-  const alvo = urlDoResultado(cargo, req.query.uf);
-  // Combinação inválida: 400 aqui, sem pedir nada ao TSE (404 em excesso bloqueia o IP por 10 min).
-  if (!alvo) return res.status(400).json({ erro: 'cargo ou uf inválido' });
+  const alvo = urlDoResultado(cargo, req.query.uf, process.env, req.query.turno);
+  // Combinação inválida (cargo, uf ou turno): 400 aqui, sem pedir nada ao TSE (404 em excesso bloqueia o IP por 10 min).
+  if (!alvo) return res.status(400).json({ erro: 'cargo, uf ou turno inválido' });
   const limite = Math.min(100, Math.max(5, parseInt(req.query.limite, 10) || 30));
   const chave = `${alvo.url}|${limite}`;
 
@@ -40,7 +41,7 @@ export default async function handler(req, res) {
       emVoo.set(alvo.url, buscar(alvo.url).finally(() => setTimeout(() => emVoo.delete(alvo.url), 0)));
     }
     const json = await emVoo.get(alvo.url);
-    const corpo = { ...reduzirResultado(json, cargo, { limite }), fonte_url: alvo.url };
+    const corpo = { ...reduzirResultado(json, cargo, { limite }), turno: alvo.turno, fonte_url: alvo.url };
     recente.set(chave, { em: Date.now(), corpo });
     res.setHeader('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=60');
     return res.status(200).json(corpo);

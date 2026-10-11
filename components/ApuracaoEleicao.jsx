@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import CampoSelect from './CampoSelect';
 import { NOMES_UF } from '../src/lib/cotas';
+import { SEGUNDO_TURNO } from '../src/lib/turnos';
 import { t } from '../src/estilo/tokens';
 
 // APURAÇÃO dentro de "Eleições 2026" (02/10/2026). Mostra o resultado oficial do TSE lido por
@@ -14,13 +15,13 @@ const INTERVALO_MS = 30000;
 const fmt = (x) => Number(x || 0).toLocaleString('pt-BR');
 const numPct = (s) => { const v = Number(String(s ?? '0').replace(/\./g, '').replace(',', '.')); return Number.isFinite(v) ? Math.max(0, Math.min(100, v)) : 0; };
 
-function useApuracao(cargo, uf) {
+function useApuracao(cargo, uf, turno) {
   const [estado, setEstado] = useState({ chave: '', dados: null, erro: null });
   useEffect(() => {
-    const chave = `${cargo}|${uf}`;
+    const chave = `${cargo}|${uf}|${turno}`;
     const ctrl = new AbortController();
     let vivo = true;
-    const url = `/api/apuracao?cargo=${encodeURIComponent(cargo)}${cargo === 'presidente' ? '' : `&uf=${encodeURIComponent(uf)}`}`;
+    const url = `/api/apuracao?cargo=${encodeURIComponent(cargo)}${cargo === 'presidente' ? '' : `&uf=${encodeURIComponent(uf)}`}${turno === 2 ? '&turno=2' : ''}`;
     const carregar = async () => {
       try {
         const r = await fetch(url, { signal: ctrl.signal });
@@ -38,7 +39,7 @@ function useApuracao(cargo, uf) {
     carregar();
     const timer = setInterval(() => { if (document.visibilityState === 'visible') carregar(); }, INTERVALO_MS);
     return () => { vivo = false; clearInterval(timer); ctrl.abort(); };
-  }, [cargo, uf]);
+  }, [cargo, uf, turno]);
   return estado;
 }
 
@@ -88,19 +89,21 @@ function LinhaCandidato({ c, posicao, mostrarBarra }) {
 
 const subtitulo = { fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.25rem', margin: '26px 0 10px' };
 
-export default function ApuracaoEleicao({ cargo, ufInicial }) {
+export default function ApuracaoEleicao({ cargo, ufInicial, turno = 1 }) {
   const router = useRouter();
-  const [uf, setUf] = useState(UFS.includes(ufInicial) ? ufInicial : 'SP');
-  const { chave, dados, erro } = useApuracao(cargo, uf);
-  const atual = chave === `${cargo}|${uf}`;
+  // No 2º turno só existem os estados com disputa de governo (regras em src/lib/turnos.js).
+  const ufsDoTurno = turno === 2 ? SEGUNDO_TURNO.ufs : UFS;
+  const [uf, setUf] = useState(ufsDoTurno.includes(ufInicial) ? ufInicial : (turno === 2 ? ufsDoTurno[0] : 'SP'));
+  const { chave, dados, erro } = useApuracao(cargo, uf, turno);
+  const atual = chave === `${cargo}|${uf}|${turno}`;
   const d = atual ? dados : null;
   const proporcional = PROPORCIONAL.has(cargo);
 
   const trocarUf = (nova) => {
     setUf(nova);
-    router.replace({ pathname: router.pathname, query: { visao: 'apuracao', cargo, uf: nova } }, undefined, { shallow: true });
+    router.replace({ pathname: router.pathname, query: { visao: 'apuracao', cargo, uf: nova, ...(turno === 2 ? { turno: 2 } : {}) } }, undefined, { shallow: true });
   };
-  const opcoesUf = UFS.map((u) => ({ valor: u, rotulo: `${u} · ${NOMES_UF[u] || u}`, busca: `${u} ${NOMES_UF[u] || ''}` }));
+  const opcoesUf = ufsDoTurno.map((u) => ({ valor: u, rotulo: `${u} · ${NOMES_UF[u] || u}`, busca: `${u} ${NOMES_UF[u] || ''}` }));
   const naoComecou = d && d.secoes.totalizadas === 0;
 
   return (
@@ -123,13 +126,13 @@ export default function ApuracaoEleicao({ cargo, ufInicial }) {
         <>
           {naoComecou && (
             <div style={{ background: t.cor.alertaBg, color: t.cor.alertaTexto, borderRadius: t.raio.md, padding: '14px 18px', margin: '0 0 16px', lineHeight: 1.5, fontSize: '0.92rem' }}>
-              A apuração ainda não começou. O TSE divulga os resultados depois do fim da votação, às 17h (horário de Brasília) de 4 de outubro. Esta tela se atualiza sozinha a cada 30 segundos.
+              A apuração ainda não começou. O TSE divulga os resultados depois do fim da votação, às 17h (horário de Brasília) de {turno === 2 ? '25' : '4'} de outubro. Esta tela se atualiza sozinha a cada 30 segundos.
             </div>
           )}
 
           <div style={{ ...cartao, marginBottom: '12px' }}>
             <p style={{ margin: 0, fontWeight: 700, color: t.cor.tinta }}>
-              {d.nome_cargo || 'Cargo'}{cargo === 'presidente' ? ' · Brasil' : ` · ${NOMES_UF[uf] || uf}`}
+              {d.nome_cargo || 'Cargo'}{cargo === 'presidente' ? ' · Brasil' : ` · ${NOMES_UF[uf] || uf}`}{turno === 2 ? ' · 2º turno' : ''}
               {d.vagas ? <span style={{ fontWeight: 500, color: t.cor.cinza }}> · {fmt(d.vagas)} {d.vagas === 1 ? 'vaga' : 'vagas'}</span> : null}
             </p>
             <p style={{ margin: '10px 0 6px', fontSize: '0.9rem', color: t.cor.tinta }}>

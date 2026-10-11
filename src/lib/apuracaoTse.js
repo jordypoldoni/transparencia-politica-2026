@@ -12,6 +12,8 @@
 //
 // Nada daqui toca o banco: o resultado é lido do TSE e guardado só na borda da Vercel.
 
+import { turnoValido, disponivelNoTurno, eleicaoDoTurno } from './turnos';
+
 export const UFS = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
 
 // chave da tela -> código do cargo no arquivo, e de qual eleição vem
@@ -29,17 +31,21 @@ const BASE_PADRAO = 'https://resultados.tse.jus.br/oficial';
 // Conferido no TSE: df-c0007 devolve 404 (NoSuchKey) e df-c0008 devolve 200 "Deputado Distrital".
 const CD_DISTRITAL = '0008';
 
-// Devolve { url, cfg } ou null se cargo/UF não existe (nesse caso NÃO se fala com o TSE).
-export function urlDoResultado(cargo, uf, env = process.env) {
+// Devolve { url, cfg, turno } ou null se cargo/UF/turno não existe (nesse caso NÃO se fala com o TSE).
+// `turno` é 1 (padrão) ou 2; o que existe em cada turno e os códigos da eleição ficam em ./turnos.js.
+export function urlDoResultado(cargo, uf, env = process.env, turnoPedido = 1) {
   const cfg = CARGOS[cargo];
   if (!cfg) return null;
+  const turno = turnoValido(turnoPedido);
+  if (!turno) return null;
   const sigla = String(uf || '').toUpperCase();
   if (!cfg.nacional && !UFS.includes(sigla)) return null;
+  if (!disponivelNoTurno(turno, cargo, sigla)) return null;
   const base = (env.TSE_RESULTADOS_BASE || BASE_PADRAO).replace(/\/+$/, '');
-  const ele = String(cfg.nacional ? (env.TSE_ELEICAO_FEDERAL || '6257') : (env.TSE_ELEICAO_ESTADUAL || '6259'));
+  const ele = eleicaoDoTurno(turno, cfg.nacional, env);
   const pasta = cfg.nacional ? 'br' : sigla.toLowerCase();
   const cd = cargo === 'deputado-estadual' && sigla === 'DF' ? CD_DISTRITAL : cfg.cd;
-  return { cfg, url: `${base}/ele2026/${ele}/dados/${pasta}/${pasta}-c${cd}-e${ele.padStart(6, '0')}-u.json` };
+  return { cfg, turno, url: `${base}/ele2026/${ele}/dados/${pasta}/${pasta}-c${cd}-e${ele.padStart(6, '0')}-u.json` };
 }
 
 const num = (x) => {
