@@ -12,7 +12,7 @@
 //
 // Nada daqui toca o banco: o resultado é lido do TSE e guardado só na borda da Vercel.
 
-import { turnoValido, disponivelNoTurno, eleicaoDoTurno } from './turnos';
+import { turnoValido, disponivelNoTurno, eleicaoDoTurno, ehSegundoTurno } from './turnos';
 
 export const UFS = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
 
@@ -59,7 +59,7 @@ const pct = (x) => (x === undefined || x === null || x === '' ? null : String(x)
 const pctDe = (parte, total) => (total > 0 ? ((parte / total) * 100).toFixed(2).replace('.', ',') : null);
 
 // O TSE marca e="s" também para quem vai ao 2º turno (situação "2º turno"); isso não é eleição.
-const segundoTurno = (st) => /2\s*[º°o]?\s*turno/i.test(String(st || ''));
+const segundoTurno = ehSegundoTurno;
 
 // Reduz o arquivo do TSE. `limite` vale só para cargos proporcionais (milhares de candidatos).
 export function reduzirResultado(json, cargo, { limite = 30 } = {}) {

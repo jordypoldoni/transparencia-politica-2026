@@ -18,6 +18,7 @@ import Paginacao from '../components/Paginacao';
 import ApuracaoEleicao from '../components/ApuracaoEleicao';
 import ConferenciaUrnas from '../components/ConferenciaUrnas';
 import { turnoValido, disponivelNoTurno, SEGUNDO_TURNO } from '../src/lib/turnos';
+import { carregarSegundoTurno } from '../src/lib/candidatosSegundoTurno';
 import { listarCandidatosEstaduais, UFS_ESTADUAL } from '../src/lib/candidatosEstaduais';
 
 const UFS = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
@@ -246,11 +247,12 @@ function ListaDeputadoFederal({ dadosIniciais, resumo, filtrosIniciais, paginaIn
 
 // ALTERNADOR "Candidatos | Apuração" (02/10/2026): as duas visões moram na mesma página de
 // Eleições 2026. A apuração é a mesma rota com ?visao=apuracao, para não criar menu nem página nova.
-function AlternarVisao({ visao, cargo }) {
+function AlternarVisao({ visao, cargo, turno = 1 }) {
+  const sufixo = turno === 2 ? '&turno=2' : '';
   return (
     <div role="group" aria-label="Visão da página" style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
-      <Link href={`/candidatos-2026?cargo=${cargo}`} style={abaEstilo(visao !== 'apuracao')}>Candidatos</Link>
-      <Link href={`/candidatos-2026?visao=apuracao&cargo=${cargo}`} style={abaEstilo(visao === 'apuracao')}>Apuração</Link>
+      <Link href={`/candidatos-2026?cargo=${cargo}${sufixo}`} style={abaEstilo(visao !== 'apuracao')}>Candidatos</Link>
+      <Link href={`/candidatos-2026?visao=apuracao&cargo=${cargo}${sufixo}`} style={abaEstilo(visao === 'apuracao')}>Apuração</Link>
     </div>
   );
 }
@@ -266,11 +268,12 @@ const CARGOS_APURACAO = [
 // SELETOR DE TURNO (11/10/2026): mesmo padrão das abas da página (abaEstilo). O 1º turno é o padrão e
 // não leva `turno` no endereço, então os links antigos continuam iguais. O 2º turno só tem presidente
 // e governador (src/lib/turnos.js); se o cargo não existir nele, a página abre em presidente.
-function SeletorTurno({ turno, cargo }) {
+function SeletorTurno({ turno, cargo, visao = 'apuracao' }) {
+  const base = `/candidatos-2026?${visao === 'apuracao' ? 'visao=apuracao&' : ''}cargo=${cargo}`;
   return (
-    <div role="group" aria-label="Turno da apuração" style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
-      <Link href={`/candidatos-2026?visao=apuracao&cargo=${cargo}`} style={abaEstilo(turno === 1)}>1º turno</Link>
-      <Link href={`/candidatos-2026?visao=apuracao&cargo=${cargo}&turno=2`} style={abaEstilo(turno === 2)}>2º turno</Link>
+    <div role="group" aria-label="Turno" style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
+      <Link href={base} style={abaEstilo(turno === 1)}>1º turno</Link>
+      <Link href={`${base}&turno=2`} style={abaEstilo(turno === 2)}>2º turno</Link>
     </div>
   );
 }
@@ -291,7 +294,7 @@ function PaginaApuracao({ cargo, ufInicial, turno }) {
       <p style={{ color: t.cor.cinza, margin: '0 0 22px', maxWidth: '70ch', lineHeight: 1.5 }}>
         {turno === 2 ? 'O resultado oficial do 2º turno, em 25 de outubro, lido do TSE conforme as seções são apuradas.' : 'O resultado oficial das eleições de 4 de outubro, lido do TSE conforme as seções são apuradas.'} Só número e fonte, sem análise ou opinião.
       </p>
-      <AlternarVisao visao="apuracao" cargo={cargo} />
+      <AlternarVisao visao="apuracao" cargo={cargo} turno={turno} />
       <SeletorTurno turno={turno} cargo={cargo} />
       <nav aria-label="Cargo" className="so-celular" style={{ marginBottom: '20px' }}>
         <EscolhaCompacta rotulo="Cargo" valor={cargo} opcoes={cargosDoTurno.map((c) => ({ ...c, href: hrefDe(c.valor) }))} />
@@ -308,7 +311,73 @@ function PaginaApuracao({ cargo, ufInicial, turno }) {
 }
 
 export default function Candidatos2026(props) {
-  return props.visao === 'apuracao' ? <PaginaApuracao cargo={props.cargo} ufInicial={props.ufInicial} turno={props.turno} /> : <PaginaCandidatos {...props} />;
+  if (props.visao === 'apuracao') return <PaginaApuracao cargo={props.cargo} ufInicial={props.ufInicial} turno={props.turno} />;
+  if (props.turno === 2) return <PaginaCandidatosSegundoTurno {...props} />;
+  return <PaginaCandidatos {...props} />;
+}
+
+// CANDIDATOS NO 2º TURNO (11/10/2026): só quem foi ao 2º turno. Presidente com o mesmo cartão da lista de
+// sempre; governador, 2 por estado, agrupados por estado, com o mesmo cartão das outras listas. Quem é
+// finalista vem do TSE (src/lib/finalistasTurno2.js) e o cruzamento com o banco fica em
+// src/lib/candidatosSegundoTurno.js. Sem busca, filtro nem paginação: são 2 chapas e 12 candidatos.
+function PaginaCandidatosSegundoTurno({ cargo, chapas, governadores, semCadastro, erro }) {
+  const totalGov = governadores.reduce((n, g) => n + g.itens.length, 0);
+  const href = (c) => `/candidatos-2026?cargo=${c}&turno=2`;
+  const avisoTse = (
+    <p style={{ color: t.cor.alertaTexto, lineHeight: 1.5 }}>
+      Não foi possível consultar o TSE agora para saber quem disputa o 2º turno. Tente de novo em alguns minutos. Você também pode consultar direto no{' '}
+      <a href="https://resultados.tse.jus.br/" target="_blank" rel="noopener noreferrer" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>portal de resultados do TSE</a>.
+    </p>
+  );
+  const nota = { margin: '0 0 12px', fontSize: '0.84rem', color: t.cor.cinza, lineHeight: 1.5 };
+  return (
+    <div className="pagina">
+      <Head>
+        <title>Candidatos do 2º turno 2026: Presidente e Governador | Lume</title>
+        <meta name="description" content="Quem disputa o 2º turno das eleições de 2026, em 25 de outubro: candidatos a Presidente e a Governador (AC, AM, DF, ES, RN e TO), com partido, coligação e situação da candidatura, direto da fonte oficial (TSE)." />
+        <link rel="canonical" href="https://www.lumecidadao.com.br/candidatos-2026" />
+      </Head>
+      <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.8rem,4vw,2.6rem)', margin: '0 0 10px' }}>
+        Candidatos 2026
+      </h1>
+      <p style={{ color: t.cor.cinza, margin: '0 0 22px', maxWidth: '70ch', lineHeight: 1.5 }}>
+        Quem disputa o 2º turno, em 25 de outubro: a Presidência e os governos de AC, AM, DF, ES, RN e TO. Só aparecem os dois candidatos de cada disputa. Dados oficiais do{' '}
+        <a href="https://www.tse.jus.br/" target="_blank" rel="noopener noreferrer" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>TSE</a>, sem análise ou opinião.
+      </p>
+      <AlternarVisao visao="candidatos" cargo={cargo} turno={2} />
+      <SeletorTurno visao="candidatos" turno={2} cargo={cargo} />
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap' }}>
+        <Link href={href('presidente')} style={abaEstilo(cargo === 'presidente')}>Presidente (2)</Link>
+        <Link href={href('governador')} style={abaEstilo(cargo === 'governador')}>Governador{erro ? '' : ` (${totalGov})`}</Link>
+      </div>
+
+      {erro && avisoTse}
+
+      {!erro && cargo === 'presidente' && (
+        <>
+          <ListaPresidente chapas={chapas} />
+          {semCadastro > 0 && <p style={{ ...nota, marginTop: '12px' }}>{semCadastro === 1 ? '1 candidato do 2º turno ainda não tem ficha no Lume.' : `${semCadastro} candidatos do 2º turno ainda não têm ficha no Lume.`}</p>}
+        </>
+      )}
+
+      {!erro && cargo === 'governador' && governadores.map((g) => (
+        <section key={g.uf} style={{ marginBottom: '26px' }}>
+          <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.25rem', margin: '0 0 10px' }}>{g.uf} · {NOMES_UF[g.uf] || g.uf}</h2>
+          {g.falhou && <p style={{ color: t.cor.alertaTexto, lineHeight: 1.5, margin: 0 }}>Não foi possível saber agora quem disputa este governo. Tente de novo em alguns minutos.</p>}
+          {!g.falhou && (
+            <div className="grade-parl">
+              {g.itens.map((d) => <CardCandidato key={d.id} d={d} hrefBase="/candidato-governador" votar />)}
+            </div>
+          )}
+          {!g.falhou && g.semCadastro > 0 && <p style={{ ...nota, marginTop: '10px' }}>{g.semCadastro === 1 ? '1 candidato desta disputa ainda não tem ficha no Lume.' : `${g.semCadastro} candidatos desta disputa ainda não têm ficha no Lume.`}</p>}
+        </section>
+      ))}
+
+      <p style={{ ...nota, marginTop: '20px', maxWidth: '75ch' }}>
+        A lista de quem disputa o 2º turno é conferida no TSE a cada hora, então uma substituição de candidato aparece aqui sozinha. O resultado da votação está na aba Apuração.
+      </p>
+    </div>
+  );
 }
 
 function PaginaCandidatos({ cargo, chapas, deputados, resumo, resumoSenado, resumoGoverno, filtros, pagina }) {
@@ -341,6 +410,7 @@ function PaginaCandidatos({ cargo, chapas, deputados, resumo, resumoSenado, resu
       </p>
 
       <AlternarVisao visao="candidatos" cargo={cargo} />
+      <SeletorTurno visao="candidatos" turno={1} cargo={cargo} />
 
       {/* Celular (27/09/2026): um campo de escolha no lugar das cinco pílulas, que ocupavam 4 linhas. */}
       <nav aria-label="Cargo" className="so-celular" style={{ marginBottom: '20px' }}>
@@ -402,6 +472,8 @@ export async function getServerSideProps({ query, req }) {
     const ufInicial = ufsDoTurno.includes(pedida) ? pedida : (ufsDoTurno.includes(local) ? local : (turno === 2 ? ufsDoTurno[0] : 'SP'));
     return { props: { visao: 'apuracao', cargo: cargoDoTurno, ufInicial, turno } };
   }
+  // 2º TURNO (11/10/2026): só presidente e governador, só quem foi ao 2º turno (src/lib/candidatosSegundoTurno.js).
+  if ((turnoValido(query.turno) || 1) === 2) return { props: await carregarSegundoTurno(cargo) };
   const filtros = {
     uf: query.uf ? String(query.uf).toUpperCase().slice(0, 2) : '',
     partido: query.partido ? String(query.partido).toUpperCase() : '',

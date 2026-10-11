@@ -21,6 +21,10 @@ export const SEGUNDO_TURNO = {
   ufs: ['AC', 'AM', 'DF', 'ES', 'RN', 'TO'],
 };
 
+// A situação de quem vai ao 2º turno vem do TSE como "2º turno" (e marcada como eleito, e="s", o que
+// não é eleição). Usada pela apuração e pela lista de finalistas.
+export const ehSegundoTurno = (situacao) => /2\s*[º°o]?\s*turno/i.test(String(situacao || ''));
+
 // Aceita 1 ou 2 (número ou texto). Vazio ou ausente vale 1º turno. Qualquer outra coisa: null.
 export function turnoValido(valor) {
   if (valor === undefined || valor === null || valor === '') return 1;
