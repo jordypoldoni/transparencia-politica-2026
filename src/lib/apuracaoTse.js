@@ -48,6 +48,13 @@ const num = (x) => {
 };
 const pct = (x) => (x === undefined || x === null || x === '' ? null : String(x)); // já vem "12,34"
 
+// Percentual "12,34" de parte sobre total. No arquivo do TSE, pvv e pvn medem outra coisa (parte entre votos nominais),
+// então válidos usam pvvc (sobre o comparecimento) e nulos são calculados aqui sobre o total de votos.
+const pctDe = (parte, total) => (total > 0 ? ((parte / total) * 100).toFixed(2).replace('.', ',') : null);
+
+// O TSE marca e="s" também para quem vai ao 2º turno (situação "2º turno"); isso não é eleição.
+const segundoTurno = (st) => /2\s*[º°o]?\s*turno/i.test(String(st || ''));
+
 // Reduz o arquivo do TSE. `limite` vale só para cargos proporcionais (milhares de candidatos).
 export function reduzirResultado(json, cargo, { limite = 30 } = {}) {
   const cfg = CARGOS[cargo];
@@ -62,7 +69,7 @@ export function reduzirResultado(json, cargo, { limite = 30 } = {}) {
         const vice = (cd.vs || []).find((v) => v.tp === 'v') || null;
         todos.push({
           numero: cd.n, nome: cd.nmu || cd.nm, partido: par.sg,
-          votos: num(cd.vap), pct: pct(cd.pvap), eleito: cd.e === 's', situacao: cd.st || '',
+          votos: num(cd.vap), pct: pct(cd.pvap), eleito: cd.e === 's' && !segundoTurno(cd.st), segundoTurno: segundoTurno(cd.st), situacao: cd.st || '',
           vice: vice ? { nome: vice.nmu || vice.nm, partido: vice.sgp || null } : null,
           coligacao: agr.tp === 'i' ? null : (agr.tp === 'f' ? agr.nm : (agr.com || agr.nm)),
         });
@@ -90,8 +97,8 @@ export function reduzirResultado(json, cargo, { limite = 30 } = {}) {
     secoes: { total: num(s.ts), totalizadas: num(s.st), pct_totalizadas: pct(s.pst) },
     eleitorado: { total: num(e.te), comparecimento: num(e.c), pct_comparecimento: pct(e.pc), abstencao: num(e.a), pct_abstencao: pct(e.pa) },
     votos: {
-      total: num(v.tv), validos: num(v.vv), pct_validos: pct(v.pvv),
-      brancos: num(v.vb), pct_brancos: pct(v.pvb), nulos: num(v.vn), pct_nulos: pct(v.pvn),
+      total: num(v.tv), validos: num(v.vv), pct_validos: pct(v.pvvc),
+      brancos: num(v.vb), pct_brancos: pct(v.pvb), nulos: num(v.vn), pct_nulos: pctDe(num(v.vn), num(v.tv)),
     },
     total_candidatos: todos.length,
     candidatos: cfg.proporcional ? todos.slice(0, limite) : todos,

@@ -67,6 +67,7 @@ function LinhaCandidato({ c, posicao, mostrarBarra }) {
           <span style={{ fontWeight: 500, color: t.cor.cinza, fontSize: '0.84rem' }}> · {c.partido} {c.numero}</span>
         </span>
         {c.eleito && <Selo>Eleito</Selo>}
+        {c.segundoTurno && <Selo>2º turno</Selo>}
         <span style={{ fontWeight: 800, color: t.cor.tinta, whiteSpace: 'nowrap' }}>{fmt(c.votos)} <span style={{ fontWeight: 600, color: t.cor.cinza, fontSize: '0.84rem' }}>({c.pct || '0,00'}%)</span></span>
       </div>
       {mostrarBarra && (
