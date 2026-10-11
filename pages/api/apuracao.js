@@ -1,7 +1,8 @@
 // APURAÇÃO ao vivo. GET /api/apuracao?cargo=governador&uf=RS[&limite=30][&turno=2]  (02/10/2026)
 //
 // Lê o arquivo oficial do TSE, reduz (src/lib/apuracaoTse.js) e entrega com cache na borda da
-// Vercel: o TSE é consultado, no máximo, uma vez a cada ~30 s por cargo e estado, não uma vez por
+// Vercel: o TSE é consultado, no máximo, uma vez a cada 10 s (apuração em andamento) ou 30 s (ainda não
+// começou ou já em 100%) por cargo e estado, não uma vez por
 // visitante. Nada vai ao banco. cargo: presidente | governador | senador | deputado-federal |
 // deputado-estadual. Presidente não leva uf. turno: 1 (padrão) ou 2; o 2º turno só existe para
 // presidente e governador de AC, AM, DF, ES, RN e TO (regras em src/lib/turnos.js).
@@ -17,6 +18,12 @@ const recente = new Map(); // url -> { em, corpo }
 // 404 do TSE = arquivo ainda não publicado (ex.: um estado do 2º turno antes da zerésima). Lembrado por 60 s
 // para não repetir o pedido: 404 em excesso bloqueia o IP por 10 minutos.
 const NAO_PUBLICADO_MS = 60000;
+
+// Tempo de cache em segundos (12/10/2026, pedido do Jordy): 10 s enquanto há seções sendo apuradas
+// (0 < totalizadas < total), 30 s quando ainda não começou ou já chegou a 100%. A tela usa a mesma regra.
+const emAndamento = (corpo) => { const s = corpo.secoes || {}; return s.totalizadas > 0 && s.totalizadas < s.total; };
+const segundosDeCache = (corpo) => (emAndamento(corpo) ? 10 : 30);
+const cabecalhoDeCache = (corpo) => { const n = segundosDeCache(corpo); return `public, s-maxage=${n}, stale-while-revalidate=${n * 2}`; };
 const naoPublicado = new Map(); // url -> instante do último 404
 
 function responderNaoPublicado(res) {
@@ -45,8 +52,8 @@ export default async function handler(req, res) {
     const quando404 = naoPublicado.get(alvo.url);
     if (quando404 && Date.now() - quando404 < NAO_PUBLICADO_MS) return responderNaoPublicado(res);
     const r0 = recente.get(chave);
-    if (r0 && Date.now() - r0.em < 15000) {
-      res.setHeader('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=60');
+    if (r0 && Date.now() - r0.em < segundosDeCache(r0.corpo) * 500) { // metade do tempo de borda
+      res.setHeader('Cache-Control', cabecalhoDeCache(r0.corpo));
       return res.status(200).json(r0.corpo);
     }
     if (!emVoo.has(alvo.url)) {
@@ -55,7 +62,7 @@ export default async function handler(req, res) {
     const json = await emVoo.get(alvo.url);
     const corpo = { ...reduzirResultado(json, cargo, { limite }), turno: alvo.turno, fonte_url: alvo.url };
     recente.set(chave, { em: Date.now(), corpo });
-    res.setHeader('Cache-Control', 'public, s-maxage=30, stale-while-revalidate=60');
+    res.setHeader('Cache-Control', cabecalhoDeCache(corpo));
     return res.status(200).json(corpo);
   } catch (e) {
     if (e.status === 404) {

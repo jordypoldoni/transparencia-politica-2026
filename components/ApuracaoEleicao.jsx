@@ -6,11 +6,15 @@ import { SEGUNDO_TURNO } from '../src/lib/turnos';
 import { t } from '../src/estilo/tokens';
 
 // APURAÇÃO dentro de "Eleições 2026" (02/10/2026). Mostra o resultado oficial do TSE lido por
-// /api/apuracao (cache de ~30 s na borda; nada é guardado no banco). A tela se atualiza sozinha
+// /api/apuracao (cache de 10 s na borda com a apuração em andamento, 30 s nos outros casos; nada é guardado no banco). A tela se atualiza sozinha
 // enquanto a aba está aberta. Texto neutro: só número e fonte.
 const UFS = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
 const PROPORCIONAL = new Set(['deputado-federal', 'deputado-estadual']);
 const INTERVALO_MS = 30000;
+const INTERVALO_APURANDO_MS = 10000;
+// Mesma regra do cache da API: 10 s enquanto há seções sendo apuradas (0 < totalizadas < total), 30 s quando
+// ainda não começou ou já chegou a 100%.
+const intervaloDe = (d) => (d && d.secoes && d.secoes.totalizadas > 0 && d.secoes.totalizadas < d.secoes.total ? INTERVALO_APURANDO_MS : INTERVALO_MS);
 
 const fmt = (x) => Number(x || 0).toLocaleString('pt-BR');
 const numPct = (s) => { const v = Number(String(s ?? '0').replace(/\./g, '').replace(',', '.')); return Number.isFinite(v) ? Math.max(0, Math.min(100, v)) : 0; };
@@ -21,6 +25,8 @@ function useApuracao(cargo, uf, turno) {
     const chave = `${cargo}|${uf}|${turno}`;
     const ctrl = new AbortController();
     let vivo = true;
+    let timer = null;
+    let atrasoMs = INTERVALO_MS;
     const url = `/api/apuracao?cargo=${encodeURIComponent(cargo)}${cargo === 'presidente' ? '' : `&uf=${encodeURIComponent(uf)}`}${turno === 2 ? '&turno=2' : ''}`;
     const carregar = async () => {
       try {
@@ -29,6 +35,7 @@ function useApuracao(cargo, uf, turno) {
         if (!vivo) return;
         if (!r.ok) throw Object.assign(new Error(corpo.erro || `erro ${r.status}`), { codigo: corpo.erro });
         setEstado({ chave, dados: corpo, erro: null });
+        atrasoMs = intervaloDe(corpo);
       } catch (e) {
         if (!vivo || e.name === 'AbortError') return;
         // Mantém o que já estava na tela; só avisa que a última atualização falhou.
@@ -37,9 +44,16 @@ function useApuracao(cargo, uf, turno) {
       }
     };
     setEstado((antes) => (antes.chave === chave ? antes : { chave, dados: null, erro: null }));
+    // O intervalo muda conforme o andamento, então o agendamento é recursivo (e não um setInterval fixo).
+    const agendar = () => {
+      timer = setTimeout(async () => {
+        if (document.visibilityState === 'visible') await carregar();
+        if (vivo) agendar();
+      }, atrasoMs);
+    };
     carregar();
-    const timer = setInterval(() => { if (document.visibilityState === 'visible') carregar(); }, INTERVALO_MS);
-    return () => { vivo = false; clearInterval(timer); ctrl.abort(); };
+    agendar();
+    return () => { vivo = false; clearTimeout(timer); ctrl.abort(); };
   }, [cargo, uf, turno]);
   return estado;
 }
@@ -206,7 +220,7 @@ export default function ApuracaoEleicao({ cargo, ufInicial, turno = 1 }) {
           <p style={{ margin: '24px 0 0', fontSize: '0.82rem', color: t.cor.cinza, lineHeight: 1.55, maxWidth: '75ch' }}>
             Fonte: resultado oficial do{' '}
             <a href="https://resultados.tse.jus.br/" target="_blank" rel="noopener noreferrer" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>TSE</a>,
-            lido a cada 30 segundos, sem edição. Números parciais mudam conforme as seções são apuradas. O Boletim de Urna de cada seção, impresso e divulgado pelo TSE, pode ser conferido no portal de resultados.
+            lido a cada 10 a 30 segundos (10 enquanto a apuração está em andamento), sem edição. Números parciais mudam conforme as seções são apuradas. O Boletim de Urna de cada seção, impresso e divulgado pelo TSE, pode ser conferido no portal de resultados.
           </p>
         </>
       )}
