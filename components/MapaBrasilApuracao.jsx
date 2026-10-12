@@ -71,6 +71,11 @@ function Quadro({ uf, dados, foco, aoFocar, interativo, agregado }) {
               <span className="mapa-nome">
                 <b className={i === 0 ? 'mapa-lider' : ''}>{c.nome}</b>
                 <small>{c.partido}</small>
+                {interativo && (
+                  <button type="button" className={`mapa-ver ${emFoco ? 'mapa-ver-on' : ''}`} aria-pressed={emFoco} onClick={() => aoFocar(emFoco ? null : chaveCand(c))} title="Colorir o mapa do país com a % deste candidato em cada estado">
+                    {emFoco ? 'No mapa' : 'Ver no mapa'}
+                  </button>
+                )}
               </span>
               <b className="mapa-pct">{c.pct}%</b>
               <span className="mapa-trilho"><span className="mapa-barra" style={{ width: `${Math.max(0.6, (p / maxPct) * 100)}%`, background: reg.cor, '--i': i }} /></span>
@@ -79,11 +84,7 @@ function Quadro({ uf, dados, foco, aoFocar, interativo, agregado }) {
           );
           return (
             <li key={chaveCand(c)} className={emFoco ? 'mapa-em-foco' : ''}>
-              {interativo ? (
-                <button type="button" className="mapa-linha mapa-linha-btn" aria-pressed={emFoco} onClick={() => aoFocar(emFoco ? null : chaveCand(c))} title="Colorir o mapa com a votação deste candidato em cada estado">
-                  {linha}
-                </button>
-              ) : <div className="mapa-linha">{linha}</div>}
+              <div className="mapa-linha">{linha}</div>
             </li>
           );
         })}
@@ -463,13 +464,16 @@ function Estilos() {
       .mapa-lista li { border-radius: ${t.raio.sm}; transition: background .2s; }
       .mapa-em-foco { background: ${t.cor.papelQuente2}; box-shadow: ${t.sombra.clicavel}; }
       .mapa-linha { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; grid-template-rows: auto auto; column-gap: 8px; row-gap: 2px; align-items: center; padding: 3px 8px; width: 100%; text-align: left; font: inherit; color: ${t.cor.tinta}; background: transparent; border: 0; border-radius: ${t.raio.sm}; }
-      .mapa-linha-btn { cursor: pointer; transition: background .15s, box-shadow .15s; }
-      .mapa-linha-btn:hover { background: ${t.cor.papelQuente}; box-shadow: ${t.sombra.clicavel}; }
+      .mapa-ver { flex: none; white-space: nowrap; line-height: 1.3; margin-left: auto; padding: 2px 10px; font: 600 .72rem ${t.fonte.corpo}; color: ${t.cor.tinta}; background: #fff; border: 0; border-radius: ${t.raio.pill}; cursor: pointer; box-shadow: ${t.sombra.clicavel}; opacity: 0; transition: opacity .15s, box-shadow .15s; }
+      .mapa-lista li:hover .mapa-ver, .mapa-ver:focus-visible, .mapa-ver-on { opacity: 1; }
+      .mapa-ver:hover { box-shadow: ${t.sombra.hover}; }
+      .mapa-ver-on { background: ${t.cor.verde}; color: ${t.cor.ouro}; }
+      @media (hover: none) { .mapa-ver { opacity: 1; } }
       .mapa-pos { font-size: .78rem; color: ${t.cor.cinza}; }
       .mapa-nome { display: flex; align-items: baseline; gap: 6px; min-width: 0; font-size: .88rem; }
-      .mapa-nome b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .mapa-nome b { min-width: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       .mapa-nome b.mapa-lider { font-weight: 800; }
-      .mapa-nome small { color: ${t.cor.cinza}; font-size: .72rem; white-space: nowrap; }
+      .mapa-nome small { flex: none; color: ${t.cor.cinza}; font-size: .72rem; white-space: nowrap; }
       .mapa-pct { font-size: .88rem; justify-self: end; font-variant-numeric: tabular-nums; }
       .mapa-votos { color: ${t.cor.cinza}; font-size: .7rem; justify-self: end; font-variant-numeric: tabular-nums; }
       .mapa-trilho { grid-column: 2; height: 6px; background: ${t.cor.papelQuente2}; border-radius: ${t.raio.pill}; overflow: hidden; }
