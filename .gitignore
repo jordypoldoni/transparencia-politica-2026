@@ -30,3 +30,6 @@ coletores/_orcamento_resumos.json
 coletores/_gerar_resumo_propostas.ANTIGO.js
 # Amostras de HTML do portal da ALRS, baixadas so para descobrir seletores
 coletores/_amostras_alrs/
+
+.vercel
+.env*
