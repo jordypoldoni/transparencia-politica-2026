@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 import CampoSelect from './CampoSelect';
+import Segmentado from './Segmentado';
 import { NOMES_UF } from '../src/lib/cotas';
 import { SEGUNDO_TURNO } from '../src/lib/turnos';
 import { t } from '../src/estilo/tokens';
@@ -70,11 +71,6 @@ function Dado({ rotulo, valor, sub }) {
       <p style={{ margin: 0, fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.05em', textTransform: 'uppercase', color: t.cor.cinza }}>{rotulo}</p>
       <p style={{ margin: '4px 0 0', fontSize: '1.15rem', fontWeight: 800, color: t.cor.tinta }}>{valor}</p>
       {sub && <p style={{ margin: '2px 0 0', fontSize: '0.76rem', color: t.cor.cinza }}>{sub}</p>}
-      <style jsx global>{`
-        .apur-escolha { transition: box-shadow 0.2s ease, transform 0.2s ease; }
-        .apur-escolha[aria-pressed='false']:hover { box-shadow: ${t.sombra.hover} !important; transform: translateY(-1px); }
-        .apur-escolha:focus-visible { outline: none; box-shadow: ${t.sombra.anelFoco}, ${t.sombra.media} !important; }
-      `}</style>
     </div>
   );
 }
@@ -111,12 +107,6 @@ function LinhaCandidato({ c, posicao, mostrarBarra }) {
   );
 }
 
-// Cartão-botão da escolha de visão (só computador). Seleção por sombra e anel, sem borda.
-const estiloEscolha = (ativo) => ({
-  ...cartao, marginBottom: 0, textAlign: 'left', width: '100%', height: '100%', border: 'none', cursor: 'pointer', font: 'inherit', color: 'inherit',
-  boxShadow: ativo ? `${t.sombra.media}, ${t.sombra.anelFoco}` : t.sombra.clicavel,
-});
-
 const subtitulo = { fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.25rem', margin: '26px 0 10px' };
 
 export default function ApuracaoEleicao({ cargo, ufInicial, turno = 1 }) {
@@ -135,6 +125,15 @@ export default function ApuracaoEleicao({ cargo, ufInicial, turno = 1 }) {
   };
   const opcoesUf = ufsDoTurno.map((u) => ({ valor: u, rotulo: `${u} · ${NOMES_UF[u] || u}`, busca: `${u} ${NOMES_UF[u] || ''}` }));
   const naoComecou = d && d.secoes.totalizadas === 0;
+  const pctDe = (x) => (x ? `${x}%` : null);
+  const numeros = d ? [
+    { rotulo: 'Eleitorado', valor: fmt(d.eleitorado.total) },
+    { rotulo: 'Comparecimento', valor: fmt(d.eleitorado.comparecimento), sub: pctDe(d.eleitorado.pct_comparecimento) },
+    { rotulo: 'Abstenção', valor: fmt(d.eleitorado.abstencao), sub: pctDe(d.eleitorado.pct_abstencao) },
+    { rotulo: 'Votos válidos', valor: fmt(d.votos.validos), sub: pctDe(d.votos.pct_validos) },
+    { rotulo: 'Brancos', valor: fmt(d.votos.brancos), sub: pctDe(d.votos.pct_brancos) },
+    { rotulo: 'Nulos', valor: fmt(d.votos.nulos), sub: pctDe(d.votos.pct_nulos) },
+  ] : [];
   // Visão por estados: só presidente, 1º turno (a rota /api/apuracao-estados serve os dois turnos; o 2º entra depois).
   const [visao, setVisao] = useState('lista');
   const podeMapa = cargo === 'presidente' && turno === 1;
@@ -179,57 +178,61 @@ export default function ApuracaoEleicao({ cargo, ufInicial, turno = 1 }) {
             </div>
           )}
 
-          {podeMapa ? (
-            <>
-              <div className="so-celular">
-          <div style={{ ...cartao, marginBottom: '12px' }}>
-            <p style={{ margin: 0, fontWeight: 700, color: t.cor.tinta }}>
-              {d.nome_cargo || 'Cargo'}{cargo === 'presidente' ? ' · Brasil' : ` · ${NOMES_UF[uf] || uf}`}{turno === 2 ? ' · 2º turno' : ''}
-              {d.vagas ? <span style={{ fontWeight: 500, color: t.cor.cinza }}> · {fmt(d.vagas)} {d.vagas === 1 ? 'vaga' : 'vagas'}</span> : null}
-            </p>
-            <p style={{ margin: '10px 0 6px', fontSize: '0.9rem', color: t.cor.tinta }}>
-              Seções apuradas: <strong>{fmt(d.secoes.totalizadas)}</strong> de {fmt(d.secoes.total)} ({d.secoes.pct_totalizadas || '0,00'}%)
-            </p>
-            <div aria-hidden="true" style={{ height: '10px', borderRadius: t.raio.pill, background: t.cor.papelQuente2, overflow: 'hidden' }}>
-              <div style={{ width: `${numPct(d.secoes.pct_totalizadas)}%`, height: '100%', background: t.cor.verde, borderRadius: t.raio.pill }} />
-            </div>
-            {d.gerado_em && <p style={{ margin: '8px 0 0', fontSize: '0.76rem', color: t.cor.cinza }}>Arquivo do TSE gerado em {d.gerado_em}{erro ? ' · a última atualização falhou, mostrando o dado anterior' : ''}.</p>}
-          </div>
-          </div>
-              <div className="so-computador" role="group" aria-label="Forma de ver a apuração" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
-                <button type="button" className="apur-escolha" aria-pressed={!porEstados} onClick={() => setVisao('lista')} style={estiloEscolha(!porEstados)}>
-            <p style={{ margin: 0, fontWeight: 700, color: t.cor.tinta }}>
-              {d.nome_cargo || 'Cargo'}{cargo === 'presidente' ? ' · Brasil' : ` · ${NOMES_UF[uf] || uf}`}{turno === 2 ? ' · 2º turno' : ''}
-              {d.vagas ? <span style={{ fontWeight: 500, color: t.cor.cinza }}> · {fmt(d.vagas)} {d.vagas === 1 ? 'vaga' : 'vagas'}</span> : null}
-            </p>
-            <p style={{ margin: '10px 0 6px', fontSize: '0.9rem', color: t.cor.tinta }}>
-              Seções apuradas: <strong>{fmt(d.secoes.totalizadas)}</strong> de {fmt(d.secoes.total)} ({d.secoes.pct_totalizadas || '0,00'}%)
-            </p>
-            <div aria-hidden="true" style={{ height: '10px', borderRadius: t.raio.pill, background: t.cor.papelQuente2, overflow: 'hidden' }}>
-              <div style={{ width: `${numPct(d.secoes.pct_totalizadas)}%`, height: '100%', background: t.cor.verde, borderRadius: t.raio.pill }} />
-            </div>
-            {d.gerado_em && <p style={{ margin: '8px 0 0', fontSize: '0.76rem', color: t.cor.cinza }}>Arquivo do TSE gerado em {d.gerado_em}{erro ? ' · a última atualização falhou, mostrando o dado anterior' : ''}.</p>}
-                </button>
-                <button type="button" className="apur-escolha" aria-pressed={porEstados} onClick={() => setVisao('estados')} style={estiloEscolha(porEstados)}>
-                  <p style={{ margin: 0, fontWeight: 700, color: t.cor.tinta }}>
-                    {d.nome_cargo || 'Cargo'} · Brasil
-                    {d.vagas ? <span style={{ fontWeight: 500, color: t.cor.cinza }}> · {fmt(d.vagas)} {d.vagas === 1 ? 'vaga' : 'vagas'}</span> : null}
-                  </p>
-                  <p style={{ margin: '10px 0 6px', fontSize: '0.9rem', color: t.cor.tinta }}>Seções apuradas por estados</p>
-                  <p style={{ margin: 0, fontSize: '0.82rem', color: t.cor.cinza, lineHeight: 1.45 }}>Mapa do Brasil: passe o mouse ou clique em um estado para ver como cada candidato foi votado nele.</p>
-                </button>
+          {/* CELULAR: como era (cartão de progresso + quadros em grade). */}
+          <div className="so-celular">
+            <div style={{ ...cartao, marginBottom: '12px' }}>
+              <p style={{ margin: 0, fontWeight: 700, color: t.cor.tinta }}>
+                {d.nome_cargo || 'Cargo'}{cargo === 'presidente' ? ' · Brasil' : ` · ${NOMES_UF[uf] || uf}`}{turno === 2 ? ' · 2º turno' : ''}
+                {d.vagas ? <span style={{ fontWeight: 500, color: t.cor.cinza }}> · {fmt(d.vagas)} {d.vagas === 1 ? 'vaga' : 'vagas'}</span> : null}
+              </p>
+              <p style={{ margin: '10px 0 6px', fontSize: '0.9rem', color: t.cor.tinta }}>
+                Seções apuradas: <strong>{fmt(d.secoes.totalizadas)}</strong> de {fmt(d.secoes.total)} ({d.secoes.pct_totalizadas || '0,00'}%)
+              </p>
+              <div aria-hidden="true" style={{ height: '10px', borderRadius: t.raio.pill, background: t.cor.papelQuente2, overflow: 'hidden' }}>
+                <div style={{ width: `${numPct(d.secoes.pct_totalizadas)}%`, height: '100%', background: t.cor.verde, borderRadius: t.raio.pill }} />
               </div>
-            </>
-          ) : CABECALHO}
-
-          <div style={{ display: 'grid', gap: '10px', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))' }}>
-            <Dado rotulo="Eleitorado" valor={fmt(d.eleitorado.total)} />
-            <Dado rotulo="Comparecimento" valor={fmt(d.eleitorado.comparecimento)} sub={d.eleitorado.pct_comparecimento ? `${d.eleitorado.pct_comparecimento}%` : null} />
-            <Dado rotulo="Abstenção" valor={fmt(d.eleitorado.abstencao)} sub={d.eleitorado.pct_abstencao ? `${d.eleitorado.pct_abstencao}%` : null} />
-            <Dado rotulo="Votos válidos" valor={fmt(d.votos.validos)} sub={d.votos.pct_validos ? `${d.votos.pct_validos}%` : null} />
-            <Dado rotulo="Brancos" valor={fmt(d.votos.brancos)} sub={d.votos.pct_brancos ? `${d.votos.pct_brancos}%` : null} />
-            <Dado rotulo="Nulos" valor={fmt(d.votos.nulos)} sub={d.votos.pct_nulos ? `${d.votos.pct_nulos}%` : null} />
+              {d.gerado_em && <p style={{ margin: '8px 0 0', fontSize: '0.76rem', color: t.cor.cinza }}>Arquivo do TSE gerado em {d.gerado_em}{erro ? ' · a última atualização falhou, mostrando o dado anterior' : ''}.</p>}
+            </div>
+            <div style={{ display: 'grid', gap: '10px', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))' }}>
+              {numeros.map((n) => <Dado key={n.rotulo} rotulo={n.rotulo} valor={n.valor} sub={n.sub} />)}
+            </div>
           </div>
+
+          {/* COMPUTADOR (12/10/2026): um cartão só (região comum): progresso, escolha de visão e os seis números
+              dividindo a largura, separados por filetes. Substitui os dois cartões-botão e os quadros soltos. */}
+          <section className="so-computador" style={{ ...cartao, padding: '18px 8px 16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px 16px', flexWrap: 'wrap', padding: '0 18px', marginBottom: '14px' }}>
+              <div style={{ flex: '1 1 360px', minWidth: 0 }}>
+                <p style={{ margin: 0, fontWeight: 700, color: t.cor.tinta }}>
+                  {d.nome_cargo || 'Cargo'}{cargo === 'presidente' ? ' · Brasil' : ` · ${NOMES_UF[uf] || uf}`}{turno === 2 ? ' · 2º turno' : ''}
+                  {d.vagas ? <span style={{ fontWeight: 500, color: t.cor.cinza }}> · {fmt(d.vagas)} {d.vagas === 1 ? 'vaga' : 'vagas'}</span> : null}
+                </p>
+                <p style={{ margin: '8px 0 6px', fontSize: '0.9rem', color: t.cor.tinta }}>
+                  Seções apuradas: <strong>{fmt(d.secoes.totalizadas)}</strong> de {fmt(d.secoes.total)} ({d.secoes.pct_totalizadas || '0,00'}%)
+                </p>
+                <div aria-hidden="true" style={{ height: '8px', borderRadius: t.raio.pill, background: t.cor.papelQuente2, overflow: 'hidden' }}>
+                  <div style={{ width: `${numPct(d.secoes.pct_totalizadas)}%`, height: '100%', background: t.cor.verde, borderRadius: t.raio.pill }} />
+                </div>
+                {d.gerado_em && <p style={{ margin: '8px 0 0', fontSize: '0.76rem', color: t.cor.cinza }}>Arquivo do TSE gerado em {d.gerado_em}{erro ? ' · a última atualização falhou, mostrando o dado anterior' : ''}.</p>}
+              </div>
+              {podeMapa && (
+                <Segmentado aria="Forma de ver o resultado" itens={[
+                  { rotulo: 'Lista', ativo: !porEstados, aoClicar: () => setVisao('lista') },
+                  { rotulo: 'Mapa por estados', ativo: porEstados, aoClicar: () => setVisao('estados') },
+                ]} />
+              )}
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', borderTop: `1px solid ${t.cor.papelQuente2}`, paddingTop: '14px' }}>
+              {numeros.map((n, i) => (
+                <div key={n.rotulo} style={{ flex: '1 1 150px', padding: '2px 16px', boxShadow: i === 0 ? 'none' : `inset 1px 0 0 ${t.cor.papelQuente2}` }}>
+                  <p style={{ margin: 0, fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.05em', textTransform: 'uppercase', color: t.cor.cinza }}>{n.rotulo}</p>
+                  <p style={{ margin: '3px 0 0', fontSize: '1.1rem', fontWeight: 800, color: t.cor.tinta }}>
+                    {n.valor}{n.sub && <span style={{ marginLeft: '6px', fontSize: '0.78rem', fontWeight: 600, color: t.cor.cinza }}>{n.sub}</span>}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
 
           {!proporcional && porEstados && (
             <>
@@ -280,11 +283,6 @@ export default function ApuracaoEleicao({ cargo, ufInicial, turno = 1 }) {
           </p>
         </>
       )}
-      <style jsx global>{`
-        .apur-escolha { transition: box-shadow 0.2s ease, transform 0.2s ease; }
-        .apur-escolha[aria-pressed='false']:hover { box-shadow: ${t.sombra.hover} !important; transform: translateY(-1px); }
-        .apur-escolha:focus-visible { outline: none; box-shadow: ${t.sombra.anelFoco}, ${t.sombra.media} !important; }
-      `}</style>
     </div>
   );
 }

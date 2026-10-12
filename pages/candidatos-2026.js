@@ -17,6 +17,7 @@ import SeloSituacao from '../components/SeloSituacao';
 import Paginacao from '../components/Paginacao';
 import ApuracaoEleicao from '../components/ApuracaoEleicao';
 import ConferenciaUrnas from '../components/ConferenciaUrnas';
+import BarraControleEleicoes from '../components/BarraControleEleicoes';
 import { turnoValido, disponivelNoTurno, SEGUNDO_TURNO } from '../src/lib/turnos';
 import { carregarSegundoTurno } from '../src/lib/candidatosSegundoTurno';
 import { listarCandidatosEstaduais, UFS_ESTADUAL } from '../src/lib/candidatosEstaduais';
@@ -257,25 +258,8 @@ function AlternarVisao({ visao, cargo, turno = 1 }) {
   );
 }
 
-// ABAS DO TOPO (12/10/2026): no computador, "Candidatos | Apuração" e "1º | 2º turno" dividem a mesma linha
-// (antes eram duas linhas). No celular tudo fica como era, uma abaixo da outra.
-function AbasTopo({ children }) {
-  return (
-    <div className="abas-topo">
-      {children}
-      <style jsx global>{`
-        .abas-topo { display: flex; flex-wrap: wrap; align-items: flex-start; column-gap: 12px; }
-        .abas-topo > div { margin-bottom: 14px !important; }
-        .abas-topo > div + div { padding-left: 12px; box-shadow: inset 1px 0 0 ${t.cor.papelQuente2}; }
-        @media (max-width: 640px) {
-          .abas-topo { display: block; }
-          .abas-topo > div { margin-bottom: 16px !important; }
-          .abas-topo > div + div { padding-left: 0; box-shadow: none; }
-        }
-      `}</style>
-    </div>
-  );
-}
+// Endereços da barra de controle (computador). O 1º turno é o padrão e não leva `turno` no endereço.
+const hrefEleicoes = (visao, cargo, turno) => `/candidatos-2026?${visao === 'apuracao' ? 'visao=apuracao&' : ''}cargo=${cargo}${turno === 2 ? '&turno=2' : ''}`;
 
 const CARGOS_APURACAO = [
   { valor: 'presidente', rotulo: 'Presidente' },
@@ -311,23 +295,22 @@ function PaginaApuracao({ cargo, ufInicial, turno }) {
       <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.8rem,4vw,2.6rem)', margin: '0 0 10px' }}>
         Apuração 2026
       </h1>
-      <p style={{ color: t.cor.cinza, margin: '0 0 22px', maxWidth: '70ch', lineHeight: 1.5 }}>
-        {turno === 2 ? 'O resultado oficial do 2º turno, em 25 de outubro, lido do TSE conforme as seções são apuradas.' : 'O resultado oficial das eleições de 4 de outubro, lido do TSE conforme as seções são apuradas.'} Só número e fonte, sem análise ou opinião.
+      <p style={{ color: t.cor.cinza, margin: '0 0 16px', lineHeight: 1.5 }}>
+        {turno === 2 ? 'Resultado oficial do 2º turno, em 25 de outubro, lido do TSE conforme as seções são apuradas.' : 'Resultado oficial das eleições de 4 de outubro, lido do TSE conforme as seções são apuradas.'} Só número e fonte.
       </p>
-      <AbasTopo>
+      <div className="so-celular">
         <AlternarVisao visao="apuracao" cargo={cargo} turno={turno} />
         <SeletorTurno turno={turno} cargo={cargo} />
-      </AbasTopo>
+      </div>
       <nav aria-label="Cargo" className="so-celular" style={{ marginBottom: '20px' }}>
         <EscolhaCompacta rotulo="Cargo" valor={cargo} opcoes={cargosDoTurno.map((c) => ({ ...c, href: hrefDe(c.valor) }))} />
       </nav>
-      <div className="so-computador" style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap' }}>
-        {cargosDoTurno.map((c) => (
-          <Link key={c.valor} href={hrefDe(c.valor)} style={abaEstilo(cargo === c.valor)}>{c.rotulo}</Link>
-        ))}
-      </div>
-      <ConferenciaUrnas />
+      <BarraControleEleicoes visao="apuracao" turno={turno} cargo={cargo}
+        hrefVisao={(v) => hrefEleicoes(v, cargo, turno)} hrefTurno={(n) => hrefEleicoes('apuracao', cargo, n)}
+        cargos={cargosDoTurno.map((c) => ({ valor: c.valor, rotulo: c.rotulo, href: hrefDe(c.valor) }))} />
       <ApuracaoEleicao key={`${cargo}|${turno}`} cargo={cargo} ufInicial={ufInicial} turno={turno} />
+      {/* Desceu para o fim da página (12/10/2026): ficava entre os filtros e os dados que eles filtram. */}
+      <div style={{ marginTop: '24px' }}><ConferenciaUrnas /></div>
     </div>
   );
 }
@@ -363,18 +346,24 @@ function PaginaCandidatosSegundoTurno({ cargo, chapas, governadores, semCadastro
       <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.8rem,4vw,2.6rem)', margin: '0 0 10px' }}>
         Candidatos 2026
       </h1>
-      <p style={{ color: t.cor.cinza, margin: '0 0 22px', maxWidth: '70ch', lineHeight: 1.5 }}>
+      <p style={{ color: t.cor.cinza, margin: '0 0 16px', lineHeight: 1.5 }}>
         Quem disputa o 2º turno, em 25 de outubro: a Presidência e os governos de AC, AM, DF, ES, RN e TO. Só aparecem os dois candidatos de cada disputa. Dados oficiais do{' '}
         <a href="https://www.tse.jus.br/" target="_blank" rel="noopener noreferrer" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>TSE</a>, sem análise ou opinião.
       </p>
-      <AbasTopo>
+      <div className="so-celular">
         <AlternarVisao visao="candidatos" cargo={cargo} turno={2} />
         <SeletorTurno visao="candidatos" turno={2} cargo={cargo} />
-      </AbasTopo>
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap' }}>
-        <Link href={href('presidente')} style={abaEstilo(cargo === 'presidente')}>Presidente (2)</Link>
-        <Link href={href('governador')} style={abaEstilo(cargo === 'governador')}>Governador{erro ? '' : ` (${totalGov})`}</Link>
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap' }}>
+          <Link href={href('presidente')} style={abaEstilo(cargo === 'presidente')}>Presidente (2)</Link>
+          <Link href={href('governador')} style={abaEstilo(cargo === 'governador')}>Governador{erro ? '' : ` (${totalGov})`}</Link>
+        </div>
       </div>
+      <BarraControleEleicoes visao="candidatos" turno={2} cargo={cargo}
+        hrefVisao={(v) => hrefEleicoes(v, cargo, 2)} hrefTurno={(n) => hrefEleicoes('candidatos', cargo, n)}
+        cargos={[
+          { valor: 'presidente', rotulo: 'Presidente (2)', href: href('presidente') },
+          { valor: 'governador', rotulo: `Governador${erro ? '' : ` (${totalGov})`}`, href: href('governador') },
+        ]} />
 
       {erro && avisoTse}
 
@@ -429,15 +418,15 @@ function PaginaCandidatos({ cargo, chapas, deputados, resumo, resumoSenado, resu
       <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.8rem,4vw,2.6rem)', margin: '0 0 10px' }}>
         Candidatos 2026
       </h1>
-      <p style={{ color: t.cor.cinza, margin: '0 0 22px', maxWidth: '70ch', lineHeight: 1.5 }}>
+      <p style={{ color: t.cor.cinza, margin: '0 0 16px', lineHeight: 1.5 }}>
         Quem disputa a Presidência, os governos estaduais, o Senado, a Câmara dos Deputados e as Assembleias Legislativas em 2026: partido, coligação e a situação da candidatura de cada um(a). Dados oficiais do{' '}
         <a href="https://www.tse.jus.br/" target="_blank" rel="noopener noreferrer" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>TSE</a>, sem análise ou opinião, tire suas próprias conclusões com base nos dados.
       </p>
 
-      <AbasTopo>
+      <div className="so-celular">
         <AlternarVisao visao="candidatos" cargo={cargo} />
         <SeletorTurno visao="candidatos" turno={1} cargo={cargo} />
-      </AbasTopo>
+      </div>
 
       {/* Celular (27/09/2026): um campo de escolha no lugar das cinco pílulas, que ocupavam 4 linhas. */}
       <nav aria-label="Cargo" className="so-celular" style={{ marginBottom: '20px' }}>
@@ -449,26 +438,18 @@ function PaginaCandidatos({ cargo, chapas, deputados, resumo, resumoSenado, resu
           { valor: 'deputado-estadual', rotulo: `Deputado Estadual${resumoEstadual.total != null ? ` (${resumoEstadual.total.toLocaleString('pt-BR')})` : ''}`, href: '/candidatos-2026?cargo=deputado-estadual' },
         ]} />
       </nav>
-      <div className="so-computador" style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap' }}>
-        <Link href="/candidatos-2026?cargo=presidente" style={abaEstilo(cargo === 'presidente')}>
-          Presidente ({totalPresidente})
-        </Link>
-        <Link href="/candidatos-2026?cargo=senador" style={abaEstilo(cargo === 'senador')}>
-          Senador ({(resumoSenado.total || 0).toLocaleString('pt-BR')})
-        </Link>
-        {/* Ordem pedida pelo Jordy em 25/09: Governador antes de Deputado Federal, e os dois
-            legislativos da UF (federal e estadual) lado a lado no fim. */}
-        <Link href="/candidatos-2026?cargo=governador" style={abaEstilo(cargo === 'governador')}>
-          Governador ({(resumoGoverno.total || 0).toLocaleString('pt-BR')})
-        </Link>
-        <Link href="/candidatos-2026?cargo=deputado-federal" style={abaEstilo(cargo === 'deputado-federal')}>
-          Deputado Federal ({(resumo.total || 0).toLocaleString('pt-BR')})
-        </Link>
-        {/* Sem contagem: a lista é lida do TSE por estado, e o total do país pediria 27 consultas. */}
-        <Link href="/candidatos-2026?cargo=deputado-estadual" style={abaEstilo(cargo === 'deputado-estadual')}>
-          Deputado Estadual{resumoEstadual.total != null ? ` (${resumoEstadual.total.toLocaleString('pt-BR')})` : ''}
-        </Link>
-      </div>
+      {/* Ordem pedida pelo Jordy em 25/09: Governador antes de Deputado Federal, e os dois legislativos da UF
+          (federal e estadual) lado a lado no fim. Deputado Estadual fica sem contagem até o total chegar: a lista
+          é lida do TSE por estado, e o total do país pede 27 consultas. */}
+      <BarraControleEleicoes visao="candidatos" turno={1} cargo={cargo}
+        hrefVisao={(v) => hrefEleicoes(v, cargo, 1)} hrefTurno={(n) => hrefEleicoes('candidatos', cargo, n)}
+        cargos={[
+          { valor: 'presidente', rotulo: `Presidente (${totalPresidente})`, href: '/candidatos-2026?cargo=presidente' },
+          { valor: 'senador', rotulo: `Senador (${(resumoSenado.total || 0).toLocaleString('pt-BR')})`, href: '/candidatos-2026?cargo=senador' },
+          { valor: 'governador', rotulo: `Governador (${(resumoGoverno.total || 0).toLocaleString('pt-BR')})`, href: '/candidatos-2026?cargo=governador' },
+          { valor: 'deputado-federal', rotulo: `Dep. Federal (${(resumo.total || 0).toLocaleString('pt-BR')})`, href: '/candidatos-2026?cargo=deputado-federal' },
+          { valor: 'deputado-estadual', rotulo: `Dep. Estadual${resumoEstadual.total != null ? ` (${resumoEstadual.total.toLocaleString('pt-BR')})` : ''}`, href: '/candidatos-2026?cargo=deputado-estadual' },
+        ]} />
 
       {cargo === 'presidente' ? (
         <ListaPresidente chapas={chapas} />
