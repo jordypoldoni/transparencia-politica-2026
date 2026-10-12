@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { useState, useEffect, useLayoutEffect, useMemo, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { t } from '../src/estilo/tokens';
 import { NOMES_UF } from '../src/lib/cotas';
@@ -95,6 +95,42 @@ function Quadro({ uf, dados, foco, aoFocar, interativo }) {
   );
 }
 
+// Dica do hover: curta de propósito (nome, região e os 3 mais votados). Os 12 completos ficam no painel ao clicar.
+function Dica({ uf, dados, foco }) {
+  const e = dados.estados[uf];
+  const geo = MAPA_BRASIL.estados.find((x) => x.uf === uf);
+  const reg = REGIOES[geo.regiao];
+  return (
+    <div className="mapa-quadro-corpo">
+      <div className="mapa-quadro-cab">
+        <strong style={{ fontFamily: t.fonte.titulo, fontSize: '1.1rem', fontWeight: 600 }}>{NOMES_UF[uf] || uf}</strong>
+        <span className="mapa-regiao"><i style={{ background: reg.cor }} />{reg.nome}</span>
+      </div>
+      {!e ? <p className="mapa-mudo">O TSE ainda não publicou o resultado deste estado.</p> : (
+        <>
+          <ol className="mapa-lista mapa-lista-curta">
+            {e.candidatos.slice(0, 3).map((c, i) => (
+              <li key={chaveCand(c)} className="mapa-linha">
+                <span className="mapa-pos">{i + 1}º</span>
+                <span className="mapa-nome"><b className={i === 0 ? 'mapa-lider' : ''}>{c.nome}</b><small>{c.partido}</small></span>
+                <b className="mapa-pct">{c.pct}%</b>
+                <span className="mapa-trilho"><span className="mapa-barra" style={{ width: `${Math.max(0.6, numPct(c.pct))}%`, background: reg.cor }} /></span>
+              </li>
+            ))}
+          </ol>
+          {foco && (() => {
+            const i = e.candidatos.findIndex((c) => chaveCand(c) === foco);
+            if (i < 3) return null;
+            const c = e.candidatos[i];
+            return <p className="mapa-foco-linha">{c.nome}: <b>{i + 1}º</b>, {c.pct}%</p>;
+          })()}
+          <p className="mapa-rodape-quadro">Clique para fixar e ver os {e.candidatos.length} candidatos.</p>
+        </>
+      )}
+    </div>
+  );
+}
+
 export default function MapaBrasilApuracao({ turno = 1 }) {
   const [dados, setDados] = useState(null);
   const [erro, setErro] = useState(null);
@@ -170,11 +206,15 @@ export default function MapaBrasilApuracao({ turno = 1 }) {
     const top = Math.min(Math.max(8, y - 28), Math.max(8, vh - h - 8));
     d.style.transform = `translate(${left}px, ${top}px)`;
   }, []);
-  const aoMover = (ev) => posicionar(ev.clientX, ev.clientY);
+  const ultimo = useRef({ x: 0, y: 0 });
+  const aoMover = (ev) => { ultimo.current = { x: ev.clientX, y: ev.clientY }; posicionar(ev.clientX, ev.clientY); };
+  // Ao trocar de estado o quadro muda de altura: reposiciona já com o tamanho novo (senão ele sai pela borda da janela).
+  useLayoutEffect(() => { if (hover) posicionar(ultimo.current.x, ultimo.current.y); }, [hover, posicionar]);
   const posicaoDoFoco = (geo) => {
     const s = svgRef.current; if (!s) return;
     const r = s.getBoundingClientRect();
-    posicionar(r.left + ((geo.cx - VB[0]) / VB[2]) * r.width, r.top + ((geo.cy - VB[1]) / VB[3]) * r.height);
+    ultimo.current = { x: r.left + ((geo.cx - VB[0]) / VB[2]) * r.width, y: r.top + ((geo.cy - VB[1]) / VB[3]) * r.height };
+    posicionar(ultimo.current.x, ultimo.current.y);
   };
 
   const escolher = (uf) => { setFixo((a) => (a === uf ? null : uf)); };
@@ -257,7 +297,8 @@ export default function MapaBrasilApuracao({ turno = 1 }) {
                     style={{ fill: corDoEstado(geo), opacity: opacidadeDe(geo), '--i': ordemEntrada[geo.uf] }}
                     tabIndex={0} role="button" aria-pressed={fixo === geo.uf}
                     aria-label={`${NOMES_UF[geo.uf]}, ${REGIOES[geo.regiao].nome}. Enter para fixar o resultado.`}
-                    onMouseEnter={() => setHover(geo.uf)} onFocus={() => { setHover(geo.uf); posicaoDoFoco(geo); }} onBlur={() => setHover(null)}
+                    onMouseEnter={() => setHover(geo.uf)} onMouseLeave={() => setHover(null)}
+                    onFocus={(ev) => { if (ev.currentTarget.matches(':focus-visible')) { setHover(geo.uf); posicaoDoFoco(geo); } }} onBlur={() => setHover(null)}
                     onClick={() => escolher(geo.uf)} onKeyDown={(ev) => teclas(ev, geo)}
                   />
                 ))}
@@ -283,7 +324,7 @@ export default function MapaBrasilApuracao({ turno = 1 }) {
               <g>
                 {MAPA_BRASIL.estados.filter((g) => g.area < AREA_MINIMA_ROTULO).map((geo) => (
                   <circle key={geo.uf} cx={geo.cx} cy={geo.cy} r={9} className="mapa-alvo" aria-hidden="true"
-                    onMouseEnter={() => setHover(geo.uf)} onClick={() => escolher(geo.uf)} />
+                    onMouseEnter={() => setHover(geo.uf)} onMouseLeave={() => setHover(null)} onClick={() => escolher(geo.uf)} />
                 ))}
               </g>
             </svg>
@@ -291,7 +332,7 @@ export default function MapaBrasilApuracao({ turno = 1 }) {
           </div>
           {createPortal(
             <div ref={dicaRef} className={`mapa-dica${ativo ? ' mapa-dica-on' : ''}`} aria-hidden="true">
-              {ativo && <Quadro key={ativo} uf={ativo} dados={dados} foco={foco} interativo={false} />}
+              {ativo && <Dica key={ativo} uf={ativo} dados={dados} foco={foco} />}
             </div>, document.body)}
 
           {escala ? (
@@ -373,9 +414,12 @@ function Estilos() {
       .mapa-sigla { font: 600 9.5px ${t.fonte.corpo}; fill: #fff; text-anchor: middle; dominant-baseline: middle; paint-order: stroke; stroke: rgba(0,0,0,.28); stroke-width: 2px; stroke-linejoin: round; transition: opacity .3s; }
       .mapa-alvo { fill: transparent; cursor: pointer; }
 
-      .mapa-dica { position: fixed; left: 0; top: 0; z-index: 1000; width: 380px; pointer-events: none; opacity: 0; transition: opacity .12s ease; background: #fff; border-radius: ${t.raio.md}; box-shadow: 0 14px 40px rgba(40,30,15,.28), 0 2px 6px rgba(40,30,15,.12); padding: 16px 16px 12px; }
+      .mapa-dica { position: fixed; left: 0; top: 0; z-index: 1000; width: 340px; pointer-events: none; opacity: 0; transition: opacity .12s ease; background: #fff; border-radius: ${t.raio.md}; box-shadow: 0 14px 40px rgba(40,30,15,.28), 0 2px 6px rgba(40,30,15,.12); padding: 16px 16px 12px; }
       .mapa-dica-on { opacity: 1; }
 
+      .mapa-lista-curta { margin-top: 8px; }
+      .mapa-lista-curta .mapa-nome b { white-space: normal; overflow: visible; text-overflow: clip; }
+      .mapa-foco-linha { margin: 6px 0 0; font-size: .8rem; color: ${t.cor.tinta}; }
       .mapa-quadro-cab { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
       .mapa-regiao { display: inline-flex; align-items: center; gap: 7px; font-size: .78rem; color: ${t.cor.tinta}; background: ${t.cor.papelQuente}; padding: 3px 10px; border-radius: ${t.raio.pill}; white-space: nowrap; }
       .mapa-sub { margin: 4px 0 10px; font-size: .8rem; color: ${t.cor.cinza}; }
