@@ -455,7 +455,7 @@ function Estilos() {
       .mapa-sugestoes small { color: ${t.cor.cinza}; margin-left: auto; }
 
       .mapa-caixa { position: relative; }
-      .mapa-svg { width: 100%; height: auto; max-height: max(380px, calc(100vh - 230px)); display: block; overflow: visible; margin: 0 auto; }
+      .mapa-svg { width: 100%; height: auto; max-height: max(560px, calc(100vh - 120px)); display: block; overflow: visible; margin: 0 auto; }
       .mapa-uf { stroke: #fff; stroke-width: 1; stroke-linejoin: round; cursor: pointer; outline: none; opacity: 0; animation: mapa-entra .55s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i) * 26ms); transition: fill .45s ease, fill-opacity .3s ease; }
       .mapa-uf:focus-visible { stroke: ${t.cor.tinta}; stroke-width: 2.4; }
       .mapa-realce { stroke: #fff; stroke-width: 1.4; stroke-linejoin: round; transform: scale(1.035) translateY(-2px); filter: drop-shadow(0 6px 7px rgba(20,16,10,.38)); animation: mapa-sobe-estado .22s ease both; }
