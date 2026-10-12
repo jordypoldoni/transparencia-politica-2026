@@ -13,6 +13,7 @@ import CampoSelect from '../components/CampoSelect';
 import EscolhaCompacta from '../components/EscolhaCompacta';
 import { NOMES_UF } from '../src/lib/cotas';
 import { t } from '../src/estilo/tokens';
+import { Seta } from '../components/icones';
 import SeloSituacao from '../components/SeloSituacao';
 import Paginacao from '../components/Paginacao';
 import ApuracaoEleicao from '../components/ApuracaoEleicao';
@@ -83,7 +84,7 @@ function ListaPresidente({ chapas }) {
                 mesmo número continuam aparecendo, e agora cada um mostra o vice certo, que é
                 o que explica a duplicidade sem precisar de aviso nenhum. */}
             <SeloSituacao info={{ situacao: c.presidente.situacao_tse }} consultadoEm={c.presidente.ficha_coletada_em} />
-            <span style={{ display: 'inline-block', marginTop: '10px', color: t.cor.ouroTexto, fontWeight: 700, fontSize: '0.8rem' }}>Ver ficha e proposta →</span>
+            <span style={{ display: 'inline-block', marginTop: '10px', color: t.cor.ouroTexto, fontWeight: 700, fontSize: '0.8rem' }}>Ver ficha e proposta<Seta direcao="direita" size={14} emTexto /></span>
           </div>
           <Link href={`/presidencial/${c.presidente.slug}`} aria-label={`${c.presidente.nome_urna}, ver ficha e proposta`} style={{ position: 'absolute', inset: 0, zIndex: 1, borderRadius: t.raio.md }} />
         </div>

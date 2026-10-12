@@ -7,6 +7,7 @@ import CampoSelect from '../components/CampoSelect';
 import BuscaMunicipio from '../components/BuscaMunicipio';
 import { Pino } from '../components/icones';
 import { t } from '../src/estilo/tokens';
+import { Seta } from '../components/icones';
 
 const brlC = (v) => {
   if (v == null) return '-';
@@ -71,7 +72,7 @@ export default function GastosPublicos({ uniao, estados = [], gastosFuncao = [] 
         <Link href="/ente/1" style={{ textDecoration: 'none', color: '#fff', display: 'block', background: t.cor.verde, borderRadius: t.raio.lg, padding: 'clamp(20px,3vw,32px)', marginBottom: '16px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '10px', flexWrap: 'wrap', marginBottom: '16px' }}>
             <span style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.4rem' }}>União · Governo Federal</span>
-            <span style={{ color: t.cor.ouro, fontWeight: 700, fontSize: '0.85rem' }}>ver detalhe →</span>
+            <span style={{ color: t.cor.ouro, fontWeight: 700, fontSize: '0.85rem' }}>ver detalhe<Seta direcao="direita" size={14} emTexto /></span>
           </div>
           <div style={{ display: 'flex', gap: '24px 44px', flexWrap: 'wrap' }}>
             <div>

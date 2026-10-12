@@ -262,7 +262,7 @@ export default function TrajetoriaEleitoral({ ficha, embutido = false, linkCandi
         {linkCandidatura && (
           <p style={{ margin: '10px 0 0', fontSize: '0.84rem' }}>
             <a href={linkCandidatura} style={{ color: t.cor.ouroTexto, fontWeight: 700, textDecoration: 'none' }}>
-              Ver a candidatura de 2026 →
+              Ver a candidatura de 2026<Seta direcao="direita" size={14} emTexto />
             </a>
           </p>
         )}

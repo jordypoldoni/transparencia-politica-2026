@@ -7,6 +7,7 @@ import CardCandidato from '../components/CardCandidato';
 import ResumoMeuVoto from '../components/ResumoMeuVoto';
 import NavPraVoce from '../components/NavPraVoce';
 import { t } from '../src/estilo/tokens';
+import { Seta } from '../components/icones';
 import { NOMES_UF } from '../src/lib/cotas';
 import { ARTIGO_UF, nomeDe, emUf, deUf, paraUf } from '../src/lib/ufs';
 import { definirUf, ufLocal, EVENTO_UF, guardarUfCookie, COOKIE_UF, lerRespostasLocais, EVENTO_RESPOSTAS } from '../src/lib/perfilUsuario';
@@ -70,7 +71,7 @@ function Cedula({ uf, cedula }) {
         <div style={{ marginTop: '14px' }}>
           <Link href={`/candidatos-2026?cargo=deputado-federal&uf=${uf}`}
             style={{ display: 'inline-block', padding: '11px 20px', borderRadius: t.raio.pill, background: t.cor.verde, color: t.cor.ouro, fontWeight: 700, fontSize: '0.88rem', textDecoration: 'none', boxShadow: t.sombra.botao }}>
-            Ver os {federais.total.toLocaleString('pt-BR')} candidatos do {uf} →
+            Ver os {federais.total.toLocaleString('pt-BR')} candidatos do {uf}<Seta direcao="direita" size={16} emTexto />
           </Link>
         </div>
       </BlocoCargo>
@@ -98,7 +99,7 @@ function Cedula({ uf, cedula }) {
             <div style={{ marginTop: '14px' }}>
               <Link href={`/candidatos-2026?cargo=deputado-estadual&uf=${uf}`}
                 style={{ display: 'inline-block', padding: '11px 20px', borderRadius: t.raio.pill, background: t.cor.verde, color: t.cor.ouro, fontWeight: 700, fontSize: '0.88rem', textDecoration: 'none', boxShadow: t.sombra.botao }}>
-                {estaduais?.total ? `Ver os ${estaduais.total.toLocaleString('pt-BR')} candidatos do ${uf} →` : `Ver os candidatos a deputado estadual do ${uf} →`}
+                {estaduais?.total ? <>Ver os {estaduais.total.toLocaleString('pt-BR')} candidatos do {uf}<Seta direcao="direita" size={16} emTexto /></> : <>Ver os candidatos a deputado estadual do {uf}<Seta direcao="direita" size={16} emTexto /></>}
               </Link>
             </div>
           </>
@@ -266,7 +267,7 @@ export default function Comecar({ modo, ufSel, ufConexao, cedula, trocando = fal
         {sugerida && (
           <div style={{ marginBottom: '30px' }}>
             <Link href={`/comecar?uf=${sugerida}`} style={botaoPrimario} onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}>
-              Ver a cédula {deUf(sugerida)} →
+              Ver a cédula {deUf(sugerida)}<Seta direcao="direita" size={16} emTexto />
             </Link>
             <p style={{ margin: '8px 0 0 6px', fontSize: '0.82rem', color: t.cor.cinza }}>estado estimado pela sua conexão; se não for o seu, escolha abaixo</p>
           </div>
@@ -316,7 +317,7 @@ function ConviteAfinidade({ uf }) {
   const algumas = n != null && n > 0 && !todas;
   // Com respostas, o link já pede o resultado (?ver=1): a página calcula sozinha ao abrir.
   const href = n > 0 ? `/afinidade?uf=${uf}&ver=1` : `/afinidade?uf=${uf}`;
-  const acao = n == null ? '' : todas ? 'Ver quem votou como você →' : algumas ? 'Ver o resultado ou continuar respondendo →' : 'Responder →';
+  const acao = n == null ? '' : todas ? 'Ver quem votou como você' : algumas ? 'Ver o resultado ou continuar respondendo' : 'Responder';
   return (
     <Link href={href} style={{ display: 'block', textDecoration: 'none', color: t.cor.tinta, background: '#fff', borderRadius: t.raio.md, padding: '18px 20px', marginBottom: '34px', boxShadow: t.sombra.clicavel, transition: 'box-shadow .15s, transform .15s', maxWidth: '760px' }} onMouseOver={(e) => { e.currentTarget.style.boxShadow = t.sombra.hover; e.currentTarget.style.transform = 'translateY(-2px)'; }} onMouseOut={(e) => { e.currentTarget.style.boxShadow = t.sombra.clicavel; e.currentTarget.style.transform = 'none'; }}>
       <strong style={{ fontSize: '1.05rem' }}>Quem vota como você?</strong>
@@ -330,7 +331,7 @@ function ConviteAfinidade({ uf }) {
           Responda votações que já aconteceram no Congresso e veja quais candidatos do {uf} votaram como você, pelo voto registrado de cada um.
         </span>
       )}
-      {acao && <span style={{ display: 'inline-block', marginTop: '8px', fontSize: '0.85rem', fontWeight: 700, color: t.cor.ouroTexto }}>{acao}</span>}
+      {acao && <span style={{ display: 'inline-block', marginTop: '8px', fontSize: '0.85rem', fontWeight: 700, color: t.cor.ouroTexto }}>{acao}<Seta direcao="direita" size={14} emTexto /></span>}
     </Link>
   );
 }

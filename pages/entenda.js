@@ -1,6 +1,7 @@
 import Head from 'next/head';
 import Link from 'next/link';
 import { t } from '../src/estilo/tokens';
+import { Seta } from '../components/icones';
 import { CEAP_LISTA } from '../src/lib/cotas';
 
 const fmtBRL = (v) => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -203,8 +204,8 @@ export default function Entenda() {
         </div>
 
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-          <Link href="/deputados" style={{ ...fonte, background: t.cor.verde, color: t.cor.ouro, border: 'none' }}>Ver os parlamentares →</Link>
-          <Link href="/votacoes" style={fonte}>Ver as votações →</Link>
+          <Link href="/deputados" style={{ ...fonte, background: t.cor.verde, color: t.cor.ouro, border: 'none' }}>Ver os parlamentares<Seta direcao="direita" size={14} emTexto /></Link>
+          <Link href="/votacoes" style={fonte}>Ver as votações<Seta direcao="direita" size={14} emTexto /></Link>
         </div>
       </div>
     </>

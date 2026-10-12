@@ -7,6 +7,7 @@ import TrajetoriaEleitoral from '../../components/TrajetoriaEleitoral';
 import ServicoAPI from '../../src/servicos/servico_api';
 import Avatar from '../../components/Avatar';
 import { t } from '../../src/estilo/tokens';
+import { Seta } from '../../components/icones';
 import BotaoVoltar from '../../components/BotaoVoltar';
 import BotaoFavorito from '../../components/BotaoFavorito';
 import BotaoMeuVoto from '../../components/BotaoMeuVoto';
@@ -83,7 +84,7 @@ export default function PerfilPresidenciavel({ candidato, colega, canonical }) {
       )}
       {colega && colega.slug && (
         <Link href={`/presidencial/${colega.slug}`} style={{ display: 'block', textDecoration: 'none', color: 'inherit', background: t.cor.papelQuente, borderRadius: t.raio.sm, padding: '12px 16px', marginBottom: '24px', fontSize: '0.88rem' }}>
-          {colega.cargo === 'Vice-Presidente' ? 'Vice na chapa' : 'Cabeça de chapa'}: <strong>{colega.nome_urna}</strong> →
+          {colega.cargo === 'Vice-Presidente' ? 'Vice na chapa' : 'Cabeça de chapa'}: <strong>{colega.nome_urna}</strong><Seta direcao="direita" size={14} emTexto />
         </Link>
       )}
       <SituacaoCandidatura ficha={candidato} />
@@ -146,7 +147,7 @@ export default function PerfilPresidenciavel({ candidato, colega, canonical }) {
             )}
             <a href={c.proposta_pdf_url} target="_blank" rel="noopener noreferrer"
               style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 22px', fontWeight: 700, fontSize: '0.92rem', borderRadius: t.raio.pill, background: t.cor.ouro, color: t.cor.verdeEscuro, textDecoration: 'none' }}>
-              Ler o PDF oficial →
+              Ler o PDF oficial<Seta direcao="direita" size={16} emTexto />
             </a>
           </>
         ) : (

@@ -483,7 +483,7 @@ export default function PerfilPolitico({ dados }) {
         {explicaCota && (
           <p style={{ margin: '12px 0 0', fontSize: '0.9rem', background: 'rgba(255,255,255,0.1)', padding: '12px 14px', borderRadius: t.raio.sm, lineHeight: 1.5 }}>
             <strong>Cota parlamentar:</strong> uma verba mensal, paga com o seu imposto, para o parlamentar tocar o mandato: passagens, aluguel de escritório, combustível, divulgação. O <strong>teto muda conforme o estado</strong> (quem é de estado mais distante de Brasília recebe mais, por causa das passagens) e é <strong>diferente entre Câmara, Senado e as Assembleias estaduais</strong>. Por isso comparamos cada um dentro da própria casa.{' '}
-            <a href="/entenda#cotas" style={{ color: t.cor.ouro, fontWeight: 700, textDecoration: 'underline' }}>Ver os valores e tetos por estado →</a>
+            <a href="/entenda#cotas" style={{ color: t.cor.ouro, fontWeight: 700, textDecoration: 'underline' }}>Ver os valores e tetos por estado<Seta direcao="direita" size={14} emTexto /></a>
           </p>
         )}
 
@@ -581,7 +581,7 @@ export default function PerfilPolitico({ dados }) {
               {/* Link discreto pra fonte — verificação, não chamada principal */}
               {perfil.website && (
                 <div style={{ marginTop: '18px' }}>
-                  <a href={perfil.website} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8rem', color: t.cor.cinza, textDecoration: 'underline dotted' }}>ver ficha completa na fonte oficial →</a>
+                  <a href={perfil.website} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.8rem', color: t.cor.cinza, textDecoration: 'underline dotted' }}>ver ficha completa na fonte oficial<Seta direcao="direita" size={13} emTexto /></a>
                 </div>
               )}
             </>
@@ -1050,7 +1050,7 @@ export default function PerfilPolitico({ dados }) {
                               <span style={{ flex: 1, minWidth: 0, fontSize: '0.8rem', fontWeight: 600, color: t.cor.tinta }}>{papel}</span>
                               {res && <span style={{ flexShrink: 0, fontSize: '0.74rem', color: res === 'Aprovado' ? t.cor.sim : t.cor.nao, fontWeight: 600 }}>{res} no plenário</span>}
                               <span style={{ flexShrink: 0, fontSize: '0.72rem', color: t.cor.cinza }}>{dataBr(v.data_voto)}</span>
-                              {linkavel && <span style={{ flexShrink: 0, fontSize: '0.72rem', fontWeight: 700, color: t.cor.ouroTexto }}>ver →</span>}
+                              {linkavel && <span style={{ flexShrink: 0, fontSize: '0.72rem', fontWeight: 700, color: t.cor.ouroTexto }}>ver<Seta direcao="direita" size={13} emTexto /></span>}
                             </>
                           );
                           const rowStyle = { display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 10px', borderRadius: t.raio.sm, background: '#fff', textDecoration: 'none', color: 'inherit' };
@@ -1098,7 +1098,7 @@ export default function PerfilPolitico({ dados }) {
             <div style={{ display: 'flex', gap: '10px' }}>
               <button onClick={() => setModal(false)} style={{ ...pilula, flex: 1, justifyContent: 'center', background: '#fff', color: t.cor.tinta, boxShadow: t.sombra.botao }}>Cancelar</button>
               {linkOficial() && (
-                <a href={linkOficial()} target="_blank" rel="noopener noreferrer" onClick={() => setModal(false)} style={{ ...pilula, flex: 1, justifyContent: 'center', background: t.cor.verde, color: t.cor.ouro }}>Prosseguir →</a>
+                <a href={linkOficial()} target="_blank" rel="noopener noreferrer" onClick={() => setModal(false)} style={{ ...pilula, flex: 1, justifyContent: 'center', background: t.cor.verde, color: t.cor.ouro }}>Prosseguir<Seta direcao="direita" size={16} emTexto /></a>
               )}
             </div>
           </div>

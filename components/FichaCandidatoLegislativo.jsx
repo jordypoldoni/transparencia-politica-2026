@@ -3,6 +3,7 @@ import Link from 'next/link';
 import Avatar from './Avatar';
 import { NOMES_UF, pctDoTeto } from '../src/lib/cotas';
 import { t } from '../src/estilo/tokens';
+import { Seta } from './icones';
 import { hrefPerfil } from '../src/lib/casa';
 import { useVoltarLista } from '../src/lib/voltarLista';
 // FICHA DE CANDIDATO (22/09/2026; governador entrou em 24/09). Era o corpo de
@@ -323,7 +324,7 @@ export default function FichaCandidatoLegislativo({ candidato, canonical, cargo 
 
           <div style={{ marginTop: '14px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             <Link href={hrefPerfil(m)} style={{ background: t.cor.verde, color: t.cor.ouro, padding: '11px 22px', borderRadius: t.raio.pill, textDecoration: 'none', fontWeight: 700, fontSize: '0.92rem', boxShadow: t.sombra.botao }}>
-              Ver o mandato em detalhe →
+              Ver o mandato em detalhe<Seta direcao="direita" size={16} emTexto />
             </Link>
             <span style={{ alignSelf: 'center', fontSize: '0.85rem', color: t.cor.cinza }}>
               Como votou em cada matéria, em que gastou, comissões e trajetória.

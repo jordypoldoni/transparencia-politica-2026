@@ -16,6 +16,7 @@ import CampoSelect from './CampoSelect';
 import CampoBusca from './CampoBusca';
 import { NOMES_UF } from '../src/lib/cotas';
 import { t } from '../src/estilo/tokens';
+import { Seta } from './icones';
 import { hrefPerfil, casaDoPerfil } from '../src/lib/casa';
 import Paginacao from './Paginacao';
 import { ASSEMBLEIAS, assembleiaDe, assembleiaPorUf, verbaDe } from '../src/lib/assembleias';
@@ -482,7 +483,7 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
                         cartao no celular, em diagonal com o nome (corrigido 28/09/2026). */}
                     <span className="radar-valor">
                       <span className="rv-total" style={{ fontWeight: 800, fontSize: '1.05rem' }}>{brl(p.total)}</span>
-                      <span style={{ fontSize: '0.72rem', opacity: 0.7 }}>ver no quê →</span>
+                      <span style={{ fontSize: '0.72rem', opacity: 0.7 }}>ver no quê<Seta direcao="direita" size={12} emTexto /></span>
                     </span>
                   </Link>
                 </li>
@@ -607,7 +608,7 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
                 </div>
                 <BotaoFavorito tipo="parlamentar" chave={hrefPerfil(d)} rotulo={d.nome}
                   detalhe={[casaDoPerfil(d).cargoPadrao, d.partido, d.uf].filter(Boolean).join(' · ')} foto={d.foto_url} />
-                <span aria-hidden="true" style={{ flexShrink: 0, color: t.cor.ouroTexto, fontWeight: 700, fontSize: '0.9rem' }}>→</span>
+                <Seta direcao="direita" size={18} />
               </div>
               <Link href={hrefPerfil(d)} aria-label={`${d.nome}, ver perfil`} style={{ position: 'absolute', inset: 0, zIndex: 1, borderRadius: t.raio.md }} />
             </div>

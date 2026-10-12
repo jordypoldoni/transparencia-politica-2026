@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Avatar from './Avatar';
 import { t } from '../src/estilo/tokens';
+import { Seta } from './icones';
 import BotaoFavorito from './BotaoFavorito';
 import BotaoMeuVoto from './BotaoMeuVoto';
 import { cargoPelaRota } from '../src/lib/meuVoto';
@@ -55,7 +56,7 @@ export default function CardCandidato({ d, hrefBase = '/deputado-federal', selo 
         </div>
         <BotaoFavorito tipo="candidato" chave={href} rotulo={d.nome_urna}
           detalhe={[cargo, d.partido_sigla, d.uf].filter(Boolean).join(' · ')} foto={d.foto_url} />
-        <span aria-hidden="true" style={{ flexShrink: 0, color: t.cor.ouroTexto, fontWeight: 700, fontSize: '0.9rem' }}>→</span>
+        <Seta direcao="direita" size={18} />
       </div>
       <Link href={href} aria-label={`${d.nome_urna}, ver ficha`} style={{ position: 'absolute', inset: 0, zIndex: 1, borderRadius: t.raio.md }} />
     </div>

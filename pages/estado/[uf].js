@@ -2,6 +2,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import ServicoAPI from '../../src/servicos/servico_api';
 import { t } from '../../src/estilo/tokens';
+import { Seta } from '../../components/icones';
 import Avatar from '../../components/Avatar';
 import { hrefPerfil, casaDoPerfil } from '../../src/lib/casa';
 
@@ -54,7 +55,7 @@ function Linha({ d, posicao }) {
         </span>
         <span style={{ flexShrink: 0, textAlign: 'right' }}>
           <span style={{ display: 'block', fontWeight: 800 }}>{brl(d.total)}</span>
-          <span style={{ fontSize: '0.72rem', color: t.cor.ouroTexto, fontWeight: 700 }}>ver perfil →</span>
+          <span style={{ fontSize: '0.72rem', color: t.cor.ouroTexto, fontWeight: 700 }}>ver perfil<Seta direcao="direita" size={13} emTexto /></span>
         </span>
       </Link>
     </li>

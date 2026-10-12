@@ -24,6 +24,7 @@ import { CASAS_VOTACAO, casaVotacaoPorChave } from '../../src/lib/casa';
 import CampoBusca from '../../components/CampoBusca';
 import CampoSelect from '../../components/CampoSelect';
 import { t } from '../../src/estilo/tokens';
+import { Seta } from '../../components/icones';
 import { dataBr, anoDe } from '../../src/lib/datas';
 
 const POR_PAGINA = 20;
@@ -213,7 +214,7 @@ export default function VotacoesDaCasa({ casa, votacoes, temas = [], temaInicial
                     )}
                     {urgencia && <span style={{ fontSize: '0.75rem', color: t.cor.ouroTexto, fontWeight: 700 }}>⚡ Tramitou em urgência</span>}
                     {g.autor_nome && <span style={{ fontSize: '0.78rem', color: t.cor.cinza }}>Proposta por <strong style={{ fontWeight: 600, color: t.cor.tinta }}>{g.autor_nome}</strong></span>}
-                    {g.url_inteiro_teor && <a href={g.url_inteiro_teor} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.76rem', color: t.cor.ouroTexto, fontWeight: 700, textDecoration: 'underline dotted' }}>texto completo →</a>}
+                    {g.url_inteiro_teor && <a href={g.url_inteiro_teor} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.76rem', color: t.cor.ouroTexto, fontWeight: 700, textDecoration: 'underline dotted' }}>texto completo<Seta direcao="direita" size={13} emTexto /></a>}
                   </div>
 
                   <div style={{ marginTop: '10px', borderTop: `1px solid ${t.cor.papelQuente2}`, paddingTop: '10px', display: 'grid', gap: '4px' }}>
@@ -231,7 +232,7 @@ export default function VotacoesDaCasa({ casa, votacoes, temas = [], temaInicial
                             {h.status || 'Sem resultado'}{h.sim != null ? ` · ${h.sim}×${h.nao}` : ''}
                           </span>
                           <span style={{ flexShrink: 0, fontSize: '0.74rem', color: t.cor.cinza }}>{dataBR(v.data_voto)}</span>
-                          <span style={{ flexShrink: 0, fontSize: '0.74rem', fontWeight: 700, color: t.cor.ouroTexto }}>quem votou →</span>
+                          <span style={{ flexShrink: 0, fontSize: '0.74rem', fontWeight: 700, color: t.cor.ouroTexto }}>quem votou<Seta direcao="direita" size={13} emTexto /></span>
                         </Link>
                       );
                     })}
