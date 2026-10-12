@@ -30,7 +30,12 @@ const cabecalhosSeguranca = [
   { key: 'Content-Security-Policy-Report-Only', value: csp },
 ];
 
+// 12/10/2026: ao voltar (botão Voltar ou o do navegador), a página anterior abria rolada até o
+// final. Causa: o Next desliga a restauração de rolagem do navegador e, sem esta chave, a página
+// de destino herda a posição de rolagem da página que ficou para trás (a ficha, rolada até o fim).
+// Com ela, o Next guarda a posição de cada página e a devolve ao voltar.
 const nextConfig = {
+  experimental: { scrollRestoration: true },
   async headers() {
     return [{ source: '/:path*', headers: cabecalhosSeguranca }];
   },
