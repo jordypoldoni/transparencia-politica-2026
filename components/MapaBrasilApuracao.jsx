@@ -534,7 +534,8 @@ function Estilos() {
       .mapa-lista-curta .mapa-nome b { white-space: normal; overflow: visible; text-overflow: clip; }
       .mapa-foco-linha { margin: 6px 0 0; font-size: .8rem; color: ${t.cor.tinta}; }
       .mapa-quadro-cab { display: flex; align-items: baseline; justify-content: flex-start; gap: 12px; flex-wrap: wrap; }
-      .mapa-regiao { display: inline-flex; align-items: center; gap: 7px; font-size: .8rem; color: ${t.cor.cinza}; white-space: nowrap; }
+      .mapa-regiao i { display: none; }
+      .mapa-regiao { display: inline; line-height: 1; font-size: .8rem; color: ${t.cor.cinza}; white-space: nowrap; }
       .mapa-sub { margin: 4px 0 10px; font-size: .8rem; color: ${t.cor.cinza}; }
       .mapa-sub b { color: ${t.cor.tinta}; }
       .mapa-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; }
