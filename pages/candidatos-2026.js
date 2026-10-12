@@ -320,8 +320,9 @@ export default function Candidatos2026(props) {
 // sempre; governador, 2 por estado, agrupados por estado, com o mesmo cartão das outras listas. Quem é
 // finalista vem do TSE (src/lib/finalistasTurno2.js) e o cruzamento com o banco fica em
 // src/lib/candidatosSegundoTurno.js. Sem busca, filtro nem paginação: são 2 chapas e 12 candidatos.
-function PaginaCandidatosSegundoTurno({ cargo, chapas, governadores, semCadastro, erro }) {
-  const totalGov = governadores.reduce((n, g) => n + g.itens.length, 0);
+function PaginaCandidatosSegundoTurno({ cargo, chapas, governadores, semCadastro, erro, totalGovernador }) {
+  // Contagem vem do TSE (props.totalGovernador) e vale em qualquer aba; os cards só existem na aba Governador.
+  const totalGov = totalGovernador != null ? totalGovernador : governadores.reduce((n, g) => n + g.itens.length, 0);
   const href = (c) => `/candidatos-2026?cargo=${c}&turno=2`;
   const avisoTse = (
     <p style={{ color: t.cor.alertaTexto, lineHeight: 1.5 }}>

@@ -33,9 +33,13 @@ export function governadoresFinalistas(itensPorUf, finalistasPorUf) {
 // Props da página no 2º turno. `deps` existe para teste; em produção usa o banco e o TSE.
 export async function carregarSegundoTurno(cargoPedido, deps = {}) {
   const cargo = cargoDoSegundoTurno(cargoPedido);
-  const base = { turno: 2, cargo, chapas: [], governadores: [], semCadastro: 0, erro: null };
+  const base = { turno: 2, cargo, chapas: [], governadores: [], semCadastro: 0, erro: null, totalGovernador: null };
   let finalistas = null;
   try { finalistas = await (deps.finalistas || finalistasSegundoTurno)(); } catch (e) { finalistas = null; }
+  // 12/10/2026: a contagem da aba "Governador" sai da lista de finalistas do TSE, que já está carregada, e vale
+  // em qualquer aba. Antes ela era somada dos cards carregados, que só existem na aba Governador: na aba
+  // Presidente aparecia "(0)".
+  if (finalistas && finalistas.governador) base.totalGovernador = Object.values(finalistas.governador).reduce((n, f) => n + (Array.isArray(f) ? f.length : 0), 0);
 
   const servico = deps.servico || (await import('../servicos/servico_api')).default;
   if (cargo === 'presidente') {
