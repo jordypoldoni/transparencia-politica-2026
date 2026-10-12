@@ -77,7 +77,7 @@ function ListaPresidente({ chapas }) {
             </div>
             {/* REMOVIDO EM 18/09 o aviso "o TSE não informa qual vice pertence a qual chapa".
                 Era falso. A ficha individual de cada candidato publica o parceiro de chapa, e
-                os 28 pares são recíprocos e de cargos opostos — inclusive os dois do número 28,
+                os 28 pares são recíprocos e de cargos opostos, inclusive os dois do número 28,
                 que a fonte separa em Marçal↔Avalanche e Avalanche↔Silvia. Dois cards com o
                 mesmo número continuam aparecendo, e agora cada um mostra o vice certo, que é
                 o que explica a duplicidade sem precisar de aviso nenhum. */}
@@ -105,7 +105,7 @@ const CARGOS_LISTA = {
 
 
 // Busca de candidato a Deputado Federal: mesmo campo padrão do site (pílula, ícone de lupa,
-// linha âmbar ao focar) e o MESMO comportamento de /deputados — digita e a lista já vai
+// linha âmbar ao focar) e o MESMO comportamento de /deputados: digita e a lista já vai
 // atualizando sozinha, sem botão "Buscar" e sem recarregar a página. A diferença é só por
 // baixo dos panos: são 7.703 candidatos, não dá pra carregar tudo no cliente como em
 // /deputados (~600 parlamentares), então cada busca vai a um endpoint fino
