@@ -85,18 +85,44 @@ export default function Home({ votacoes, parlamentares = [], uniao = null, estad
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(DADOS_ESTRUTURADOS_HOME) }} />
       </Head>
       {/* HERO */}
+      <style jsx global>{`
+        .hero-grid.hero-esticado { align-items: stretch; }
+        .hero-esq { display: flex; flex-direction: column; justify-content: space-between; gap: 18px; min-width: 0; }
+        .hero-topo { display: flex; align-items: center; gap: 24px; }
+        .hero-sub { flex: 1 1 0; min-width: 0; margin: 0; font-size: 0.92rem; line-height: 1.5; color: ${t.cor.cinza}; }
+        .hero-passos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+        .hero-passo { background: ${t.cor.papelCartao}; border-radius: ${t.raio.md}; padding: 12px 14px; box-shadow: ${t.sombra.sutil}; }
+        .hero-passo-tit { margin: 0 0 4px; font-weight: 700; font-size: 0.9rem; color: ${t.cor.tinta}; }
+        .hero-passo-tit span { display: block; font-family: ${t.fonte.titulo}; font-size: 1.05rem; line-height: 1.2; margin-bottom: 2px; color: ${t.cor.ouroTexto}; font-weight: 600; }
+        .hero-passo-txt { margin: 0; font-size: 0.78rem; line-height: 1.4; color: ${t.cor.cinza}; }
+        @media (max-width: 880px) { .hero-topo { flex-direction: column; align-items: flex-start; gap: 12px; } }
+        @media (max-width: 560px) { .hero-passos { grid-template-columns: 1fr; } }
+      `}</style>
       <section className="surgir pagina">
-        <div className="hero-grid">
-          <div>
-            <span style={{ display: 'inline-block', fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: t.cor.ouroTexto }}>
-              Dados oficiais · em português claro
-            </span>
-            <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(2.4rem, 5vw, 3.6rem)', lineHeight: 1.04, letterSpacing: '-0.02em', margin: '14px 0 14px' }}>
-              Você elegeu.<br />Agora <span style={{ color: t.cor.ouroTexto }}>fiscalize</span>.
-            </h1>
-            <p style={{ fontSize: '1.1rem', color: t.cor.cinza, maxWidth: '46ch', lineHeight: 1.5, margin: '0 0 24px' }}>
-              Política não se aceita. Se verifica. Votos e gastos dos seus representantes, em português claro, com o documento oficial do lado. Nós trazemos os dados, você decide.
-            </p>
+        <div className="hero-grid hero-esticado">
+          <div className="hero-esq">
+            {/* 12/10/2026 (Jordy): sem a faixa "Dados oficiais · em português claro"; o texto de apoio passa para o lado do título
+                e os 3 passos sobem para onde ele ficava, para a busca alinhar com o card de atalhos. */}
+            <div className="hero-topo">
+              <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(2.4rem, 5vw, 3.6rem)', lineHeight: 1.04, letterSpacing: '-0.02em', margin: 0, flex: 'none' }}>
+                Você elegeu.<br />Agora <span style={{ color: t.cor.ouroTexto }}>fiscalize</span>.
+              </h1>
+              <p className="hero-sub">
+                Política não se aceita. Se verifica. Votos e gastos dos seus representantes, em português claro, com o documento oficial do lado. Nós trazemos os dados, você decide.
+              </p>
+            </div>
+            <div className="hero-passos">
+              {[
+                { n: '01', tit: 'Busque seu representante', txt: 'Pelo nome ou pelo estado. Sem cadastro.' },
+                { n: '02', tit: 'Entenda em 1 minuto', txt: 'Traduzimos votos e gastos pra qualquer pessoa, sem juridiquês.' },
+                { n: '03', tit: 'Confira na fonte', txt: 'Cada número tem o link do documento oficial. Não confie na gente: confira.' },
+              ].map((c) => (
+                <div key={c.n} className="hero-passo">
+                  <p className="hero-passo-tit"><span>{c.n}</span>{c.tit}</p>
+                  <p className="hero-passo-txt">{c.txt}</p>
+                </div>
+              ))}
+            </div>
             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'flex-start' }}>
               <div style={{ flex: '2 1 320px', minWidth: 0 }}>
                 <CampoSelect
@@ -173,23 +199,6 @@ export default function Home({ votacoes, parlamentares = [], uniao = null, estad
         </section>
         </ResumoEleicoesHome>
       )}
-
-      {/* COMO FUNCIONA — logo no topo, para orientar */}
-      <section style={{ padding: '8px 24px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(240px, 100%), 1fr))', gap: '16px' }}>
-          {[
-            { n: '01', tit: 'Busque seu representante', txt: 'Pelo nome ou pelo estado. Sem cadastro.' },
-            { n: '02', tit: 'Entenda em 1 minuto', txt: 'Traduzimos votos e gastos pra qualquer pessoa, sem juridiquês.' },
-            { n: '03', tit: 'Confira na fonte', txt: 'Cada número tem o link do documento oficial. Não confie na gente: confira.' },
-          ].map((c) => (
-            <div key={c.n} style={{ background: t.cor.papelCartao, borderRadius: t.raio.md, padding: '22px', boxShadow: t.sombra.sutil }}>
-              <span style={{ fontFamily: t.fonte.titulo, fontSize: '1.4rem', color: t.cor.ouroTexto, fontWeight: 600 }}>{c.n}</span>
-              <h3 style={{ margin: '8px 0 6px', fontSize: '1.05rem' }}>{c.tit}</h3>
-              <p style={{ margin: 0, color: t.cor.cinza, fontSize: '0.9rem', lineHeight: 1.5 }}>{c.txt}</p>
-            </div>
-          ))}
-        </div>
-      </section>
 
       {/* PANORAMA FISCAL — União, estados, DF, municípios (SICONFI) */}
       <section style={{ padding: '16px 24px' }}>
