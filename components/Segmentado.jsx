@@ -11,12 +11,13 @@ export default function Segmentado({ itens, aria, className = '' }) {
       {itens.map((i) => {
         const props = { className: `seg-op${i.ativo ? ' seg-ativa' : ''}`, 'aria-current': i.href && i.ativo ? 'page' : undefined, 'aria-pressed': !i.href ? !!i.ativo : undefined };
         return i.href
-          ? <Link key={i.rotulo} href={i.href} {...props} scroll={false}>{i.rotulo}</Link>
-          : <button key={i.rotulo} type="button" onClick={i.aoClicar} {...props}>{i.rotulo}</button>;
+          ? <Link key={i.chave || i.rotulo} href={i.href} {...props} scroll={false}>{i.cor && <i className="seg-ponto" style={{ background: i.cor }} />}{i.rotulo}</Link>
+            : <button key={i.chave || i.rotulo} type="button" onClick={i.aoClicar} {...props}>{i.cor && <i className="seg-ponto" style={{ background: i.cor }} />}{i.rotulo}</button>;
       })}
       <style jsx global>{`
         .segmentado { display: inline-flex; flex-wrap: wrap; gap: 2px; padding: 4px; background: ${t.cor.papelQuente2}; border-radius: ${t.raio.pill}; max-width: 100%; }
         .seg-op { display: inline-block; padding: 8px 18px; border: none; border-radius: ${t.raio.pill}; background: transparent; color: ${t.cor.tinta}; font: inherit; font-weight: 700; font-size: 0.92rem; line-height: 1.2; white-space: nowrap; cursor: pointer; text-decoration: none; transition: background 0.18s ease, box-shadow 0.18s ease; }
+        .seg-ponto { display: inline-block; width: 10px; height: 10px; margin-right: 8px; border-radius: 50%; box-shadow: 0 0 0 2px rgba(255,255,255,0.9); vertical-align: -1px; }
         .seg-op:hover { background: rgba(255,255,255,0.7); }
         .seg-op:focus-visible { outline: none; box-shadow: ${t.sombra.anelFoco}; }
         .seg-ativa, .seg-ativa:hover { background: ${t.cor.verde}; color: ${t.cor.ouro}; box-shadow: 0 2px 6px rgba(36,30,82,0.35); }
