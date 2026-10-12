@@ -7,7 +7,7 @@ import { humanizarVotacao, explicarTipo, papelVotacao, situacaoCidada } from '..
 import Termo from '../components/Termo';
 import CampoSelect from '../components/CampoSelect';
 import BuscaMunicipio from '../components/BuscaMunicipio';
-import { Lupa, Pino } from '../components/icones';
+import { Lupa, Pino, Seta } from '../components/icones';
 import { NOMES_UF } from '../src/lib/cotas';
 import { t } from '../src/estilo/tokens';
 import { hrefPerfil } from '../src/lib/casa';
@@ -161,7 +161,7 @@ export default function Home({ votacoes, parlamentares = [], uniao = null, estad
                   <p style={{ margin: '0 0 2px', fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.2rem', color: t.cor.tinta }}>{c.titulo}</p>
                   <p style={{ margin: 0, color: t.cor.cinza, fontSize: '0.84rem' }}>{c.desc}</p>
                 </div>
-                <span aria-hidden style={{ fontSize: '1.25rem', color: t.cor.ouroTexto, fontWeight: 800, flexShrink: 0 }}>→</span>
+                <Seta direcao="direita" size={22} />
               </Link>
             ))}
           </aside>
@@ -177,7 +177,7 @@ export default function Home({ votacoes, parlamentares = [], uniao = null, estad
         <section style={{ padding: '8px 24px 16px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '12px', flexWrap: 'wrap' }}>
             <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.7rem', margin: '0 0 4px' }}>Candidatos 2026</h2>
-            <Link href="/candidatos-2026" style={{ fontSize: '0.85rem', fontWeight: 700, color: t.cor.ouroTexto, textDecoration: 'none' }}>Ver todos os cargos →</Link>
+            <Link href="/candidatos-2026" style={{ fontSize: '0.85rem', fontWeight: 700, color: t.cor.ouroTexto, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>Ver todos os cargos <Seta direcao="direita" size={14} /></Link>
           </div>
           <p style={{ color: t.cor.cinza, fontSize: '0.92rem', margin: '0 0 16px' }}>Abaixo, quem disputa a Presidência. Na página completa estão também governador, senador, deputado federal e deputado estadual de cada estado, com o partido e a situação da candidatura, direto da fonte oficial (TSE) e sem opinião.</p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(220px, 100%), 1fr))', gap: '12px' }}>
@@ -211,7 +211,7 @@ export default function Home({ votacoes, parlamentares = [], uniao = null, estad
           <Link href="/ente/1" style={{ textDecoration: 'none', color: '#fff', display: 'block', background: t.cor.verde, borderRadius: t.raio.lg, padding: 'clamp(20px,3vw,32px)', marginBottom: '14px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '10px', flexWrap: 'wrap', marginBottom: '16px' }}>
               <span style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.4rem' }}>União · Governo Federal</span>
-              <span style={{ color: t.cor.ouro, fontWeight: 700, fontSize: '0.85rem' }}>ver detalhe →</span>
+              <span style={{ color: t.cor.ouro, fontWeight: 700, fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>ver detalhe <Seta direcao="direita" size={14} /></span>
             </div>
             <div style={{ display: 'flex', gap: '24px 44px', flexWrap: 'wrap' }}>
               <NumHero rotulo="Arrecadou" valor={brlC(uniao.resumo.receita_total)} />
@@ -232,7 +232,7 @@ export default function Home({ votacoes, parlamentares = [], uniao = null, estad
         </div>
 
         <Link href="/gastos-publicos" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 24px', fontWeight: 700, fontSize: '0.95rem', borderRadius: t.raio.pill, background: t.cor.verde, color: t.cor.ouro, textDecoration: 'none', boxShadow: t.sombra.botao }}>
-          Explorar gastos públicos →
+          Explorar gastos públicos <Seta direcao="direita" size={16} />
         </Link>
       </section>
 
@@ -240,7 +240,7 @@ export default function Home({ votacoes, parlamentares = [], uniao = null, estad
       <section style={{ padding: '16px 24px 24px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '12px', flexWrap: 'wrap' }}>
           <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.7rem', margin: '0 0 4px' }}>O que os deputados decidiram</h2>
-          <Link href="/votacoes" style={{ fontSize: '0.85rem', fontWeight: 700, color: t.cor.ouroTexto, textDecoration: 'none' }}>Ver todas as votações →</Link>
+          <Link href="/votacoes" style={{ fontSize: '0.85rem', fontWeight: 700, color: t.cor.ouroTexto, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>Ver todas as votações <Seta direcao="direita" size={14} /></Link>
         </div>
         <p style={{ color: t.cor.cinza, fontSize: '0.92rem', margin: '0 0 18px' }}>Votações recentes no plenário da Câmara: o assunto, quem propôs e o que foi decidido. O título de cada card é um resumo em linguagem comum, escrito por inteligência artificial a partir da ementa oficial, que está na íntegra na página da votação. Fonte: Câmara dos Deputados.</p>
         {votacoes && votacoes.length > 0 ? (
@@ -280,7 +280,7 @@ export default function Home({ votacoes, parlamentares = [], uniao = null, estad
                           <strong style={{ color: t.cor.sim }}>{h.sim}</strong> a favor · <strong style={{ color: t.cor.nao }}>{h.nao}</strong> contra{h.abs != null ? <> · <Termo>{h.abs} abstenções</Termo></> : null}
                         </span>
                       ) : <span />}
-                      <span style={{ fontSize: '0.8rem', fontWeight: 700, color: t.cor.ouroTexto }}>ver quem votou →</span>
+                      <span style={{ fontSize: '0.8rem', fontWeight: 700, color: t.cor.ouroTexto, display: 'inline-flex', alignItems: 'center', gap: '5px' }}>ver quem votou <Seta direcao="direita" size={13} /></span>
                     </div>
                   </div>
                 </Link>

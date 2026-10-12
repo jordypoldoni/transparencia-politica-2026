@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { t } from '../src/estilo/tokens';
 import Avatar from './Avatar';
+import { Seta } from './icones';
 
 // RESUMO DAS ELEIÇÕES NA HOME (12/10/2026, pedido do Jordy): depois do 1º turno, a home mostra o resultado em vez da
 // lista de candidatos. Fase pelo que o TSE marca no arquivo: quem tem situação "2º turno" são os finalistas; sem essa
@@ -69,7 +70,7 @@ export default function ResumoEleicoesHome({ chapas = [], children }) {
     <section style={{ padding: '8px 24px 16px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '12px', flexWrap: 'wrap' }}>
         <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.7rem', margin: '0 0 4px' }}>Eleições 2026</h2>
-        <Link href="/candidatos-2026?visao=apuracao" style={{ fontSize: '0.85rem', fontWeight: 700, color: t.cor.ouroTexto, textDecoration: 'none' }}>Ver apuração completa →</Link>
+        <Link href="/candidatos-2026?visao=apuracao" style={{ fontSize: '0.85rem', fontWeight: 700, color: t.cor.ouroTexto, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>Ver apuração completa <Seta direcao="direita" size={14} /></Link>
       </div>
       <p style={{ color: t.cor.cinza, fontSize: '0.92rem', margin: '0 0 16px' }}>{linha}</p>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(260px, 100%), 1fr))', gap: 12, alignItems: 'stretch' }}>
@@ -86,7 +87,7 @@ export default function ResumoEleicoesHome({ chapas = [], children }) {
         </div>
       </div>
       <p style={{ margin: '12px 0 0', fontSize: '.86rem' }}>
-        <Link href="/candidatos-2026" style={{ color: t.cor.ouroTexto, fontWeight: 700, textDecoration: 'none' }}>Ver todos os candidatos →</Link>
+        <Link href="/candidatos-2026" style={{ color: t.cor.ouroTexto, fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>Ver todos os candidatos <Seta direcao="direita" size={14} /></Link>
       </p>
     </section>
   );
