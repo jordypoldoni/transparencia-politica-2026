@@ -48,6 +48,20 @@ export function urlDoResultado(cargo, uf, env = process.env, turnoPedido = 1) {
   return { cfg, turno, url: `${base}/ele2026/${ele}/dados/${pasta}/${pasta}-c${cd}-e${ele.padStart(6, '0')}-u.json` };
 }
 
+// Presidente POR ESTADO (12/10/2026, mapa do Brasil): o TSE publica o cargo de presidente também em um arquivo por UF,
+// no mesmo formato do nacional (ex.: .../6257/dados/sp/sp-c0001-e006257-u.json). Devolve { url, turno } ou null se a UF
+// ou o turno não existe (aí NÃO se fala com o TSE).
+export function urlPresidentePorUf(uf, env = process.env, turnoPedido = 1) {
+  const turno = turnoValido(turnoPedido);
+  if (!turno) return null;
+  const sigla = String(uf || '').toUpperCase();
+  if (!UFS.includes(sigla)) return null;
+  const base = (env.TSE_RESULTADOS_BASE || BASE_PADRAO).replace(/\/+$/, '');
+  const ele = eleicaoDoTurno(turno, true, env);
+  const pasta = sigla.toLowerCase();
+  return { turno, url: `${base}/ele2026/${ele}/dados/${pasta}/${pasta}-c${CARGOS.presidente.cd}-e${ele.padStart(6, '0')}-u.json` };
+}
+
 const num = (x) => {
   const n = Number(String(x ?? '').replace(/\./g, '').replace(',', '.'));
   return Number.isFinite(n) ? n : 0;
