@@ -330,7 +330,7 @@ export default function MapaBrasilApuracao({ turno = 1 }) {
   const bannerFoco = escala && candFoco ? (
     <div className="mapa-foco-banner" role="status">
       <p><b>Mapa colorido por {escala.nome}</b></p>
-      <p>A lista ao lado do mapa mostra a % de votos válidos que {escala.nome} teve em cada estado e, acima do mapa, o total de cada região (soma dos votos dos estados, não média){regiao ? `. As cores comparam só os estados da região ${REGIOES[regiao].nome}` : ''}. Quanto mais escuro, maior a %. Não é o total do país.</p>
+      <p>Quanto mais escuro, maior a % dele no estado. Acima do mapa, o total de cada região.{regiao ? ` Cores comparadas só dentro de ${REGIOES[regiao].nome}.` : ''}</p>
       <span className="mapa-gradiente" style={{ background: `linear-gradient(to right, ${FOCO_CLARO}, ${FOCO_ESCURO})` }} />
       <span className="mapa-extremos"><b>{fmtPct(escala.min)}%</b><b>{fmtPct(escala.max)}%</b></span>
       {regiao && candFoco.votosPais > 0 && (
@@ -443,10 +443,6 @@ export default function MapaBrasilApuracao({ turno = 1 }) {
         <aside className="mapa-lado mapa-painel" aria-live="polite" aria-label="Resultado do estado fixado">
           {agregado ? (
             <>
-              <div className="mapa-painel-topo">
-                <span className="mapa-fixado">Região selecionada</span>
-                <button type="button" className="mapa-pilula" onClick={limparTudo}>Limpar</button>
-              </div>
               {bannerFoco}
               {agregado.e ? (
                 <Quadro key={`reg-${regiao}`} agregado={agregado} dados={dados} foco={foco} aoFocar={setFoco} interativo />
@@ -460,10 +456,6 @@ export default function MapaBrasilApuracao({ turno = 1 }) {
             </>
           ) : fixo ? (
             <>
-              <div className="mapa-painel-topo">
-                <span className="mapa-fixado">Estado fixado</span>
-                <button type="button" className="mapa-pilula" onClick={limparTudo}>Limpar</button>
-              </div>
               {bannerFoco}
               <Quadro key={fixo} uf={fixo} dados={dados} foco={foco} aoFocar={setFoco} interativo />
               <p className="mapa-dica-painel">Em “Ver no mapa”, ao lado de um candidato, o mapa é colorido com a votação dele em cada estado.</p>
@@ -541,14 +533,14 @@ function Estilos() {
       .mapa-lista-curta { margin-top: 8px; }
       .mapa-lista-curta .mapa-nome b { white-space: normal; overflow: visible; text-overflow: clip; }
       .mapa-foco-linha { margin: 6px 0 0; font-size: .8rem; color: ${t.cor.tinta}; }
-      .mapa-quadro-cab { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
-      .mapa-regiao { display: inline-flex; align-items: center; gap: 7px; font-size: .78rem; color: ${t.cor.tinta}; background: ${t.cor.papelQuente}; padding: 3px 10px; border-radius: ${t.raio.pill}; white-space: nowrap; }
+      .mapa-quadro-cab { display: flex; align-items: baseline; justify-content: flex-start; gap: 12px; flex-wrap: wrap; }
+      .mapa-regiao { display: inline-flex; align-items: center; gap: 7px; font-size: .8rem; color: ${t.cor.cinza}; white-space: nowrap; }
       .mapa-sub { margin: 4px 0 10px; font-size: .8rem; color: ${t.cor.cinza}; }
       .mapa-sub b { color: ${t.cor.tinta}; }
       .mapa-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; }
       .mapa-lista li { border-radius: ${t.raio.sm}; transition: background .2s; }
       .mapa-em-foco { background: ${t.cor.papelQuente2}; box-shadow: ${t.sombra.clicavel}; }
-      .mapa-linha { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; grid-template-rows: auto auto; column-gap: 8px; row-gap: 2px; align-items: center; padding: 3px 8px; width: 100%; text-align: left; font: inherit; color: ${t.cor.tinta}; background: transparent; border: 0; border-radius: ${t.raio.sm}; }
+      .mapa-linha { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; grid-template-rows: auto auto; column-gap: 6px; row-gap: 2px; align-items: center; padding: 3px 8px; width: 100%; text-align: left; font: inherit; color: ${t.cor.tinta}; background: transparent; border: 0; border-radius: ${t.raio.sm}; }
       .mapa-ver { position: absolute; right: 0; top: 50%; transform: translateY(-50%); flex: none; white-space: nowrap; line-height: 1.3; margin-left: auto; padding: 2px 10px; font: 600 .72rem ${t.fonte.corpo}; color: ${t.cor.tinta}; background: #fff; border: 0; border-radius: ${t.raio.pill}; cursor: pointer; box-shadow: ${t.sombra.clicavel}; opacity: 0; transition: opacity .15s, box-shadow .15s; }
       .mapa-lista li:hover .mapa-ver, .mapa-ver:focus-visible, .mapa-ver-on { opacity: 1; }
       .mapa-ver:hover { box-shadow: ${t.sombra.hover}; }
@@ -585,7 +577,7 @@ function Estilos() {
       .mapa-nota { margin: 14px 0 0; font-size: .78rem; color: ${t.cor.cinza}; line-height: 1.5; }
       .mapa-nota a { color: ${t.cor.ouroTexto}; font-weight: 700; }
 
-      .mapa-painel { position: sticky; top: 16px; min-height: 260px; max-height: calc(100vh - 72px); padding-left: 24px; box-shadow: inset 1px 0 0 ${t.cor.papelQuente2}; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+      .mapa-painel { position: sticky; top: 16px; min-height: 260px; max-height: calc(100vh - 72px); padding-left: 24px; padding-right: 14px; scrollbar-gutter: stable; box-shadow: inset 1px 0 0 ${t.cor.papelQuente2}; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
       .mapa-painel-topo { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
       .mapa-fixado { font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: ${t.cor.cinza}; font-weight: 700; }
       .mapa-dica-painel { margin: 12px 0 0; font-size: .78rem; color: ${t.cor.cinza}; }
