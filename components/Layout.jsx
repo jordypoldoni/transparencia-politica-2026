@@ -62,6 +62,7 @@ const navItens = [
     filhos: [
       { href: '/votacoes', rotulo: 'Votações', nota: 'Câmara, Senado e Assembleia do RS' },
       { href: '/indicacoes', rotulo: 'Indicações', nota: 'nomes do presidente no Senado' },
+      { href: '/cpis', rotulo: 'CPIs', nota: 'investigações do Congresso' },
     ],
   },
   { href: '/gastos-publicos', rotulo: 'Gastos públicos' },
