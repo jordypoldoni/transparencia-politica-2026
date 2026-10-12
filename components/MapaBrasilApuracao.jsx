@@ -311,17 +311,22 @@ export default function MapaBrasilApuracao({ turno = 1 }) {
     <div className="mapa-raiz">
       <div className="mapa-grade">
         <section className="mapa-cartao" aria-label="Mapa do Brasil: presidente por estado">
-          <div className="mapa-busca">
-            <CampoBusca valor={busca} aoMudar={setBusca} placeholder="Buscar estado (nome ou sigla)" aoLabel="Buscar estado" />
-            {sugestoes.length > 0 && (
-              <ul className="mapa-sugestoes" role="listbox" aria-label="Estados encontrados">
-                {sugestoes.map((e) => (
-                  <li key={e.uf} role="option" aria-selected="false">
-                    <button type="button" onClick={() => irPara(e.uf)}><i style={{ background: REGIOES[e.regiao].cor }} />{NOMES_UF[e.uf]} <small>{e.uf}</small></button>
-                  </li>
-                ))}
-              </ul>
-            )}
+          <div className="mapa-controles">
+            <div className="mapa-busca">
+              <CampoBusca valor={busca} aoMudar={setBusca} placeholder="Buscar estado" aoLabel="Buscar estado" />
+              {sugestoes.length > 0 && (
+                <ul className="mapa-sugestoes" role="listbox" aria-label="Estados encontrados">
+                  {sugestoes.map((e) => (
+                    <li key={e.uf} role="option" aria-selected="false">
+                      <button type="button" onClick={() => irPara(e.uf)}><i style={{ background: REGIOES[e.regiao].cor }} />{NOMES_UF[e.uf]} <small>{e.uf}</small></button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            {/* Filtro por região: escolha excludente, então segmented control. Clicar de novo desmarca. */}
+          <Segmentado className="seg-compacto" aria="Somar os estados de uma região" itens={ORDEM_REGIOES.map((k) => ({ chave: k, rotulo: REGIOES[k].nome, cor: REGIOES[k].cor, ativo: regiao === k, aoClicar: () => escolherRegiao(k) }))} />
           </div>
 
           <div className="mapa-caixa" ref={caixaRef} onMouseMove={aoMover} onMouseLeave={() => setHover(null)}>
@@ -380,15 +385,9 @@ export default function MapaBrasilApuracao({ turno = 1 }) {
               <button type="button" className="mapa-pilula" onClick={() => setFoco(null)}>Voltar às cores das regiões</button>
             </div>
           )}
-          {/* Filtro por região: escolha excludente, então segmented control. Clicar de novo desmarca. */}
-          <div className="mapa-regioes">
-            <Segmentado aria="Somar os estados de uma região" itens={ORDEM_REGIOES.map((k) => ({ chave: k, rotulo: REGIOES[k].nome, cor: REGIOES[k].cor, ativo: regiao === k, aoClicar: () => escolherRegiao(k) }))} />
-            <span className="mapa-dica-legenda">Clique em uma região para ver o total dela. A cor marca só a região, não o resultado.</span>
-          </div>
-
           <p className="mapa-nota">
             {exterior != null && <>Os votos de brasileiros no exterior ({fmt(exterior)} válidos) não aparecem no mapa, mas estão no total do Brasil. </>}
-            Fonte: <a href="https://resultados.tse.jus.br/" target="_blank" rel="noopener noreferrer">TSE</a>, arquivos por estado{datas.length === 1 ? ` gerados em ${datas[0]}` : ''}. Malha dos estados: IBGE.
+            A cor do mapa marca só a região, não o resultado. Clique em uma região para ver o total dela. Fonte: <a href="https://resultados.tse.jus.br/" target="_blank" rel="noopener noreferrer">TSE</a>, arquivos por estado{datas.length === 1 ? ` gerados em ${datas[0]}` : ''}. Malha dos estados: IBGE.
           </p>
         </section>
 
@@ -445,7 +444,10 @@ function Estilos() {
       .mapa-grade { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(300px, 1fr); gap: 20px; align-items: start; }
       .mapa-cartao { background: ${t.cor.papelCartao}; border-radius: ${t.raio.lg}; box-shadow: ${t.sombra.sutil}; padding: 20px; position: relative; min-width: 0; }
       .mapa-aviso { color: ${t.cor.tinta}; display: flex; align-items: center; gap: 12px; line-height: 1.5; }
-      .mapa-busca { position: relative; max-width: 360px; margin-bottom: 8px; z-index: 5; }
+      .mapa-controles { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 14px; margin-bottom: 8px; position: relative; z-index: 5; }
+      .mapa-busca { position: relative; flex: 1 1 120px; max-width: 190px; min-width: 120px; z-index: 5; }
+      .seg-compacto .seg-op { padding: 6px 9px; font-size: .84rem; }
+      .seg-compacto .seg-ponto { margin-right: 6px; }
       .mapa-sugestoes { position: absolute; left: 0; right: 0; top: calc(100% + 6px); margin: 0; padding: 6px; list-style: none; background: #fff; border-radius: ${t.raio.md}; box-shadow: ${t.sombra.media}; animation: mapa-sobe .18s ease both; }
       .mapa-sugestoes button { width: 100%; display: flex; align-items: center; gap: 10px; text-align: left; padding: 9px 12px; background: transparent; border: 0; border-radius: ${t.raio.sm}; font: inherit; color: ${t.cor.tinta}; cursor: pointer; transition: background .15s; }
       .mapa-sugestoes button:hover, .mapa-sugestoes button:focus-visible { background: ${t.cor.papelQuente2}; }
@@ -453,7 +455,7 @@ function Estilos() {
       .mapa-sugestoes small { color: ${t.cor.cinza}; margin-left: auto; }
 
       .mapa-caixa { position: relative; }
-      .mapa-svg { width: 100%; height: auto; max-height: 700px; display: block; overflow: visible; }
+      .mapa-svg { width: 100%; height: auto; max-height: max(380px, calc(100vh - 230px)); display: block; overflow: visible; margin: 0 auto; }
       .mapa-uf { stroke: #fff; stroke-width: 1; stroke-linejoin: round; cursor: pointer; outline: none; opacity: 0; animation: mapa-entra .55s cubic-bezier(.2,.8,.2,1) both; animation-delay: calc(var(--i) * 26ms); transition: fill .45s ease, fill-opacity .3s ease; }
       .mapa-uf:focus-visible { stroke: ${t.cor.tinta}; stroke-width: 2.4; }
       .mapa-realce { stroke: #fff; stroke-width: 1.4; stroke-linejoin: round; transform: scale(1.035) translateY(-2px); filter: drop-shadow(0 6px 7px rgba(20,16,10,.38)); animation: mapa-sobe-estado .22s ease both; }
@@ -475,7 +477,7 @@ function Estilos() {
       .mapa-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; }
       .mapa-lista li { border-radius: ${t.raio.sm}; transition: background .2s; }
       .mapa-em-foco { background: ${t.cor.papelQuente2}; box-shadow: ${t.sombra.clicavel}; }
-      .mapa-linha { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; grid-template-rows: auto auto; column-gap: 8px; row-gap: 3px; align-items: center; padding: 4px 8px; width: 100%; text-align: left; font: inherit; color: ${t.cor.tinta}; background: transparent; border: 0; border-radius: ${t.raio.sm}; }
+      .mapa-linha { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; grid-template-rows: auto auto; column-gap: 8px; row-gap: 2px; align-items: center; padding: 3px 8px; width: 100%; text-align: left; font: inherit; color: ${t.cor.tinta}; background: transparent; border: 0; border-radius: ${t.raio.sm}; }
       .mapa-linha-btn { cursor: pointer; transition: background .15s, box-shadow .15s; }
       .mapa-linha-btn:hover { background: ${t.cor.papelQuente}; box-shadow: ${t.sombra.clicavel}; }
       .mapa-pos { font-size: .78rem; color: ${t.cor.cinza}; }
@@ -504,7 +506,7 @@ function Estilos() {
       .mapa-nota { margin: 14px 0 0; font-size: .78rem; color: ${t.cor.cinza}; line-height: 1.5; }
       .mapa-nota a { color: ${t.cor.ouroTexto}; font-weight: 700; }
 
-      .mapa-painel { position: sticky; top: 16px; min-height: 260px; }
+      .mapa-painel { position: sticky; top: 16px; min-height: 260px; max-height: calc(100vh - 32px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
       .mapa-painel-topo { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
       .mapa-fixado { font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: ${t.cor.cinza}; font-weight: 700; }
       .mapa-dica-painel { margin: 12px 0 0; font-size: .78rem; color: ${t.cor.cinza}; }
