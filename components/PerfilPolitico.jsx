@@ -197,6 +197,25 @@ export default function PerfilPolitico({ dados }) {
   // ATENCAO A ORDEM: estes estados precisam vir ANTES de `proposicoesExibidas`, que os le.
   // Declarar depois causa TDZ ("Cannot access before initialization") no build de producao -
   // a mesma armadilha ja documentada mais abaixo para `dadosAno`/`secoes`.
+  // CPIs e CPMIs (ideia I1, 12/10/2026). So senador: a API da Camara nao expoe esse dado.
+  // Busca na hora, e so quando o leitor abre a secao. `ehSenadoCpi` vem direto de casaDoPerfil
+  // porque `ehSenado` so e declarado mais abaixo (usar antes causa TDZ no build).
+  const ehSenadoCpi = casaDoPerfil(perfil).ehSenado;
+  const [cpis, setCpis] = useState(null);
+  const [erroCpis, setErroCpis] = useState(null);
+  useEffect(() => {
+    if (!ehSenadoCpi || !secoesAbertas.cpi || cpis || erroCpis) return;
+    let cancelado = false;
+    fetch(`/api/comissoes-inquerito?id=${perfil.id}`)
+      .then((r) => r.json().then((j) => ({ r, j })))
+      .then(({ r, j }) => {
+        if (cancelado) return;
+        if (!r.ok || j.erro) throw new Error(j.erro || 'falha');
+        setCpis(Array.isArray(j.comissoes) ? j.comissoes : []);
+      })
+      .catch(() => { if (!cancelado) setErroCpis('Não foi possível carregar agora. A fonte oficial não respondeu.'); });
+    return () => { cancelado = true; };
+  }, [ehSenadoCpi, secoesAbertas.cpi, cpis, erroCpis, perfil.id]);
   const PROPOSICOES_INICIAIS = 20;
   const [verTodasProposicoes, setVerTodasProposicoes] = useState(false);
   // Lista completa buscada na hora na fonte oficial (federais e senadores). Fica null ate o
@@ -285,6 +304,7 @@ export default function PerfilPolitico({ dados }) {
     { id: 'atuacao', rotulo: 'Atuação' },
     temTrajetoria && { id: 'trajetoria', rotulo: 'Trajetória' },
     { id: 'proposicoes', rotulo: 'Proposições' },
+    ehSenadoCpi && { id: 'cpi', rotulo: 'CPIs' },
     { id: 'votos', rotulo: 'Votos' },
   ].filter(Boolean);
   const ancora = { scrollMarginTop: '150px' }; // cabeçalho (74) + respiro (12) + barra (~48) + folga. Era 112, calculado com a barra em 56.
@@ -907,6 +927,45 @@ export default function PerfilPolitico({ dados }) {
             </p>
           )}
         </Secao>
+
+        {ehSenadoCpi && (
+          <Secao id="cpi" titulo="CPIs e CPMIs" aberta={secoesAbertas.cpi} onToggle={() => toggleSecao('cpi')}>
+            <p style={{ margin: '0 0 14px', fontSize: '0.86rem', lineHeight: 1.5, color: t.cor.cinza }}>
+              CPI e CPMI são comissões formadas por parlamentares para investigar um fato. <strong style={{ color: t.cor.tinta }}>Participar de uma não significa ser alvo da investigação.</strong>
+            </p>
+            {erroCpis ? (
+              <p style={{ margin: 0, fontSize: '0.9rem', color: t.cor.cinza }}>{erroCpis}</p>
+            ) : !cpis ? (
+              <p style={{ margin: 0, fontSize: '0.9rem', color: t.cor.cinza }}>Buscando na fonte oficial…</p>
+            ) : cpis.length === 0 ? (
+              <p style={{ margin: 0, fontSize: '0.9rem', color: t.cor.cinza }}>
+                O cadastro de comissões do Senado não registra participação de {perfil.nome_urna} em CPI ou CPMI.
+              </p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {cpis.map((c) => (
+                  <div key={c.codigo} style={{ background: t.cor.papelQuente, borderRadius: t.raio.md, padding: '12px 14px' }}>
+                    <span style={{ display: 'inline-block', fontSize: '0.72rem', fontWeight: 700, color: t.cor.ouroTexto, marginBottom: '3px' }}>
+                      {c.casa === 'CN' ? 'Comissão mista (Câmara e Senado)' : 'Comissão do Senado'}
+                    </span>
+                    <p style={{ margin: 0, fontSize: '0.92rem', fontWeight: 600, lineHeight: 1.4, color: t.cor.tinta }}>{c.nome || c.sigla}</p>
+                    <ul style={{ margin: '6px 0 0', padding: 0, listStyle: 'none', fontSize: '0.84rem', lineHeight: 1.5, color: t.cor.cinza }}>
+                      {c.periodos.map((x, i) => (
+                        <li key={i}>
+                          {x.papel || 'Membro'}
+                          {x.inicio ? (x.fim ? `, de ${dataBr(x.inicio)} a ${dataBr(x.fim)}` : `, desde ${dataBr(x.inicio)} (sem data de fim registrada)`) : ''}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            )}
+            <p style={{ margin: '14px 0 0', fontSize: '0.78rem', color: t.cor.cinza }}>
+              Fonte: Senado Federal, comissões de que o senador participou. O cadastro informa titular ou suplente, mas não informa presidente ou relator.
+            </p>
+          </Secao>
+        )}
 
         <Secao id="votos" titulo="Como ele votou" aberta={secoesAbertas.votos} onToggle={() => toggleSecao('votos')}>
 
