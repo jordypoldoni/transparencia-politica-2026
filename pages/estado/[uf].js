@@ -106,7 +106,7 @@ export default function Estado({ uf, nome, deputados, canonical }) {
         {blocos.length === 0 && <p style={{ color: t.cor.cinza }}>Ainda não há dados de gastos para {nome}.</p>}
 
         <p style={{ marginTop: '32px' }}>
-          <Link href="/deputados" style={{ color: t.cor.verde, fontWeight: 700, textDecoration: 'none' }}>← ver parlamentares de todos os estados</Link>
+          <Link href="/deputados" style={{ color: t.cor.verde, fontWeight: 700, textDecoration: 'none' }}><Seta direcao="esquerda" size={14} emTexto />ver parlamentares de todos os estados</Link>
         </p>
       </div>
     </>

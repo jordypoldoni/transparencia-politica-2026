@@ -126,7 +126,7 @@ export default function VotacoesDaCasa({ casa, votacoes, temas = [], temaInicial
 
       <div className="pagina">
         <Link href="/votacoes" style={{ fontSize: '0.82rem', fontWeight: 700, color: t.cor.ouroTexto, textDecoration: 'none' }}>
-          ← todas as casas
+          <Seta direcao="esquerda" size={14} emTexto />todas as casas
         </Link>
 
         <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.5rem,4vw,2.1rem)', margin: '8px 0 6px' }}>

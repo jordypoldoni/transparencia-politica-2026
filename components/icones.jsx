@@ -20,15 +20,15 @@ export function Pino({ size = 15 }) {
 // SETA DE ABRIR/FECHAR (12/10/2026, pedido do Jordy): chevron fino de pontas arredondadas,
 // dourado padrao do site (t.cor.ouro), com sombra pequena logo abaixo. Substitui os triangulos
 // de texto (▲ ▼ ▾) que existiam em todo o site.
-// `direcao="direita"` e a mesma seta virada para a direita, para links ("Ver todos →").
+// `direcao="direita"` e `direcao="esquerda"` sao a mesma seta virada para o lado (links de "ver todos" e botao Voltar).
 // `emTexto` e para seta colada no fim de uma frase (afasta 5px e alinha ao meio da linha).
 // A sombra fica num invólucro que NAO gira: se ficasse no svg, ao abrir (giro de 180 graus) a
 // sombra passaria para cima da seta.
 export function Seta({ aberta = false, size = 16, cor, direcao = 'baixo', emTexto = false }) {
   return (
-    <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, lineHeight: 0, ...(emTexto ? { marginLeft: '5px', verticalAlign: 'middle' } : null), filter: 'drop-shadow(0 1.5px 1px rgba(26, 22, 70, 0.30))' }}>
+    <span aria-hidden="true" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, lineHeight: 0, ...(emTexto ? { [direcao === 'esquerda' ? 'marginRight' : 'marginLeft']: '5px', verticalAlign: 'middle' } : null), filter: 'drop-shadow(0 1.5px 1px rgba(26, 22, 70, 0.30))' }}>
       <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={cor || t.cor.ouro} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
-        style={{ transition: 'transform .18s ease', transform: direcao === 'direita' ? 'rotate(-90deg)' : aberta ? 'rotate(180deg)' : 'none' }}>
+        style={{ transition: 'transform .18s ease', transform: direcao === 'direita' ? 'rotate(-90deg)' : direcao === 'esquerda' ? 'rotate(90deg)' : aberta ? 'rotate(180deg)' : 'none' }}>
         <polyline points="6 9 12 15 18 9" />
       </svg>
     </span>
