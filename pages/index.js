@@ -12,6 +12,7 @@ import { NOMES_UF } from '../src/lib/cotas';
 import { t } from '../src/estilo/tokens';
 import { hrefPerfil } from '../src/lib/casa';
 import Avatar from '../components/Avatar';
+import ResumoEleicoesHome from '../components/ResumoEleicoesHome';
 import { dataBr } from '../src/lib/datas';
 
 const DESCRICAO_HOME = 'Quanto cada deputado e senador gastou da verba pública, como votou e quem são os candidatos de 2026 no seu estado. Dados oficiais da Câmara, do Senado, das Assembleias e do TSE, sempre com link para a fonte.';
@@ -141,10 +142,12 @@ export default function Home({ votacoes, parlamentares = [], uniao = null, estad
         </div>
       </section>
 
-      {/* CANDIDATOS 2026 — destaque de temporada (eleição em outubro). Mostra Presidenciáveis
+      {/* ELEIÇÕES 2026 (12/10/2026): depois do 1º turno a home mostra o resultado (ResumoEleicoesHome); a lista de candidatos
+          abaixo é o que aparece se o TSE ainda não publicou o resultado. Antes: CANDIDATOS 2026 — destaque de temporada (eleição em outubro). Mostra Presidenciáveis
           aqui na home (teaser); a página unificada /candidatos-2026 traz os cinco cargos (texto e link
           atualizados em 28/09/2026: ainda falavam só em Presidência e Câmara). */}
       {chapas.length > 0 && (
+        <ResumoEleicoesHome chapas={chapas}>
         <section style={{ padding: '8px 24px 16px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '12px', flexWrap: 'wrap' }}>
             <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.7rem', margin: '0 0 4px' }}>Candidatos 2026</h2>
@@ -168,6 +171,7 @@ export default function Home({ votacoes, parlamentares = [], uniao = null, estad
             ))}
           </div>
         </section>
+        </ResumoEleicoesHome>
       )}
 
       {/* COMO FUNCIONA — logo no topo, para orientar */}
