@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { t } from '../src/estilo/tokens';
@@ -101,6 +101,7 @@ function wrapCanvas(ctx, text, x, y, maxW, lh) {
   return yy;
 }
 
+const SOMBRA_ATALHO = '0 1px 2px rgba(36,30,82,0.18), 0 2px 6px rgba(36,30,82,0.14)'; // atalhos do menu rápido, em repouso
 const ANCORA = { scrollMarginTop: '112px' }; // compensa header + barra fixa ao rolar até a âncora
 
 // Caixa de seção recolhível: cabeçalho sempre visível (clicável) + corpo que expande/recolhe.
@@ -168,7 +169,45 @@ export default function PerfilPolitico({ dados }) {
   const [alvoScroll, setAlvoScroll] = useState(null);
   const toggleSecao = (id) => setSecoesAbertas((s) => ({ ...s, [id]: !s[id] }));
   // Menu rápido: abre a seção e rola até ela (rola depois do render, com a seção já expandida).
-  const irParaSecao = (id) => { setSecoesAbertas((s) => ({ ...s, [id]: true })); setAlvoScroll(id); };
+  // SEÇÃO ATIVA NO MENU RÁPIDO (12/10/2026, pedido do Jordy): o atalho da seção em que a pessoa
+  // está fica azul com texto dourado. Muda ao clicar e acompanha a rolagem. Depois de um clique
+  // a rolagem suave passa por seções intermediárias; durante esse tempo o acompanhamento fica
+  // parado (`pausaSpy`), senão o destaque pularia de atalho em atalho até chegar.
+  const [secaoAtiva, setSecaoAtiva] = useState('resumo');
+  const idsSecoes = useRef([]);
+  const pausaSpy = useRef(0);
+  const irParaSecao = (id) => {
+    setSecaoAtiva(id);
+    pausaSpy.current = Date.now() + 1000;
+    setSecoesAbertas((s) => ({ ...s, [id]: true }));
+    setAlvoScroll(id);
+  };
+  useEffect(() => {
+    let quadro = null;
+    const atualizar = () => {
+      quadro = null;
+      if (Date.now() < pausaSpy.current) return;
+      const ids = idsSecoes.current;
+      if (!ids.length) return;
+      let ativo = ids[0];
+      for (const id of ids) {
+        const el = document.getElementById(id);
+        if (el && el.getBoundingClientRect().top <= 170) ativo = id;
+      }
+      // No fim da página a última seção nunca chega ao topo: vale a última.
+      if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4) ativo = ids[ids.length - 1];
+      setSecaoAtiva(ativo);
+    };
+    const aoRolar = () => { if (quadro == null) quadro = requestAnimationFrame(atualizar); };
+    window.addEventListener('scroll', aoRolar, { passive: true });
+    window.addEventListener('resize', aoRolar);
+    aoRolar();
+    return () => {
+      window.removeEventListener('scroll', aoRolar);
+      window.removeEventListener('resize', aoRolar);
+      if (quadro != null) cancelAnimationFrame(quadro);
+    };
+  }, []);
   useEffect(() => {
     if (!alvoScroll) return;
     const el = typeof document !== 'undefined' ? document.getElementById(alvoScroll) : null;
@@ -311,6 +350,7 @@ export default function PerfilPolitico({ dados }) {
     ehSenadoCpi && { id: 'cpi', rotulo: 'CPIs' },
     { id: 'votos', rotulo: 'Votos' },
   ].filter(Boolean);
+  idsSecoes.current = secoes.map((x) => x.id);
   const ancora = { scrollMarginTop: '150px' }; // cabeçalho (74) + respiro (12) + barra (~48) + folga. Era 112, calculado com a barra em 56.
 
   // A casa do parlamentar sai do fonte_api ('alesp' | 'alergs' | url da camara | url do senado).
@@ -443,7 +483,19 @@ export default function PerfilPolitico({ dados }) {
         <BotaoVoltar margem="0" style={{ flexShrink: 0 }} />
         <nav aria-label="Seções do perfil" style={{ flex: '0 1 auto', minWidth: 0, padding: '7px', display: 'flex', gap: '7px', overflowX: 'auto', background: t.cor.ouro, borderRadius: t.raio.pill, boxShadow: t.sombra.sutil }}>
           {secoes.map((s) => (
-            <button key={s.id} type="button" onClick={() => irParaSecao(s.id)} style={{ flexShrink: 0, fontSize: '0.82rem', fontWeight: 700, color: t.cor.tinta, cursor: 'pointer', border: 'none', padding: '7px 15px', borderRadius: t.raio.pill, background: '#FFFFFF', boxShadow: '0 1px 2px rgba(36,30,82,0.18), 0 2px 6px rgba(36,30,82,0.14)', fontFamily: t.fonte.corpo }}>{s.rotulo}</button>
+            <button key={s.id} type="button" onClick={() => irParaSecao(s.id)}
+              aria-current={secaoAtiva === s.id ? 'true' : undefined}
+              onMouseOver={(e) => { e.currentTarget.style.boxShadow = t.sombra.botaoHover; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+              onMouseOut={(e) => { e.currentTarget.style.boxShadow = secaoAtiva === s.id ? t.sombra.botao : SOMBRA_ATALHO; e.currentTarget.style.transform = 'none'; }}
+              style={{
+                flexShrink: 0, fontSize: '0.82rem', fontWeight: 700, cursor: 'pointer', border: 'none', padding: '7px 15px',
+                borderRadius: t.raio.pill, fontFamily: t.fonte.corpo,
+                // Ativo: o botão padrão do site (índigo com texto âmbar). Os demais: superfície branca.
+                background: secaoAtiva === s.id ? t.cor.verde : '#FFFFFF',
+                color: secaoAtiva === s.id ? t.cor.ouro : t.cor.tinta,
+                boxShadow: secaoAtiva === s.id ? t.sombra.botao : SOMBRA_ATALHO,
+                transition: 'box-shadow .15s ease, transform .15s ease, background .15s ease, color .15s ease',
+              }}>{s.rotulo}</button>
           ))}
         </nav>
       </div>
