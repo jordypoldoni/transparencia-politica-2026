@@ -257,6 +257,26 @@ function AlternarVisao({ visao, cargo, turno = 1 }) {
   );
 }
 
+// ABAS DO TOPO (12/10/2026): no computador, "Candidatos | Apuração" e "1º | 2º turno" dividem a mesma linha
+// (antes eram duas linhas). No celular tudo fica como era, uma abaixo da outra.
+function AbasTopo({ children }) {
+  return (
+    <div className="abas-topo">
+      {children}
+      <style jsx global>{`
+        .abas-topo { display: flex; flex-wrap: wrap; align-items: flex-start; column-gap: 12px; }
+        .abas-topo > div { margin-bottom: 14px !important; }
+        .abas-topo > div + div { padding-left: 12px; box-shadow: inset 1px 0 0 ${t.cor.papelQuente2}; }
+        @media (max-width: 640px) {
+          .abas-topo { display: block; }
+          .abas-topo > div { margin-bottom: 16px !important; }
+          .abas-topo > div + div { padding-left: 0; box-shadow: none; }
+        }
+      `}</style>
+    </div>
+  );
+}
+
 const CARGOS_APURACAO = [
   { valor: 'presidente', rotulo: 'Presidente' },
   { valor: 'governador', rotulo: 'Governador' },
@@ -294,8 +314,10 @@ function PaginaApuracao({ cargo, ufInicial, turno }) {
       <p style={{ color: t.cor.cinza, margin: '0 0 22px', maxWidth: '70ch', lineHeight: 1.5 }}>
         {turno === 2 ? 'O resultado oficial do 2º turno, em 25 de outubro, lido do TSE conforme as seções são apuradas.' : 'O resultado oficial das eleições de 4 de outubro, lido do TSE conforme as seções são apuradas.'} Só número e fonte, sem análise ou opinião.
       </p>
-      <AlternarVisao visao="apuracao" cargo={cargo} turno={turno} />
-      <SeletorTurno turno={turno} cargo={cargo} />
+      <AbasTopo>
+        <AlternarVisao visao="apuracao" cargo={cargo} turno={turno} />
+        <SeletorTurno turno={turno} cargo={cargo} />
+      </AbasTopo>
       <nav aria-label="Cargo" className="so-celular" style={{ marginBottom: '20px' }}>
         <EscolhaCompacta rotulo="Cargo" valor={cargo} opcoes={cargosDoTurno.map((c) => ({ ...c, href: hrefDe(c.valor) }))} />
       </nav>
@@ -345,8 +367,10 @@ function PaginaCandidatosSegundoTurno({ cargo, chapas, governadores, semCadastro
         Quem disputa o 2º turno, em 25 de outubro: a Presidência e os governos de AC, AM, DF, ES, RN e TO. Só aparecem os dois candidatos de cada disputa. Dados oficiais do{' '}
         <a href="https://www.tse.jus.br/" target="_blank" rel="noopener noreferrer" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>TSE</a>, sem análise ou opinião.
       </p>
-      <AlternarVisao visao="candidatos" cargo={cargo} turno={2} />
-      <SeletorTurno visao="candidatos" turno={2} cargo={cargo} />
+      <AbasTopo>
+        <AlternarVisao visao="candidatos" cargo={cargo} turno={2} />
+        <SeletorTurno visao="candidatos" turno={2} cargo={cargo} />
+      </AbasTopo>
       <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', flexWrap: 'wrap' }}>
         <Link href={href('presidente')} style={abaEstilo(cargo === 'presidente')}>Presidente (2)</Link>
         <Link href={href('governador')} style={abaEstilo(cargo === 'governador')}>Governador{erro ? '' : ` (${totalGov})`}</Link>
@@ -410,8 +434,10 @@ function PaginaCandidatos({ cargo, chapas, deputados, resumo, resumoSenado, resu
         <a href="https://www.tse.jus.br/" target="_blank" rel="noopener noreferrer" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>TSE</a>, sem análise ou opinião, tire suas próprias conclusões com base nos dados.
       </p>
 
-      <AlternarVisao visao="candidatos" cargo={cargo} />
-      <SeletorTurno visao="candidatos" turno={1} cargo={cargo} />
+      <AbasTopo>
+        <AlternarVisao visao="candidatos" cargo={cargo} />
+        <SeletorTurno visao="candidatos" turno={1} cargo={cargo} />
+      </AbasTopo>
 
       {/* Celular (27/09/2026): um campo de escolha no lugar das cinco pílulas, que ocupavam 4 linhas. */}
       <nav aria-label="Cargo" className="so-celular" style={{ marginBottom: '20px' }}>
