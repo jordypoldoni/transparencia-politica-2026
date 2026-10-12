@@ -1,9 +1,13 @@
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 import CampoSelect from './CampoSelect';
 import { NOMES_UF } from '../src/lib/cotas';
 import { SEGUNDO_TURNO } from '../src/lib/turnos';
 import { t } from '../src/estilo/tokens';
+
+// Mapa por estados (D-026): só carrega quando o usuário escolhe essa visão.
+const MapaBrasilApuracao = dynamic(() => import('./MapaBrasilApuracao'), { ssr: false, loading: () => <p style={{ color: t.cor.cinza }}>Carregando o mapa…</p> });
 
 // APURAÇÃO dentro de "Eleições 2026" (02/10/2026). Mostra o resultado oficial do TSE lido por
 // /api/apuracao (cache de 10 s na borda com a apuração em andamento, 30 s nos outros casos; nada é guardado no banco). A tela se atualiza sozinha
@@ -66,6 +70,11 @@ function Dado({ rotulo, valor, sub }) {
       <p style={{ margin: 0, fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.05em', textTransform: 'uppercase', color: t.cor.cinza }}>{rotulo}</p>
       <p style={{ margin: '4px 0 0', fontSize: '1.15rem', fontWeight: 800, color: t.cor.tinta }}>{valor}</p>
       {sub && <p style={{ margin: '2px 0 0', fontSize: '0.76rem', color: t.cor.cinza }}>{sub}</p>}
+      <style jsx global>{`
+        .apur-escolha { transition: box-shadow 0.2s ease, transform 0.2s ease; }
+        .apur-escolha[aria-pressed='false']:hover { box-shadow: ${t.sombra.hover} !important; transform: translateY(-1px); }
+        .apur-escolha:focus-visible { outline: none; box-shadow: ${t.sombra.anelFoco}, ${t.sombra.media} !important; }
+      `}</style>
     </div>
   );
 }
@@ -102,6 +111,12 @@ function LinhaCandidato({ c, posicao, mostrarBarra }) {
   );
 }
 
+// Cartão-botão da escolha de visão (só computador). Seleção por sombra e anel, sem borda.
+const estiloEscolha = (ativo) => ({
+  ...cartao, marginBottom: 0, textAlign: 'left', width: '100%', height: '100%', border: 'none', cursor: 'pointer', font: 'inherit', color: 'inherit',
+  boxShadow: ativo ? `${t.sombra.media}, ${t.sombra.anelFoco}` : t.sombra.clicavel,
+});
+
 const subtitulo = { fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.25rem', margin: '26px 0 10px' };
 
 export default function ApuracaoEleicao({ cargo, ufInicial, turno = 1 }) {
@@ -120,6 +135,19 @@ export default function ApuracaoEleicao({ cargo, ufInicial, turno = 1 }) {
   };
   const opcoesUf = ufsDoTurno.map((u) => ({ valor: u, rotulo: `${u} · ${NOMES_UF[u] || u}`, busca: `${u} ${NOMES_UF[u] || ''}` }));
   const naoComecou = d && d.secoes.totalizadas === 0;
+  // Visão por estados: só presidente, 1º turno (a rota /api/apuracao-estados serve os dois turnos; o 2º entra depois).
+  const [visao, setVisao] = useState('lista');
+  const podeMapa = cargo === 'presidente' && turno === 1;
+  const porEstados = podeMapa && visao === 'estados';
+
+  const listaCandidatos = d && !proporcional ? (
+    <>
+              <h2 style={subtitulo}>Candidatos por votos</h2>
+              <ol style={{ margin: 0, padding: 0, display: 'grid', gap: '10px' }}>
+                {d.candidatos.map((c, i) => <LinhaCandidato key={`${c.numero}-${c.nome}`} c={c} posicao={i + 1} mostrarBarra />)}
+              </ol>
+            </>
+  ) : null;
 
   return (
     <div>
@@ -151,6 +179,9 @@ export default function ApuracaoEleicao({ cargo, ufInicial, turno = 1 }) {
             </div>
           )}
 
+          {podeMapa ? (
+            <>
+              <div className="so-celular">
           <div style={{ ...cartao, marginBottom: '12px' }}>
             <p style={{ margin: 0, fontWeight: 700, color: t.cor.tinta }}>
               {d.nome_cargo || 'Cargo'}{cargo === 'presidente' ? ' · Brasil' : ` · ${NOMES_UF[uf] || uf}`}{turno === 2 ? ' · 2º turno' : ''}
@@ -164,6 +195,32 @@ export default function ApuracaoEleicao({ cargo, ufInicial, turno = 1 }) {
             </div>
             {d.gerado_em && <p style={{ margin: '8px 0 0', fontSize: '0.76rem', color: t.cor.cinza }}>Arquivo do TSE gerado em {d.gerado_em}{erro ? ' · a última atualização falhou, mostrando o dado anterior' : ''}.</p>}
           </div>
+          </div>
+              <div className="so-computador" role="group" aria-label="Forma de ver a apuração" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
+                <button type="button" className="apur-escolha" aria-pressed={!porEstados} onClick={() => setVisao('lista')} style={estiloEscolha(!porEstados)}>
+            <p style={{ margin: 0, fontWeight: 700, color: t.cor.tinta }}>
+              {d.nome_cargo || 'Cargo'}{cargo === 'presidente' ? ' · Brasil' : ` · ${NOMES_UF[uf] || uf}`}{turno === 2 ? ' · 2º turno' : ''}
+              {d.vagas ? <span style={{ fontWeight: 500, color: t.cor.cinza }}> · {fmt(d.vagas)} {d.vagas === 1 ? 'vaga' : 'vagas'}</span> : null}
+            </p>
+            <p style={{ margin: '10px 0 6px', fontSize: '0.9rem', color: t.cor.tinta }}>
+              Seções apuradas: <strong>{fmt(d.secoes.totalizadas)}</strong> de {fmt(d.secoes.total)} ({d.secoes.pct_totalizadas || '0,00'}%)
+            </p>
+            <div aria-hidden="true" style={{ height: '10px', borderRadius: t.raio.pill, background: t.cor.papelQuente2, overflow: 'hidden' }}>
+              <div style={{ width: `${numPct(d.secoes.pct_totalizadas)}%`, height: '100%', background: t.cor.verde, borderRadius: t.raio.pill }} />
+            </div>
+            {d.gerado_em && <p style={{ margin: '8px 0 0', fontSize: '0.76rem', color: t.cor.cinza }}>Arquivo do TSE gerado em {d.gerado_em}{erro ? ' · a última atualização falhou, mostrando o dado anterior' : ''}.</p>}
+                </button>
+                <button type="button" className="apur-escolha" aria-pressed={porEstados} onClick={() => setVisao('estados')} style={estiloEscolha(porEstados)}>
+                  <p style={{ margin: 0, fontWeight: 700, color: t.cor.tinta }}>
+                    {d.nome_cargo || 'Cargo'} · Brasil
+                    {d.vagas ? <span style={{ fontWeight: 500, color: t.cor.cinza }}> · {fmt(d.vagas)} {d.vagas === 1 ? 'vaga' : 'vagas'}</span> : null}
+                  </p>
+                  <p style={{ margin: '10px 0 6px', fontSize: '0.9rem', color: t.cor.tinta }}>Seções apuradas por estados</p>
+                  <p style={{ margin: 0, fontSize: '0.82rem', color: t.cor.cinza, lineHeight: 1.45 }}>Mapa do Brasil: passe o mouse ou clique em um estado para ver como cada candidato foi votado nele.</p>
+                </button>
+              </div>
+            </>
+          ) : CABECALHO}
 
           <div style={{ display: 'grid', gap: '10px', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))' }}>
             <Dado rotulo="Eleitorado" valor={fmt(d.eleitorado.total)} />
@@ -174,14 +231,13 @@ export default function ApuracaoEleicao({ cargo, ufInicial, turno = 1 }) {
             <Dado rotulo="Nulos" valor={fmt(d.votos.nulos)} sub={d.votos.pct_nulos ? `${d.votos.pct_nulos}%` : null} />
           </div>
 
-          {!proporcional && (
+          {!proporcional && porEstados && (
             <>
-              <h2 style={subtitulo}>Candidatos por votos</h2>
-              <ol style={{ margin: 0, padding: 0, display: 'grid', gap: '10px' }}>
-                {d.candidatos.map((c, i) => <LinhaCandidato key={`${c.numero}-${c.nome}`} c={c} posicao={i + 1} mostrarBarra />)}
-              </ol>
+              <div className="so-computador" style={{ marginTop: '26px' }}><MapaBrasilApuracao turno={turno} /></div>
+              <div className="so-celular">{listaCandidatos}</div>
             </>
           )}
+          {!proporcional && !porEstados && listaCandidatos}
 
           {proporcional && (
             <>
@@ -224,6 +280,11 @@ export default function ApuracaoEleicao({ cargo, ufInicial, turno = 1 }) {
           </p>
         </>
       )}
+      <style jsx global>{`
+        .apur-escolha { transition: box-shadow 0.2s ease, transform 0.2s ease; }
+        .apur-escolha[aria-pressed='false']:hover { box-shadow: ${t.sombra.hover} !important; transform: translateY(-1px); }
+        .apur-escolha:focus-visible { outline: none; box-shadow: ${t.sombra.anelFoco}, ${t.sombra.media} !important; }
+      `}</style>
     </div>
   );
 }
