@@ -398,9 +398,13 @@ export default function Layout({ children, pageProps }) {
         <div style={{ width: '100%', padding: '32px 24px', color: t.cor.cinza, fontSize: '0.85rem', display: 'flex', flexWrap: 'wrap', gap: '24px', justifyContent: 'space-between' }}>
           <div style={{ maxWidth: '420px' }}>
             <img src="/marca-lume.svg" alt="Lume Cidadão" style={{ height: '24px', width: 'auto', display: 'block', marginBottom: '10px' }} />
-            <p style={{ margin: 0, lineHeight: 1.5 }}>
-              Informação política em linguagem clara, sem lado. Todos os dados vêm de fontes oficiais e podem ser conferidos por você.
-            </p>
+            {/* 12/10/2026, pedido do Jordy: a frase de Adam Smith no lugar do texto institucional. */}
+            <figure style={{ margin: 0 }}>
+              <blockquote style={{ margin: 0, lineHeight: 1.5, fontStyle: 'italic' }}>
+                “Em períodos conturbados por duelos de facções, comumente, poucos, muito poucos, mantêm o discernimento livre do contágio geral.”
+              </blockquote>
+              <figcaption style={{ marginTop: '6px', fontSize: '0.8rem', fontWeight: 700 }}>Adam Smith</figcaption>
+            </figure>
             {/* "Sobre & Fontes" saiu do menu principal em 19/09/2026 e passou a morar aqui, ao
                 lado das fontes oficiais, que é o assunto da página. Ocupava 124px do menu,
                 mais que "Deputados", para conteúdo institucional. */}
