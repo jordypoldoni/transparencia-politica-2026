@@ -9,6 +9,7 @@ import { explicarTipo, agruparPorMateria, papelVotacao, situacaoCidada } from '.
 import { casaDoPerfil, hrefPerfil } from '../src/lib/casa';
 import TrajetoriaEleitoral from './TrajetoriaEleitoral';
 import { Seta } from './icones';
+import { generoDe, comSujeito } from '../src/lib/genero';
 import BotaoVoltar from './BotaoVoltar';
 import BotaoFavorito from './BotaoFavorito';
 import NotasDaCategoria from './NotasDaCategoria';
@@ -202,6 +203,8 @@ export default function PerfilPolitico({ dados }) {
   // Busca na hora, e so quando o leitor abre a secao. `ehSenadoCpi` vem direto de casaDoPerfil
   // porque `ehSenado` so e declarado mais abaixo (usar antes causa TDZ no build).
   const ehSenadoCpi = casaDoPerfil(perfil).ehSenado;
+  // Genero vem do cadastro oficial (campo sexo). Sem dado, os titulos ficam neutros.
+  const genero = generoDe(perfil.sexo);
   const [cpis, setCpis] = useState(null);
   const [erroCpis, setErroCpis] = useState(null);
   useEffect(() => {
@@ -646,7 +649,7 @@ export default function PerfilPolitico({ dados }) {
           </Secao>
         )}
 
-        <Secao id="em-que-gastou" titulo="Em que ele gastou" aberta={secoesAbertas['em-que-gastou']} onToggle={() => toggleSecao('em-que-gastou')}>
+        <Secao id="em-que-gastou" titulo={comSujeito(genero, 'Em que', 'gastou')} aberta={secoesAbertas['em-que-gastou']} onToggle={() => toggleSecao('em-que-gastou')}>
           <SeletorAno anos={anos_disponiveis} atual={anoSel} aoTrocar={trocarAno} rotulo="Ano das despesas por categoria" />
           <p style={{ color: t.cor.cinza, fontSize: '0.9rem', margin: '0 0 20px' }}>
             Em que {perfil.nome_urna} usou a verba em <strong>{anoSel}</strong>. Toque numa categoria para ver as notas e o link de cada documento.
@@ -687,7 +690,7 @@ export default function PerfilPolitico({ dados }) {
         </Secao>
 
         {/* ATUAÇÃO — comissões e frentes (Ficha 360°) */}
-        <Secao id="atuacao" titulo="Onde ele atua" aberta={secoesAbertas.atuacao} onToggle={() => toggleSecao('atuacao')}>
+        <Secao id="atuacao" titulo={comSujeito(genero, 'Onde', 'atua')} aberta={secoesAbertas.atuacao} onToggle={() => toggleSecao('atuacao')}>
           <p style={{ color: t.cor.cinza, fontSize: '0.9rem', margin: '0 0 20px', lineHeight: 1.5 }}>
             É nas <strong>comissões</strong> que os projetos são debatidos e votados antes do plenário; as <strong>frentes parlamentares</strong> são grupos temáticos que o parlamentar integra. Fonte: {fonteNome}.
           </p>
@@ -797,6 +800,7 @@ export default function PerfilPolitico({ dados }) {
               <div style={{ marginTop: temTrajetoriaCamara ? '22px' : 0 }}>
                 <TrajetoriaEleitoral
                   ficha={candidatura_2026}
+                  genero={genero}
                   embutido
                   linkCandidatura={candidatura_2026.slug ? `/deputado-federal/${candidatura_2026.slug}` : null}
                 />
@@ -806,7 +810,7 @@ export default function PerfilPolitico({ dados }) {
         )}
 
         {/* PROPOSIÇÕES — leis e projetos apresentados (Ficha 360°) */}
-        <Secao id="proposicoes" titulo="O que ele propôs" aberta={secoesAbertas.proposicoes} onToggle={() => toggleSecao('proposicoes')}>
+        <Secao id="proposicoes" titulo={comSujeito(genero, 'O que', 'propôs')} aberta={secoesAbertas.proposicoes} onToggle={() => toggleSecao('proposicoes')}>
           {proposicoes.length > 0 ? (
             <>
               <p style={{ color: t.cor.cinza, fontSize: '0.9rem', margin: '0 0 18px', lineHeight: 1.5 }}>
@@ -963,12 +967,12 @@ export default function PerfilPolitico({ dados }) {
               </div>
             )}
             <p style={{ margin: '14px 0 0', fontSize: '0.78rem', color: t.cor.cinza }}>
-              Fonte: Senado Federal, comissões de que o senador participou. O cadastro informa titular ou suplente, mas não informa presidente ou relator.
+              Fonte: Senado Federal, cadastro de comissões do parlamentar. O cadastro informa titular ou suplente, mas não informa presidente ou relator.
             </p>
           </Secao>
         )}
 
-        <Secao id="votos" titulo="Como ele votou" aberta={secoesAbertas.votos} onToggle={() => toggleSecao('votos')}>
+        <Secao id="votos" titulo={comSujeito(genero, 'Como', 'votou')} aberta={secoesAbertas.votos} onToggle={() => toggleSecao('votos')}>
 
           {presenca && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px', background: t.cor.papelQuente, borderRadius: t.raio.md, marginBottom: '16px', boxShadow: t.sombra.sutil }}>

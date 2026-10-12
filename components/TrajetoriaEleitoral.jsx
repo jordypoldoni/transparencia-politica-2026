@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { t } from '../src/estilo/tokens';
+import { generoDe, eleitoDe } from '../src/lib/genero';
 import { Seta } from './icones';
 
 // Seção "Trajetória eleitoral" — as candidaturas anteriores publicadas pelo TSE. (20/09/2026)
@@ -149,7 +150,9 @@ function DetalheCandidatura({ estado, ano }) {
 // "Trajetória", que já tem outros blocos (atuação profissional, cargos, filiações). Lá ela não
 // pode ser um cartão próprio com título de seção, senão vira cartão dentro de cartão; vira mais
 // um bloco com subtítulo no mesmo estilo dos vizinhos.
-export default function TrajetoriaEleitoral({ ficha, embutido = false, linkCandidatura = null }) {
+export default function TrajetoriaEleitoral({ ficha, embutido = false, linkCandidatura = null, genero: generoProp = null }) {
+  // Genero: o que o chamador passou, ou o da propria ficha (TSE: genero). Sem dado, "Eleito(a)".
+  const genero = generoDe(generoProp || ficha?.genero);
   const [explica, setExplica] = useState(false);
   // Qual ano está aberto e o que já foi buscado. Ficha de eleição encerrada não muda: buscada
   // uma vez, fica guardada enquanto a página estiver aberta, e fechar e abrir não vai à rede.
@@ -205,7 +208,7 @@ export default function TrajetoriaEleitoral({ ficha, embutido = false, linkCandi
         {linhas.length} {linhas.length === 1 ? 'candidatura registrada' : 'candidaturas registradas'} pelo TSE
         {anos.length ? `, de ${Math.min(...anos)} a ${Math.max(...anos)}` : ''}
         {partidos.length ? `, por ${partidos.length} ${partidos.length === 1 ? 'partido' : 'partidos'} (${partidos.join(', ')})` : ''}
-        {eleicoesComResultado.length ? `. Eleito em ${vezesEleito} ${vezesEleito === 1 ? 'vez' : 'vezes'}` : ''}.
+        {eleicoesComResultado.length ? `. ${eleitoDe(genero)} em ${vezesEleito} ${vezesEleito === 1 ? 'vez' : 'vezes'}` : ''}.
       </p>
 
       <ol style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
