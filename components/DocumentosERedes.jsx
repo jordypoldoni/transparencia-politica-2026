@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { t } from '../src/estilo/tokens';
+import { Seta } from './icones';
 
 // Seção "Documentos e redes" da ficha do presidenciável. (16/09/2026)
 //
@@ -64,7 +65,7 @@ export default function DocumentosERedes({ ficha }) {
         </span>
         <span style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', fontWeight: 700, color: t.cor.ouroTexto }}>
           {aberta ? 'Recolher' : 'Ver'}
-          <span aria-hidden="true" style={{ display: 'inline-block', transform: aberta ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}>▾</span>
+          <Seta aberta={aberta} size={14} />
         </span>
       </button>
 

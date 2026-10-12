@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { t } from '../src/estilo/tokens';
+import { Seta } from './icones';
 
 // ESCOLHA COMPACTA (27/09/2026, pedido do Jordy para o celular). Pílulas irmãs que no celular
 // ocupavam duas ou três linhas (páginas de "Pra você", casas, cargos) viram UM campo com a opção
@@ -38,7 +39,7 @@ export default function EscolhaCompacta({ opcoes, valor, aoEscolher, rotulo }) {
           boxShadow: aberto ? `inset 0 0 0 2.5px ${t.cor.ouro}, ${t.sombra.clicavel}, ${t.sombra.anelFoco}` : `inset 0 0 0 1px #CC7A22, ${t.sombra.clicavel}`,
           transition: 'box-shadow .15s' }}>
         <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{atual?.rotulo}</span>
-        <span aria-hidden style={{ flexShrink: 0, color: t.cor.cinza, transition: 'transform .15s', transform: aberto ? 'rotate(180deg)' : 'none' }}>▾</span>
+        <Seta aberta={aberto} size={16} />
       </button>
       {aberto && (
         <div style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0, zIndex: 70, background: '#fff', borderRadius: t.raio.md, boxShadow: t.sombra.media, overflow: 'hidden' }}>

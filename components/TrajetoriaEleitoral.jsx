@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { t } from '../src/estilo/tokens';
+import { Seta } from './icones';
 
 // Seção "Trajetória eleitoral" — as candidaturas anteriores publicadas pelo TSE. (20/09/2026)
 //
@@ -223,7 +224,7 @@ export default function TrajetoriaEleitoral({ ficha, embutido = false, linkCandi
                 <span style={{ fontWeight: 700, color: t.cor.tinta, fontSize: '0.95rem' }}>{l.cargo || 'Cargo não informado'}</span>
                 {l.local && <span style={{ color: t.cor.tinta, fontSize: '0.88rem' }}>{l.local}</span>}
               </span>
-              <span aria-hidden="true" style={{ color: t.cor.tinta, fontSize: '12px', flexShrink: 0 }}>{aberto === i ? '▲' : '▼'}</span>
+              <Seta aberta={aberto === i} size={14} />
             </button>
             <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap', padding: '4px 16px 14px', fontSize: '0.82rem', color: t.cor.tinta }}>
               {l.partido && <span><strong>Partido:</strong> {l.partido}</span>}

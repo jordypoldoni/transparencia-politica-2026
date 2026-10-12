@@ -3,6 +3,7 @@ import Link from 'next/link';
 import Head from 'next/head';
 import ServicoAPI from '../../src/servicos/servico_api';
 import { t } from '../../src/estilo/tokens';
+import { Seta } from '../../components/icones';
 import BotaoVoltar from '../../components/BotaoVoltar';
 import { dataBr } from '../../src/lib/datas';
 
@@ -142,7 +143,7 @@ export default function FichaIndicacao({ i }) {
               </span>
             </span>
             <span style={{ flexShrink: 0, fontSize: '0.8rem', fontWeight: 700, color: t.cor.ouroTexto }}>
-              {abrirPresencas ? 'Recolher' : 'Ver'} <span aria-hidden="true">{abrirPresencas ? '▴' : '▾'}</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>{abrirPresencas ? 'Recolher' : 'Ver'} <Seta aberta={abrirPresencas} size={14} /></span>
             </span>
           </button>
 

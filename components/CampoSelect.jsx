@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { t } from '../src/estilo/tokens';
+import { Seta } from './icones';
 
 const norm = (s) => String(s || '').normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
 
@@ -63,7 +64,7 @@ export default function CampoSelect({
             fontSize: '1rem', fontFamily: t.fonte.corpo, background: 'transparent', color: t.cor.tinta,
           }} />
         <span aria-hidden onMouseDown={(e) => { e.preventDefault(); setAberto((a) => !a); }}
-          style={{ flexShrink: 0, cursor: 'pointer', transition: 'transform .15s', transform: aberto ? 'rotate(180deg)' : 'none', color: t.cor.cinza }}>▾</span>
+          style={{ flexShrink: 0, cursor: 'pointer', display: 'inline-flex' }}><Seta aberta={aberto} size={16} /></span>
       </div>
 
       {aberto && (

@@ -1,5 +1,6 @@
 import { useState, useMemo, useRef } from 'react';
 import { t } from '../src/estilo/tokens';
+import { Seta } from './icones';
 import { pilulaPagina, realcePagina } from '../src/estilo/botoes';
 import { dataBr } from '../src/lib/datas';
 
@@ -70,9 +71,9 @@ function BlocoDoTipo({ tipo, notas, subtotal, anoSel, palavraNota, sozinho }) {
         style={{ width: '100%', display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'baseline', flexWrap: 'wrap',
           border: 'none', background: 'transparent', padding: '4px 0', margin: 0, cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', scrollMarginTop: '84px' }}>
         <span style={{ fontSize: '0.88rem', fontWeight: 700, color: t.cor.tinta, minWidth: 0 }}>{tipo}</span>
-        <span style={{ fontSize: '0.82rem', color: t.cor.cinza, flexShrink: 0, display: 'flex', alignItems: 'baseline', gap: '10px' }}>
+        <span style={{ fontSize: '0.82rem', color: t.cor.cinza, flexShrink: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
           <span><strong style={{ color: t.cor.tinta, fontSize: '0.9rem' }}>{brlExato(subtotal)}</strong> em {plural(notas.length)}</span>
-          <span aria-hidden style={{ fontSize: '12px' }}>{aberto ? '▲' : '▼'}</span>
+          <Seta aberta={aberto} size={14} />
         </span>
       </button>
       {aberto && (<>

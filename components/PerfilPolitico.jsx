@@ -8,6 +8,7 @@ import { nomeTipoProposicao, legendaDosTipos } from '../src/lib/proposicoes';
 import { explicarTipo, agruparPorMateria, papelVotacao, situacaoCidada } from '../src/lib/votacao';
 import { casaDoPerfil, hrefPerfil } from '../src/lib/casa';
 import TrajetoriaEleitoral from './TrajetoriaEleitoral';
+import { Seta } from './icones';
 import BotaoVoltar from './BotaoVoltar';
 import BotaoFavorito from './BotaoFavorito';
 import NotasDaCategoria from './NotasDaCategoria';
@@ -108,7 +109,7 @@ function Secao({ id, titulo, aberta, onToggle, children }) {
       <h2 style={{ margin: 0 }}>
         <button type="button" onClick={onToggle} aria-expanded={aberta} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', padding: 'clamp(16px,3vw,22px) clamp(20px,3vw,32px)', background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.4rem', color: t.cor.tinta }}>
           <span>{titulo}</span>
-          <span aria-hidden style={{ fontSize: '0.85rem', flexShrink: 0, opacity: 0.55, color: t.cor.cinza }}>{aberta ? '▲' : '▼'}</span>
+          <Seta aberta={aberta} size={20} />
         </button>
       </h2>
       {aberta && (
@@ -461,7 +462,7 @@ export default function PerfilPolitico({ dados }) {
           {/* Coração (26/09/2026): no cartão escuro, o par invertido (âmbar com coração índigo). */}
           <BotaoFavorito tipo="parlamentar" chave={hrefPerfil(perfil)} rotulo={perfil.nome_urna} escuro
             detalhe={[perfil.cargo_atual || casaDoPerfil(perfil).cargoPadrao, perfil.partido_atual, perfil.uf_sede].filter(Boolean).join(' · ')} foto={perfil.foto_url} />
-          <button type="button" onClick={() => toggleSecao('resumo')} aria-expanded={secoesAbertas.resumo} aria-label={secoesAbertas.resumo ? 'Recolher resumo' : 'Expandir resumo'} style={{ flexShrink: 0, background: 'rgba(255,255,255,0.14)', border: 'none', color: '#fff', cursor: 'pointer', borderRadius: '999px', width: '36px', height: '36px', fontSize: '0.8rem' }}>{secoesAbertas.resumo ? '▲' : '▼'}</button>
+          <button type="button" onClick={() => toggleSecao('resumo')} aria-expanded={secoesAbertas.resumo} aria-label={secoesAbertas.resumo ? 'Recolher resumo' : 'Expandir resumo'} style={{ flexShrink: 0, background: 'rgba(255,255,255,0.14)', border: 'none', color: '#fff', cursor: 'pointer', borderRadius: '999px', width: '36px', height: '36px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}><Seta aberta={secoesAbertas.resumo} size={18} /></button>
         </div>
 
         {secoesAbertas.resumo && (
@@ -559,7 +560,7 @@ export default function PerfilPolitico({ dados }) {
                 <div style={{ marginTop: '22px', paddingTop: '18px', borderTop: `1px solid ${t.cor.papelQuente2}` }}>
                   <button onClick={() => setBioAberta(!bioAberta)} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: t.fonte.corpo }}>
                     <span style={{ fontSize: '0.7rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: t.cor.cinza }}>Nas palavras do gabinete</span>
-                    <span style={{ fontSize: '0.72rem', color: t.cor.cinza }}>{bioAberta ? '▲ ocultar' : '▼ ler'}</span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '0.72rem', color: t.cor.cinza }}>{bioAberta ? 'ocultar' : 'ler'} <Seta aberta={bioAberta} size={13} /></span>
                   </button>
                   {bioAberta && (
                     <div style={{ marginTop: '12px' }}>
@@ -657,7 +658,7 @@ export default function PerfilPolitico({ dados }) {
                   <span style={{ fontWeight: 700, color: t.cor.tinta, fontSize: '0.95rem' }}>{cat}</span>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <strong>{brlExato(val)}</strong>
-                    <span style={{ color: t.cor.cinza, fontSize: '12px' }}>{aberta === cat ? '▲' : '▼'}</span>
+                    <Seta aberta={aberta === cat} size={14} />
                   </span>
                 </div>
                 {aberta === cat && (

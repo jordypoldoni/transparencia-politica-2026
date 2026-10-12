@@ -8,6 +8,7 @@ import { casaDaVotacao } from '../../src/lib/casa';
 import Termo from '../../components/Termo';
 import CampoBusca from '../../components/CampoBusca';
 import { t } from '../../src/estilo/tokens';
+import { Seta } from '../../components/icones';
 import BotaoVoltar from '../../components/BotaoVoltar';
 import { dataBr } from '../../src/lib/datas';
 
@@ -109,7 +110,7 @@ export default function Votacao({ meta, votos }) {
                   transition: 'box-shadow .15s ease, background .15s ease',
                 }}>
                 {verMais ? 'Ocultar' : 'Quero entender melhor'}
-                <span aria-hidden="true" style={{ fontSize: '0.7rem' }}>{verMais ? '▲' : '▼'}</span>
+                <Seta aberta={verMais} size={14} />
               </button>
 
               {verMais && (
@@ -190,7 +191,7 @@ export default function Votacao({ meta, votos }) {
                   <strong style={{ fontSize: '1rem' }}>{tp === 'Sim' || tp === 'Não' ? rotuloVoto(tp) : <Termo>{tp}</Termo>}</strong>
                   <span style={{ color: t.cor.cinza, fontSize: '0.9rem' }}>({doTipo.length})</span>
                 </span>
-                <span style={{ color: t.cor.cinza }}>{aberto ? '▲' : '▼'}</span>
+                <Seta aberta={aberto} size={16} />
               </button>
               {aberto && (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(240px, 100%), 1fr))', gap: '6px', padding: '6px', background: t.cor.papelQuente }}>

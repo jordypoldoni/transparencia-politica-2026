@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { t } from '../src/estilo/tokens';
+import { Seta } from './icones';
 import { dataBr } from '../src/lib/datas';
 
 const brl = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
@@ -76,7 +77,7 @@ export default function PatrimonioDeclarado({ ficha }) {
               transition: 'box-shadow .15s ease',
             }}>
             {aberto ? 'Ocultar a lista' : `Ver os ${itens.length} bens declarados`}
-            <span aria-hidden="true" style={{ fontSize: '0.7rem' }}>{aberto ? '▲' : '▼'}</span>
+            <Seta aberta={aberto} size={14} />
           </button>
 
           {aberto && (
