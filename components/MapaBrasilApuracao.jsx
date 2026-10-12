@@ -21,6 +21,8 @@ const ORDEM_REGIOES = ['N', 'NE', 'CO', 'SE', 'S'];
 const SEM_DADOS = '#D9D6CE';
 const FOCO_CLARO = '#E4E8EE';
 const FOCO_ESCURO = '#334155';
+// Estados pequenos: a sigla vai para fora, no oceano, ligada por uma linha fina (padrão de mapas). DF fica dentro, em fonte menor.
+const CHAMADAS = { RN: [652, 176], PB: [652, 199], AL: [650, 243], SE: [640, 266], ES: [586, 406], RJ: [570, 456] };
 const AREA_MINIMA_ROTULO = 1500; // estados menores não levam a sigla dentro; ganham alvo de mouse maior
 const VB = MAPA_BRASIL.viewBox.split(' ').map(Number);
 
@@ -338,9 +340,19 @@ export default function MapaBrasilApuracao({ turno = 1 }) {
                 })}
               </g>
               <g style={{ pointerEvents: 'none' }} aria-hidden="true">
-                {MAPA_BRASIL.estados.filter((g) => g.area >= AREA_MINIMA_ROTULO).map((geo) => (
-                  <text key={geo.uf} x={geo.cx} y={geo.cy} className="mapa-sigla" style={{ opacity: opacidadeDe(geo) }}>{geo.uf}</text>
+                {MAPA_BRASIL.estados.filter((g) => g.area >= AREA_MINIMA_ROTULO || g.uf === 'DF').map((geo) => (
+                  <text key={geo.uf} x={geo.cx} y={geo.cy} className={geo.uf === 'DF' ? 'mapa-sigla mapa-sigla-mini' : 'mapa-sigla'} style={{ opacity: opacidadeDe(geo) }}>{geo.uf}</text>
                 ))}
+                {MAPA_BRASIL.estados.filter((g) => CHAMADAS[g.uf]).map((geo) => {
+                  const [lx, ly] = CHAMADAS[geo.uf];
+                  return (
+                    <g key={geo.uf} style={{ opacity: opacidadeDe(geo), transition: 'opacity .3s' }}>
+                      <line x1={geo.cx} y1={geo.cy} x2={lx - 3} y2={ly} className="mapa-chamada-linha" />
+                      <circle cx={geo.cx} cy={geo.cy} r={1.6} className="mapa-chamada-ponto" />
+                      <text x={lx} y={ly} className="mapa-sigla-fora">{geo.uf}</text>
+                    </g>
+                  );
+                })}
               </g>
               {/* Alvos maiores para os estados pequenos (DF, SE, AL...): mesmo comportamento dos estados. */}
               <g>
@@ -448,6 +460,10 @@ function Estilos() {
       .mapa-realce-fixo { stroke: ${t.cor.tinta}; stroke-width: 2.2; }
       .mapa-pulso { animation: mapa-sobe-estado .22s ease both, mapa-pulsa 1.2s ease-out .2s 1 both; }
       .mapa-sigla { font: 600 9.5px ${t.fonte.corpo}; fill: #fff; text-anchor: middle; dominant-baseline: middle; paint-order: stroke; stroke: rgba(0,0,0,.28); stroke-width: 2px; stroke-linejoin: round; transition: opacity .3s; }
+      .mapa-sigla-mini { font-size: 6.5px; stroke-width: 1.4px; }
+      .mapa-sigla-fora { font: 700 9.5px ${t.fonte.corpo}; fill: ${t.cor.tinta}; text-anchor: start; dominant-baseline: middle; }
+      .mapa-chamada-linha { stroke: ${t.cor.cinza}; stroke-width: .8px; }
+      .mapa-chamada-ponto { fill: ${t.cor.cinza}; }
       .mapa-alvo { fill: transparent; cursor: pointer; }
 
       .mapa-dica { position: fixed; left: 0; top: 0; z-index: 1000; width: 340px; pointer-events: none; opacity: 0; transition: opacity .12s ease; background: #fff; border-radius: ${t.raio.md}; box-shadow: 0 14px 40px rgba(40,30,15,.28), 0 2px 6px rgba(40,30,15,.12); padding: 16px 16px 12px; }
