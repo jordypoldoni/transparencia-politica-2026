@@ -140,6 +140,7 @@ export default function MapaBrasilApuracao({ turno = 1 }) {
   const [erro, setErro] = useState(null);
   const [nacional, setNacional] = useState(null);
   const [hover, setHover] = useState(null);
+  const [realceLista, setRealceLista] = useState(null); // estado sob o mouse na lista lateral
   const [fixo, setFixo] = useState(null);
   const [regiao, setRegiao] = useState(null); // região escolhida (filtro): soma os estados dela
   const [foco, setFoco] = useState(null); // chave do candidato em foco
@@ -324,10 +325,12 @@ export default function MapaBrasilApuracao({ turno = 1 }) {
     );
   }
 
+  const listaUF = candFoco ? MAPA_BRASIL.estados.map((g) => ({ uf: g.uf, regiao: g.regiao, pct: candFoco.porUf[g.uf] ?? null, cor: corDoEstado(g) }))
+    .sort((a, b) => (b.pct ?? -1) - (a.pct ?? -1)) : [];
   const bannerFoco = escala && candFoco ? (
     <div className="mapa-foco-banner" role="status">
       <p><b>Mapa colorido por {escala.nome}</b></p>
-      <p>Os números mostram a % de votos válidos que {escala.nome} teve em cada estado e, nas regiões acima do mapa, no total da região (soma dos votos dos estados, não média){regiao ? `. As cores comparam só os estados da região ${REGIOES[regiao].nome}` : ''}. Quanto mais escuro, maior a %. Não é o total do país.</p>
+      <p>A lista ao lado do mapa mostra a % de votos válidos que {escala.nome} teve em cada estado e, acima do mapa, o total de cada região (soma dos votos dos estados, não média){regiao ? `. As cores comparam só os estados da região ${REGIOES[regiao].nome}` : ''}. Quanto mais escuro, maior a %. Não é o total do país.</p>
       <span className="mapa-gradiente" style={{ background: `linear-gradient(to right, ${FOCO_CLARO}, ${FOCO_ESCURO})` }} />
       <span className="mapa-extremos"><b>{fmtPct(escala.min)}%</b><b>{fmtPct(escala.max)}%</b></span>
       {regiao && candFoco.votosPais > 0 && (
@@ -344,7 +347,7 @@ export default function MapaBrasilApuracao({ turno = 1 }) {
 
   return (
     <div className="mapa-raiz">
-      <div className="mapa-grade">
+      <div className={`mapa-grade${candFoco ? ' mapa-grade-lista' : ''}`}>
         <section className="mapa-lado mapa-lado-mapa" aria-label="Mapa do Brasil: presidente por estado">
           {/* Filtro por região: escolha excludente, então segmented control. Clicar de novo desmarca. */}
           <div className="mapa-controles">
@@ -369,7 +372,7 @@ export default function MapaBrasilApuracao({ turno = 1 }) {
               </g>
               {/* Camada de destaque: o estado sob o mouse e o fixo sobem (SVG não tem z-index, então são copiados por cima). */}
               <g style={{ pointerEvents: 'none' }}>
-                {[...new Set([fixo, ativo].filter(Boolean))].map((uf) => {
+                {[...new Set([fixo, ativo, realceLista].filter(Boolean))].map((uf) => {
                   const geo = MAPA_BRASIL.estados.find((e) => e.uf === uf);
                   const base = corDoEstado(geo);
                   return (
@@ -382,8 +385,7 @@ export default function MapaBrasilApuracao({ turno = 1 }) {
               <g style={{ pointerEvents: 'none' }} aria-hidden="true">
                 {MAPA_BRASIL.estados.filter((g) => g.area >= AREA_MINIMA_ROTULO).map((geo) => (
                   <g key={geo.uf} style={{ opacity: opacidadeDe(geo), transition: 'opacity .3s' }}>
-                    <text x={geo.cx} y={candFoco ? geo.cy - 4.5 : geo.cy} className={`mapa-sigla${claroDe(geo) ? ' mapa-sigla-escura' : ''}`}>{geo.uf}</text>
-                    {candFoco && <text x={geo.cx} y={geo.cy + 6} className={`mapa-sigla mapa-sigla-pct${claroDe(geo) ? ' mapa-sigla-escura' : ''}`}>{fmt1(candFoco.porUf[geo.uf])}</text>}
+                    <text x={geo.cx} y={geo.cy} className={`mapa-sigla${claroDe(geo) ? ' mapa-sigla-escura' : ''}`}>{geo.uf}</text>
                   </g>
                 ))}
                 {MAPA_BRASIL.estados.filter((g) => CHAMADAS[g.uf]).map((geo) => {
@@ -392,7 +394,7 @@ export default function MapaBrasilApuracao({ turno = 1 }) {
                     <g key={geo.uf} style={{ opacity: opacidadeDe(geo), transition: 'opacity .3s' }}>
                       <line x1={geo.cx} y1={geo.cy} x2={lx - 3} y2={ly} className="mapa-chamada-linha" />
                       <circle cx={geo.cx} cy={geo.cy} r={1.6} className="mapa-chamada-ponto" />
-                      <text x={lx} y={ly} className="mapa-sigla-fora">{geo.uf}{candFoco && <tspan className="mapa-fora-pct"> {fmt1(candFoco.porUf[geo.uf])}</tspan>}</text>
+                      <text x={lx} y={ly} className="mapa-sigla-fora">{geo.uf}</text>
                     </g>
                   );
                 })}
@@ -417,6 +419,26 @@ export default function MapaBrasilApuracao({ turno = 1 }) {
             A cor do mapa marca só a região, não o resultado. Clique em uma região para ver o total dela. Fonte: <a href="https://resultados.tse.jus.br/" target="_blank" rel="noopener noreferrer">TSE</a>, arquivos por estado{datas.length === 1 ? ` gerados em ${datas[0]}` : ''}. Malha dos estados: IBGE.
           </p>
         </section>
+
+        {candFoco && (
+          <nav className="mapa-lista-uf" aria-label={`Porcentagem de ${escala ? escala.nome : 'candidato'} em cada estado`}>
+            <p className="mapa-lista-uf-tit">% por estado</p>
+            <ol>
+              {listaUF.map((x) => (
+                <li key={x.uf} style={{ opacity: regiao && x.regiao !== regiao ? 0.35 : 1 }}>
+                  <button type="button" className={`mapa-lista-uf-lin${fixo === x.uf ? ' on' : ''}${hover === x.uf ? ' hov' : ''}`}
+                    onMouseEnter={() => setRealceLista(x.uf)} onMouseLeave={() => setRealceLista(null)}
+                    onFocus={() => setRealceLista(x.uf)} onBlur={() => setRealceLista(null)}
+                    onClick={() => escolher(x.uf)} aria-pressed={fixo === x.uf} title={NOMES_UF[x.uf]}>
+                    <i style={{ background: x.cor }} />
+                    <span>{x.uf}</span>
+                    <b>{x.pct == null ? '–' : fmt1(x.pct)}%</b>
+                  </button>
+                </li>
+              ))}
+            </ol>
+          </nav>
+        )}
 
         <aside className="mapa-lado mapa-painel" aria-live="polite" aria-label="Resultado do estado fixado">
           {agregado ? (
@@ -488,7 +510,7 @@ function Estilos() {
       .mapa-realce { stroke: #fff; stroke-width: 1.4; stroke-linejoin: round; transform: scale(1.035) translateY(-2px); filter: drop-shadow(0 6px 7px rgba(20,16,10,.38)); animation: mapa-sobe-estado .22s ease both; }
       .mapa-realce-fixo { stroke: ${t.cor.tinta}; stroke-width: 2.2; }
       .mapa-pulso { animation: mapa-sobe-estado .22s ease both, mapa-pulsa 1.2s ease-out .2s 1 both; }
-      .mapa-sigla { font: 600 9.5px ${t.fonte.corpo}; fill: #fff; text-anchor: middle; dominant-baseline: middle; paint-order: stroke; stroke: rgba(0,0,0,.28); stroke-width: 2px; stroke-linejoin: round; transition: opacity .3s; }
+      .mapa-sigla { font: 700 11px ${t.fonte.corpo}; fill: #fff; text-anchor: middle; dominant-baseline: middle; paint-order: stroke; stroke: rgba(0,0,0,.28); stroke-width: 2px; stroke-linejoin: round; transition: opacity .3s; }
       .mapa-sigla-escura { fill: ${t.cor.tinta}; stroke: rgba(255,255,255,.7); }
       .mapa-sigla-pct { font-weight: 500; font-size: 8.5px; }
       .mapa-fora-pct { font-weight: 500; }
@@ -496,6 +518,21 @@ function Estilos() {
       .mapa-sigla-fora { font: 700 9.5px ${t.fonte.corpo}; fill: ${t.cor.tinta}; text-anchor: start; dominant-baseline: middle; paint-order: stroke; stroke: #fff; stroke-width: 3px; stroke-linejoin: round; }
       .mapa-chamada-linha { stroke: ${t.cor.cinza}; stroke-width: .8px; }
       .mapa-chamada-ponto { fill: ${t.cor.cinza}; }
+      .mapa-grade-lista { grid-template-columns: minmax(0, 1.55fr) 132px minmax(300px, 1fr); }
+      .mapa-grade-lista .mapa-lado-mapa { padding-right: 34px; }
+      .mapa-grade-lista .mapa-painel { padding-left: 18px; }
+      .seg-com-pct .seg-op { padding: 6px 6px; font-size: .75rem; }
+      .mapa-grade { transition: grid-template-columns .28s ease; }
+      .mapa-lista-uf { padding: 0 8px; position: sticky; top: 16px; align-self: start; box-shadow: inset 1px 0 0 ${t.cor.papelQuente2}; animation: mapa-sobe .25s ease both; }
+      .mapa-lista-uf-tit { margin: 0 0 6px; padding-left: 8px; font-size: .68rem; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; color: ${t.cor.cinza}; }
+      .mapa-lista-uf ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 1px; }
+      .mapa-lista-uf-lin { display: grid; grid-template-columns: 12px 26px 1fr; align-items: center; gap: 6px; width: 100%; padding: 3px 6px; font: inherit; font-size: .84rem; color: ${t.cor.tinta}; background: transparent; border: 0; border-radius: ${t.raio.sm}; cursor: pointer; text-align: left; transition: background .15s; }
+      .mapa-lista-uf-lin i { width: 12px; height: 12px; border-radius: 4px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.12); }
+      .mapa-lista-uf-lin span { font-weight: 700; }
+      .mapa-lista-uf-lin b { text-align: right; font-weight: 600; font-variant-numeric: tabular-nums; }
+      .mapa-lista-uf-lin:hover, .mapa-lista-uf-lin.hov { background: ${t.cor.papelQuente}; }
+      .mapa-lista-uf-lin.on { background: ${t.cor.papelQuente2}; }
+      .mapa-lista-uf-lin:focus-visible { outline: 2px solid ${t.cor.verde}; outline-offset: 1px; }
       .mapa-alvo { fill: transparent; cursor: pointer; }
 
       .mapa-dica { position: fixed; left: 0; top: 0; z-index: 1000; width: 340px; pointer-events: none; opacity: 0; transition: opacity .12s ease; background: #fff; border-radius: ${t.raio.md}; box-shadow: 0 14px 40px rgba(40,30,15,.28), 0 2px 6px rgba(40,30,15,.12); padding: 16px 16px 12px; }
@@ -512,15 +549,16 @@ function Estilos() {
       .mapa-lista li { border-radius: ${t.raio.sm}; transition: background .2s; }
       .mapa-em-foco { background: ${t.cor.papelQuente2}; box-shadow: ${t.sombra.clicavel}; }
       .mapa-linha { display: grid; grid-template-columns: 26px minmax(0, 1fr) auto; grid-template-rows: auto auto; column-gap: 8px; row-gap: 2px; align-items: center; padding: 3px 8px; width: 100%; text-align: left; font: inherit; color: ${t.cor.tinta}; background: transparent; border: 0; border-radius: ${t.raio.sm}; }
-      .mapa-ver { flex: none; white-space: nowrap; line-height: 1.3; margin-left: auto; padding: 2px 10px; font: 600 .72rem ${t.fonte.corpo}; color: ${t.cor.tinta}; background: #fff; border: 0; border-radius: ${t.raio.pill}; cursor: pointer; box-shadow: ${t.sombra.clicavel}; opacity: 0; transition: opacity .15s, box-shadow .15s; }
+      .mapa-ver { position: absolute; right: 0; top: 50%; transform: translateY(-50%); flex: none; white-space: nowrap; line-height: 1.3; margin-left: auto; padding: 2px 10px; font: 600 .72rem ${t.fonte.corpo}; color: ${t.cor.tinta}; background: #fff; border: 0; border-radius: ${t.raio.pill}; cursor: pointer; box-shadow: ${t.sombra.clicavel}; opacity: 0; transition: opacity .15s, box-shadow .15s; }
       .mapa-lista li:hover .mapa-ver, .mapa-ver:focus-visible, .mapa-ver-on { opacity: 1; }
       .mapa-ver:hover { box-shadow: ${t.sombra.hover}; }
-      .mapa-ver-on { background: ${t.cor.verde}; color: ${t.cor.ouro}; }
+      .mapa-ver-on { position: static; transform: none; background: ${t.cor.verde}; color: ${t.cor.ouro}; }
       @media (hover: none) { .mapa-ver { opacity: 1; } }
       .mapa-pos { font-size: .78rem; color: ${t.cor.cinza}; }
       .mapa-nome { display: flex; align-items: baseline; gap: 6px; min-width: 0; font-size: .88rem; }
       .mapa-nome b { min-width: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       .mapa-nome b.mapa-lider { font-weight: 800; }
+      .mapa-nome { position: relative; }
       .mapa-nome small { flex: none; color: ${t.cor.cinza}; font-size: .72rem; white-space: nowrap; }
       .mapa-pct { font-size: .88rem; justify-self: end; font-variant-numeric: tabular-nums; }
       .mapa-votos { color: ${t.cor.cinza}; font-size: .7rem; justify-self: end; font-variant-numeric: tabular-nums; }
@@ -564,7 +602,7 @@ function Estilos() {
       @keyframes mapa-cresce { from { transform: scaleX(0); } to { transform: scaleX(1); } }
       @keyframes mapa-pulsa { 0% { stroke-width: 1.4; } 40% { stroke-width: 6; stroke: #CC7A22; } 100% { stroke-width: 2.2; } }
       @keyframes mapa-pisca { 0%, 100% { opacity: .25; } 50% { opacity: 1; } }
-      @media (max-width: 1000px) { .mapa-grade { grid-template-columns: minmax(0, 1fr); } .mapa-lado-mapa { padding-right: 0; } .mapa-painel { position: static; max-height: none; padding: 18px 0 0; margin-top: 18px; box-shadow: inset 0 1px 0 ${t.cor.papelQuente2}; } }
+      @media (max-width: 1000px) { .mapa-grade, .mapa-grade-lista { grid-template-columns: minmax(0, 1fr); } .mapa-lista-uf { position: static; box-shadow: none; padding: 14px 0 0; } .mapa-lista-uf ol { grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); } .mapa-lado-mapa { padding-right: 0; } .mapa-painel { position: static; max-height: none; padding: 18px 0 0; margin-top: 18px; box-shadow: inset 0 1px 0 ${t.cor.papelQuente2}; } }
     `}</style>
   );
 }
