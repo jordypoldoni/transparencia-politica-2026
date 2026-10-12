@@ -21,8 +21,8 @@ const ORDEM_REGIOES = ['N', 'NE', 'CO', 'SE', 'S'];
 const SEM_DADOS = '#D9D6CE';
 const FOCO_CLARO = '#E4E8EE';
 const FOCO_ESCURO = '#334155';
-// Estados pequenos: a sigla vai para fora, no oceano, ligada por uma linha fina (padrão de mapas). DF fica dentro, em fonte menor.
-const CHAMADAS = { RN: [652, 176], PB: [652, 199], AL: [650, 243], SE: [640, 266], ES: [586, 406], RJ: [570, 456] };
+// Estados pequenos: a sigla vai para fora, no oceano, ligada por uma linha fina (padrão de mapas). DF fica dentro de GO, então a linha dele aponta para a área vizinha.
+const CHAMADAS = { RN: [652, 176], PB: [652, 199], AL: [650, 243], SE: [640, 266], ES: [586, 406], RJ: [570, 456], DF: [458, 326] };
 const AREA_MINIMA_ROTULO = 1500; // estados menores não levam a sigla dentro; ganham alvo de mouse maior
 const VB = MAPA_BRASIL.viewBox.split(' ').map(Number);
 
@@ -218,6 +218,28 @@ export default function MapaBrasilApuracao({ turno = 1 }) {
     return Number.isFinite(min) ? { por, min, max, nome: cand ? cand.nome : '' } : null;
   }, [foco, dados, regiao]);
 
+  // Candidato em foco (12/10/2026): % dele em cada estado e o total dele em cada região. Tudo sai dos mesmos números do TSE
+  // que o painel usa. Região = soma dos votos dele nos estados da região / soma dos votos válidos desses estados
+  // (não é média dos estados). Estado sem resultado fica de fora; a região avisa que é parcial.
+  const candFoco = useMemo(() => {
+    if (!foco || !dados) return null;
+    const porUf = {};
+    const regs = {};
+    let votosPais = 0;
+    for (const k of ORDEM_REGIOES) regs[k] = { votos: 0, validos: 0, faltam: [] };
+    for (const g of MAPA_BRASIL.estados) {
+      const e = dados.estados[g.uf];
+      if (!e) { regs[g.regiao].faltam.push(g.uf); continue; }
+      const c = e.candidatos.find((x) => chaveCand(x) === foco);
+      const v = c ? c.votos : 0;
+      porUf[g.uf] = e.votos.validos ? (v / e.votos.validos) * 100 : 0;
+      regs[g.regiao].votos += v; regs[g.regiao].validos += e.votos.validos; votosPais += v;
+    }
+    for (const k of ORDEM_REGIOES) regs[k].pct = regs[k].validos ? (regs[k].votos / regs[k].validos) * 100 : null;
+    return { porUf, regs, votosPais };
+  }, [foco, dados]);
+  const fmt1 = (v) => (v == null ? '–' : v.toFixed(1).replace('.', ','));
+
   const corDoEstado = (geo) => {
     const tem = dados && dados.estados[geo.uf];
     if (!tem) return SEM_DADOS;
@@ -227,6 +249,11 @@ export default function MapaBrasilApuracao({ turno = 1 }) {
       return misturar(FOCO_CLARO, FOCO_ESCURO, 0.08 + f * 0.92);
     }
     return REGIOES[geo.regiao].cor;
+  };
+  // Estado de cor clara (pouca votação do candidato): a sigla e o número viram texto escuro, para não sumirem no fundo claro.
+  const claroDe = (geo) => {
+    if (!escala || escala.por[geo.uf] == null || !(escala.max > escala.min)) return false;
+    return (escala.por[geo.uf] - escala.min) / (escala.max - escala.min) < 0.5;
   };
   const opacidadeDe = (geo) => (regiao && geo.regiao !== regiao ? 0.22 : 1);
 
@@ -297,6 +324,19 @@ export default function MapaBrasilApuracao({ turno = 1 }) {
     );
   }
 
+  const bannerFoco = escala && candFoco ? (
+    <div className="mapa-foco-banner" role="status">
+      <p><b>Mapa colorido por {escala.nome}</b></p>
+      <p>Os números mostram a % de votos válidos que {escala.nome} teve em cada estado e, nas regiões acima do mapa, no total da região (soma dos votos dos estados, não média){regiao ? `. As cores comparam só os estados da região ${REGIOES[regiao].nome}` : ''}. Quanto mais escuro, maior a %. Não é o total do país.</p>
+      <span className="mapa-gradiente" style={{ background: `linear-gradient(to right, ${FOCO_CLARO}, ${FOCO_ESCURO})` }} />
+      <span className="mapa-extremos"><b>{fmtPct(escala.min)}%</b><b>{fmtPct(escala.max)}%</b></span>
+      {regiao && candFoco.votosPais > 0 && (
+        <p>Do total de votos de {escala.nome} nos estados com resultado, <b>{fmtPct((candFoco.regs[regiao].votos / candFoco.votosPais) * 100)}%</b> vieram da região {REGIOES[regiao].nome} ({fmt(candFoco.regs[regiao].votos)} de {fmt(candFoco.votosPais)}).</p>
+      )}
+      <button type="button" className="mapa-pilula" onClick={() => setFoco(null)}>Voltar às cores das regiões</button>
+    </div>
+  ) : null;
+
   const ativo = hover; // quadro flutuante
   const somaValidosUF = Object.values(dados.estados).reduce((n, e) => n + e.votos.validos, 0);
   const exterior = nacional && nacional.votos && nacional.votos.validos > somaValidosUF ? nacional.votos.validos - somaValidosUF : null;
@@ -308,7 +348,7 @@ export default function MapaBrasilApuracao({ turno = 1 }) {
         <section className="mapa-lado mapa-lado-mapa" aria-label="Mapa do Brasil: presidente por estado">
           {/* Filtro por região: escolha excludente, então segmented control. Clicar de novo desmarca. */}
           <div className="mapa-controles">
-            <Segmentado className="seg-compacto" aria="Somar os estados de uma região" itens={ORDEM_REGIOES.map((k) => ({ chave: k, rotulo: REGIOES[k].nome, cor: REGIOES[k].cor, ativo: regiao === k, aoClicar: () => escolherRegiao(k) }))} />
+            <Segmentado className={candFoco ? 'seg-compacto seg-com-pct' : 'seg-compacto'} aria="Somar os estados de uma região" itens={ORDEM_REGIOES.map((k) => ({ chave: k, rotulo: candFoco ? <>{REGIOES[k].nome} <b className="mapa-reg-pct" title={candFoco.regs[k].faltam.length ? 'Parcial: o TSE ainda não publicou ' + candFoco.regs[k].faltam.join(', ') : undefined}>{fmt1(candFoco.regs[k].pct)}%{candFoco.regs[k].faltam.length ? '*' : ''}</b></> : REGIOES[k].nome, cor: REGIOES[k].cor, ativo: regiao === k, aoClicar: () => escolherRegiao(k) }))} />
           </div>
 
           <div className="mapa-caixa" ref={caixaRef} onMouseMove={aoMover} onMouseLeave={() => setHover(null)}>
@@ -340,8 +380,11 @@ export default function MapaBrasilApuracao({ turno = 1 }) {
                 })}
               </g>
               <g style={{ pointerEvents: 'none' }} aria-hidden="true">
-                {MAPA_BRASIL.estados.filter((g) => g.area >= AREA_MINIMA_ROTULO || g.uf === 'DF').map((geo) => (
-                  <text key={geo.uf} x={geo.cx} y={geo.cy} className={geo.uf === 'DF' ? 'mapa-sigla mapa-sigla-mini' : 'mapa-sigla'} style={{ opacity: opacidadeDe(geo) }}>{geo.uf}</text>
+                {MAPA_BRASIL.estados.filter((g) => g.area >= AREA_MINIMA_ROTULO).map((geo) => (
+                  <g key={geo.uf} style={{ opacity: opacidadeDe(geo), transition: 'opacity .3s' }}>
+                    <text x={geo.cx} y={candFoco ? geo.cy - 4.5 : geo.cy} className={`mapa-sigla${claroDe(geo) ? ' mapa-sigla-escura' : ''}`}>{geo.uf}</text>
+                    {candFoco && <text x={geo.cx} y={geo.cy + 6} className={`mapa-sigla mapa-sigla-pct${claroDe(geo) ? ' mapa-sigla-escura' : ''}`}>{fmt1(candFoco.porUf[geo.uf])}</text>}
+                  </g>
                 ))}
                 {MAPA_BRASIL.estados.filter((g) => CHAMADAS[g.uf]).map((geo) => {
                   const [lx, ly] = CHAMADAS[geo.uf];
@@ -349,7 +392,7 @@ export default function MapaBrasilApuracao({ turno = 1 }) {
                     <g key={geo.uf} style={{ opacity: opacidadeDe(geo), transition: 'opacity .3s' }}>
                       <line x1={geo.cx} y1={geo.cy} x2={lx - 3} y2={ly} className="mapa-chamada-linha" />
                       <circle cx={geo.cx} cy={geo.cy} r={1.6} className="mapa-chamada-ponto" />
-                      <text x={lx} y={ly} className="mapa-sigla-fora">{geo.uf}</text>
+                      <text x={lx} y={ly} className="mapa-sigla-fora">{geo.uf}{candFoco && <tspan className="mapa-fora-pct"> {fmt1(candFoco.porUf[geo.uf])}</tspan>}</text>
                     </g>
                   );
                 })}
@@ -382,15 +425,7 @@ export default function MapaBrasilApuracao({ turno = 1 }) {
                 <span className="mapa-fixado">Região selecionada</span>
                 <button type="button" className="mapa-pilula" onClick={limparTudo}>Limpar</button>
               </div>
-              {escala && (
-                <div className="mapa-foco-banner" role="status">
-                  <p><b>Mapa colorido por {escala.nome}</b></p>
-                  <p>Cada estado mostra a % de votos válidos que {escala.nome} teve nele{regiao ? `, só nos estados da região ${REGIOES[regiao].nome}` : ''}. Quanto mais escuro, mais votos. Não é o total do país.</p>
-                  <span className="mapa-gradiente" style={{ background: `linear-gradient(to right, ${FOCO_CLARO}, ${FOCO_ESCURO})` }} />
-                  <span className="mapa-extremos"><b>{fmtPct(escala.min)}%</b><b>{fmtPct(escala.max)}%</b></span>
-                  <button type="button" className="mapa-pilula" onClick={() => setFoco(null)}>Voltar às cores das regiões</button>
-                </div>
-              )}
+              {bannerFoco}
               {agregado.e ? (
                 <Quadro key={`reg-${regiao}`} agregado={agregado} dados={dados} foco={foco} aoFocar={setFoco} interativo />
               ) : (
@@ -399,7 +434,7 @@ export default function MapaBrasilApuracao({ turno = 1 }) {
               {agregado.faltam.length > 0 && agregado.e && (
                 <p className="mapa-aviso-parcial">Total parcial: o TSE ainda não publicou {agregado.faltam.join(', ')}.</p>
               )}
-              <p className="mapa-dica-painel">Soma dos votos de todos os estados da região. Clique em um candidato para colorir o mapa com a votação dele em cada estado da região.</p>
+              <p className="mapa-dica-painel">Soma dos votos de todos os estados da região. Em “Ver no mapa”, ao lado de um candidato, o mapa é colorido com a votação dele em cada estado da região.</p>
             </>
           ) : fixo ? (
             <>
@@ -407,17 +442,9 @@ export default function MapaBrasilApuracao({ turno = 1 }) {
                 <span className="mapa-fixado">Estado fixado</span>
                 <button type="button" className="mapa-pilula" onClick={limparTudo}>Limpar</button>
               </div>
-              {escala && (
-                <div className="mapa-foco-banner" role="status">
-                  <p><b>Mapa colorido por {escala.nome}</b></p>
-                  <p>Cada estado mostra a % de votos válidos que {escala.nome} teve nele{regiao ? `, só nos estados da região ${REGIOES[regiao].nome}` : ''}. Quanto mais escuro, mais votos. Não é o total do país.</p>
-                  <span className="mapa-gradiente" style={{ background: `linear-gradient(to right, ${FOCO_CLARO}, ${FOCO_ESCURO})` }} />
-                  <span className="mapa-extremos"><b>{fmtPct(escala.min)}%</b><b>{fmtPct(escala.max)}%</b></span>
-                  <button type="button" className="mapa-pilula" onClick={() => setFoco(null)}>Voltar às cores das regiões</button>
-                </div>
-              )}
+              {bannerFoco}
               <Quadro key={fixo} uf={fixo} dados={dados} foco={foco} aoFocar={setFoco} interativo />
-              <p className="mapa-dica-painel">Clique em um candidato para colorir o mapa com a votação dele em cada estado.</p>
+              <p className="mapa-dica-painel">Em “Ver no mapa”, ao lado de um candidato, o mapa é colorido com a votação dele em cada estado.</p>
             </>
           ) : (
             <div className="mapa-vazio">
@@ -426,7 +453,7 @@ export default function MapaBrasilApuracao({ turno = 1 }) {
               <ul>
                 <li>Passe o mouse para ver quanto cada candidato teve.</li>
                 <li>Clique para fixar o resultado aqui e comparar com outro estado.</li>
-                <li>Depois de fixar, clique num candidato para colorir o mapa com a votação dele em cada estado.</li>
+                <li>Depois de fixar, use “Ver no mapa” ao lado de um candidato para ver a votação dele em cada estado.</li>
                 <li>Clique em uma região, acima do mapa, para ver o total dela.</li>
                 <li>Use Tab e as setas para navegar pelo teclado.</li>
               </ul>
@@ -451,6 +478,8 @@ function Estilos() {
       .mapa-controles { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 14px; margin-bottom: 8px; position: relative; z-index: 5; }
             .seg-compacto .seg-op { padding: 6px 9px; font-size: .84rem; }
       .seg-compacto .seg-ponto { margin-right: 6px; }
+      .seg-com-pct .seg-op { padding: 6px 10px; font-size: .84rem; white-space: nowrap; }
+      .seg-com-pct .seg-ponto { display: none; }
 
       .mapa-caixa { position: relative; }
       .mapa-svg { width: 100%; height: auto; max-height: max(560px, calc(100vh - 120px)); display: block; overflow: visible; margin: 0 auto; }
@@ -460,8 +489,11 @@ function Estilos() {
       .mapa-realce-fixo { stroke: ${t.cor.tinta}; stroke-width: 2.2; }
       .mapa-pulso { animation: mapa-sobe-estado .22s ease both, mapa-pulsa 1.2s ease-out .2s 1 both; }
       .mapa-sigla { font: 600 9.5px ${t.fonte.corpo}; fill: #fff; text-anchor: middle; dominant-baseline: middle; paint-order: stroke; stroke: rgba(0,0,0,.28); stroke-width: 2px; stroke-linejoin: round; transition: opacity .3s; }
-      .mapa-sigla-mini { font-size: 6.5px; stroke-width: 1.4px; }
-      .mapa-sigla-fora { font: 700 9.5px ${t.fonte.corpo}; fill: ${t.cor.tinta}; text-anchor: start; dominant-baseline: middle; }
+      .mapa-sigla-escura { fill: ${t.cor.tinta}; stroke: rgba(255,255,255,.7); }
+      .mapa-sigla-pct { font-weight: 500; font-size: 8.5px; }
+      .mapa-fora-pct { font-weight: 500; }
+      .mapa-reg-pct { margin-left: 3px; font-variant-numeric: tabular-nums; font-weight: 800; }
+      .mapa-sigla-fora { font: 700 9.5px ${t.fonte.corpo}; fill: ${t.cor.tinta}; text-anchor: start; dominant-baseline: middle; paint-order: stroke; stroke: #fff; stroke-width: 3px; stroke-linejoin: round; }
       .mapa-chamada-linha { stroke: ${t.cor.cinza}; stroke-width: .8px; }
       .mapa-chamada-ponto { fill: ${t.cor.cinza}; }
       .mapa-alvo { fill: transparent; cursor: pointer; }
