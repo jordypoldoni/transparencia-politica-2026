@@ -302,7 +302,7 @@ export default function MapaBrasilApuracao({ turno = 1 }) {
   return (
     <div className="mapa-raiz">
       <div className="mapa-grade">
-        <section className="mapa-cartao" aria-label="Mapa do Brasil: presidente por estado">
+        <section className="mapa-lado mapa-lado-mapa" aria-label="Mapa do Brasil: presidente por estado">
           {/* Filtro por região: escolha excludente, então segmented control. Clicar de novo desmarca. */}
           <div className="mapa-controles">
             <Segmentado className="seg-compacto" aria="Somar os estados de uma região" itens={ORDEM_REGIOES.map((k) => ({ chave: k, rotulo: REGIOES[k].nome, cor: REGIOES[k].cor, ativo: regiao === k, aoClicar: () => escolherRegiao(k) }))} />
@@ -362,7 +362,7 @@ export default function MapaBrasilApuracao({ turno = 1 }) {
           </p>
         </section>
 
-        <aside className="mapa-cartao mapa-painel" aria-live="polite" aria-label="Resultado do estado fixado">
+        <aside className="mapa-lado mapa-painel" aria-live="polite" aria-label="Resultado do estado fixado">
           {agregado ? (
             <>
               <div className="mapa-painel-topo">
@@ -430,7 +430,9 @@ function Estilos() {
   return (
     <style jsx global>{`
       .mapa-raiz { margin-top: 4px; }
-      .mapa-grade { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(300px, 1fr); gap: 20px; align-items: start; }
+      .mapa-grade { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(300px, 1fr); gap: 0; align-items: start; background: ${t.cor.papelCartao}; border-radius: ${t.raio.lg}; box-shadow: ${t.sombra.sutil}; padding: 20px; }
+      .mapa-lado { position: relative; min-width: 0; }
+      .mapa-lado-mapa { padding-right: 24px; }
       .mapa-cartao { background: ${t.cor.papelCartao}; border-radius: ${t.raio.lg}; box-shadow: ${t.sombra.sutil}; padding: 20px; position: relative; min-width: 0; }
       .mapa-aviso { color: ${t.cor.tinta}; display: flex; align-items: center; gap: 12px; line-height: 1.5; }
       .mapa-controles { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 14px; margin-bottom: 8px; position: relative; z-index: 5; }
@@ -493,7 +495,7 @@ function Estilos() {
       .mapa-nota { margin: 14px 0 0; font-size: .78rem; color: ${t.cor.cinza}; line-height: 1.5; }
       .mapa-nota a { color: ${t.cor.ouroTexto}; font-weight: 700; }
 
-      .mapa-painel { position: sticky; top: 16px; min-height: 260px; max-height: calc(100vh - 32px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+      .mapa-painel { position: sticky; top: 16px; min-height: 260px; max-height: calc(100vh - 72px); padding-left: 24px; box-shadow: inset 1px 0 0 ${t.cor.papelQuente2}; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
       .mapa-painel-topo { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
       .mapa-fixado { font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: ${t.cor.cinza}; font-weight: 700; }
       .mapa-dica-painel { margin: 12px 0 0; font-size: .78rem; color: ${t.cor.cinza}; }
@@ -510,7 +512,7 @@ function Estilos() {
       @keyframes mapa-cresce { from { transform: scaleX(0); } to { transform: scaleX(1); } }
       @keyframes mapa-pulsa { 0% { stroke-width: 1.4; } 40% { stroke-width: 6; stroke: #CC7A22; } 100% { stroke-width: 2.2; } }
       @keyframes mapa-pisca { 0%, 100% { opacity: .25; } 50% { opacity: 1; } }
-      @media (max-width: 1000px) { .mapa-grade { grid-template-columns: minmax(0, 1fr); } .mapa-painel { position: static; } }
+      @media (max-width: 1000px) { .mapa-grade { grid-template-columns: minmax(0, 1fr); } .mapa-lado-mapa { padding-right: 0; } .mapa-painel { position: static; max-height: none; padding: 18px 0 0; margin-top: 18px; box-shadow: inset 0 1px 0 ${t.cor.papelQuente2}; } }
     `}</style>
   );
 }
