@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { t } from '../src/estilo/tokens';
 import { NOMES_UF } from '../src/lib/cotas';
 import { MAPA_BRASIL } from '../src/lib/mapaBrasilGeo';
+import { REGIOES, ORDEM_REGIOES } from '../src/lib/mapaRegioes';
 import Segmentado from './Segmentado';
 
 // MAPA DO BRASIL NA APURAÇÃO (12/10/2026, D-026). Presidente por estado, lido de /api/apuracao-estados.
@@ -10,14 +11,6 @@ import Segmentado from './Segmentado';
 // pesa na tela normal. Regras do Jordy: a cor do estado marca a REGIÃO (só para identificar; nunca partido, nunca as
 // cores do site); o resultado aparece no hover, igual para todos; clique fixa o estado ao lado; clicar num candidato
 // mostra em que estados ele foi melhor (uma cor neutra, em intensidade). Neutralidade: ordem por votos, sem rótulos.
-const REGIOES = {
-  N: { nome: 'Norte', cor: '#2F7D6B' },
-  NE: { nome: 'Nordeste', cor: '#C07A3C' },
-  CO: { nome: 'Centro-Oeste', cor: '#8A8F3A' },
-  SE: { nome: 'Sudeste', cor: '#5B6FA8' },
-  S: { nome: 'Sul', cor: '#8E5C9A' },
-};
-const ORDEM_REGIOES = ['N', 'NE', 'CO', 'SE', 'S'];
 const SEM_DADOS = '#D9D6CE';
 const FOCO_CLARO = '#E4E8EE';
 const FOCO_ESCURO = '#334155';

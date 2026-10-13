@@ -9,6 +9,8 @@ import { t } from '../src/estilo/tokens';
 
 // Mapa por estados (D-026): só carrega quando o usuário escolhe essa visão.
 const MapaBrasilApuracao = dynamic(() => import('./MapaBrasilApuracao'), { ssr: false, loading: () => <p style={{ color: t.cor.cinza }}>Carregando o mapa…</p> });
+// Celular (D-032): o mapa de verdade depende de hover e tem estados minúsculos; no celular entra a grade de quadrados.
+const MapaGradeApuracao = dynamic(() => import('./MapaGradeApuracao'), { ssr: false, loading: () => <p style={{ color: t.cor.cinza }}>Carregando o resultado por estado…</p> });
 
 // APURAÇÃO dentro de "Eleições 2026" (02/10/2026). Mostra o resultado oficial do TSE lido por
 // /api/apuracao (cache de 10 s na borda com a apuração em andamento, 30 s nos outros casos; nada é guardado no banco). A tela se atualiza sozinha
@@ -180,6 +182,14 @@ export default function ApuracaoEleicao({ cargo, ufInicial, turno = 1 }) {
 
           {/* CELULAR: como era (cartão de progresso + quadros em grade). */}
           <div className="so-celular">
+            {podeMapa && (
+              <div style={{ marginBottom: '12px' }}>
+                <Segmentado aria="Forma de ver o resultado" itens={[
+                  { rotulo: 'Lista', ativo: !porEstados, aoClicar: () => setVisao('lista') },
+                  { rotulo: 'Mapa por estados', ativo: porEstados, aoClicar: () => setVisao('estados') },
+                ]} />
+              </div>
+            )}
             <div style={{ ...cartao, marginBottom: '12px' }}>
               <p style={{ margin: 0, fontWeight: 700, color: t.cor.tinta }}>
                 {d.nome_cargo || 'Cargo'}{cargo === 'presidente' ? ' · Brasil' : ` · ${NOMES_UF[uf] || uf}`}{turno === 2 ? ' · 2º turno' : ''}
@@ -193,9 +203,11 @@ export default function ApuracaoEleicao({ cargo, ufInicial, turno = 1 }) {
               </div>
               {d.gerado_em && <p style={{ margin: '8px 0 0', fontSize: '0.76rem', color: t.cor.cinza }}>Arquivo do TSE gerado em {d.gerado_em}{erro ? ' · a última atualização falhou, mostrando o dado anterior' : ''}.</p>}
             </div>
-            <div style={{ display: 'grid', gap: '10px', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))' }}>
-              {numeros.map((n) => <Dado key={n.rotulo} rotulo={n.rotulo} valor={n.valor} sub={n.sub} />)}
-            </div>
+            {!porEstados && (
+              <div style={{ display: 'grid', gap: '10px', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))' }}>
+                {numeros.map((n) => <Dado key={n.rotulo} rotulo={n.rotulo} valor={n.valor} sub={n.sub} />)}
+              </div>
+            )}
           </div>
 
           {/* COMPUTADOR (12/10/2026): um cartão só (região comum): progresso, escolha de visão e os seis números
@@ -237,7 +249,7 @@ export default function ApuracaoEleicao({ cargo, ufInicial, turno = 1 }) {
           {!proporcional && porEstados && (
             <>
               <div className="so-computador" style={{ marginTop: '26px' }}><MapaBrasilApuracao turno={turno} /></div>
-              <div className="so-celular">{listaCandidatos}</div>
+              <div className="so-celular" style={{ marginTop: '4px' }}><MapaGradeApuracao turno={turno} /></div>
             </>
           )}
           {!proporcional && !porEstados && listaCandidatos}
