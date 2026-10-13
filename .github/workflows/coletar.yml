@@ -104,3 +104,14 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         continue-on-error: true
         run: node coletores/coletor_proposicoes.js
+
+      # Pedidos de CPI da Camara (I1, 13/10/2026). A pagina /cpis le a tabela pedidos_cpi_camara
+      # porque o servidor da Vercel nao conecta no host da Camara ("fetch failed"); o GitHub conecta.
+      # Uma vez por dia basta: pedido de CPI muda raramente. continue-on-error: se a Camara cair,
+      # os outros passos ja rodaram e a tabela segue com os dados da ultima coleta boa.
+      - name: Pedidos de CPI da Câmara
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        continue-on-error: true
+        run: node coletores/coletor_pedidos_cpi.js
