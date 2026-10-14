@@ -18,7 +18,7 @@ const CAMARA = 'https://dadosabertos.camara.leg.br/api/v2';
 const TIMEOUT_MS = 12000;
 const PRIMEIRO_ANO = 2023; // inicio da legislatura atual (2023 a 2026)
 
-async function buscar(url, tipo = 'json') {
+async function buscarUma(url, tipo = 'json') {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
   try {
@@ -31,6 +31,19 @@ async function buscar(url, tipo = 'json') {
   } finally {
     clearTimeout(timer);
   }
+}
+
+// Tentativas extras com pausa (so o coletor da Camara usa: 1/2025 e 2/2025, com ~180 assinantes,
+// falharam uma vez no run #109 e responderam normal minutos depois). Padrao 1 = comportamento antigo.
+async function buscar(url, tipo = 'json', tentativas = 1) {
+  let erro;
+  for (let i = 1; i <= tentativas; i++) {
+    try { return await buscarUma(url, tipo); } catch (e) {
+      erro = e;
+      if (i < tentativas) await new Promise((r) => setTimeout(r, 2000 * i));
+    }
+  }
+  throw erro;
 }
 
 // ---------- XML do Senado (sem dependencia: so precisamos de tags simples) ----------
@@ -124,8 +137,8 @@ export async function pedidosCamara(anoAtual = new Date().getFullYear()) {
     };
     // Detalhe e assinantes sao independentes: se um falhar, o outro ainda aparece.
     const [det, aut] = await Promise.allSettled([
-      buscar(`${CAMARA}/proposicoes/${p.id}`),
-      buscar(`${CAMARA}/proposicoes/${p.id}/autores`),
+      buscar(`${CAMARA}/proposicoes/${p.id}`, 'json', 3),
+      buscar(`${CAMARA}/proposicoes/${p.id}/autores`, 'json', 3),
     ]);
     if (det.status === 'fulfilled') {
       const d = det.value?.dados || {};
