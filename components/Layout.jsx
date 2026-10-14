@@ -432,7 +432,7 @@ export default function Layout({ children, pageProps }) {
         <div style={{ borderTop: `1px solid ${t.cor.papelQuente2}` }}>
           <div style={{ width: '100%', padding: '18px 24px', display: 'flex', flexWrap: 'wrap', gap: '6px 20px', justifyContent: 'space-between', color: t.cor.cinza, fontSize: '0.8rem' }}>
             <p style={{ margin: 0 }}>© {new Date().getFullYear()} Lume Cidadão. Todos os direitos reservados.</p>
-            <p style={{ margin: 0 }}>Desenvolvido por Jordy Oldoni</p>
+            <p style={{ margin: 0 }}>Desenvolvido por PELEGRA</p>
           </div>
         </div>
       </footer>
