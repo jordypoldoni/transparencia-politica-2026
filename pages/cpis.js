@@ -1,14 +1,16 @@
 // /cpis: CPIs em atividade no Senado e pedidos de CPI na Camara (ideia I1, 12/10/2026).
 //
-// Tudo vem ao vivo das fontes oficiais, sem banco (ver src/lib/cpisAoVivo.js), com cache de
-// 1 hora na borda. Regra do site: so fato e fonte. Esta pagina NAO diz que alguem e investigado
+// Senado: ao vivo da fonte oficial (src/lib/cpisAoVivo.js), cache de 1 hora na borda.
+// Camara: lido da tabela pedidos_cpi_camara (banco 1), preenchida todo dia pelo coletor
+// coletores/coletor_pedidos_cpi.js, porque a Vercel nao consegue chamar a API da Camara (D-033). Regra do site: so fato e fonte. Esta pagina NAO diz que alguem e investigado
 // nem sugere culpa: pedido de CPI e um pedido, e participar de CPI nao e ser alvo dela.
 //
 // Cada fonte falha sozinha: se o Senado cair, os pedidos da Camara continuam aparecendo, e o
 // bloco que falhou diz isso, em vez de mostrar lista vazia (que se leria como "nao ha CPI").
 
 import Head from 'next/head';
-import { cpisSenado, pedidosCamara } from '../src/lib/cpisAoVivo';
+import { createClient } from '@supabase/supabase-js';
+import { cpisSenado } from '../src/lib/cpisAoVivo';
 import { t } from '../src/estilo/tokens';
 import { dataBr } from '../src/lib/datas';
 
@@ -123,7 +125,7 @@ export default function PaginaCpis({ senado, camara }) {
           <section style={cartao}>
             <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.35rem', margin: '0 0 4px' }}>Pedidos de CPI na Câmara</h2>
             <p style={{ ...aviso, margin: '0 0 14px', fontSize: '0.84rem' }}>
-              Requerimentos de instituição de CPI apresentados de 2023 em diante, do mais recente para o mais antigo. O número de assinaturas é o que consta no requerimento; a Câmara decide se o pedido atende às exigências.
+              Requerimentos de instituição de CPI apresentados de 2023 em diante, do mais recente para o mais antigo. O número de assinaturas é o que consta no requerimento; a Câmara decide se o pedido atende às exigências.{camara.atualizadoEm ? <> Lista atualizada em {dataBr(String(camara.atualizadoEm).slice(0, 10))}.</> : null}
             </p>
             {!camara.ok ? (
               <p style={aviso}>Não foi possível carregar agora. A fonte oficial não respondeu.</p>
@@ -146,8 +148,22 @@ export default function PaginaCpis({ senado, camara }) {
   );
 }
 
+async function pedidosDaTabela() {
+  const banco = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+  const { data, error } = await banco.from('pedidos_cpi_camara').select('*')
+    .order('ano', { ascending: false }).order('numero', { ascending: false });
+  if (error) throw new Error(error.message);
+  const itens = (data || []).map((r) => ({
+    id: r.id, numero: r.numero, ano: r.ano, ementa: r.ementa, data: r.data_apresentacao,
+    situacao: r.situacao, despacho: r.despacho, dataSituacao: r.data_situacao,
+    assinaturas: r.assinaturas, primeiro: r.primeiro_autor, inteiroTeor: r.inteiro_teor, ficha: r.ficha,
+  }));
+  const atualizadoEm = (data || []).reduce((m, r) => (r.coletado_em > m ? r.coletado_em : m), '') || null;
+  return { itens, atualizadoEm };
+}
+
 export async function getServerSideProps({ res }) {
-  const [s, c] = await Promise.allSettled([cpisSenado(), pedidosCamara()]);
+  const [s, c] = await Promise.allSettled([cpisSenado(), pedidosDaTabela()]);
   if (s.status === 'rejected') console.error('cpis/senado:', s.reason?.message);
   if (c.status === 'rejected') console.error('cpis/camara:', c.reason?.message);
   // Uma hora na borda; so cacheia se as duas fontes responderam, senao o erro grudaria.
@@ -157,7 +173,7 @@ export async function getServerSideProps({ res }) {
   return {
     props: {
       senado: s.status === 'fulfilled' ? { ok: true, itens: s.value } : { ok: false, itens: [] },
-      camara: c.status === 'fulfilled' ? { ok: true, itens: c.value } : { ok: false, itens: [] },
+      camara: c.status === 'fulfilled' ? { ok: true, itens: c.value.itens, atualizadoEm: c.value.atualizadoEm } : { ok: false, itens: [], atualizadoEm: null },
     },
   };
 }
