@@ -75,21 +75,14 @@ jobs:
         continue-on-error: true
         run: node coletores/coletor_alesp.js
 
-      # Rio Grande do Sul (ALERGS). O ano vai por $(date -u +%Y) em vez de fixo: assim a virada
-      # de ano nao deixa o coletor preso em 2026, como aconteceu com os outros passos daqui.
-      - name: Estadual RS — votos em plenário (ALERGS)
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        continue-on-error: true
-        run: node coletores/coletor_votos_alergs.js $(date -u +%Y)
-
-      - name: Estadual RS — gastos de gabinete (ALERGS)
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        continue-on-error: true
-        run: node coletores/coletor_gastos_alergs.js $(date -u +%Y)
+      # Rio Grande do Sul (ALERGS): NAO roda mais aqui desde 15/10/2026 (T4b, D-034). O GitHub nao
+      # alcanca a ALERGS: medido em 15/10, a conexao TCP expira (UND_ERR_CONNECT_TIMEOUT, ~10,5 s) nos
+      # hosts ww4.al.rs.gov.br (inclusive a porta 5000) e transparencia.al.rs.gov.br, enquanto do Brasil
+      # respondem normal. Retry nao resolve. Votos e gastos do RS sao coletados a mao, no terminal do
+      # Jordy (IP do Brasil):
+      #   node coletores/coletor_votos_alergs.js 2026
+      #   node coletores/coletor_gastos_alergs.js 2026   (apaga e regrava: rodar uma vez, nao em seguida)
+      # Os dois coletores continuam em coletores/. Quando houver caminho automatico, voltam para ca.
 
       # Proposicoes dos federais e senadores. Ate 11/09/2026 isso so era atualizado quando
       # alguem rodava coletor_biografia.js a mao — e esse nunca esteve neste agendamento, entao
