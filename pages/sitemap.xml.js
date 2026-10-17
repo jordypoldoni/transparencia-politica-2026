@@ -4,7 +4,7 @@ import { hrefPerfil, CASAS_VOTACAO } from '../src/lib/casa';
 // Páginas fixas do site. Até 12/09/2026 faltavam aqui /gastos-publicos, /candidatos-2026
 // e /presidenciaveis, que existem e são públicas. Em 01/10/2026 /presidenciaveis saiu: hoje ela
 // redireciona para /candidatos-2026, e endereço que redireciona não deve estar no sitemap.
-const FIXAS = ['', '/comecar', '/deputados', '/senadores', '/votacoes', '/cpis', '/gastos-publicos', '/candidatos-2026', '/entenda', '/sobre'];
+const FIXAS = ['', '/comecar', '/deputados', '/senadores', '/votacoes', '/cpis', '/gastos-publicos', '/candidatos-2026', '/entenda', '/entenda/atualizacao', '/sobre'];
 
 const UFS = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
 

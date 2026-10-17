@@ -52,7 +52,7 @@ export default function SeloAtualizacao({ fonte, escopo = '', mensal = false, ti
   return (
     <p style={{ margin: '0 0 14px', fontSize: '0.8rem', lineHeight: 1.5, color: escuro ? 'rgba(255,255,255,0.78)' : t.cor.cinza, ...style }}>
       {texto}
-      {!semLink && <>{' · '}<Link href="/entenda#atualizacao" style={{ color: escuro ? t.cor.ouro : t.cor.ouroTexto, fontWeight: 600 }}>Como atualizamos</Link></>}
+      {!semLink && <>{' · '}<Link href="/entenda/atualizacao" style={{ color: escuro ? t.cor.ouro : t.cor.ouroTexto, fontWeight: 600 }}>Como atualizamos</Link></>}
     </p>
   );
 }

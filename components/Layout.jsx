@@ -67,7 +67,16 @@ const navItens = [
   },
   { href: '/gastos-publicos', rotulo: 'Gastos públicos' },
   { href: '/candidatos-2026', rotulo: 'Eleições 2026' },
-  { href: '/entenda', rotulo: 'Entenda' },
+  // 17/10/2026 (decisão do Jordy): Entenda vira grupo, como Pra você, Parlamentares e Decisões:
+  // abre as subpáginas para o usuário escolher. "Quem é quem" mantém o endereço antigo /entenda
+  // (links e Google continuam valendo); "Como atualizamos os dados" tem endereço próprio.
+  {
+    rotulo: 'Entenda',
+    filhos: [
+      { href: '/entenda', rotulo: 'Quem é quem', nota: 'o que faz cada político e a cota' },
+      { href: '/entenda/atualizacao', rotulo: 'Como atualizamos os dados', curto: 'Como atualizamos', nota: 'de onde vêm e quando coletamos' },
+    ],
+  },
 ];
 
 function ehAtivo(href, pathname) {
@@ -81,6 +90,8 @@ function ehAtivo(href, pathname) {
   // casas: o Layout troca a rota por /deputados-estaduais quando o perfil é de estadual (rotaMenu).
   if (hp === '/deputados') return pathname === '/deputados' || pathname.startsWith('/deputado/');
   if (hp === '/deputados-estaduais') return pathname === '/deputados-estaduais' || pathname.startsWith('/deputados/');
+  // /entenda e /entenda/atualizacao sao irmas: sem isto, a segunda acenderia as duas.
+  if (hp === '/entenda') return pathname === '/entenda';
   if (hp === '/indicacoes') return pathname === '/indicacoes' || pathname.startsWith('/indicacao/');
   if (hp === '/votacoes') return pathname === '/votacoes' || pathname.startsWith('/votacao');
   if (hp === '/candidatos-2026') return pathname === '/candidatos-2026' || pathname.startsWith('/presidencial/') || pathname.startsWith('/deputado-federal/') || pathname.startsWith('/candidato-');
