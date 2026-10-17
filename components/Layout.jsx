@@ -273,6 +273,11 @@ export default function Layout({ children, pageProps }) {
               }
               const ativo = grupoAtivo(n, rotaMenu);
               const estaAberto = aberto === n.rotulo;
+              // O ULTIMO item do menu abre ALINHADO A DIREITA. O painel tem 260px de largura minima e
+              // nasce na borda esquerda do botao: no ultimo item, que fica colado na margem da
+              // janela, ele passava da tela e cortava o texto (Entenda, 17/10/2026, 1366px). Alinhar
+              // pela direita mantem o painel dentro da janela em qualquer largura.
+              const ancoraDireita = navItens[navItens.length - 1] === n;
               return (
                 <div key={n.rotulo} style={{ position: 'relative' }}
                   onMouseEnter={() => abrirGrupo(n.rotulo)}
@@ -293,7 +298,7 @@ export default function Layout({ children, pageProps }) {
                     // Invólucro sem fundo, colado no botão (top: 100%), com o respiro de 6px
                     // como PADDING. É o que elimina a zona morta entre o botão e o painel.
                     <div
-                      style={{ position: 'absolute', top: '100%', left: 0, paddingTop: '6px', zIndex: 60 }}
+                      style={{ position: 'absolute', top: '100%', ...(ancoraDireita ? { right: 0 } : { left: 0 }), paddingTop: '6px', zIndex: 60 }}
                       onMouseEnter={() => abrirGrupo(n.rotulo)}
                       onMouseLeave={fecharComTolerancia}
                     >
