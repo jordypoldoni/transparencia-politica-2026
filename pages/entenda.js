@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { t } from '../src/estilo/tokens';
 import { Seta } from '../components/icones';
 import { CEAP_LISTA } from '../src/lib/cotas';
+import AtualizacaoDados from '../components/AtualizacaoDados';
+import { montarGrupos, lerFonteStatus } from '../src/lib/fontesAtualizacao';
 
 const fmtBRL = (v) => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -41,7 +43,12 @@ const CARGOS = [
 const cartao = { background: t.cor.papelCartao, borderRadius: t.raio.md, padding: '20px 22px', boxShadow: t.sombra.sutil };
 const fonte = { display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 16px', fontSize: '0.85rem', fontWeight: 700, fontFamily: t.fonte.corpo, borderRadius: t.raio.pill, textDecoration: 'none', background: '#fff', color: t.cor.tinta, boxShadow: t.sombra.botao };
 
-export default function Entenda() {
+// Datas de coleta vem de fonte_status. Regenerada a cada 30 min: o dado muda no maximo uma vez por dia.
+export async function getStaticProps() {
+  return { props: { grupos: montarGrupos(await lerFonteStatus()) }, revalidate: 1800 };
+}
+
+export default function Entenda({ grupos }) {
   return (
     <>
       <Head>
@@ -203,7 +210,9 @@ export default function Entenda() {
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+        <AtualizacaoDados grupos={grupos} />
+
+        <div style={{ marginTop: '32px', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
           <Link href="/deputados" style={{ ...fonte, background: t.cor.verde, color: t.cor.ouro, border: 'none' }}>Ver os parlamentares<Seta direcao="direita" size={14} emTexto /></Link>
           <Link href="/votacoes" style={fonte}>Ver as votações<Seta direcao="direita" size={14} emTexto /></Link>
         </div>

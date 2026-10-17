@@ -175,6 +175,25 @@ export default function App({ Component, pageProps }) {
            padrao do navegador. Em hex pelo mesmo motivo do bloco abaixo. */
         .campo-email::placeholder { color: #666E7B; opacity: 1; }
 
+        /* Secao Como atualizamos os dados (components/AtualizacaoDados.jsx). Hex iguais aos de
+           src/estilo/tokens.js: tinta #191C20, cinza #666E7B, papelQuente #FAF5EE.
+           Computador: quatro colunas. Celular: cada linha vira um bloco, fonte em cima e os tres
+           valores logo abaixo, cada um com seu rotulo. O alinhamento fica aqui, nao no style. */
+        .atu-cab, .atu-linha { display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr; gap: 8px; align-items: center; }
+        .atu-cab { font-size: 0.72rem; color: #666E7B; padding: 2px 0 6px; }
+        .atu-linha { font-size: 0.9rem; color: #191C20; padding: 10px 12px; margin: 0 -12px; border-radius: 8px; }
+        .atu-linha:nth-of-type(even) { background: #FAF5EE; }
+        .atu-fonte { font-weight: 600; }
+        .atu-rot { display: none; }
+        @media (max-width: 640px) {
+          .atu-cab { display: none; }
+          .atu-linha { grid-template-columns: 1fr 1fr; row-gap: 6px; padding: 12px; }
+          .atu-fonte { grid-column: 1 / -1; }
+          .atu-freq { grid-column: 1 / -1; color: #666E7B; font-size: 0.82rem; }
+          .atu-rot { display: block; font-size: 0.68rem; color: #666E7B; text-transform: uppercase; letter-spacing: 0.04em; }
+          .atu-freq .atu-rot { display: inline; margin-right: 6px; }
+        }
+
         /* Grafico de gastos mes a mes (PerfilPolitico). Fica AQUI, e nao num <style jsx> dentro
            do componente: o compilador do Next quebra ("Option::unwrap() on a None") quando o CSS
            do componente interpola valores dos tokens. Por isso as cores vao em hex, iguais as de

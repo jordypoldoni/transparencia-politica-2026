@@ -75,14 +75,9 @@ jobs:
         continue-on-error: true
         run: node coletores/coletor_alesp.js
 
-      # Rio Grande do Sul (ALERGS): NAO roda mais aqui desde 15/10/2026 (T4b, D-034). O GitHub nao
-      # alcanca a ALERGS: medido em 15/10, a conexao TCP expira (UND_ERR_CONNECT_TIMEOUT, ~10,5 s) nos
-      # hosts ww4.al.rs.gov.br (inclusive a porta 5000) e transparencia.al.rs.gov.br, enquanto do Brasil
-      # respondem normal. Retry nao resolve. Votos e gastos do RS sao coletados a mao, no terminal do
-      # Jordy (IP do Brasil):
-      #   node coletores/coletor_votos_alergs.js 2026
-      #   node coletores/coletor_gastos_alergs.js 2026   (apaga e regrava: rodar uma vez, nao em seguida)
-      # Os dois coletores continuam em coletores/. Quando houver caminho automatico, voltam para ca.
+      # Rio Grande do Sul (ALERGS): NAO roda neste arquivo. O GitHub nao alcanca a ALERGS direto
+      # (conexao TCP expira, medido em 15/10/2026, T4b/D-034), entao votos e gastos do RS rodam em
+      # coletar_alergs.yml, que passa pela Edge Function alergs-ponte do Supabase (D-035, 17/10/2026).
 
       # Proposicoes dos federais e senadores. Ate 11/09/2026 isso so era atualizado quando
       # alguem rodava coletor_biografia.js a mao — e esse nunca esteve neste agendamento, entao
