@@ -74,6 +74,11 @@ jobs:
           BANCO_URL: ${{ secrets.BANCO1_DB_URL }}
         run: |
           set -euo pipefail
+          # Mascara a senha (e o endereco inteiro) em qualquer linha de log. O GitHub so mascara o segredo
+          # INTEIRO; se o pg_dump imprimir um pedaco da senha numa mensagem de erro, ele vazaria no log
+          # publico (aconteceu em 17/10 com a senha do banco 2, que tinha % e #). Medida de defesa.
+          SENHA=$(printf '%s' "$BANCO_URL" | sed -E 's#^[A-Za-z]+://[^:@/]+:(.*)@[^@]+$#\1#')
+          [ -n "$SENHA" ] && [ "$SENHA" != "$BANCO_URL" ] && echo "::add-mask::$SENHA"
           DATA=$(date -u +%Y-%m-%d)
           # grep -c le o arquivo TODO. Nao usar grep -q aqui: ele sai na primeira linha, o gunzip toma
           # "Broken pipe" e o pipefail derruba o passo mesmo com a tabela presente (erro de 17/10).
@@ -97,6 +102,11 @@ jobs:
           BANCO_URL: ${{ secrets.BANCO2_DB_URL }}
         run: |
           set -euo pipefail
+          # Mascara a senha (e o endereco inteiro) em qualquer linha de log. O GitHub so mascara o segredo
+          # INTEIRO; se o pg_dump imprimir um pedaco da senha numa mensagem de erro, ele vazaria no log
+          # publico (aconteceu em 17/10 com a senha do banco 2, que tinha % e #). Medida de defesa.
+          SENHA=$(printf '%s' "$BANCO_URL" | sed -E 's#^[A-Za-z]+://[^:@/]+:(.*)@[^@]+$#\1#')
+          [ -n "$SENHA" ] && [ "$SENHA" != "$BANCO_URL" ] && echo "::add-mask::$SENHA"
           DATA=$(date -u +%Y-%m-%d)
           contem() { [ "$(gunzip -c "$1" | grep -c -- "$2" || true)" -ge 1 ]; }
           mkdir -p backups/banco2
