@@ -2,7 +2,9 @@
 // Apagar depois do teste (junto com .github/workflows/teste_almg_votos.yml).
 const B = 'https://dadosabertos.almg.gov.br';
 const limpa = (h) => h.replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/gi, ' ').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+const espera = (ms) => new Promise((r) => setTimeout(r, ms));
 async function pega(url) {
+  await espera(4000); // a ALMG devolve 429 se as chamadas vierem em sequencia
   try {
     const r = await fetch(url, { headers: { 'User-Agent': 'LumeCidadao/1.0 (teste de fonte)', Accept: '*/*' } });
     const t = await r.text();
@@ -26,7 +28,7 @@ async function main() {
 
   console.log('\n=== 3) Exemplo real: proposicoes pesquisadas (JSON) ===');
   const tentativas = [
-    `${B}/ws/proposicoes/pesquisa/direcionada?tp=PL&ano=2025&formato=json&p=1&ps=2`,
+    `${B}/ws/proposicoes/pesquisa/direcionada?tp=PL&ano=2025&formato=json`,
     `${B}/ws/proposicoes/pesquisa/direcionada?tp=PL&ano=2025&formato=xml`,
   ];
   let amostra = null;
@@ -34,6 +36,7 @@ async function main() {
     const r = await pega(u);
     console.log(`\n${u}\nHTTP ${r.status} ${r.tipo}\n${r.texto.slice(0, 1800)}`);
     if (r.status === 200 && !amostra) amostra = r.texto;
+    try { const j = JSON.parse(r.texto); const chaves = new Set(); (function an(o, d) { if (d > 6 || !o || typeof o !== 'object') return; for (const k of Object.keys(o)) { chaves.add(k); an(o[k], d + 1); } })(j, 0); console.log('CAMPOS DO JSON:', [...chaves].join(', ')); } catch { /* nao e json */ }
     achaVoto(r.texto).forEach((l) => console.log('  >', l.trim()));
   }
 
