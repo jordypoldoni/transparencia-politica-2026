@@ -28,10 +28,12 @@ test('União: números do quadro batem com os publicados pelo Tesouro', () => {
   assert.ok(Math.abs(p.divida.aumento + p.nominal) < 5e9);
   // conta direta + ajuste metodológico = resultado primário oficial
   assert.ok(Math.abs(p.direta + p.ajuste - p.primario) < 1e6);
-  assert.equal(brlCompacto(p.arrecadou), 'R$ 2,10 tri');
-  assert.equal(brlCompacto(p.gastou), 'R$ 2,18 tri');
-  assert.equal(brlCompacto(-p.nominal), 'R$ 802 bi');
-  assert.equal(brlCompacto(-p.primario), 'R$ 95 bi');
+  const sp = (s) => s.replace(/\u00a0/g, ' ');
+  assert.equal(sp(brlCompacto(p.arrecadou)), 'R$ 2,10 tri');
+  assert.ok(brlCompacto(p.arrecadou).includes('\u00a0'), 'sem quebra de linha entre R$, número e unidade');
+  assert.equal(sp(brlCompacto(p.gastou)), 'R$ 2,18 tri');
+  assert.equal(sp(brlCompacto(-p.nominal)), 'R$ 802 bi');
+  assert.equal(sp(brlCompacto(-p.primario)), 'R$ 95 bi');
 });
 
 test('origem da receita fecha 100% e a sobra é positiva', () => {

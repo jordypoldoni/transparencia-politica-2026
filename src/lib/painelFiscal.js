@@ -9,7 +9,10 @@
 // "Gastou" é a despesa primária PAGA no ano (inclui restos a pagar de anos anteriores), que é a base
 // em que o Tesouro calcula o resultado primário.
 
-export const brlCompacto = (v) => {
+const NB = '\u00a0';
+const junta = (s) => s.replace(/ /g, NB);
+export const brlCompacto = (v) => junta(brlCompactoBruto(v));
+const brlCompactoBruto = (v) => {
   if (v == null) return '-';
   const n = Number(v), abs = Math.abs(n);
   if (abs >= 1e12) return `R$ ${(n / 1e12).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} tri`;
@@ -22,7 +25,7 @@ export const brlCompacto = (v) => {
 export const brlPreciso = (v) => {
   if (v == null) return '-';
   const n = Number(v), abs = Math.abs(n);
-  if (abs >= 1e9 && abs < 1e12) return `R$ ${(n / 1e9).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} bi`;
+  if (abs >= 1e9 && abs < 1e12) return junta(`R$ ${(n / 1e9).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} bi`);
   return brlCompacto(v);
 };
 export const pct = (p) => `${p.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 1 })}%`;

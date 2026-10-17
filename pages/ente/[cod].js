@@ -180,7 +180,7 @@ function ResumoV2({ painel, ano, ateMes, nome, uniao, mostrarOrigem, setMostrarO
         </div>
         <div aria-hidden="true" style={{ height: '14px', borderRadius: '12px', background: t.cor.verde }} />
         <div style={{ fontSize: '0.88rem', marginTop: '8px', lineHeight: 1.5 }}>
-          Dívida líquida: de <strong>{brlCompacto(divida.inicio)}</strong> (31/12/{ano - 1}) para <strong>{brlCompacto(divida.atual)}</strong> (até {ateMes || 'o fim do período'} de {ano}).
+          Dívida líquida: de <strong>{brlCompacto(divida.inicio)}</strong> (início de {ano}) para <strong>{brlCompacto(divida.atual)}</strong> (até {ateMes || 'o fim do período'} de {ano}).
         </div>
         {painel.ajuste !== 0 && (
           <div style={{ fontSize: '0.78rem', color: t.cor.cinza, marginTop: '14px', lineHeight: 1.5 }}>
