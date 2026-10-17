@@ -119,18 +119,98 @@ export function parseDespesaEFuncoes(items) {
   return { despesa_total: totalLinha ? Number(totalLinha.valor) : null, funcoes };
 }
 
+// ---------------------------------------------------------------------------------------------
+// DETALHE (17/10/2026, página de gastos públicos v2): de onde veio a receita, resultado primário e
+// nominal, juros, dívida e o que há dentro de "Encargos Especiais". Tudo em R$, valores acumulados
+// no ano até o bimestre. Cada campo é nulo quando o ente não publica a linha (a página então cai
+// no desenho simples). Nomes de conta conferidos na API da União, 4º bimestre de 2026.
+const num = (v) => { const n = Number(v); return Number.isFinite(n) ? n : null; };
+const soma = (...vs) => (vs.some((v) => v == null) ? null : vs.reduce((a, b) => a + b, 0));
+const achar = (items, rx, colRx) => {
+  const l = items.find((i) => rx.test(i.conta || '') && colRx.test(i.coluna || ''));
+  return l ? num(l.valor) : null;
+};
+
+// Anexo 01: origem da receita (colunas "Até o Bimestre").
+export function parseReceitaDetalhe(items) {
+  const ate = /at[eé]\s+o\s+bimestre/i;
+  const porCod = (cod) => {
+    const l = items.find((i) => i.cod_conta === cod && ate.test(i.coluna || '') && !String(i.coluna).includes('%'));
+    return l ? num(l.valor) : null;
+  };
+  return {
+    tributaria: porCod('ReceitaTributaria'),            // impostos, taxas e contribuições de melhoria
+    contribuicoes: porCod('ReceitaDeContribuicoes'),    // contribuições sociais e econômicas
+    operacoes_credito: porCod('ReceitasDeOperacoesDeCredito'), // dívida nova, dentro da receita
+    remuneracao_caixa: porCod('RemuneracaoDasDisponibilidadesDoTesouroOutrasReceitasDeCapital'),
+  };
+}
+
+// Anexo 06: resultado primário e nominal, juros, dívida (União; outros entes podem não ter as linhas).
+export function parseResultados(items) {
+  const VALOR = /^VALOR$/i;
+  const receitaPrimaria = achar(items, /^Receita prim[aá]ria total/i, /^RECEITAS REALIZADAS/i);
+  const pagas = achar(items, /^DESPESA PRIM[AÁ]RIA TOTAL/i, /^DESPESAS PAGAS/i);
+  const rpp = achar(items, /^DESPESA PRIM[AÁ]RIA TOTAL/i, /^RESTOS A PAGAR PROCESSADOS PAGOS/i);
+  const rpnp = achar(items, /^DESPESA PRIM[AÁ]RIA TOTAL/i, /^PAGOS\s*\(c\)/i);
+  const dividaLiq = (col) => achar(items, /^D[IÍ]VIDA CONSOLIDADA L[IÍ]QUIDA/i, col);
+  return {
+    receita_primaria: receitaPrimaria,
+    // despesa primária PAGA no ano = paga do exercício + restos a pagar (processados e não processados) pagos
+    despesa_primaria_paga: soma(pagas, rpp, rpnp),
+    ajuste_metodologico: achar(items, /^AJUSTE METODOL[OÓ]GICO DO RESULTADO PRIM[AÁ]RIO\s*-\s*Acima/i, VALOR),
+    resultado_primario: achar(items, /^RESULTADO PRIM[AÁ]RIO\s*-\s*Acima/i, VALOR),
+    resultado_nominal: achar(items, /^RESULTADO NOMINAL\s*-\s*Acima/i, VALOR),
+    juros_ativos: achar(items, /^Juros, Encargos e Varia[cç][oõ]es Monet[aá]rias Ativos/i, /^VALOR INCORRIDO/i),
+    juros_passivos: achar(items, /^Juros, Encargos e Varia[cç][oõ]es Monet[aá]rias Passivos/i, /^VALOR INCORRIDO/i),
+    divida_liquida_inicio: dividaLiq(/^Em 31\/12/i),
+    divida_liquida_atual: dividaLiq(/^At[eé] o Bimestre/i),
+  };
+}
+
+// Anexo 02: o que há dentro de "Encargos Especiais" (serviço da dívida, repasses, outros).
+// As subfunções vêm logo depois da função na mesma coluna; lemos até a próxima função.
+export function parseEncargos(items) {
+  const col = colunaDespesaRealizada(items);
+  if (!col) return null;
+  const linhas = items.filter((i) => i.coluna === col);
+  const ini = linhas.findIndex((i) => (i.conta || '').trim().toLowerCase() === 'encargos especiais');
+  if (ini < 0) return null;
+  const sub = {};
+  for (const i of linhas.slice(ini + 1)) {
+    const nome = (i.conta || '').trim();
+    if (FUNCOES_SET.has(nome.toLowerCase())) break;
+    if (/^DESPESAS\s*\(/i.test(nome)) break;
+    if (!(nome in sub)) sub[nome] = num(i.valor);
+  }
+  const g = (n) => sub[n] ?? null;
+  const out = {
+    divida_interna: g('Serviço da Dívida Interna'),
+    divida_externa: g('Serviço da Dívida Externa'),
+    transferencias: g('Transferências'),
+    outros: g('Outros Encargos Especiais'),
+  };
+  return Object.values(out).every((v) => v == null) ? null : out;
+}
+
 // Coleta o resumo fiscal de um ente para um (ano, período) específico.
 export async function coletarEnteEmPeriodo({ idEnte, esfera, ano, periodo }) {
-  const [a01, a02] = await Promise.all([
+  const [a01, a02, a06] = await Promise.all([
     rreoItems({ ano, periodo, anexo: 1, idEnte, esfera }),
     rreoItems({ ano, periodo, anexo: 2, idEnte, esfera }),
+    rreoItems({ ano, periodo, anexo: 6, idEnte, esfera }),
   ]);
   const receita_total = parseReceita(a01);
   const { despesa_total, funcoes } = parseDespesaEFuncoes(a02);
   if (receita_total == null && despesa_total == null && Object.keys(funcoes).length === 0) {
     return null; // sem dados nesse período
   }
-  return { ano, periodo, receita_total, despesa_total, funcoes };
+  const detalhe = {
+    receita: parseReceitaDetalhe(a01),
+    resultados: parseResultados(a06),
+    encargos: parseEncargos(a02),
+  };
+  return { ano, periodo, receita_total, despesa_total, funcoes, detalhe };
 }
 
 // Descobre automaticamente o período mais recente com dados e coleta.
@@ -150,7 +230,7 @@ export async function salvarResumo(supabase, ente, dados) {
   const { error: e1 } = await supabase.from('fiscal_resumo').upsert({
     cod_ibge: ente.cod_ibge, ano: dados.ano, periodo: dados.periodo, esfera: ente.esfera,
     populacao: ente.populacao, receita_total: receita, despesa_total: despesa,
-    resultado, fonte: 'SICONFI/RREO', atualizado_em: new Date().toISOString(),
+    resultado, detalhe: dados.detalhe || null, fonte: 'SICONFI/RREO', atualizado_em: new Date().toISOString(),
   }, { onConflict: 'cod_ibge,ano' });
   if (e1) throw new Error('fiscal_resumo: ' + e1.message);
 
