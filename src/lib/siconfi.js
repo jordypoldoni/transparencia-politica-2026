@@ -92,16 +92,19 @@ function parseReceita(items) {
   return linha ? Number(linha.valor) : null;
 }
 
-// Escolhe a coluna de "despesa realizada no ano": liquidada até o bimestre (preferida),
+// Escolhe a coluna de "despesa realizada no ano": liquidada ATÉ o bimestre (acumulado do ano),
 // senão empenhada até o bimestre. Ignora colunas de % e de dotação.
-function colunaDespesaRealizada(items) {
+// BUG corrigido em 17/10/2026: antes pegava a primeira coluna "liquidada" qualquer, que é a
+// "No Bimestre" (só os 2 últimos meses). Resultado: despesa de 1 bimestre contra receita do ano
+// inteiro (União mostrava R$ 884 bi em vez de ~R$ 2,9 tri e a diferença saía com o sinal trocado).
+export function colunaDespesaRealizada(items) {
   const cols = [...new Set(items.map((i) => i.coluna || ''))];
-  const ok = (c, termo) => new RegExp(termo, 'i').test(c) && /bimestre/i.test(c) && !c.includes('%');
+  const ok = (c, termo) => new RegExp(termo, 'i').test(c) && /at[eé]\s+o\s+bimestre/i.test(c) && !c.includes('%');
   return cols.find((c) => ok(c, 'liquidad')) || cols.find((c) => ok(c, 'empenhad')) || null;
 }
 
 // Despesa total + despesa por função (Anexo 02).
-function parseDespesaEFuncoes(items) {
+export function parseDespesaEFuncoes(items) {
   const col = colunaDespesaRealizada(items);
   if (!col) return { despesa_total: null, funcoes: {} };
   const doCol = items.filter((i) => i.coluna === col);
