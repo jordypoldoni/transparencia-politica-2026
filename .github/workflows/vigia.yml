@@ -1,0 +1,48 @@
+# vigia.yml: vigia diário do site no ar e do frescor dos dados. (T13, 17/10/2026)
+#
+# POR QUE EXISTE: os coletores usam `continue-on-error` e ficam verdes mesmo quando um passo falha, e
+# nada avisa se o site cai ou se uma fonte para de atualizar (a página de gastos públicos ficou
+# desatualizada sem alerta). Este workflow roda uma vez por dia, DEPOIS da janela dos coletores
+# (coletar.yml 09:17 UTC, com atraso medido de 3 a 10 h), e fica VERMELHO se algo estiver errado.
+# Run vermelho gera e-mail do GitHub ao dono do repositório.
+#
+# O QUE CONFERE:
+#   1. fumaça em produção (tests/fumaca.mjs --producao): páginas abrem, rotas recusam entrada inválida,
+#      cabeçalhos de segurança, /api/fonte-status devolve JSON.
+#   2. frescor (scripts/vigia_frescor.mjs): cada fonte coletada dentro do prazo da sua cadência.
+#      Os prazos ficam em scripts/vigia_frescor.mjs (REGRAS) e são testados em tests/vigia.test.mjs.
+#
+# Sem segredos: lê só endereços públicos. Quando uma coleta for desligada (ex.: T5 em 01/11), a regra
+# da fonte tem `ate` e deixa de ser cobrada sozinha.
+name: Vigia (site e dados)
+
+on:
+  schedule:
+    - cron: '7 19 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vigia
+  cancel-in-progress: false
+
+jobs:
+  vigia:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Instalar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Fumaça no site no ar
+        run: node tests/fumaca.mjs https://www.lumecidadao.com.br --producao
+
+      - name: Frescor dos dados
+        run: node scripts/vigia_frescor.mjs https://www.lumecidadao.com.br

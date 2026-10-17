@@ -12,6 +12,8 @@ on:
 jobs:
   coletar-votos:
     runs-on: ubuntu-latest
+    # Teto de 150 min (T14, 17/10/2026): as durações medidas vão de 8 min a 1h32; só corta travamento de rede.
+    timeout-minutes: 150
     steps:
       - name: Checkout do código
         uses: actions/checkout@v4

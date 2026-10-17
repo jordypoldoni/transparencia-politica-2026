@@ -104,15 +104,9 @@ test('todo script chamado pelos workflows existe no repositório', () => {
   }
 });
 
-// EXCEÇÃO CONHECIDA (17/10/2026): coletar.yml/coletar-votos não tem teto, e o padrão do GitHub é 6 horas.
-// As durações medidas vão de 8 min a 1h32; um teto de 150 min (o mesmo do job da ficha) cortaria só um
-// travamento. Fica pendente da decisão do Jordy; ao acrescentar o teto, REMOVA esta exceção.
-const SEM_TETO_CONHECIDO = new Set(['coletar.yml/coletar-votos']);
-
 test('todo job tem teto de tempo (timeout-minutes), para rede travada não gastar horas', () => {
   for (const { nome, texto } of workflows) {
     for (const j of jobs(texto)) {
-      if (SEM_TETO_CONHECIDO.has(`${nome}/${j.nome}`)) continue;
       const job = j.linhas.join('\n');
       assert.match(job, /timeout-minutes:/, `${nome}, job ${j.nome}: sem timeout-minutes (no job ou num passo)`);
     }
