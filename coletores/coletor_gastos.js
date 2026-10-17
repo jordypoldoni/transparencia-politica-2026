@@ -18,6 +18,7 @@
 import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
 import { categoria } from './categoria_gastos.js';
+import { registrarStatus, ultimaEmissao } from './_status.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -160,6 +161,7 @@ async function main() {
     `✅ ${processados} deputados, ${totalLinhas} lançamentos gravados` +
     (preservados ? ` · ${preservados} deputados sem retorno da API tiveram o ano ${ANO} PRESERVADO (nada apagado)` : '') + '.'
   );
+  await registrarStatus(supabase, { fonte: 'gastos_camara', dadosAte: await ultimaEmissao(supabase, 'Câmara', ANO), linhas: totalLinhas });
 }
 
 import { refreshRadar } from './refresh_radar.js';

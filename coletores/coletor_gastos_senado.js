@@ -3,6 +3,7 @@
 // Casa por NOME (CEAPS não traz código), com normalização de acentos/caixa.
 import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
+import { registrarStatus, ultimaEmissao } from './_status.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -121,6 +122,7 @@ async function main() {
     if (e) { console.warn('insert:', e.message); break; }
   }
   console.log(`✅ ${linhasOut.length} despesas do Senado gravadas.`);
+  await registrarStatus(supabase, { fonte: 'gastos_senado', dadosAte: await ultimaEmissao(supabase, 'Senado', ANO), linhas: linhasOut.length });
 }
 
 import { refreshRadar } from './refresh_radar.js';

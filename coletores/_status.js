@@ -26,3 +26,12 @@ export async function registrarStatus(supabase, { fonte, escopo = '', dadosAte =
 
 // Ultimo dia do mes (ano, mes 1-12) em ISO. Usado por fontes que publicam por mes fechado.
 export const ultimoDiaDoMes = (ano, mes) => new Date(Date.UTC(ano, mes, 0)).toISOString().slice(0, 10);
+
+// Ultimo data_emissao de uma casa num ano, lido do BANCO (o que de fato ficou gravado). Para fontes
+// que publicam o lancamento com a data do documento (Camara, Senado). null se nao ha nada.
+export async function ultimaEmissao(supabase, casa, ano) {
+  const { data } = await supabase.from('despesas_parlamentares').select('data_emissao')
+    .eq('casa_legislativa', casa).eq('ano', ano).not('data_emissao', 'is', null)
+    .order('data_emissao', { ascending: false }).limit(1);
+  return data?.[0]?.data_emissao?.slice(0, 10) || null;
+}
