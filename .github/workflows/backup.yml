@@ -1,0 +1,113 @@
+# backup.yml: backup semanal CRIPTOGRAFADO dos dois bancos. (17/10/2026, T1b)
+#
+# O QUE FAZ
+# Exporta os dois bancos do Supabase (plano gratuito, sem backup proprio), criptografa com a chave
+# PUBLICA do age e grava o arquivo num repositorio PRIVADO separado (jordypoldoni/lume-backups).
+# Este repositorio e PUBLICO: por isso NADA em claro sai daqui. Artifacts e logs de repositorio
+# publico sao legiveis por qualquer pessoa, entao o arquivo so existe depois de criptografado e
+# nenhum passo imprime conteudo, senha ou endereco de banco.
+#
+# O QUE ENTRA
+# - Banco 1: esquema de tudo, e os DADOS de tudo, menos 3 tabelas que os coletores recriam e que
+#   somam ~95% do tamanho: despesas_parlamentares, votos_parlamentares, candidatos_deputado_federal.
+# - Banco 2: schemas public e auth completos (contas e dados de pessoa; nao se recria).
+#
+# COMO ABRIR UM BACKUP (so quem tem a chave privada, guardada pelo Jordy fora do GitHub):
+#   age -d -i chave-backup-privada.txt banco1_AAAA-MM-DD.sql.gz.age | gunzip > banco1.sql
+#
+# SEGREDOS (Settings > Secrets and variables > Actions): BANCO1_DB_URL e BANCO2_DB_URL (Session
+# pooler do Supabase, com a senha), BACKUP_REPO_TOKEN (token fino, so Contents: Read and write no
+# lume-backups; vence em 1 ano, renovar antes).
+#
+# FALHA BARULHENTA DE PROPOSITO: sem continue-on-error. Se algo falhar, o run fica vermelho e o
+# GitHub avisa por e-mail. O horario do cron e um pedido, nao uma promessa.
+name: Backup criptografado dos bancos
+
+on:
+  schedule:
+    - cron: '37 7 * * 0'   # domingo, 04:37 de Brasilia
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CHAVE_PUBLICA: age1dywsjr5frxdsv3yt7ss4sgy7xlsmhqqfvls00z2ltmqx6meexa5s5kslpx
+      MANTER: 12   # quantos backups de cada banco ficam na pasta (o historico do git guarda os demais)
+    steps:
+      - name: Instalar pg_dump 17 e age
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-common age
+          # Tenta o cliente 17 do proprio Ubuntu; se nao existir nesta versao, usa o repositorio oficial do PostgreSQL.
+          if ! sudo apt-get install -y -qq postgresql-client-17; then
+            sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+            sudo apt-get install -y -qq postgresql-client-17
+          fi
+          pg_dump --version
+          age --version
+
+      - name: Baixar o repositorio privado de backups
+        env:
+          BACKUP_REPO_TOKEN: ${{ secrets.BACKUP_REPO_TOKEN }}
+        run: |
+          set -euo pipefail
+          # git clone (e nao actions/checkout) porque o repositorio comeca vazio, e o checkout falha em repositorio sem commits.
+          git clone "https://x-access-token:${BACKUP_REPO_TOKEN}@github.com/jordypoldoni/lume-backups.git" backups
+          cd backups
+          git checkout -B main
+
+      - name: Exportar e criptografar o banco 1
+        env:
+          BANCO_URL: ${{ secrets.BANCO1_DB_URL }}
+        run: |
+          set -euo pipefail
+          DATA=$(date -u +%Y-%m-%d)
+          mkdir -p backups/banco1
+          pg_dump "$BANCO_URL" --no-owner --no-privileges -n public \
+            --exclude-table-data=public.despesas_parlamentares \
+            --exclude-table-data=public.votos_parlamentares \
+            --exclude-table-data=public.candidatos_deputado_federal \
+            | gzip -9 > banco1.sql.gz
+          # Conferencias: o arquivo tem de conter dados de tabelas nossas e NAO ser vazio.
+          gunzip -c banco1.sql.gz | grep -q '^COPY public.agentes_politicos ' || { echo "::error::banco 1: agentes_politicos ausente no dump"; exit 1; }
+          gunzip -c banco1.sql.gz | grep -q '^COPY public.votacoes ' || { echo "::error::banco 1: votacoes ausente no dump"; exit 1; }
+          age -r "$CHAVE_PUBLICA" -o "backups/banco1/banco1_${DATA}.sql.gz.age" banco1.sql.gz
+          rm -f banco1.sql.gz
+          ls -l "backups/banco1/banco1_${DATA}.sql.gz.age"
+
+      - name: Exportar e criptografar o banco 2
+        env:
+          BANCO_URL: ${{ secrets.BANCO2_DB_URL }}
+        run: |
+          set -euo pipefail
+          DATA=$(date -u +%Y-%m-%d)
+          mkdir -p backups/banco2
+          pg_dump "$BANCO_URL" --no-owner --no-privileges -n public -n auth | gzip -9 > banco2.sql.gz
+          gunzip -c banco2.sql.gz | grep -q '^COPY auth.users ' || { echo "::error::banco 2: auth.users ausente no dump"; exit 1; }
+          gunzip -c banco2.sql.gz | grep -q 'CREATE TABLE public\.' || { echo "::error::banco 2: nenhuma tabela public no dump"; exit 1; }
+          age -r "$CHAVE_PUBLICA" -o "backups/banco2/banco2_${DATA}.sql.gz.age" banco2.sql.gz
+          rm -f banco2.sql.gz
+          ls -l "backups/banco2/banco2_${DATA}.sql.gz.age"
+
+      - name: Guardar no repositorio privado e podar os antigos
+        working-directory: backups
+        run: |
+          set -euo pipefail
+          for d in banco1 banco2; do
+            ls -1 "$d"/*.age | sort | head -n -"$MANTER" | xargs -r git rm -q
+          done
+          git config user.name "backup-lume"
+          git config user.email "backup-lume@users.noreply.github.com"
+          git add -A
+          git commit -m "Backup criptografado $(date -u +%Y-%m-%d)"
+          git push origin main
