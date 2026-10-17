@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "node --import ./tests/registrar.mjs --test tests/*.test.mjs"
+    "test": "node --import ./tests/registrar.mjs --test tests/*.test.mjs",
+    "test:fumaca": "node tests/fumaca.mjs"
   },
   "keywords": [],
   "author": "",

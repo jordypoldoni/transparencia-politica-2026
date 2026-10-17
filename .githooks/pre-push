@@ -1,0 +1,12 @@
+#!/bin/sh
+# TRAVA ANTES DE ENVIAR (17/10/2026). Todo `git push` roda os testes antes. Se falharem, o envio é
+# cancelado e nada chega ao GitHub nem à Vercel. Ativar neste computador (uma vez):
+#   git config core.hooksPath .githooks
+# Para enviar mesmo assim, só em emergência e com consciência: git push --no-verify
+echo "Rodando os testes antes de enviar..."
+if ! npm test --silent; then
+  echo ""
+  echo "TESTES FALHARAM: envio cancelado. Corrija e tente de novo."
+  exit 1
+fi
+echo "Testes ok."
