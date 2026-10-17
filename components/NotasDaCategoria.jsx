@@ -30,7 +30,7 @@ function Nota({ it, anoSel }) {
     <div style={{ padding: '10px 0' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px', alignItems: 'flex-start' }}>
         <span style={{ color: t.cor.tinta, fontSize: '0.86rem', fontWeight: 600 }}>
-          {dataBr(it.data_emissao)} · {it.fornecedor_nome || '-'}
+          {dataBr(it.data_emissao) ? `${dataBr(it.data_emissao)} · ` : ''}{it.fornecedor_nome || '-'}
         </span>
         <span style={{ display: 'flex', gap: '8px', alignItems: 'center', flexShrink: 0 }}>
           <strong style={{ fontSize: '0.88rem' }}>{brlExato(it.valor_liquido)}</strong>

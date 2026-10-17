@@ -29,9 +29,17 @@ function categoria(tipo) {
 }
 
 const valor = (v) => parseFloat(String(v || '0').replace(/\./g, '').replace(',', '.')) || 0;
+// DATA NO FUTURO VIRA VAZIA (17/10/2026). O CSV do Senado traz 4 lancamentos com ano de emissao
+// errado (ex.: referencia 12/2025 com data 29/12/2026). O coletor copia a data sem mexer, entao a
+// nota aparecia como se fosse de dezembro de 2026. Nota nao pode ser emitida depois de hoje:
+// grava vazio, e a nota segue contada no mes de referencia (colunas ano/mes, que sao outras).
+// NAO usar "data fora do mes de referencia" como regra: isso e normal (nota emitida num mes e
+// reembolsada em outro; 13% do Senado e 8% da Camara).
 const data = (d) => { // dd/mm/aaaa -> aaaa-mm-dd
   const m = String(d || '').match(/(\d{2})\/(\d{2})\/(\d{4})/);
-  return m ? `${m[3]}-${m[2]}-${m[1]}` : null;
+  if (!m) return null;
+  const iso = `${m[3]}-${m[2]}-${m[1]}`;
+  return iso > new Date().toISOString().slice(0, 10) ? null : iso;
 };
 
 async function main() {
