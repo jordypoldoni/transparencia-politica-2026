@@ -8,6 +8,7 @@ import BuscaMunicipio from '../components/BuscaMunicipio';
 import { Pino } from '../components/icones';
 import { t } from '../src/estilo/tokens';
 import { Seta } from '../components/icones';
+import SeloAtualizacao from '../components/SeloAtualizacao';
 
 const brlC = (v) => {
   if (v == null) return '-';
@@ -66,6 +67,7 @@ export default function GastosPublicos({ uniao, estados = [], gastosFuncao = [] 
       <p style={{ color: t.cor.cinza, fontSize: '0.96rem', margin: '0 0 24px', lineHeight: 1.55, maxWidth: '72ch' }}>
         Quanto a União, os estados, o DF e os municípios <strong>arrecadam e gastam</strong>, e em quais áreas, direto da fonte oficial (<a href="https://siconfi.tesouro.gov.br/" target="_blank" rel="noopener noreferrer" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>SICONFI/Tesouro</a>). São dados <strong>agregados</strong> (quanto e em quais áreas), não contratos individuais. Acumulado de {uniao?.resumo?.ano || '2026'}.
       </p>
+      <SeloAtualizacao fonte="fiscal_siconfi" escopo="tudo" tipo="coleta" style={{ margin: '-12px 0 22px' }} />
 
       {/* União em destaque */}
       {uniao?.resumo && (

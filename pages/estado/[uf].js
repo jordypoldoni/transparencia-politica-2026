@@ -5,6 +5,8 @@ import { t } from '../../src/estilo/tokens';
 import { Seta } from '../../components/icones';
 import Avatar from '../../components/Avatar';
 import { hrefPerfil, casaDoPerfil } from '../../src/lib/casa';
+import SeloAtualizacao from '../../components/SeloAtualizacao'; 
+import { fonteGastosEstadual } from '../../src/lib/selosFonte';
 
 const NOMES = { AC:'Acre', AL:'Alagoas', AP:'Amapá', AM:'Amazonas', BA:'Bahia', CE:'Ceará', DF:'Distrito Federal', ES:'Espírito Santo', GO:'Goiás', MA:'Maranhão', MT:'Mato Grosso', MS:'Mato Grosso do Sul', MG:'Minas Gerais', PA:'Pará', PB:'Paraíba', PR:'Paraná', PE:'Pernambuco', PI:'Piauí', RJ:'Rio de Janeiro', RN:'Rio Grande do Norte', RS:'Rio Grande do Sul', RO:'Rondônia', RR:'Roraima', SC:'Santa Catarina', SP:'São Paulo', SE:'Sergipe', TO:'Tocantins' };
 const brl = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v || 0);
@@ -90,6 +92,11 @@ export default function Estado({ uf, nome, deputados, canonical }) {
         <p style={{ color: t.cor.cinza, margin: '0 0 28px', maxWidth: '60ch', lineHeight: 1.5, fontSize: '0.88rem' }}>
           Os valores não se comparam entre as casas: cada uma tem um teto de verba diferente. Por isso cada bloco tem o seu próprio ranking.
         </p>
+        <div style={{ margin: '-12px 0 26px' }}>
+          <SeloAtualizacao fonte="gastos_camara" nome="Gastos da Câmara" semLink style={{ margin: '0 0 2px' }} />
+          <SeloAtualizacao fonte="gastos_senado" nome="Gastos do Senado" semLink={!!fonteGastosEstadual(uf)} style={{ margin: '0 0 2px' }} />
+          {fonteGastosEstadual(uf) && <SeloAtualizacao {...fonteGastosEstadual(uf)} nome={`Gastos da Assembleia (${uf})`} style={{ margin: 0 }} />}
+        </div>
 
         {blocos.map((g) => (
           <section key={g.chave} style={{ marginBottom: '36px' }}>

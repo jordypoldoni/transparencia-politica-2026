@@ -1,3 +1,5 @@
+import { formatarDadosAte } from './datasFonte';
+
 // Catalogo das fontes que o site mostra na secao "Como atualizamos os dados" (T10 / D-036).
 // A FREQUENCIA e escrita aqui a mao e precisa bater com os workflows de .github/workflows/:
 //   coletar.yml        diario 06:17 (Brasilia): votos Camara/Senado, gastos Camara/Senado/SP,
@@ -35,15 +37,6 @@ export const GRUPOS = [
     { fonte: 'fiscal_siconfi', escopo: 'tudo', nome: 'Panorama fiscal (Tesouro Nacional)', frequencia: 'A cada 2 meses' },
   ] },
 ];
-
-const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
-
-// "2026-07-31" -> "jul/2026" (fonte mensal) ou "31/07/2026". null quando a fonte nao informa.
-export function formatarDadosAte(iso, mensal) {
-  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || '');
-  if (!m) return null;
-  return mensal ? `${MESES[Number(m[2]) - 1]}/${m[1]}` : `${m[3]}/${m[2]}/${m[1]}`;
-}
 
 // Junta o catalogo com as linhas de fonte_status. `linhas` pode ser vazio ou null (banco fora do ar):
 // cada item entao sai sem data, e a tela diz "ainda sem registro" em vez de inventar uma.

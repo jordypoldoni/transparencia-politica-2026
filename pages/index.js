@@ -14,6 +14,7 @@ import { hrefPerfil } from '../src/lib/casa';
 import Avatar from '../components/Avatar';
 import ResumoEleicoesHome from '../components/ResumoEleicoesHome';
 import { dataBr } from '../src/lib/datas';
+import SeloAtualizacao from '../components/SeloAtualizacao';
 
 const DESCRICAO_HOME = 'Quanto cada deputado e senador gastou da verba pública, como votou e quem são os candidatos de 2026 no seu estado. Dados oficiais da Câmara, do Senado, das Assembleias e do TSE, sempre com link para a fonte.';
 const DADOS_ESTRUTURADOS_HOME = {"@context": "https://schema.org", "@type": "WebSite", "name": "Lume Cidadão", "alternateName": "Lume", "url": "https://www.lumecidadao.com.br/", "inLanguage": "pt-BR", "description": "Gastos, votos e candidatos 2026 dos políticos do Brasil, com dados oficiais e link para a fonte."};
@@ -206,6 +207,8 @@ export default function Home({ votacoes, parlamentares = [], uniao = null, estad
         <p style={{ color: t.cor.cinza, fontSize: '0.92rem', margin: '0 0 18px', lineHeight: 1.5, maxWidth: '70ch' }}>
           Quanto a União, os estados, o DF e os municípios <strong>arrecadam e gastam</strong>, em linguagem clara, direto da fonte oficial (<a href="https://siconfi.tesouro.gov.br/" target="_blank" rel="noopener noreferrer" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>SICONFI/Tesouro</a>). Números acumulados de {uniao?.resumo?.ano || '2026'}.
         </p>
+
+        <SeloAtualizacao fonte="fiscal_siconfi" escopo="tudo" tipo="coleta" style={{ margin: '-10px 0 18px' }} />
 
         {uniao?.resumo && (
           <Link href="/ente/1" style={{ textDecoration: 'none', color: '#fff', display: 'block', background: t.cor.verde, borderRadius: t.raio.lg, padding: 'clamp(20px,3vw,32px)', marginBottom: '14px' }}>

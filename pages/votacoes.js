@@ -27,6 +27,7 @@ import { explicarProposicao, naSuaVida } from '../src/lib/proposicoes';
 import { agruparPorMateria, humanizarVotacao, papelVotacao } from '../src/lib/votacao';
 import { t } from '../src/estilo/tokens';
 import { dataBr, anoDe } from '../src/lib/datas';
+import SeloAtualizacao from '../components/SeloAtualizacao';
 
 const dataBR = dataBr; // src/lib/datas.js (29/09/2026)
 
@@ -70,6 +71,11 @@ export default function PainelVotacoes({ resumo }) {
           o que se decide em cada uma e o que isso alcança do seu dia a dia. Entre numa delas
           para ver a lista completa e quem votou o quê.
         </p>
+        <div style={{ margin: '-14px 0 24px' }}>
+          <SeloAtualizacao fonte="votos_camara" nome="Câmara" semLink style={{ margin: '0 0 2px' }} />
+          <SeloAtualizacao fonte="votos_senado" nome="Senado" semLink style={{ margin: '0 0 2px' }} />
+          <SeloAtualizacao fonte="votos_alergs" escopo="RS" nome="Assembleia do RS" style={{ margin: 0 }} />
+        </div>
 
         <div style={{ display: 'grid', gap: '18px' }}>
           {casas.map((c) => {

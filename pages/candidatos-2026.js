@@ -22,6 +22,8 @@ import BarraControleEleicoes from '../components/BarraControleEleicoes';
 import { turnoValido, disponivelNoTurno, SEGUNDO_TURNO } from '../src/lib/turnos';
 import { carregarSegundoTurno } from '../src/lib/candidatosSegundoTurno';
 import { listarCandidatosEstaduais, UFS_ESTADUAL } from '../src/lib/candidatosEstaduais';
+import SeloAtualizacao from '../components/SeloAtualizacao';
+import { seloDoCargoCandidato } from '../src/lib/selosFonte';
 
 const UFS = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
 const PORPAGINA = 25; // 5 colunas x 5 linhas, igual as listas de /deputados e /senadores
@@ -351,6 +353,10 @@ function PaginaCandidatosSegundoTurno({ cargo, chapas, governadores, semCadastro
         Quem disputa o 2º turno, em 25 de outubro: a Presidência e os governos de AC, AM, DF, ES, RN e TO. Só aparecem os dois candidatos de cada disputa. Dados oficiais do{' '}
         <a href="https://www.tse.jus.br/" target="_blank" rel="noopener noreferrer" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>TSE</a>, sem análise ou opinião.
       </p>
+      <div style={{ margin: '-8px 0 18px' }}>
+        <SeloAtualizacao fonte="ficha_presidenciaveis" tipo="ficha" nome="Presidente" semLink style={{ margin: '0 0 2px' }} />
+        <SeloAtualizacao fonte="candidatos_governador" tipo="ficha" nome="Governador" style={{ margin: 0 }} />
+      </div>
       <div className="so-celular">
         <AlternarVisao visao="candidatos" cargo={cargo} turno={2} />
         <SeletorTurno visao="candidatos" turno={2} cargo={cargo} />
@@ -423,6 +429,7 @@ function PaginaCandidatos({ cargo, chapas, deputados, resumo, resumoSenado, resu
         Quem disputa a Presidência, os governos estaduais, o Senado, a Câmara dos Deputados e as Assembleias Legislativas em 2026: partido, coligação e a situação da candidatura de cada um(a). Dados oficiais do{' '}
         <a href="https://www.tse.jus.br/" target="_blank" rel="noopener noreferrer" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>TSE</a>, sem análise ou opinião, tire suas próprias conclusões com base nos dados.
       </p>
+      {seloDoCargoCandidato(cargo) && <SeloAtualizacao {...seloDoCargoCandidato(cargo)} style={{ margin: '-8px 0 16px' }} />}
 
       <div className="so-celular">
         <AlternarVisao visao="candidatos" cargo={cargo} />

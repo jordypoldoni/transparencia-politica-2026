@@ -15,6 +15,7 @@ import { MIN_COMPARAVEIS, ordenarPorConcordancia } from '../src/lib/afinidade/nu
 import { faixaCoesao } from '../src/lib/afinidade/partidos';
 import { CASAS_AFINIDADE } from '../src/lib/afinidade/casas';
 import { lerRespostasLocais, salvarResposta, EVENTO_RESPOSTAS, ufLocal, definirUf, EVENTO_UF } from '../src/lib/perfilUsuario';
+import SeloAtualizacao from '../components/SeloAtualizacao';
 
 // QUEM VOTA COMO VOCÊ (26/09/2026). Caminho principal do questionário de afinidade, SEM IA:
 // a pessoa responde votações que já aconteceram e o resultado sai do voto registrado de cada
@@ -696,6 +697,11 @@ export default function Afinidade({ ufInicial }) {
       <div style={{ maxWidth: '860px' }}>
         <span style={{ fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: t.cor.ouroTexto }}>Pra você</span>
         <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.9rem,5vw,2.6rem)', lineHeight: 1.1, margin: '10px 0 12px' }}>Quem vota como você</h1>
+        <div style={{ margin: '0 0 16px' }}>
+          <SeloAtualizacao fonte="votos_camara" nome="Votos da Câmara" semLink style={{ margin: '0 0 2px' }} />
+          <SeloAtualizacao fonte="votos_senado" nome="Votos do Senado" semLink style={{ margin: '0 0 2px' }} />
+          <SeloAtualizacao fonte="votos_alergs" escopo="RS" nome="Votos da Assembleia do RS" style={{ margin: 0 }} />
+        </div>
         {/* Quem já respondeu não precisa reler a explicação: ela vira uma linha que abre (27/09/2026,
             para o resumo e o resultado ficarem perto do topo). */}
         {respondidas > 0 ? (

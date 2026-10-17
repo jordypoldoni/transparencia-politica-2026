@@ -23,6 +23,8 @@ import { ASSEMBLEIAS, assembleiaDe, assembleiaPorUf, verbaDe } from '../src/lib/
 import { deUf } from '../src/lib/ufs';
 import { useRouter } from 'next/router';
 import { Pino } from './icones';
+import SeloAtualizacao from './SeloAtualizacao';
+import { fonteGastosEstadual } from '../src/lib/selosFonte';
 
 // Botao sobre o painel escuro: indigo sobre indigo nao aparece, entao segue a regra das
 // Diretrizes para cartao escuro (superficie branca translucida, texto branco, pilula, sem
@@ -375,6 +377,10 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
                   : <>Toque para ver <em>em quê</em>.</>}{' '}
                 Fonte: {casa === 'Senado' ? 'Senado Federal' : assembleiaRanking ? assembleiaRanking.sigla : 'Câmara dos Deputados'}.
               </p>
+              {(() => {
+                const sel = casa === 'Senado' ? { fonte: 'gastos_senado' } : assembleiaRanking ? fonteGastosEstadual(assembleiaRanking.uf) : { fonte: 'gastos_camara' };
+                return sel ? <SeloAtualizacao {...sel} escuro style={{ margin: '10px 0 0' }} /> : null;
+              })()}
             </div>
             {radarCasa.totais[anoAtivo] > 0 && (
               <p className="painel-meta">

@@ -6,6 +6,7 @@ import { t } from '../../src/estilo/tokens';
 import { Seta } from '../../components/icones';
 import BotaoVoltar from '../../components/BotaoVoltar';
 import { dataBr } from '../../src/lib/datas';
+import SeloAtualizacao from '../../components/SeloAtualizacao';
 
 // /indicacao/[codigo] — a ficha de uma indicação. (18/09/2026)
 //
@@ -101,6 +102,7 @@ export default function FichaIndicacao({ i }) {
       <p style={{ margin: '0 0 24px', fontSize: '1.02rem', lineHeight: 1.5, color: t.cor.tinta, maxWidth: '60ch' }}>
         {i.cargo}
       </p>
+      <SeloAtualizacao fonte="indicacoes_executivo" tipo="coleta" style={{ margin: '-14px 0 22px' }} />
 
       <section style={secao}>
         <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.15rem', margin: '0 0 14px' }}>Decisão do Senado</h2>

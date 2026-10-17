@@ -26,6 +26,7 @@ import CampoSelect from '../../components/CampoSelect';
 import { t } from '../../src/estilo/tokens';
 import { Seta } from '../../components/icones';
 import { dataBr, anoDe } from '../../src/lib/datas';
+import SeloAtualizacao from '../../components/SeloAtualizacao';
 
 const POR_PAGINA = 20;
 
@@ -137,6 +138,7 @@ export default function VotacoesDaCasa({ casa, votacoes, temas = [], temaInicial
           texto, redação final) em ordem. Busque por assunto, pela proposta (ex.: "PEC 6") ou por
           quem propôs.
         </p>
+        <SeloAtualizacao fonte={casa.chave === 'senado' ? 'votos_senado' : casa.chave === 'rs' ? 'votos_alergs' : 'votos_camara'} escopo={casa.chave === 'rs' ? 'RS' : ''} style={{ margin: '-8px 0 18px' }} />
 
         <div style={{ marginBottom: '12px' }}>
           <CampoBusca valor={busca} aoMudar={aoFiltrar(setBusca)} placeholder="Buscar por assunto, proposta ou autor… (ex.: saúde, imposto, PEC 45)" aoLabel="Buscar votações" />

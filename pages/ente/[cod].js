@@ -4,6 +4,7 @@ import Link from 'next/link';
 import ServicoAPI from '../../src/servicos/servico_api';
 import { t } from '../../src/estilo/tokens';
 import BotaoVoltar from '../../components/BotaoVoltar';
+import SeloAtualizacao from '../../components/SeloAtualizacao';
 
 const brlCompacto = (v) => {
   if (v == null) return '-';
@@ -67,6 +68,8 @@ export default function EntePanorama({ dados }) {
           <p style={{ color: t.cor.cinza, fontSize: '0.86rem', margin: '0 0 24px', lineHeight: 1.5 }}>
             Valores <strong>acumulados no ano de {resumo.ano}</strong>{ateMes ? `, até ${ateMes} (${resumo.periodo}º bimestre)` : ''}: receita realizada e despesa liquidada. A diferença reflete o <strong>momento do ano</strong> (a receita entra ao longo do exercício e a despesa é liquidada aos poucos), não é o resultado fiscal fechado. Fonte oficial: SICONFI / Tesouro Nacional.
           </p>
+
+          <SeloAtualizacao coletadoEm={resumo.atualizado_em} style={{ margin: '-14px 0 22px' }} />
 
           {/* Para onde foi — despesa por função */}
           {funcoes && funcoes.length > 0 && (

@@ -12,6 +12,8 @@ import { Seta } from './icones';
 import { generoDe, comSujeito } from '../src/lib/genero';
 import BotaoVoltar from './BotaoVoltar';
 import BotaoFavorito from './BotaoFavorito';
+import SeloAtualizacao from './SeloAtualizacao';
+import { fonteGastosDoPerfil, fonteVotosDoPerfil } from '../src/lib/selosFonte';
 import NotasDaCategoria from './NotasDaCategoria';
 import { dataBr, idadeEm } from '../src/lib/datas';
 
@@ -362,6 +364,8 @@ export default function PerfilPolitico({ dados }) {
   const rotuloCota = ehEstadual ? `cota (${nomeVerba}) ?` : 'cota parlamentar ?';
   // % do teto mensal da cota — federal (CEAP), senador (CEAPS) e estadual-SP (verba ALESP)
   const tetoInfo = pctDoTeto({ fonteApi: perfil.fonte_api, casa: perfil.casa_legislativa, uf: perfil.uf_sede }, mediaAno || media_mensal);
+  const selGastos = fonteGastosDoPerfil(perfil); // data da coleta (T10), null onde nao ha coleta registrada
+  const selVotos = fonteVotosDoPerfil(perfil);
   // Valores do ANO SELECIONADO (reativo ao seletor de ano)
   const totalAno = dadosAno?.total ?? total_geral;
   const nNotasAno = dadosAno?.n_notas ?? n_notas;
@@ -646,6 +650,7 @@ export default function PerfilPolitico({ dados }) {
 
         {dadosAno && (
           <Secao id="gastos" titulo="Gastos mês a mês" aberta={secoesAbertas.gastos} onToggle={() => toggleSecao('gastos')}>
+            {selGastos && <SeloAtualizacao {...selGastos} />}
             <SeletorAno anos={anos_disponiveis} atual={anoSel} aoTrocar={trocarAno} rotulo="Ano dos gastos mes a mes" />
             <p style={{ color: t.cor.cinza, fontSize: '0.9rem', margin: '0 0 18px', lineHeight: 1.5 }}>
               Quanto {perfil.nome_urna} usou da verba em cada mês de <strong>{anoSel}</strong>: cada barra é a soma {temNotaFiscal ? 'das notas fiscais' : 'das despesas publicadas'} daquele mês.
@@ -702,6 +707,7 @@ export default function PerfilPolitico({ dados }) {
         )}
 
         <Secao id="em-que-gastou" titulo={comSujeito(genero, 'Em que', 'gastou')} aberta={secoesAbertas['em-que-gastou']} onToggle={() => toggleSecao('em-que-gastou')}>
+          {selGastos && <SeloAtualizacao {...selGastos} />}
           <SeletorAno anos={anos_disponiveis} atual={anoSel} aoTrocar={trocarAno} rotulo="Ano das despesas por categoria" />
           <p style={{ color: t.cor.cinza, fontSize: '0.9rem', margin: '0 0 20px' }}>
             Em que {perfil.nome_urna} usou a verba em <strong>{anoSel}</strong>. Toque numa categoria para ver as notas e o link de cada documento.
@@ -863,6 +869,7 @@ export default function PerfilPolitico({ dados }) {
 
         {/* PROPOSIÇÕES — leis e projetos apresentados (Ficha 360°) */}
         <Secao id="proposicoes" titulo={comSujeito(genero, 'O que', 'propôs')} aberta={secoesAbertas.proposicoes} onToggle={() => toggleSecao('proposicoes')}>
+          {!casaDoPerfil(perfil).ehEstadual && <SeloAtualizacao fonte="proposicoes" tipo="coleta" />}
           {proposicoes.length > 0 ? (
             <>
               <p style={{ color: t.cor.cinza, fontSize: '0.9rem', margin: '0 0 18px', lineHeight: 1.5 }}>
@@ -987,6 +994,7 @@ export default function PerfilPolitico({ dados }) {
 
         {ehSenadoCpi && (
           <Secao id="cpi" titulo="CPIs e CPMIs" aberta={secoesAbertas.cpi} onToggle={() => toggleSecao('cpi')}>
+            <SeloAtualizacao aoVivo />
             <p style={{ margin: '0 0 14px', fontSize: '0.86rem', lineHeight: 1.5, color: t.cor.cinza }}>
               CPI e CPMI são comissões formadas por parlamentares para investigar um fato. <strong style={{ color: t.cor.tinta }}>Participar de uma não significa ser alvo da investigação.</strong>
             </p>
@@ -1025,6 +1033,7 @@ export default function PerfilPolitico({ dados }) {
         )}
 
         <Secao id="votos" titulo={comSujeito(genero, 'Como', 'votou')} aberta={secoesAbertas.votos} onToggle={() => toggleSecao('votos')}>
+          {selVotos && <SeloAtualizacao {...selVotos} />}
 
           {presenca && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px', background: t.cor.papelQuente, borderRadius: t.raio.md, marginBottom: '16px', boxShadow: t.sombra.sutil }}>

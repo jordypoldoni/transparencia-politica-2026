@@ -6,6 +6,7 @@ import CampoBusca from '../components/CampoBusca';
 import CampoSelect from '../components/CampoSelect';
 import { t } from '../src/estilo/tokens';
 import { dataBr } from '../src/lib/datas';
+import SeloAtualizacao from '../components/SeloAtualizacao';
 
 // /indicacoes — as indicações do presidente e o que o Senado fez com elas. (18/09/2026)
 //
@@ -124,6 +125,7 @@ export default function Indicacoes({ indicacoes }) {
         agências reguladoras, procurador-geral da República, defensor público-geral e
         embaixadores.
       </p>
+      <SeloAtualizacao fonte="indicacoes_executivo" tipo="coleta" style={{ margin: '-12px 0 24px' }} />
 
       <div style={{ display: 'flex', gap: 'clamp(20px,5vw,48px)', flexWrap: 'wrap', background: t.cor.papelCartao, borderRadius: t.raio.md, padding: 'clamp(18px,3vw,24px)', boxShadow: t.sombra.sutil, marginBottom: '20px' }}>
         <Numero valor={indicacoes.length} rotulo="indicações desde 2023" />
