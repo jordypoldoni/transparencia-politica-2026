@@ -32,6 +32,7 @@ export const ultimoDiaDoMes = (ano, mes) => new Date(Date.UTC(ano, mes, 0)).toIS
 export async function ultimaEmissao(supabase, casa, ano) {
   const { data } = await supabase.from('despesas_parlamentares').select('data_emissao')
     .eq('casa_legislativa', casa).eq('ano', ano).not('data_emissao', 'is', null)
+    .lte('data_emissao', new Date().toISOString().slice(0, 10)) // medido em 17/10/2026: o Senado traz lancamentos datados no FUTURO (ate 30/10); "dados ate" nunca passa de hoje
     .order('data_emissao', { ascending: false }).limit(1);
   return data?.[0]?.data_emissao?.slice(0, 10) || null;
 }
