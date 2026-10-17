@@ -33,6 +33,7 @@
 import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
 import { buscarAlergs } from './_ponte_alergs.js';
+import { registrarStatus, ultimoDiaDoMes } from './_status.js';
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
@@ -124,6 +125,7 @@ async function main() {
   console.log(`${agentes.length} deputados do RS no banco.`);
 
   let totalLinhas = 0;
+  let dadosAte = null; // ultimo mes que o portal ja publicou, no ultimo ano gravado
 
   for (const ano of ANOS) {
     const meses = (await baixar(`${BASE}/ajax-gastosParlamentaresListarMes?ano=${ano}`, true))?.lista || [];
@@ -195,10 +197,14 @@ async function main() {
     }
 
     totalLinhas += linhas.length;
+    const maxMes = Math.max(...meses.map((m) => Number(m.mes)));
+    const fimMes = ultimoDiaDoMes(ano, maxMes);
+    if (!dadosAte || fimMes > dadosAte) dadosAte = fimMes;
     console.log(`${ano}: ${linhas.length} lançamentos gravados` + (semCadastro ? ` (${semCadastro} gabinetes de suplentes ignorados)` : '') + '.');
   }
 
   console.log(`Concluido: ${totalLinhas} lançamentos de gasto (RS, ${ANOS.join('/')}).`);
+  await registrarStatus(supabase, { fonte: 'gastos_alergs', escopo: 'RS', dadosAte, linhas: totalLinhas });
 }
 
 import { refreshRadar } from './refresh_radar.js';

@@ -34,6 +34,7 @@
 import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
 import { buscarAlergs } from './_ponte_alergs.js';
+import { registrarStatus } from './_status.js';
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
@@ -336,7 +337,9 @@ async function coletarAno(ano, deputados, idPorExterno) {
 
   console.log(`${ano}: ${metas.length} votacoes e ${linhas.length} votos gravados` +
     (semDeputado ? ` (${semDeputado} deputados sem cadastro)` : '') + '.');
-  return { votacoes: metas.length, votos: linhas.length };
+  // ultimo dia com votacao, lido do proprio id (ALERGS-AAAA-MM-DD-...)
+  const dias = metas.map((m) => /^ALERGS-(\d{4}-\d{2}-\d{2})/.exec(m.votacao_id_externa)?.[1]).filter(Boolean).sort();
+  return { votacoes: metas.length, votos: linhas.length, ultimoDia: dias.at(-1) || null };
 }
 
 // -------------------------------------------------------------------- main
@@ -351,12 +354,14 @@ async function main() {
   const idPorExterno = await sincronizarDeputados(deputados);
   if (SO_CADASTRO) { console.log('--so-cadastro: parando aqui.'); return; }
 
-  let totalV = 0, totalP = 0;
+  let totalV = 0, totalP = 0, dadosAte = null;
   for (const ano of ANOS) {
     const r = await coletarAno(ano, deputados, idPorExterno);
     totalV += r.votacoes; totalP += r.votos;
+    if (r.ultimoDia && (!dadosAte || r.ultimoDia > dadosAte)) dadosAte = r.ultimoDia;
   }
   console.log(`Concluido: ${deputados.length} deputados, ${totalV} votacoes e ${totalP} votos (RS, anos ${ANOS.join('/')}).`);
+  await registrarStatus(supabase, { fonte: 'votos_alergs', escopo: 'RS', dadosAte, linhas: totalP });
 }
 
 main().catch((e) => { console.error('ERRO:', e.message); process.exit(1); });
