@@ -14,6 +14,7 @@
 import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
 import { pedidosCamara } from '../src/lib/cpisAoVivo.js';
+import { registrarStatus } from './_status.js';
 
 const DRY = process.argv.includes('--dry');
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -66,6 +67,7 @@ async function main() {
   const { error } = await supabase.from('pedidos_cpi_camara').upsert(linhas, { onConflict: 'id' });
   if (error) { console.error(`Erro ao gravar: ${error.message}`); process.exit(1); }
   console.log(`${linhas.length} pedidos gravados.`);
+  await registrarStatus(supabase, { fonte: 'pedidos_cpi_camara', linhas: linhas.length });
   if (pulados.length) process.exit(1); // sinaliza a execucao como parcial
 }
 

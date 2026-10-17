@@ -28,6 +28,7 @@
 import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
 import { traduzir } from './ficha_tse_traduzir.js';
+import { registrarStatus } from './_status.js';
 import { buscarTudo } from '../src/lib/paginar.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -239,6 +240,7 @@ async function main() {
   if (semViceApto) console.log(`   ${semViceApto} com titular apto e vice não apto (substituição de vice em curso): a tela mostra a situação, não afirma vice confirmado`);
   if (viceDemais) console.warn(`⚠️  ${viceDemais} fichas trouxeram MAIS DE UM vice APTO. Ficamos com o primeiro, mas isso foge do que medimos em 24/09 e merece olhada.`);
   if (semFoto.length) console.warn(`⚠️  ${semFoto.length} fotos não baixaram: ${semFoto.slice(0, 8).join(', ')}${semFoto.length > 8 ? '…' : ''}`);
+  if (!SIMULAR && ok > 0) await registrarStatus(supabase, { fonte: 'candidatos_governador', linhas: ok });
   if (ok === 0) {
     console.error('❌ Nenhum candidato lido. Se for 403, o Akamai recusou a origem; a ponte existe para isso.');
     if (process.env.GITHUB_ACTIONS) console.log('::error title=Candidatos a Governador::Nenhum candidato coletado.');

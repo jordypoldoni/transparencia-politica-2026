@@ -26,6 +26,7 @@
 import 'dotenv/config';
 import { writeFileSync } from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
+import { registrarStatus } from './_status.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -317,6 +318,7 @@ async function main() {
     .upsert(linhas, { onConflict: 'codigo_materia' });
   if (error) { console.error('❌ Supabase:', error.message); process.exit(1); }
   console.log(`✅ ${linhas.length} indicações gravadas.`);
+  await registrarStatus(supabase, { fonte: 'indicacoes_executivo', linhas: linhas.length });
 }
 
 main()

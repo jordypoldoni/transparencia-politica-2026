@@ -25,6 +25,7 @@
 
 import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
+import { registrarStatus } from './_status.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -208,6 +209,7 @@ async function main() {
   }
 
   console.log(`\n\n✅ ${fmt(ok)} atualizado(s)${falhou ? ` · ⚠️ ${falhou} com erro` : ''}${semId ? ` · ${semId} sem id externo` : ''}`);
+  await registrarStatus(supabase, { fonte: 'proposicoes', linhas: ok });
 }
 
 main().catch((e) => { console.error('💥 Erro:', e.message); process.exit(1); });
