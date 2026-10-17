@@ -39,16 +39,15 @@ export default function EntePanorama({ dados }) {
         <meta name="description" content={`Quanto ${nome} arrecadou e gastou em ${resumo?.ano || ''}, e para onde foi o dinheiro público, por função e por habitante. Fonte: SICONFI/Tesouro Nacional.`} />
       </Head>
 
-      <BotaoVoltar margem="0 0 16px" />
-
-      {/* Cabeçalho */}
-      <div style={{ background: t.cor.verde, color: '#fff', borderRadius: t.raio.lg, padding: 'clamp(24px,4vw,40px)', marginBottom: '20px' }}>
-        <span style={{ fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.07em', textTransform: 'uppercase', color: t.cor.ouro }}>{esferaLabel}</span>
-        <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.7rem,4vw,2.6rem)', margin: '8px 0 4px' }}>{nome}</h1>
-        <p style={{ margin: 0, opacity: 0.85 }}>
-          {ente?.esfera === 'M' && ente?.uf ? `${ente.uf} · ` : ''}{pop ? `${pop.toLocaleString('pt-BR')} habitantes` : ''}
-        </p>
+      {/* Topo: botão de voltar com o rótulo do ente ao lado */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '14px' }}>
+        <BotaoVoltar margem="0" />
+        <span style={{ fontSize: '0.78rem', fontWeight: 800, letterSpacing: '0.07em', textTransform: 'uppercase', color: t.cor.ouroTexto }}>{esferaLabel}</span>
       </div>
+      <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.7rem,4vw,2.4rem)', margin: '0 0 4px', color: t.cor.verde }}>{nome}</h1>
+      <p style={{ margin: '0 0 18px', color: t.cor.cinza, fontSize: '0.9rem' }}>
+        {ente?.esfera === 'M' && ente?.uf ? `${ente.uf} · ` : ''}{pop ? `${pop.toLocaleString('pt-BR')} habitantes` : ''}
+      </p>
 
       {resumo ? (
         <>
@@ -127,7 +126,7 @@ function ResumoV2({ painel, ano, ateMes, nome, uniao, mostrarOrigem, setMostrarO
       </p>
       <SeloAtualizacao coletadoEm={selo} style={{ margin: '0 2px 20px' }} />
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(300px, 100%), 1fr))', gap: '14px', marginBottom: '14px', alignItems: 'start' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(300px, 100%), 1fr))', gap: '14px', marginBottom: '14px', alignItems: 'stretch' }}>
         <div style={cartao}>
           <div style={rot}>Arrecadou</div>
           <div style={{ ...tit, fontSize: '2.1rem', lineHeight: 1.1, color: t.cor.sim }}>{brlCompacto(painel.arrecadou)}</div>
@@ -158,11 +157,11 @@ function ResumoV2({ painel, ano, ateMes, nome, uniao, mostrarOrigem, setMostrarO
             </>
           )}
         </div>
-        <div style={cartao}>
+        <div style={{ ...cartao, display: 'flex', flexDirection: 'column' }}>
           <div style={rot}>Gastou</div>
           <div style={{ ...tit, fontSize: '2.1rem', lineHeight: 1.1, color: t.cor.ouroTexto }}>{brlCompacto(painel.gastou)}</div>
           <div style={{ fontSize: '0.84rem', color: t.cor.cinza, marginTop: '6px', lineHeight: 1.45 }}>Aposentadorias, salários, saúde, educação e obras, pagos no ano. Não conta juros nem pagamento da dívida.</div>
-          <div style={{ fontSize: '0.84rem', color: t.cor.cinza, marginTop: '18px', lineHeight: 1.45 }}>Para onde foi cada real está mais abaixo.</div>
+          <div style={{ fontSize: '0.84rem', color: t.cor.cinza, marginTop: 'auto', paddingTop: '18px', lineHeight: 1.45 }}>Para onde foi cada real está mais abaixo.</div>
         </div>
       </div>
 
