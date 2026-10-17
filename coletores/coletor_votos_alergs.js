@@ -33,6 +33,7 @@
 
 import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
+import { buscarAlergs } from './_ponte_alergs.js';
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 
@@ -92,7 +93,7 @@ const CABECALHOS_NAVEGADOR = {
 async function baixar(url, tentativas = 4, aceita = 'text/html', referer = null) {
   for (let i = 1; i <= tentativas; i++) {
     try {
-      const res = await fetch(url, {
+      const res = await buscarAlergs(url, {
         headers: {
           ...CABECALHOS_NAVEGADOR,
           Accept: aceita === 'application/json'
@@ -105,7 +106,7 @@ async function baixar(url, tentativas = 4, aceita = 'text/html', referer = null)
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return await res.text();
     } catch (e) {
-      if (i === tentativas) throw new Error(`Falhou ${url}: ${e.message}`);
+      if (i === tentativas || e.fatal) throw new Error(`Falhou ${url}: ${e.message}`);
       await dorme(600 * i * i); // backoff
     }
   }
