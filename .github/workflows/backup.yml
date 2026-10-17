@@ -75,6 +75,9 @@ jobs:
         run: |
           set -euo pipefail
           DATA=$(date -u +%Y-%m-%d)
+          # grep -c le o arquivo TODO. Nao usar grep -q aqui: ele sai na primeira linha, o gunzip toma
+          # "Broken pipe" e o pipefail derruba o passo mesmo com a tabela presente (erro de 17/10).
+          contem() { [ "$(gunzip -c "$1" | grep -c -- "$2" || true)" -ge 1 ]; }
           mkdir -p backups/banco1
           /usr/lib/postgresql/17/bin/pg_dump "$BANCO_URL" --no-owner --no-privileges -n public \
             --exclude-table-data=public.despesas_parlamentares \
@@ -82,10 +85,11 @@ jobs:
             --exclude-table-data=public.candidatos_deputado_federal \
             | gzip -9 > banco1.sql.gz
           # Conferencias: o arquivo tem de conter dados de tabelas nossas e NAO ser vazio.
-          gunzip -c banco1.sql.gz | grep -q '^COPY public.agentes_politicos ' || { echo "::error::banco 1: agentes_politicos ausente no dump"; exit 1; }
-          gunzip -c banco1.sql.gz | grep -q '^COPY public.votacoes ' || { echo "::error::banco 1: votacoes ausente no dump"; exit 1; }
+          contem banco1.sql.gz '^COPY public.agentes_politicos ' || { echo "::error::banco 1: agentes_politicos ausente no dump"; exit 1; }
+          contem banco1.sql.gz '^COPY public.votacoes ' || { echo "::error::banco 1: votacoes ausente no dump"; exit 1; }
           age -r "$CHAVE_PUBLICA" -o "backups/banco1/banco1_${DATA}.sql.gz.age" banco1.sql.gz
           rm -f banco1.sql.gz
+          test -s "backups/banco1/banco1_${DATA}.sql.gz.age" || { echo "::error::banco 1: arquivo criptografado vazio"; exit 1; }
           ls -l "backups/banco1/banco1_${DATA}.sql.gz.age"
 
       - name: Exportar e criptografar o banco 2
@@ -94,12 +98,14 @@ jobs:
         run: |
           set -euo pipefail
           DATA=$(date -u +%Y-%m-%d)
+          contem() { [ "$(gunzip -c "$1" | grep -c -- "$2" || true)" -ge 1 ]; }
           mkdir -p backups/banco2
           /usr/lib/postgresql/17/bin/pg_dump "$BANCO_URL" --no-owner --no-privileges -n public -n auth | gzip -9 > banco2.sql.gz
-          gunzip -c banco2.sql.gz | grep -q '^COPY auth.users ' || { echo "::error::banco 2: auth.users ausente no dump"; exit 1; }
-          gunzip -c banco2.sql.gz | grep -q 'CREATE TABLE public\.' || { echo "::error::banco 2: nenhuma tabela public no dump"; exit 1; }
+          contem banco2.sql.gz '^COPY auth.users ' || { echo "::error::banco 2: auth.users ausente no dump"; exit 1; }
+          contem banco2.sql.gz 'CREATE TABLE public\.' || { echo "::error::banco 2: nenhuma tabela public no dump"; exit 1; }
           age -r "$CHAVE_PUBLICA" -o "backups/banco2/banco2_${DATA}.sql.gz.age" banco2.sql.gz
           rm -f banco2.sql.gz
+          test -s "backups/banco2/banco2_${DATA}.sql.gz.age" || { echo "::error::banco 2: arquivo criptografado vazio"; exit 1; }
           ls -l "backups/banco2/banco2_${DATA}.sql.gz.age"
 
       - name: Guardar no repositorio privado e podar os antigos
