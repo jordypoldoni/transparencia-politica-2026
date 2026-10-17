@@ -70,4 +70,8 @@ jobs:
             curl -sf -o /dev/null http://localhost:3100/sobre && break
             sleep 1
           done
-          node tests/fumaca.mjs http://localhost:3100 || { echo "--- log do servidor ---"; tail -40 servidor.log; exit 1; }
+          node tests/fumaca.mjs http://localhost:3100 || {
+            echo "--- log do servidor ---"; tail -40 servidor.log
+            echo "::error::log do servidor: $(tail -8 servidor.log | tr '\n' ' ' | cut -c1-600)"
+            exit 1
+          }

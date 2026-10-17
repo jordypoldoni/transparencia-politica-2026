@@ -12,7 +12,12 @@ const base = (process.argv[2] || 'http://localhost:3100').replace(/\/+$/, '');
 const producao = process.argv.includes('--producao');
 const falhas = [];
 const ok = (msg) => console.log(`  ok   ${msg}`);
-const falha = (msg) => { falhas.push(msg); console.log(`  FALHA ${msg}`); };
+const falha = (msg) => {
+  falhas.push(msg);
+  console.log(`  FALHA ${msg}`);
+  // No GitHub Actions o log exige login; a anotação aparece na página pública do run.
+  if (process.env.GITHUB_ACTIONS) console.log(`::error::fumaça: ${msg}`);
+};
 
 // Pedido que permite escolher o método e o cabeçalho Host (o fetch não deixa trocar o Host).
 function pedir(caminho, { metodo = 'GET', host } = {}) {
