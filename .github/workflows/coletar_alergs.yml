@@ -1,0 +1,97 @@
+# coletar_alergs.yml: coleta do Rio Grande do Sul (ALERGS) pela ponte. (17/10/2026, T4b, D-035)
+#
+# POR QUE ESTE ARQUIVO EXISTE SEPARADO DO coletar.yml
+# O GitHub nao alcanca a ALERGS (bloqueio por origem, medido em 15/10). O caminho e
+# GitHub -> funcao `alergs-ponte` do Supabase (sa-east-1) -> ALERGS. Os coletores falam com a ponte
+# quando ALERGS_PONTE_URL existe (coletores/_ponte_alergs.js).
+#
+# POR QUE NAO E DIARIO
+# - A ALERGS publica os gastos UMA vez por mes, e os votos mudam por sessao de plenario.
+# - O coletor de gastos APAGA E REGRAVA o ano dos deputados do RS: rodar todo dia so gera
+#   linhas mortas no banco 1 (T7, perto do teto de 500 MB). Votos fazem upsert (idempotente).
+# - Cadencia: VOTOS toda segunda (07:17 de Brasilia); VOTOS + GASTOS no dia 8 de cada mes (07:47).
+#   O cadastro dos deputados e sincronizado pelo coletor de votos, que por isso roda antes dos gastos.
+# - Em janeiro e fevereiro roda tambem o ano anterior (a ALERGS pode publicar o fim de dezembro
+#   depois da virada).
+#
+# O horario do cron do GitHub e um PEDIDO, nao uma promessa (atraso tipico de 3 a 6 horas).
+#
+# FALHA BARULHENTA DE PROPOSITO: nenhum passo usa continue-on-error. Se a ponte, a senha ou o
+# layout do portal falharem, o run fica VERMELHO e o GitHub avisa por e-mail. O coletor de gastos
+# aborta sem apagar nada quando nao reconhece despesa nenhuma.
+#
+# SEGREDOS (Settings > Secrets and variables > Actions): SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY,
+# ALERGS_PONTE_URL, ALERGS_PONTE_TOKEN (o mesmo valor do secret ALERGS_PONTE_TOKEN do Supabase).
+
+name: Coletar dados (ALERGS, RS)
+
+on:
+  schedule:
+    - cron: '17 10 * * 1'   # toda segunda, 07:17 de Brasilia: votos
+    - cron: '47 10 8 * *'   # dia 8 de cada mes, 07:47 de Brasilia: votos e gastos
+  workflow_dispatch:
+    inputs:
+      alvo:
+        description: 'O que rodar agora'
+        type: choice
+        required: true
+        default: votos
+        options:
+          - votos
+          - gastos
+          - ambos
+
+# Nunca dois runs ao mesmo tempo (o de gastos apaga e regrava).
+concurrency:
+  group: coletar-alergs
+  cancel-in-progress: false
+
+jobs:
+  alergs:
+    name: ALERGS (votos e gastos do RS)
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Instalar dependências
+        run: npm install --ignore-scripts
+
+      - name: Definir anos
+        id: anos
+        run: |
+          ANO=$(date -u +%Y)
+          MES=$(date -u +%m)
+          if [ "$MES" = "01" ] || [ "$MES" = "02" ]; then
+            echo "lista=$((ANO-1)) $ANO" >> "$GITHUB_OUTPUT"
+          else
+            echo "lista=$ANO" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Votos em plenário e cadastro (ALERGS)
+        if: >-
+          ${{ github.event_name == 'schedule'
+              || inputs.alvo == 'votos' || inputs.alvo == 'ambos' }}
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          ALERGS_PONTE_URL: ${{ secrets.ALERGS_PONTE_URL }}
+          ALERGS_PONTE_TOKEN: ${{ secrets.ALERGS_PONTE_TOKEN }}
+        run: node coletores/coletor_votos_alergs.js ${{ steps.anos.outputs.lista }}
+
+      - name: Gastos de gabinete (ALERGS), só mensal ou manual
+        if: >-
+          ${{ github.event.schedule == '47 10 8 * *'
+              || inputs.alvo == 'gastos' || inputs.alvo == 'ambos' }}
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          ALERGS_PONTE_URL: ${{ secrets.ALERGS_PONTE_URL }}
+          ALERGS_PONTE_TOKEN: ${{ secrets.ALERGS_PONTE_TOKEN }}
+        run: node coletores/coletor_gastos_alergs.js ${{ steps.anos.outputs.lista }}
