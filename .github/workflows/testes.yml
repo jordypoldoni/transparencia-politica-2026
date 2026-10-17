@@ -1,0 +1,73 @@
+# testes.yml: rede de testes automáticos. (17/10/2026)
+#
+# QUANDO RODA: a cada envio (push) em qualquer ramificação, em todo pull request e sob demanda.
+# Em repositório público o Actions é gratuito.
+#
+# O QUE CONFERE, nesta ordem (parou em um vermelho, o resto não roda):
+#   1. npm ci            : o package-lock está de acordo com o package.json e instala limpo.
+#   2. npm test          : funções puras (datas, paginar, afinidade, apuração), rota de apuração e
+#                          os testes dos próprios workflows (tests/workflows.test.mjs).
+#   3. npm run build     : o site inteiro compila (lint e tipos incluídos).
+#   4. fumaça            : sobe o servidor de produção e visita páginas, rotas de API e cabeçalhos
+#                          (tests/fumaca.mjs).
+#
+# BANCO DE MENTIRA DE PROPÓSITO: o endereço abaixo aponta para uma porta fechada. O teste NÃO fala com
+# banco nem com TSE, e nenhum segredo entra aqui (assim um pull request de fora não acessa nada).
+# Páginas com dados do banco ficam fora deste teste; quem confere dado de verdade é o vigia do site no ar.
+#
+# VERMELHO = o GitHub manda e-mail. Se o envio foi de main, a Vercel já pode ter publicado: por isso a
+# trava local (.githooks/pre-push) roda `npm test` ANTES do envio.
+name: Testes
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: testes-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  testes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SUPABASE_URL: http://127.0.0.1:9
+      SUPABASE_SERVICE_ROLE_KEY: teste
+      SUPABASE_URL_2: http://127.0.0.1:9
+      SUPABASE_SERVICE_ROLE_KEY_2: teste
+      NEXT_PUBLIC_SUPABASE_URL_2: http://127.0.0.1:9
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY_2: teste
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Instalar dependências (npm ci)
+        run: npm ci --ignore-scripts
+
+      - name: Testes (npm test)
+        run: npm test
+
+      - name: Compilar o site (npm run build)
+        run: npm run build
+
+      - name: Fumaça (servidor de produção local)
+        run: |
+          set -euo pipefail
+          npx next start -p 3100 > servidor.log 2>&1 &
+          for i in $(seq 1 40); do
+            curl -sf -o /dev/null http://localhost:3100/sobre && break
+            sleep 1
+          done
+          node tests/fumaca.mjs http://localhost:3100 || { echo "--- log do servidor ---"; tail -40 servidor.log; exit 1; }
