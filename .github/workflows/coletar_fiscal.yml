@@ -123,6 +123,17 @@ jobs:
         if: steps.trava.outputs.parar != '1'
         run: node coletores/coletor_candidatos_senador_2026.js
 
+      # Candidatos a Governador (T10, 17/10/2026). Ate hoje so rodava a mao (ficha parada desde
+      # 03/10). Fica DENTRO deste job porque herda o que ele ja tem: a ponte do TSE (o Akamai
+      # recusa o IP do GitHub), o token e a TRAVA DE DATA de 01/11, que cobre o 2o turno de
+      # governador (25/10) e a semana em que a ficha passa a dizer quem foi eleito. Sao ~180
+      # fichas, algo como 3 a 4 minutos. D-016 mantinha governador fora da coleta diaria; a
+      # decisao foi revista pelo Jordy em 17/10. Pela ponte a foto e pulada e quem ja tem foto
+      # nao perde (o upsert nao manda a coluna). Sem continue-on-error: vermelho = coleta falhou.
+      - name: Candidatos a Governador (ficha)
+        if: steps.trava.outputs.parar != '1'
+        run: node coletores/coletor_candidatos_governador_2026.js
+
       # Diário e botão comum: só quem ainda pode mudar. Domingo e botão "completa": todos.
       - name: Deputados federais
         if: steps.trava.outputs.parar != '1'

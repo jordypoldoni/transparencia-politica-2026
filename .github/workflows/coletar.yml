@@ -108,3 +108,22 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         continue-on-error: true
         run: node coletores/coletor_pedidos_cpi.js
+
+      # Indicacoes do Executivo e o voto do Senado nelas (T10, 17/10/2026). Ate hoje so rodava a mao
+      # (ultima coleta em 18/09/2026), entao a tela /indicacoes ficava congelada sem aviso. A fonte
+      # e a API aberta do Senado, a mesma dos votos acima, entao o GitHub alcanca sem ponte.
+      # SEMANAL (segunda-feira): indicacao do presidente muda pouco e cada rodada consulta a votacao
+      # de cada mensagem. O cron e diario, entao o portao do dia da semana fica aqui no passo.
+      # O botao manual (workflow_dispatch) roda sempre. continue-on-error pelo mesmo motivo dos dois
+      # passos acima: se o Senado cair, o resto ja rodou e a data na tela simplesmente nao avanca.
+      - name: Indicações do Executivo (segunda-feira ou manual)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        continue-on-error: true
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "$(date -u +%u)" = "1" ]; then
+            node coletores/coletor_indicacoes_executivo.js
+          else
+            echo "Hoje não é segunda-feira: indicações do Executivo ficam para a próxima semana."
+          fi
