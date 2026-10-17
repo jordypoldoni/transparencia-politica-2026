@@ -27,6 +27,25 @@ export async function registrarStatus(supabase, { fonte, escopo = '', dadosAte =
 // Ultimo dia do mes (ano, mes 1-12) em ISO. Usado por fontes que publicam por mes fechado.
 export const ultimoDiaDoMes = (ano, mes) => new Date(Date.UTC(ano, mes, 0)).toISOString().slice(0, 10);
 
+// Maior data (YYYY-MM-DD) de uma lista de linhas em memoria, nunca depois de hoje. null se vazia.
+export function maiorData(linhas, campo = 'data_emissao') {
+  const hoje = new Date().toISOString().slice(0, 10);
+  let max = null;
+  for (const l of linhas) { const d = String(l[campo] || '').slice(0, 10); if (d && d <= hoje && (!max || d > max)) max = d; }
+  return max;
+}
+
+// Ultima votacao gravada cujo id casa com o filtro (like / notLike: lista de padroes). Le a tabela
+// votacoes (pequena), nao a de votos. null se nao ha.
+export async function ultimaVotacao(supabase, { like = null, notLike = [] } = {}) {
+  let q = supabase.from('votacoes').select('data_voto').not('data_voto', 'is', null)
+    .lte('data_voto', new Date().toISOString());
+  if (like) q = q.like('votacao_id_externa', like);
+  for (const p of notLike) q = q.not('votacao_id_externa', 'like', p);
+  const { data } = await q.order('data_voto', { ascending: false }).limit(1);
+  return data?.[0]?.data_voto?.slice(0, 10) || null;
+}
+
 // Ultimo data_emissao de uma casa num ano, lido do BANCO (o que de fato ficou gravado). Para fontes
 // que publicam o lancamento com a data do documento (Camara, Senado). null se nao ha nada.
 export async function ultimaEmissao(supabase, casa, ano) {

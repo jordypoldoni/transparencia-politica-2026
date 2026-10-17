@@ -18,6 +18,7 @@
 
 import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
+import { registrarStatus } from './_status.js';
 import AdmZip from 'adm-zip';
 import iconv from 'iconv-lite';
 import fs from 'fs';
@@ -304,6 +305,7 @@ async function main() {
   }
 
   console.log(`\n✅ Presidenciáveis: ${ok} gravados, ${falhou} com erro.`);
+  if (ok > 0) await registrarStatus(supabase, { fonte: 'candidatos_presidenciais', linhas: ok });
   console.log('   Confira no banco (tabela candidatos_presidenciais) e depois rode o site local pra ver /presidenciaveis.');
 }
 

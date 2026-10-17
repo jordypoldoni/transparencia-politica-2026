@@ -36,6 +36,7 @@
 
 import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
+import { registrarStatus } from './_status.js';
 import AdmZip from 'adm-zip';
 import iconv from 'iconv-lite';
 import fs from 'fs';
@@ -331,6 +332,7 @@ async function main() {
 
   console.log(`\n✅ Deputados Federais: ${totalOk} gravados, ${totalFalhou} com erro. Fotos: ${totalFotosOk} casadas, ${totalFotosNao} sem candidato correspondente.`);
   await supabase.rpc('marcar_candidaturas_duplicadas').then(({ error }) => { if (error) console.warn('⚠️  duplicadas (rode supabase/banco1/006):', error.message); }); // 02/10/2026: esconde registro repetido que nao consta da urna
+  if (totalOk > 0) await registrarStatus(supabase, { fonte: 'candidatos_deputado_federal', linhas: totalOk });
   console.log('   Confira no banco (tabela candidatos_deputado_federal) e depois rode o site local pra ver /candidatos-2026?cargo=deputado-federal.');
 }
 

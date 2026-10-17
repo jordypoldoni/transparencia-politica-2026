@@ -29,6 +29,7 @@
 import 'dotenv/config';
 import { writeFileSync } from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
+import { registrarStatus } from './_status.js';
 import { traduzir } from './ficha_tse_traduzir.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -174,6 +175,7 @@ async function main() {
     console.warn(`⚠ ${msg}`);
     if (process.env.GITHUB_ACTIONS) console.log(`::warning title=Fichas do TSE incompletas::${msg}`);
   }
+  if (!SIMULAR) await registrarStatus(supabase, { fonte: 'ficha_presidenciaveis', linhas: ok });
 }
 
 main()

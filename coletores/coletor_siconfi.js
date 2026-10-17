@@ -8,6 +8,7 @@
  * (o .env precisa de SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY)
  */
 import supabase from '../src/supabase_cliente.js';
+import { registrarStatus } from './_status.js';
 import { listarEntes, coletarEnteRecente, salvarResumo } from '../src/lib/siconfi.js';
 
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -89,6 +90,7 @@ async function main() {
   if (!entes.length) process.exit(1);
   if (filtro !== 'entes') await popularFiscalSubnacional(entes);
   console.log('\n🏁 Concluído.');
+  await registrarStatus(supabase, { fonte: 'fiscal_siconfi', escopo: filtro || 'tudo', linhas: entes.length });
   process.exit(0);
 }
 

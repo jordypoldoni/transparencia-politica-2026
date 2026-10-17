@@ -3,6 +3,7 @@
 // Idempotente: upsert com chave (votacao_id_externa, agente_id).
 import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
+import { registrarStatus, ultimaVotacao } from './_status.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -162,6 +163,7 @@ async function main() {
 
   if (linhas.length === 0) {
     console.log('Nenhum voto nominal novo. Fim.');
+    await registrarStatus(supabase, { fonte: 'votos_camara', dadosAte: await ultimaVotacao(supabase, { notLike: ['SF-%', 'ALERGS-%'] }), linhas: 0 });
     return;
   }
 
@@ -177,6 +179,7 @@ async function main() {
     gravados += lote.length;
   }
   console.log(`✅ ${gravados} votos gravados/atualizados.`);
+  await registrarStatus(supabase, { fonte: 'votos_camara', dadosAte: await ultimaVotacao(supabase, { notLike: ['SF-%', 'ALERGS-%'] }), linhas: gravados });
 }
 
 main().catch((e) => {

@@ -5,6 +5,7 @@
 import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
 import { XMLParser } from 'fast-xml-parser';
+import { registrarStatus, maiorData, ultimoDiaDoMes } from './_status.js';
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 const ANO = parseInt(process.argv[2] || process.env.ANO_ALESP || '2026', 10); // uso: node coletor_alesp.js 2025
@@ -157,6 +158,10 @@ async function main() {
     if (error) throw error;
   }
   console.log(`Concluido: ${linhasAg.length} deputados estaduais e ${linhasDesp.length} despesas (SP/${ANO}).`);
+  // a ALESP publica por mes (data_emissao = dia 1): "dados ate" = fim do ultimo mes publicado, como na ALERGS
+  const ult = maiorData(linhasDesp);
+  const dadosAte = ult ? ultimoDiaDoMes(Number(ult.slice(0, 4)), Number(ult.slice(5, 7))) : null;
+  await registrarStatus(supabase, { fonte: 'gastos_alesp', escopo: 'SP', dadosAte, linhas: linhasDesp.length });
 }
 
 import { refreshRadar } from './refresh_radar.js';

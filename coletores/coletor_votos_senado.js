@@ -39,6 +39,7 @@
 import 'dotenv/config';
 import { writeFileSync } from 'node:fs';
 import { createClient } from '@supabase/supabase-js';
+import { registrarStatus, ultimaVotacao } from './_status.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -228,6 +229,8 @@ async function main() {
   if (noBanco < metas.length) {
     console.warn('⚠ o banco tem menos que a fonte: alguma gravação falhou em silêncio.');
     process.exitCode = 1;
+  } else {
+    await registrarStatus(supabase, { fonte: 'votos_senado', dadosAte: await ultimaVotacao(supabase, { like: 'SF-%' }), linhas: linhas.length });
   }
 }
 

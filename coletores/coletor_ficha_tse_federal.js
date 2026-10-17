@@ -29,6 +29,7 @@
 // semanal, para pegar quem era definitivo e mudou.
 import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
+import { registrarStatus } from './_status.js';
 import { traduzir } from './ficha_tse_traduzir.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -185,6 +186,7 @@ async function main() {
   if (falhou.length && process.env.GITHUB_ACTIONS) {
     console.log(`::warning title=Ficha do TSE (federais)::${falhou.length} de ${candidatos.length} falharam: ${falhou.slice(0, 5).join(' | ').slice(0, 300)}`);
   }
+  if (!SIMULAR) await registrarStatus(supabase, { fonte: 'ficha_deputado_federal', linhas: ok });
 }
 
 main().catch((e) => { console.error('💥 Erro:', e.message); process.exitCode = 1; });

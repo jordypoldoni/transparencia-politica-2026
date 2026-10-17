@@ -30,6 +30,7 @@ import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
 import { categoria } from './categoria_gastos.js';
 import { refreshRadar } from './refresh_radar.js';
+import { registrarStatus, maiorData } from './_status.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -188,6 +189,7 @@ async function main() {
   }
   console.log(`💾 ${linhas.length} notas gravadas (${ANOS.join(', ')})`);
   await refreshRadar();
+  await registrarStatus(supabase, { fonte: 'gastos_almg', escopo: 'MG', dadosAte: maiorData(linhas), linhas: linhas.length });
   console.log('✅ pronto');
 }
 

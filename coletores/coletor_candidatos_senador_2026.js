@@ -23,6 +23,7 @@
 //   node coletores/coletor_candidatos_senador_2026.js                     (todas as UFs)
 import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
+import { registrarStatus } from './_status.js';
 import { traduzir } from './ficha_tse_traduzir.js';
 import { buscarTudo } from '../src/lib/paginar.js';
 
@@ -212,6 +213,7 @@ async function main() {
   if (!SIMULAR) await supabase.rpc('marcar_candidaturas_duplicadas').then(({ error }) => { if (error) console.warn('⚠️  duplicadas (rode supabase/banco1/006):', error.message); }); // 02/10/2026: esconde registro repetido que nao consta da urna
   if (semSuplente) console.log(`   ${semSuplente} sem suplente na ficha (a tela não inventa: mostra que a fonte não informa)`);
   if (semFoto.length) console.warn(`⚠️  ${semFoto.length} fotos não baixaram: ${semFoto.slice(0, 8).join(', ')}${semFoto.length > 8 ? '…' : ''}`);
+  if (!SIMULAR && ok > 0) await registrarStatus(supabase, { fonte: 'candidatos_senador', linhas: ok });
   if (ok === 0) {
     console.error('❌ Nenhum candidato lido. Se for 403, o Akamai recusou a origem; a ponte existe para isso.');
     if (process.env.GITHUB_ACTIONS) console.log('::error title=Candidatos a Senador::Nenhum candidato coletado.');
