@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "type": "module",
   "description": "Plataforma de Integridade Democrática 2026",
-  "main": "index.js",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -14,7 +13,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.120.0",
     "@supabase/supabase-js": "^2.95.3",
     "adm-zip": "^0.6.0",
     "axios": "^1.13.5",
