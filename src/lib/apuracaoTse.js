@@ -62,6 +62,15 @@ export function urlPresidentePorUf(uf, env = process.env, turnoPedido = 1) {
   return { turno, url: `${base}/ele2026/${ele}/dados/${pasta}/${pasta}-c${CARGOS.presidente.cd}-e${ele.padStart(6, '0')}-u.json` };
 }
 
+// Presidente do EXTERIOR (pasta "zz", 18/10/2026, I4): mesmo formato dos arquivos de UF; entra na soma dos estados.
+export function urlPresidenteExterior(env = process.env, turnoPedido = 1) {
+  const turno = turnoValido(turnoPedido);
+  if (!turno) return null;
+  const base = (env.TSE_RESULTADOS_BASE || BASE_PADRAO).replace(/\/+$/, '');
+  const ele = eleicaoDoTurno(turno, true, env);
+  return { turno, url: `${base}/ele2026/${ele}/dados/zz/zz-c${CARGOS.presidente.cd}-e${ele.padStart(6, '0')}-u.json` };
+}
+
 const num = (x) => {
   const n = Number(String(x ?? '').replace(/\./g, '').replace(',', '.'));
   return Number.isFinite(n) ? n : 0;
