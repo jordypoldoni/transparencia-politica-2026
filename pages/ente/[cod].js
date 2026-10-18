@@ -109,7 +109,7 @@ function Barra({ partes }) {
 const Quadrado = ({ cor }) => <i aria-hidden="true" style={{ display: 'inline-block', width: '10px', height: '10px', borderRadius: '3px', background: cor, marginRight: '6px', flexShrink: 0 }} />;
 const COR_ORIGEM = { contribuicoes: '#241E52', impostos: '#FF8A00', outras: '#9AA0B4' };
 
-const COR_GERAL = { impostos: '#FF8A00', transferencias: '#1F7A4D', contribuicoes: '#241E52', credito: '#666E7B', outras: '#9AA0B4' };
+const COR_GERAL = { impostos: '#FF8A00', transferencias: '#1F7A4D', patrimonial: '#A85B00', contribuicoes: '#241E52', credito: '#666E7B', outras: '#9AA0B4' };
 
 // De onde veio a receita de estados, DF e municípios (a União tem o seu no card Arrecadou).
 function OrigemGeral({ origem, total, pop }) {
