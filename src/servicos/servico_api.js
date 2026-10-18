@@ -6,6 +6,7 @@ import { casaDoPerfil } from '../lib/casa.js';
 import { todosCandidatosEstaduais } from '../lib/candidatosEstaduais.js';
 import { mandatoEstadual } from '../lib/mandatoEstadual.js';
 import { ASSEMBLEIAS } from '../lib/assembleias.js';
+import { posicaoNaBancada } from '../lib/bancadaEstado.js';
 
 const ServicoAPI = {
     // Busca o ranking de maiores gastadores
@@ -279,6 +280,17 @@ const ServicoAPI = {
             candidatura_2026 = cand || null;
         } catch (e) { console.error('candidatura_2026:', e.message); }
 
+        // 7. Posição na bancada do estado (18/10/2026): mesma conta e mesma view da tela /estado/[uf].
+        //    Falha aqui não derruba o perfil; sem o dado, a linha some.
+        let posicao_estado = null;
+        try {
+            if (perfil.uf_sede) {
+                const bancada = await ServicoAPI.getRadarPorEstado(perfil.uf_sede, anoReferencia);
+                const r = posicaoNaBancada(bancada, perfil, perfil.uf_sede);
+                posicao_estado = r ? { ...r, ano: anoReferencia, uf: perfil.uf_sede } : null;
+            }
+        } catch (e) { console.error('posicao_estado:', e.message); }
+
         const total_geral = Object.values(categorias).reduce((a, b) => a + b, 0);
         const n_notas = gastosAno.length;
         const mesesSet = new Set(gastosAno.map((g) => g.mes).filter(Boolean));
@@ -301,7 +313,8 @@ const ServicoAPI = {
             resumo_votos,
             coerencia,
             presenca,
-            candidatura_2026
+            candidatura_2026,
+            posicao_estado
         };
     },
 

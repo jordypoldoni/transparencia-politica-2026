@@ -149,3 +149,26 @@ export function fraseResumo(grupo, resumo, ano = 2026) {
   if (teto) f += ` O teto mensal ${grupo.chave === 'senado' ? 'da cota do Senado' : grupo.chave === 'federal' ? 'da cota da Câmara' : 'da verba'} para o estado é ${reais(teto)}.`;
   return f;
 }
+
+// Posição de um parlamentar na própria bancada (mesma casa, mesmo estado, portanto mesmo teto).
+// 1º = maior média mensal de gasto. Empate divide a posição (dois 3º, depois 5º). Só conta quem tem média.
+// deputados: linhas da view radar_gastos do estado. Devolve null quando não há como comparar:
+// o parlamentar sem média, ou bancada com menos de 2 pessoas com média.
+export function posicaoNaBancada(deputados, perfil, uf) {
+  const grupo = agruparPorCasa(deputados).find((g) => g.daPara(casaDoPerfil(perfil)));
+  if (!grupo) return null;
+  const linhas = montarLinhas(grupo, uf);
+  const eu = linhas.find((l) => l.d.id === perfil.id);
+  if (!eu || eu.media == null) return null;
+  const medias = linhas.map((l) => l.media).filter((x) => x != null);
+  if (medias.length < 2) return null;
+  const resumo = resumoDoGrupo(linhas, grupo.chave, uf);
+  return {
+    posicao: 1 + medias.filter((m) => m > eu.media).length,
+    de: medias.length,
+    media: eu.media,
+    mediana: medias.length >= 4 ? resumo.mediana : null,
+    teto: resumo.teto,
+    grupo: { chave: grupo.chave, plural: grupo.plural, verba: grupo.verba },
+  };
+}

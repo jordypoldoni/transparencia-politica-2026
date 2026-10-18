@@ -220,7 +220,7 @@ export default function PerfilPolitico({ dados }) {
 
   const { perfil, resumo_gastos, total_geral, n_notas, media_mensal, maior_categoria, lista_detalhada, votos = [], resumo_votos = {}, coerencia = null,
     serie_mensal = [], anos_disponiveis = [], ano_referencia, meses_com_gasto = 0, presenca = null,
-    candidatura_2026 = null } = dados;
+    candidatura_2026 = null, posicao_estado = null } = dados;
 
   // Ficha 360°: dados biográficos e de atuação (podem estar vazios até o coletor rodar)
   const idade = idadeDe(perfil.data_nascimento);
@@ -555,6 +555,26 @@ export default function PerfilPolitico({ dados }) {
             </div>
             <p style={{ margin: '8px 0 0', fontSize: '0.82rem', opacity: 0.8 }}>
               Média de <strong>{brl(media_mensal)}/mês</strong> comparada ao teto mensal de referência do estado ({brl(tetoInfo.teto)}). O saldo não usado pode acumular ao longo do ano, então a média pode variar entre os meses. Tire suas próprias conclusões com base nos dados.
+            </p>
+          </div>
+        )}
+
+        {/* Posição na bancada (18/10/2026): só entre quem tem a mesma casa e o mesmo estado, logo o mesmo teto.
+            1º = maior média mensal. A regra, a fonte e o aviso de que posição não é nota ficam à vista. */}
+        {posicao_estado && n_notas > 0 && (
+          <div style={{ marginTop: '12px', background: 'rgba(255,255,255,0.1)', borderRadius: t.raio.md, padding: '16px 18px' }}>
+            <p style={{ margin: 0, fontWeight: 700, lineHeight: 1.45 }}>
+              {posicao_estado.posicao}º maior gasto médio por mês entre os {posicao_estado.de} {posicao_estado.grupo.plural} de {posicao_estado.uf}
+            </p>
+            <p style={{ margin: '6px 0 0', fontSize: '0.92rem', lineHeight: 1.5 }}>
+              {perfil.nome_urna}: <strong>{brl(posicao_estado.media)}</strong> por mês
+              {posicao_estado.mediana != null ? <>. Mediana do estado: <strong>{brl(posicao_estado.mediana)}</strong> por mês</> : null}
+              {posicao_estado.teto ? <>. Teto mensal: {brl(posicao_estado.teto)}</> : null}.
+            </p>
+            <p style={{ margin: '8px 0 0', fontSize: '0.82rem', opacity: 0.85, lineHeight: 1.5 }}>
+              Como lemos: 1º é a maior média mensal ({posicao_estado.ano}, total ÷ meses com gasto). Comparamos só quem é da mesma casa e do mesmo estado, que têm o mesmo teto. A posição mostra quanto se gasta, não a qualidade do mandato.
+              {' '}Fonte: {fonteNome}.{' '}
+              <Link href={`/estado/${posicao_estado.uf}?casa=${posicao_estado.grupo.chave}`} style={{ color: t.cor.ouro, fontWeight: 700, textDecoration: 'underline' }}>Ver os {posicao_estado.de} de {posicao_estado.uf}<Seta direcao="direita" size={14} emTexto /></Link>
             </p>
           </div>
         )}

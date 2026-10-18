@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mediaMensal, mediana, agruparPorCasa, montarLinhas, ordenar, ordensDisponiveis, filtrar, resumoDoGrupo, fraseResumo, rotuloSituacao, tetoDoGrupo, reais } from '../src/lib/bancadaEstado.js';
+import { mediaMensal, mediana, agruparPorCasa, montarLinhas, ordenar, ordensDisponiveis, filtrar, resumoDoGrupo, fraseResumo, rotuloSituacao, tetoDoGrupo, reais, posicaoNaBancada } from '../src/lib/bancadaEstado.js';
 
 const dep = (nome, total, meses, extra = {}) => ({ id: nome, slug: nome, nome_urna: nome, partido_atual: 'XX', uf_sede: 'RS', casa: 'Câmara', total, meses_com_gasto: meses, n_notas: 10, ...extra });
 
@@ -97,4 +97,26 @@ test('perfil: presença e coerência não têm cor de aprovação (sem semáforo
   const fonte = readFileSync(new URL('../components/PerfilPolitico.jsx', import.meta.url), 'utf8');
   assert.ok(!/corCoerencia/.test(fonte));
   assert.ok(!/p >= 80/.test(fonte));
+});
+
+test('posicaoNaBancada: 1º é a maior média; empate divide; mediana só com 4+; compara só dentro da casa', () => {
+  const l = [dep('a', 100000, 10), dep('b', 80000, 10), dep('c', 60000, 10), dep('d', 60000, 10), dep('e', 20000, 10), dep('sen', 999999, 1, { casa: 'Senado' })];
+  const eu = (n) => ({ id: n, casa: 'Câmara', uf_sede: 'RS' });
+  const a = posicaoNaBancada(l, eu('a'), 'RS');
+  assert.equal(a.posicao, 1);
+  assert.equal(a.de, 5);
+  assert.equal(a.mediana, 6000);
+  assert.equal(posicaoNaBancada(l, eu('c'), 'RS').posicao, 3);
+  assert.equal(posicaoNaBancada(l, eu('d'), 'RS').posicao, 3);
+  assert.equal(posicaoNaBancada(l, eu('e'), 'RS').posicao, 5);
+  assert.equal(a.teto, 53086.78);
+  assert.equal(a.grupo.chave, 'federal');
+});
+
+test('posicaoNaBancada: sem média, bancada de 1 pessoa ou fora da lista devolve null; mediana some com menos de 4', () => {
+  const l = [dep('a', 100000, 10), dep('sem', 5000, 0), dep('b', 1000, 10)];
+  assert.equal(posicaoNaBancada(l, { id: 'sem', casa: 'Câmara' }, 'RS'), null);
+  assert.equal(posicaoNaBancada(l, { id: 'x', casa: 'Câmara' }, 'RS'), null);
+  assert.equal(posicaoNaBancada([dep('a', 1, 1)], { id: 'a', casa: 'Câmara' }, 'RS'), null);
+  assert.equal(posicaoNaBancada(l, { id: 'a', casa: 'Câmara' }, 'RS').mediana, null);
 });
