@@ -645,6 +645,10 @@ const ServicoAPI = {
         if (!base && !vm) return null;
         const meta = {
             id,
+            // 18/10/2026: sem este campo, casaDaVotacao(meta) (que lê o prefixo do id) nunca via
+            // 'SF-' nem 'ALERGS-' e tratava TODA votação como da Câmara na página /votacao/[id]:
+            // uma votação do Senado era explicada como decisão do plenário da Câmara.
+            votacao_id_externa: id,
             descricao_votacao: vm?.descricao || base?.descricao_votacao || null,
             aprovacao: (vm?.aprovacao ?? base?.aprovacao) ?? null,
             data_voto: vm?.data_voto || base?.data_voto || null,
@@ -709,7 +713,7 @@ const ServicoAPI = {
         for (let inicio = 0; ; inicio += PAGINA) {
             const { data: pagina, error } = await supabase
                 .from('agentes_politicos')
-                .select('slug, cargo_atual, fonte_api, casa_legislativa')
+                .select('slug, cargo_atual, fonte_api, casa_legislativa, data_atualizacao')
                 .not('slug', 'is', null)
                 .order('slug', { ascending: true })
                 .range(inicio, inicio + PAGINA - 1);
@@ -719,6 +723,19 @@ const ServicoAPI = {
         }
         return todos;
     },
+
+    // Votações individuais para o mapa do site (18/10/2026). São ~1,4 mil linhas, uma por votação.
+    listarVotacoesParaSitemap: async () => buscarTudo(
+        () => supabase.from('votacoes').select('votacao_id_externa, data_insercao').not('votacao_id_externa', 'is', null).order('votacao_id_externa', { ascending: true }),
+        'listarVotacoesParaSitemap',
+    ),
+
+    // Entes com painel fiscal JÁ coletado (18/10/2026). Só quem tem resumo: a página de um município
+    // sem resumo busca no SICONFI na hora, e o mapa não deve mandar o Google disparar isso 5,5 mil vezes.
+    listarEntesParaSitemap: async () => buscarTudo(
+        () => supabase.from('fiscal_resumo').select('cod_ibge').order('cod_ibge', { ascending: true }),
+        'listarEntesParaSitemap',
+    ),
 
     // Fichas dos candidatos 2026 para o sitemap (01/10/2026). Até aqui só os perfis de quem tem
     // mandato entravam, e as ~8 mil fichas de candidato (o que mais se procura antes da eleição)

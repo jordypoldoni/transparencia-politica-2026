@@ -8,6 +8,7 @@
 // Cada fonte falha sozinha: se o Senado cair, os pedidos da Camara continuam aparecendo, e o
 // bloco que falhou diz isso, em vez de mostrar lista vazia (que se leria como "nao ha CPI").
 
+import { grafo, organizacao, site, migalhas, conjuntoDeDados, jsonSeguro } from '../src/lib/dadosEstruturados';
 import Head from 'next/head';
 import { createClient } from '@supabase/supabase-js';
 import { cpisSenado } from '../src/lib/cpisAoVivo';
@@ -92,6 +93,20 @@ export default function PaginaCpis({ senado, camara }) {
         <title>CPIs e pedidos de CPI | Lume</title>
         <meta name="description" content="CPIs em atividade no Senado e pedidos de CPI na Câmara, direto das fontes oficiais, com data, situação e assinaturas. Só fato e fonte." />
         <link rel="canonical" href="https://www.lumecidadao.com.br/cpis" />
+        <script key="ld-cpis" type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonSeguro(grafo(
+          organizacao(),
+          site(),
+          migalhas([{ nome: 'Início', caminho: '/' }, { nome: 'CPIs', caminho: '/cpis' }]),
+          conjuntoDeDados({
+            nome: 'CPIs em atividade no Senado e pedidos de CPI na Câmara',
+            descricao: 'CPIs em atividade no Senado e pedidos de CPI na Câmara dos Deputados, com data, situação e assinaturas, lidos das fontes oficiais.',
+            caminho: '/cpis',
+            fontes: [
+              { nome: 'Dados Abertos da Câmara dos Deputados', url: 'https://dadosabertos.camara.leg.br' },
+              { nome: 'Dados Abertos do Senado Federal', url: 'https://www12.senado.leg.br/dados-abertos' },
+            ],
+          }),
+        )) }} />
       </Head>
 
       <div className="pagina">

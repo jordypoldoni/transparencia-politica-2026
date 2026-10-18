@@ -15,6 +15,7 @@
 //     (expandir de 10 em 10 em vez de embutir 50 no payload), e o motivo aqui foi medido:
 //     a /votacoes antiga renderizava 1.054 cartões de uma vez, cada um com linha do tempo.
 
+import { grafo, organizacao, site, migalhas, lista, jsonSeguro } from '../../src/lib/dadosEstruturados';
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import Head from 'next/head';
@@ -123,6 +124,18 @@ export default function VotacoesDaCasa({ casa, votacoes, temas = [], temaInicial
       <Head>
         <title>{`Votações: ${casa.nome} | Lume`}</title>
         <meta name="description" content={`${votacoes.length} votações em plenário ${casa.chave === 'rs' ? 'da' : casa.chave === 'senado' ? 'do' : 'da'} ${casa.nome}, com o resultado e quem votou.`} />
+        {/* 18/10/2026: esta lista ia ao ar sem endereço canônico nem dados estruturados. */}
+        <link rel="canonical" href={`https://www.lumecidadao.com.br/votacoes/${casa.chave}`} />
+        <script key="ld-votacoes" type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonSeguro(grafo(
+          organizacao(),
+          site(),
+          migalhas([{ nome: 'Início', caminho: '/' }, { nome: 'Votações', caminho: '/votacoes' }, { nome: casa.curto, caminho: `/votacoes/${casa.chave}` }]),
+          lista({
+            nome: `Votações recentes: ${casa.nome}`,
+            caminho: `/votacoes/${casa.chave}`,
+            itens: votacoes.filter((v) => v.votacao_id_externa).map((v) => ({ nome: String(v.ementa || v.descricao || v.proposicao_titulo || 'Votação').replace(/\s+/g, ' ').trim().slice(0, 110), caminho: `/votacao/${encodeURIComponent(v.votacao_id_externa)}` })),
+          }),
+        )) }} />
       </Head>
 
       <div className="pagina">

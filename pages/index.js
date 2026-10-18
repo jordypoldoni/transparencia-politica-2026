@@ -15,9 +15,11 @@ import Avatar from '../components/Avatar';
 import ResumoEleicoesHome from '../components/ResumoEleicoesHome';
 import { dataBr } from '../src/lib/datas';
 import SeloAtualizacao from '../components/SeloAtualizacao';
+import { grafo, organizacao, site, jsonSeguro } from '../src/lib/dadosEstruturados';
 
 const DESCRICAO_HOME = 'Quanto cada deputado e senador gastou da verba pública, como votou e quem são os candidatos de 2026 no seu estado. Dados oficiais da Câmara, do Senado, das Assembleias e do TSE, sempre com link para a fonte.';
-const DADOS_ESTRUTURADOS_HOME = {"@context": "https://schema.org", "@type": "WebSite", "name": "Lume Cidadão", "alternateName": "Lume", "url": "https://www.lumecidadao.com.br/", "inLanguage": "pt-BR", "description": "Gastos, votos e candidatos 2026 dos políticos do Brasil, com dados oficiais e link para a fonte."};
+// 18/10/2026: além do WebSite, a home agora declara a Organization (quem publica), em src/lib/dadosEstruturados.js.
+const DADOS_ESTRUTURADOS_HOME = grafo(organizacao(), site());
 
 const ESTADOS = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
 const ESTADOS_OPCOES = ESTADOS.map((uf) => ({ valor: uf, rotulo: `${uf} · ${NOMES_UF[uf] || uf}`, busca: `${uf} ${NOMES_UF[uf] || ''}` }));
@@ -83,7 +85,7 @@ export default function Home({ votacoes, parlamentares = [], uniao = null, estad
         <meta property="og:description" content={DESCRICAO_HOME} />
         <meta property="og:image" content="https://www.lumecidadao.com.br/og-image.png" />
         <meta name="twitter:card" content="summary_large_image" />
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(DADOS_ESTRUTURADOS_HOME) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonSeguro(DADOS_ESTRUTURADOS_HOME) }} />
       </Head>
       {/* HERO */}
       <style jsx global>{`

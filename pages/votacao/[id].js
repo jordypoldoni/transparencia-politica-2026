@@ -11,6 +11,7 @@ import { t } from '../../src/estilo/tokens';
 import { Seta } from '../../components/icones';
 import BotaoVoltar from '../../components/BotaoVoltar';
 import { dataBr } from '../../src/lib/datas';
+import { grafo, organizacao, site, migalhas, pagina, jsonSeguro } from '../../src/lib/dadosEstruturados';
 
 const ORDEM = ['Sim', 'Não', 'Abstenção', 'Obstrução'];
 const corVoto = (tp) => {
@@ -72,9 +73,41 @@ export default function Votacao({ meta, votos }) {
   }, [votos, busca]);
   const buscando = busca.trim().length > 0;
 
+  const caminhoVotacao = `/votacao/${encodeURIComponent(meta.votacao_id_externa || router.query.id || '')}`;
+  const quando = meta.data_voto ? dataBr(meta.data_voto) : null;
+  const descricaoVotacao = [
+    `${String(titulo || 'Votação').replace(/\s+/g, ' ').trim().slice(0, 170)}.`,
+    h.status ? `Resultado: ${h.status.toLowerCase()}.` : null,
+    `Votação ${casaDesta.preposicao} ${casaDesta.nome}${quando ? `, em ${quando}` : ''}. Veja como cada parlamentar votou.`,
+  ].filter(Boolean).join(' ');
+  const dadosVotacao = grafo(
+    organizacao(),
+    site(),
+    pagina({ nome: assunto || 'Votação', descricao: descricaoVotacao, caminho: caminhoVotacao }),
+    migalhas([
+      { nome: 'Início', caminho: '/' },
+      { nome: 'Votações', caminho: '/votacoes' },
+      { nome: casaDesta.curto, caminho: `/votacoes/${casaDesta.chave}` },
+      { nome: String(assunto || 'Votação').slice(0, 80), caminho: caminhoVotacao },
+    ]),
+  );
+
   return (
     <>
-      <Head><title>{`${(assunto || 'Votação').slice(0, 70)}: como votaram | Lume`}</title></Head>
+      {/* 18/10/2026: a página de cada votação ia ao ar só com título, sem descrição, canônico nem
+          dados estruturados. É a página que responde "como votou fulano na lei X", então é uma das
+          que mais merecem ser achadas. A descrição usa o que a tela já mostra (resumo ou ementa,
+          resultado, casa e data). */}
+      <Head>
+        <title>{`${(assunto || 'Votação').slice(0, 70)}: como votaram | Lume`}</title>
+        <meta name="description" content={descricaoVotacao} />
+        <link rel="canonical" href={`https://www.lumecidadao.com.br${caminhoVotacao}`} />
+        <meta property="og:type" content="article" />
+        <meta property="og:title" content={`${(assunto || 'Votação').slice(0, 70)}: como votaram`} />
+        <meta property="og:description" content={descricaoVotacao} />
+        <meta property="og:url" content={`https://www.lumecidadao.com.br${caminhoVotacao}`} />
+        <script key="ld-votacao" type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonSeguro(dadosVotacao) }} />
+      </Head>
       <div className="pagina">
         <BotaoVoltar />
 

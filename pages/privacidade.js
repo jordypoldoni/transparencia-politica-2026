@@ -22,6 +22,7 @@ export default function Privacidade() {
     <div className="pagina">
       <Head>
         <title>Privacidade | Lume Cidadão</title>
+        <link rel="canonical" href="https://www.lumecidadao.com.br/privacidade" />
         <meta name="description" content="O que o Lume Cidadão guarda sobre você, onde, por quanto tempo e como apagar. Sem cadastro, o site não guarda dado pessoal." />
       </Head>
       <div className="leitura">

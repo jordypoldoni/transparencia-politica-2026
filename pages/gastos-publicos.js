@@ -1,3 +1,4 @@
+import { grafo, organizacao, site, migalhas, conjuntoDeDados, jsonSeguro } from '../src/lib/dadosEstruturados';
 import Head from 'next/head';
 import { useState, useMemo } from 'react';
 import { useRouter } from 'next/router';
@@ -61,6 +62,17 @@ export default function GastosPublicos({ uniao, estados = [], gastosFuncao = [] 
         <title>Gastos públicos: União, estados, DF e municípios | Lume</title>
         <meta name="description" content="Quanto a União, os estados, o DF e os municípios arrecadam e gastam, e para onde vai o dinheiro, por área e por habitante. Fonte: SICONFI/Tesouro Nacional." />
         <link rel="canonical" href="https://www.lumecidadao.com.br/gastos-publicos" />
+        <script key="ld-gastos" type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonSeguro(grafo(
+          organizacao(),
+          site(),
+          migalhas([{ nome: 'Início', caminho: '/' }, { nome: 'Gastos públicos', caminho: '/gastos-publicos' }]),
+          conjuntoDeDados({
+            nome: 'Arrecadação e gastos da União, dos estados, do DF e dos municípios',
+            descricao: 'Quanto a União, os estados, o DF e os municípios arrecadam e gastam, por área e por habitante.',
+            caminho: '/gastos-publicos',
+            fontes: [{ nome: 'SICONFI, Tesouro Nacional', url: 'https://apidatalake.tesouro.gov.br/docs/siconfi/' }],
+          }),
+        )) }} />
       </Head>
 
       <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.8rem,4vw,2.6rem)', margin: '0 0 8px' }}>Gastos públicos</h1>

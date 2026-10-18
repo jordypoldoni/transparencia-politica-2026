@@ -39,6 +39,11 @@ const nextConfig = {
   async headers() {
     return [{ source: '/:path*', headers: cabecalhosSeguranca }];
   },
+  // 18/10/2026: o mapa do site virou um índice (/sitemap.xml) com um arquivo por tipo de página,
+  // servido em /sitemap-<tipo>.xml. A página é pages/sitemaps/[tipo].js.
+  async rewrites() {
+    return [{ source: '/sitemap-:tipo.xml', destination: '/sitemaps/:tipo' }];
+  },
   async redirects() {
     return [
       {
