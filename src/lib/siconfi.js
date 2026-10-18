@@ -141,6 +141,8 @@ export function parseReceitaDetalhe(items) {
   return {
     tributaria: porCod('ReceitaTributaria'),            // impostos, taxas e contribuições de melhoria
     contribuicoes: porCod('ReceitaDeContribuicoes'),    // contribuições sociais e econômicas
+    patrimonial: porCod('ReceitaPatrimonial'),          // aluguéis, rendimentos financeiros, concessões
+    transferencias_correntes: porCod('TransferenciasCorrentes'), // repasses de outros governos (FPE, FPM, SUS...)
     operacoes_credito: porCod('ReceitasDeOperacoesDeCredito'), // dívida nova, dentro da receita
     remuneracao_caixa: porCod('RemuneracaoDasDisponibilidadesDoTesouroOutrasReceitasDeCapital'),
   };

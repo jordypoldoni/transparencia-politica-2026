@@ -242,7 +242,13 @@ export default function FichaCandidatoLegislativo({ candidato, canonical, cargo 
             Candidato(a) a {cfg.nome} · {c.uf} · 2026
           </p>
           <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.5rem,3.4vw,2.1rem)', margin: '0 0 4px' }}>{c.nome_urna}</h1>
-          <p style={{ margin: 0, color: t.cor.cinza, fontSize: '0.95rem' }}>{c.partido_sigla}{c.nr_candidato ? ` · nº ${c.nr_candidato}` : ''}{c.coligacao_nome ? ` · ${c.coligacao_nome}` : ''}</p>
+          <p style={{ margin: 0, color: t.cor.cinza, fontSize: '0.95rem' }}>{c.partido_sigla}{c.nr_candidato ? ` · nº ${c.nr_candidato}` : ''}{c.coligacao_nome ? ` · ${/^partido isolado$/i.test(c.coligacao_nome) ? 'Partido isolado' : c.coligacao_nome}` : ''}</p>
+          {/* Quais partidos formam a coligação ou federação (texto oficial do TSE). Partido isolado não tem o que mostrar. */}
+          {c.coligacao_composicao && c.coligacao_nome && !/^partido isolado$/i.test(c.coligacao_nome) && String(c.coligacao_composicao).trim() !== String(c.coligacao_nome).trim() && (
+            <p style={{ margin: '4px 0 0', color: t.cor.cinza, fontSize: '0.84rem', lineHeight: 1.45, maxWidth: '62ch' }}>
+              <strong style={{ color: t.cor.tinta, fontWeight: 700 }}>Partidos:</strong> {c.coligacao_composicao}
+            </p>
+          )}
         </div>
         {/* Coração (26/09/2026). A chave é o endereço desta ficha, tirado do canonical. */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>

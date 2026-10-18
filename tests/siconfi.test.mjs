@@ -49,7 +49,12 @@ test('origem da receita lê as linhas "Até o Bimestre" pelo código da conta', 
     { cod_conta: 'ReceitaDeContribuicoes', coluna: ate, valor: 1048150710753.87 },
     { cod_conta: 'ReceitasDeOperacoesDeCredito', coluna: ate, valor: 467781360906.8 },
     { cod_conta: 'ReceitasDeOperacoesDeCredito', coluna: '% (c/a)', valor: 99 },
+    { cod_conta: 'TransferenciasCorrentes', coluna: ate, valor: 9080639195.96 },
+    { cod_conta: 'TransferenciasCorrentes', coluna: 'No Bimestre', valor: 1 },
+    { cod_conta: 'ReceitaPatrimonial', coluna: ate, valor: 4026449916.54 },
   ]);
+  assert.equal(r.transferencias_correntes, 9080639195.96);
+  assert.equal(r.patrimonial, 4026449916.54);
   assert.equal(r.tributaria, 846163557843.27);
   assert.equal(r.contribuicoes, 1048150710753.87);
   assert.equal(r.operacoes_credito, 467781360906.8);

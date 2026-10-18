@@ -120,6 +120,27 @@ export function montarDestino({ funcoes, encargos, subfuncoes, intra, esfera, ma
   return { total, itens, principais, outras };
 }
 
+// De onde veio a receita dos entes sem resultado primário publicado (estados, DF, municípios).
+// Percentuais sobre a receita total do ente (Anexo 01, exceto intra-orçamentárias). Só devolve algo
+// quando as quatro linhas principais existem e a soma não passa do total (leitura duvidosa = nada).
+export function montarOrigemGeral(resumo) {
+  const rec = (resumo && resumo.detalhe && resumo.detalhe.receita) || {};
+  const total = Number(resumo && resumo.receita_total);
+  if (!ok(rec.tributaria, rec.contribuicoes, rec.transferencias_correntes, rec.operacoes_credito) || !(total > 0)) return null;
+  const partes = [
+    { chave: 'impostos', rotulo: 'Impostos e taxas', valor: Number(rec.tributaria) },
+    { chave: 'transferencias', rotulo: 'Transferências de outros governos', valor: Number(rec.transferencias_correntes) },
+    { chave: 'contribuicoes', rotulo: 'Contribuições sociais', valor: Number(rec.contribuicoes) },
+    { chave: 'credito', rotulo: 'Empréstimos (dívida nova)', valor: Number(rec.operacoes_credito) },
+  ];
+  const soma = partes.reduce((a, p) => a + p.valor, 0);
+  if (soma > total * 1.001) return null;
+  const outras = total - soma;
+  if (outras > total * 0.0005) partes.push({ chave: 'outras', rotulo: 'Patrimônio, serviços e outras', valor: outras });
+  return partes.filter((p) => p.valor > 0).sort((a, b) => (a.chave === 'outras') - (b.chave === 'outras') || b.valor - a.valor)
+    .map((p) => ({ ...p, pct: (p.valor / total) * 100 }));
+}
+
 // Quadro completo. `v2` só quando o ente publica o resultado primário e nominal (hoje: União).
 export function montarPainel({ resumo, funcoes, ente }) {
   const d = (resumo && resumo.detalhe) || {};
@@ -128,7 +149,7 @@ export function montarPainel({ resumo, funcoes, ente }) {
   const destino = montarDestino({ funcoes, encargos: d.encargos, subfuncoes: d.subfuncoes, intra: d.intra, esfera: ente && ente.esfera });
   const v2 = ok(r.receita_primaria, r.despesa_primaria_paga, r.resultado_primario, r.resultado_nominal,
     r.juros_ativos, r.juros_passivos, r.divida_liquida_inicio, r.divida_liquida_atual);
-  if (!v2) return { v2: false, destino };
+  if (!v2) return { v2: false, destino, origemGeral: montarOrigemGeral(resumo) };
 
   const juros = Number(r.juros_passivos) - Number(r.juros_ativos);
   const aumentoDivida = Number(r.divida_liquida_atual) - Number(r.divida_liquida_inicio);
@@ -155,6 +176,9 @@ export function montarPainel({ resumo, funcoes, ente }) {
     juros,
     nominal: Number(r.resultado_nominal),
     deficit: Number(r.resultado_nominal) < 0,
+    jurosPagos: Number(r.juros_passivos),
+    jurosRecebidos: Number(r.juros_ativos),
+    credito: ok(rec.operacoes_credito) ? Number(rec.operacoes_credito) : null,
     divida: { inicio: Number(r.divida_liquida_inicio), atual: Number(r.divida_liquida_atual), aumento: aumentoDivida },
     origem,
     destino,

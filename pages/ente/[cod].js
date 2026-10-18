@@ -71,6 +71,7 @@ export default function EntePanorama({ dados }) {
                 Valores <strong>acumulados no ano de {resumo.ano}</strong>{ateMes ? `, até ${ateMes} (${resumo.periodo}º bimestre)` : ''}: receita realizada e despesa liquidada. A diferença reflete o <strong>momento do ano</strong> (a receita entra ao longo do exercício e a despesa é liquidada aos poucos), não é o resultado fiscal fechado. Fonte oficial: SICONFI / Tesouro Nacional.
               </p>
               <SeloAtualizacao coletadoEm={resumo.atualizado_em} style={{ margin: '-14px 0 22px' }} />
+              {painel.origemGeral && <OrigemGeral origem={painel.origemGeral} total={resumo.receita_total} pop={pop} />}
             </>
           )}
 
@@ -107,6 +108,32 @@ function Barra({ partes }) {
 
 const Quadrado = ({ cor }) => <i aria-hidden="true" style={{ display: 'inline-block', width: '10px', height: '10px', borderRadius: '3px', background: cor, marginRight: '6px', flexShrink: 0 }} />;
 const COR_ORIGEM = { contribuicoes: '#241E52', impostos: '#FF8A00', outras: '#9AA0B4' };
+
+const COR_GERAL = { impostos: '#FF8A00', transferencias: '#1F7A4D', contribuicoes: '#241E52', credito: '#666E7B', outras: '#9AA0B4' };
+
+// De onde veio a receita de estados, DF e municípios (a União tem o seu no card Arrecadou).
+function OrigemGeral({ origem, total, pop }) {
+  return (
+    <div style={{ background: t.cor.papelCartao, borderRadius: t.raio.lg, padding: '22px 24px', boxShadow: t.sombra.sutil, marginBottom: '20px' }}>
+      <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.4rem', margin: '0 0 6px' }}>De onde veio o dinheiro</h2>
+      <p style={{ color: t.cor.cinza, fontSize: '0.9rem', margin: 0, lineHeight: 1.5 }}>
+        A receita de <strong>{brlCompacto(total)}</strong> arrecadada no ano, por origem.
+      </p>
+      <Barra partes={origem.map((o) => ({ valor: o.valor, cor: COR_GERAL[o.chave] }))} />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.9rem', marginTop: '14px' }}>
+        {origem.map((o) => (
+          <div key={o.chave} style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+            <Quadrado cor={COR_GERAL[o.chave]} />
+            <span style={{ flex: 1, minWidth: 0 }}>{o.rotulo}</span>
+            <span style={{ whiteSpace: 'nowrap', textAlign: 'right', color: t.cor.cinza, fontSize: '0.85rem' }}>
+              <strong style={{ color: t.cor.tinta }}>{brlCompacto(o.valor)}</strong> · {pct(o.pct)}{porHab(o.valor, pop) ? ` · ${porHab(o.valor, pop)}` : ''}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function ResumoV2({ painel, ano, ateMes, nome, uniao, mostrarOrigem, setMostrarOrigem, selo }) {
   const quem = uniao ? 'o governo federal' : nome;
@@ -181,6 +208,11 @@ function ResumoV2({ painel, ano, ateMes, nome, uniao, mostrarOrigem, setMostrarO
         <div style={{ fontSize: '0.88rem', marginTop: '8px', lineHeight: 1.5 }}>
           Dívida líquida: de <strong>{brlCompacto(divida.inicio)}</strong> (início de {ano}) para <strong>{brlCompacto(divida.atual)}</strong> (até {ateMes || 'o fim do período'} de {ano}).
         </div>
+        {painel.credito > 0 && (
+          <div style={{ fontSize: '0.86rem', marginTop: '10px', lineHeight: 1.5, color: t.cor.tinta }}>
+            Nesse período o governo também tomou <strong>{brlPreciso(painel.credito)}</strong> em novos empréstimos (operações de crédito). Esse valor inclui a troca de dívidas antigas por novas, por isso não é igual ao aumento da dívida.
+          </div>
+        )}
         {painel.ajuste !== 0 && (
           <div style={{ fontSize: '0.78rem', color: t.cor.cinza, marginTop: '14px', lineHeight: 1.5 }}>
             A diferença oficial (resultado primário) de {brlPreciso(Math.abs(painel.primario))} é a conta direta, {brlPreciso(Math.abs(painel.direta))}, mais um ajuste metodológico de {brlPreciso(Math.abs(painel.ajuste))} feito pelo Tesouro. O gasto é o valor pago no ano, incluindo restos a pagar de anos anteriores.
@@ -208,6 +240,11 @@ function Ponte({ painel }) {
         <span style={{ display: 'inline-flex', alignItems: 'center' }}><Quadrado cor={cDif} />Diferença entre arrecadou e gastou: {brlPreciso(dif)}</span>
         <span style={{ display: 'inline-flex', alignItems: 'center' }}><Quadrado cor={cJur} />Juros da dívida (líquidos): {brlPreciso(jur)}</span>
       </div>
+      {painel.jurosPagos > 0 && painel.jurosRecebidos > 0 && (
+        <div style={{ fontSize: '0.78rem', color: t.cor.cinza, marginTop: '6px', lineHeight: 1.5 }}>
+          Os juros líquidos são os {brlPreciso(painel.jurosPagos)} que o governo pagou menos os {brlPreciso(painel.jurosRecebidos)} que recebeu.
+        </div>
+      )}
     </div>
   );
 }

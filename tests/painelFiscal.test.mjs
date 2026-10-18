@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { montarPainel, montarDestino, montarSubs, brlCompacto, pct } from '../src/lib/painelFiscal.js';
+import { montarPainel, montarDestino, montarSubs, montarOrigemGeral, brlCompacto, pct } from '../src/lib/painelFiscal.js';
 
 // Valores reais da União, 4º bimestre de 2026.
 const detalheUniao = {
@@ -122,4 +122,21 @@ test('montarSubs: intra-orçamentárias entram como linha própria e fecham a co
   assert.deepEqual(r.map((x) => x.nome), ['A', 'B', 'Despesas entre órgãos do próprio governo']);
   assert.ok(!r.some((x) => x.nome === 'Outras subfunções'));
   assert.ok(Math.abs(r.reduce((a, x) => a + x.pct, 0) - 100) < 1e-9);
+});
+
+// Rio Grande do Sul, 4º bimestre de 2026 (Anexo 01 do Tesouro).
+const rs = { receita_total: 49436561235.36, detalhe: { receita: { tributaria: 28912848741, contribuicoes: 3985754702.21, transferencias_correntes: 9080639195.96, operacoes_credito: 1899376836.19 } } };
+
+test('origem geral (estados): fecha em 100% e põe "outras" por último', () => {
+  const o = montarOrigemGeral(rs);
+  assert.deepEqual(o.map((x) => x.chave), ['impostos', 'transferencias', 'contribuicoes', 'credito', 'outras']);
+  assert.ok(Math.abs(o.reduce((a, x) => a + x.pct, 0) - 100) < 1e-9);
+  assert.ok(Math.abs(o[0].pct - 58.49) < 0.01);       // 28,9 bi de 49,4 bi
+  assert.ok(Math.abs(o.reduce((a, x) => a + x.valor, 0) - 49436561235.36) < 1);
+});
+
+test('origem geral: sem alguma linha principal, ou soma maior que o total, não mostra nada', () => {
+  assert.equal(montarOrigemGeral({ ...rs, detalhe: { receita: { tributaria: 1 } } }), null);
+  assert.equal(montarOrigemGeral({ receita_total: 10, detalhe: rs.detalhe }), null);
+  assert.equal(montarOrigemGeral(null), null);
 });
