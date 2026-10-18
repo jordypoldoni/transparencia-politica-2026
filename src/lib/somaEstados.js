@@ -111,3 +111,25 @@ export function combinarComSoma({ nacional, estados, exterior }) {
     corpo: { ...corpo, origem: 'soma_dos_estados', nacional_gerado_em: nacional.gerado_em },
   };
 }
+
+// ---- Modo automático (18/10/2026): sem mexer na Vercel ------------------------------------------------------------
+// APURACAO_SOMA_ESTADOS: off | sombra | on | auto. Ausente = auto. Em auto: sombra até AUTO_LIGA_EM e on depois.
+// Valor explícito (off, sombra, on) sempre vale; `off` é o botão de emergência.
+export const AUTO_LIGA_EM = Date.parse('2026-10-23T09:00:00-03:00');
+export function modoDaSoma(env, agora = Date.now()) {
+  const m = String((env && env.APURACAO_SOMA_ESTADOS) || 'auto').trim().toLowerCase();
+  if (m === 'off' || m === 'sombra' || m === 'on') return m;
+  return agora >= AUTO_LIGA_EM ? 'on' : 'sombra'; // auto e qualquer valor desconhecido
+}
+
+// ---- Autoauditoria: o nacional nunca pode ficar atrás da soma já entregue, se for mais novo que ela ------------------
+// `entregue` = { total, carimbo } da última soma mostrada; `nacional` = corpo reduzido do arquivo nacional.
+// Se o nacional foi gerado no mesmo instante ou depois dos estados daquela soma, ele tem de ter pelo menos os mesmos
+// votos. Se tem menos, algo está errado (soma ou nacional): devolve o motivo; senão, null.
+export function anomaliaNacional(entregue, nacional) {
+  if (!entregue || !nacional || !nacional.votos) return null;
+  const c = carimbo(nacional.gerado_em);
+  if (c === null || entregue.carimbo === null) return null;
+  if (c >= entregue.carimbo && nacional.votos.total < entregue.total) return 'nacional_mais_novo_com_menos_votos_que_a_soma';
+  return null;
+}

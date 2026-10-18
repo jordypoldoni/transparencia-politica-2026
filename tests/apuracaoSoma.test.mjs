@@ -1,6 +1,7 @@
 // Testes de INTEGRAÇÃO da soma dos estados na rota /api/apuracao, contra um TSE falso com arquivos reais (I4, D-049).
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { mock } from 'node:test';
 import { subirTseFalso, rebaixarNacional, lerBruto, temFixtures } from './tseFalso.mjs';
 
 let n = 0;
@@ -33,8 +34,8 @@ async function com(modo, { nacional, ajustar } = {}, fn) {
 const parado = () => rebaixarNacional(lerBruto('br'));
 const opt = { skip: !temFixtures };
 
-test('off (padrao): so o nacional, ZERO pedidos extras ao TSE', opt, async () => {
-  await com(null, { nacional: parado() }, async (tse, h) => {
+test('off explicito: so o nacional, ZERO pedidos extras ao TSE', opt, async () => {
+  await com('off', { nacional: parado() }, async (tse, h) => {
     const r = await chamar(h);
     assert.equal(r.codigo, 200); assert.equal(r.corpo.origem, undefined);
     assert.equal(tse.total(), 1); assert.equal(r.cab['X-Apuracao-Soma'], undefined);
@@ -152,5 +153,58 @@ test('mesma tela em duas chamadas seguidas usa a memoria: 1 rodada de pedidos', 
   await com('on', { nacional: parado() }, async (tse, h) => {
     await chamar(h); const n1 = tse.total(); await chamar(h);
     assert.equal(tse.total(), n1);
+  });
+});
+
+test('variavel ausente = auto: antes de 23/10 09h funciona como sombra (entrega o nacional)', opt, async () => {
+  await com(null, { nacional: parado() }, async (tse, h) => {
+    const r = await chamar(h);
+    assert.equal(r.corpo.origem, undefined); assert.equal(r.cab['X-Apuracao-Soma'], 'sombra:ok');
+  });
+});
+
+test('variavel ausente = auto: a partir de 23/10 09h funciona como on (entrega a soma)', opt, async () => {
+  const real = Date.now;
+  const depois = Date.parse('2026-10-23T09:00:01-03:00');
+  mock.method(Date, 'now', () => depois + (real() - real()));
+  try {
+    await com(null, { nacional: parado() }, async (tse, h) => {
+      const r = await chamar(h);
+      assert.equal(r.corpo.origem, 'soma_dos_estados'); assert.equal(r.cab['X-Apuracao-Soma'], 'on:ok');
+    });
+  } finally { mock.restoreAll(); }
+});
+
+test('autoauditoria: nacional MAIS NOVO e com MENOS votos que a soma entregue => derruba a soma por 15 min', opt, async () => {
+  await com('on', { nacional: parado() }, async (tse, h) => {
+    let r = await chamar(h, { limite: '11' });
+    assert.equal(r.corpo.origem, 'soma_dos_estados');
+    // o nacional "atualiza": carimbo depois dos estados, mas com menos votos que a soma entregue
+    const b = rebaixarNacional(lerBruto('br'), 5000); b.dg = '05/10/2026'; b.hg = '13:00:00';
+    tse.corpo.br = b;
+    r = await chamar(h, { limite: '12' });
+    assert.equal(r.corpo.origem, undefined); assert.equal(r.cab['X-Apuracao-Soma'], 'on:anomalia');
+    await new Promise((ok) => setTimeout(ok, 20)); // deixa a rota soltar o pedido em voo do passo anterior
+    const antes = tse.total();
+    r = await chamar(h, { limite: '13' });
+    assert.equal(r.cab['X-Apuracao-Soma'], 'on:disjuntor_aberto'); assert.equal(tse.total() - antes, 1);
+  });
+});
+
+test('autoauditoria: nacional que atualiza e alcanca a soma NAO e anomalia', opt, async () => {
+  await com('on', { nacional: parado() }, async (tse, h) => {
+    await chamar(h, { limite: '21' });
+    const b = lerBruto('br'); b.dg = '05/10/2026'; b.hg = '13:00:00'; b.s.st = String(Number(b.s.st) - 1); // em andamento, em dia
+    tse.corpo.br = b;
+    const r = await chamar(h, { limite: '22' });
+    assert.equal(r.cab['X-Apuracao-Soma'], 'on:nacional_em_dia'); assert.equal(r.corpo.origem, undefined);
+  });
+});
+
+test('autoauditoria: nacional ainda parado e MAIS ANTIGO que a soma NAO e anomalia (e o caso de uso)', opt, async () => {
+  await com('on', { nacional: parado() }, async (tse, h) => {
+    await chamar(h, { limite: '31' });
+    const r = await chamar(h, { limite: '32' });
+    assert.equal(r.cab['X-Apuracao-Soma'], 'on:ok'); assert.equal(r.corpo.origem, 'soma_dos_estados');
   });
 });

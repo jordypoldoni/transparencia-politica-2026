@@ -11,7 +11,7 @@
 // Se a Vercel for recusada pelo TSE (o DivulgaCandContas recusa com 403), a resposta diz
 // `tse_recusou` com o status: é assim que descobrimos, e o plano B é a tse-ponte do Supabase.
 import { urlDoResultado, reduzirResultado } from '../../src/lib/apuracaoTse';
-import { combinarComSoma } from '../../src/lib/somaEstados';
+import { combinarComSoma, modoDaSoma, anomaliaNacional, carimbo } from '../../src/lib/somaEstados';
 import { carregarParaSoma } from '../../src/lib/somaEstadosRede';
 
 const UA = { 'User-Agent': 'Mozilla/5.0', Accept: 'application/json' };
@@ -30,12 +30,13 @@ const naoPublicado = new Map(); // url -> instante do último 404
 
 // TOTAL NACIONAL PELA SOMA DOS ESTADOS (18/10/2026, I4, D-049). Só presidente. O arquivo NACIONAL continua sendo a base
 // e a reserva: a soma só substitui quando está à frente E passa em todas as verificações (src/lib/somaEstados.js).
-// Interruptor (variável de ambiente APURACAO_SOMA_ESTADOS na Vercel): off (padrão, nada muda) | sombra (calcula e registra
-// no log, mas entrega o nacional) | on (entrega a soma quando válida e à frente). `?origem=nacional` força o nacional e
-// `?origem=soma` força a tentativa da soma (diagnóstico; só vale com o interruptor em sombra ou on).
+// Interruptor (variável de ambiente APURACAO_SOMA_ESTADOS na Vercel): auto (padrão quando ausente: sombra até 23/10 09h,
+// on depois) | off (botão de emergência) | sombra (calcula e registra no log, mas entrega o nacional) | on (entrega a soma
+// quando válida e à frente). `?origem=nacional` força o nacional e `?origem=soma` força a tentativa da soma (diagnóstico;
+// só vale com o interruptor em sombra ou on). Autoauditoria: ver anomaliaNacional() em src/lib/somaEstados.js.
 const SOMA_PAUSA_MS = 60000; // disjuntor: após 3 falhas seguidas, não tenta por 60 s
-const somaEstado = { falhas: 0, pausadoAte: 0 };
-const modoDaSoma = (env) => { const m = String(env.APURACAO_SOMA_ESTADOS || 'off').toLowerCase(); return m === 'on' || m === 'sombra' ? m : 'off'; };
+const SOMA_PAUSA_ANOMALIA_MS = 15 * 60000; // autoauditoria: anomalia desliga a soma por 15 min
+const somaEstado = { falhas: 0, pausadoAte: 0, entregue: null }; // entregue = { total, carimbo } da última soma mostrada (por instância)
 
 async function buscarRapido(url) {
   const r = await fetch(url, { headers: UA, signal: AbortSignal.timeout(5000) });
@@ -45,6 +46,8 @@ async function buscarRapido(url) {
   return JSON.parse(texto);
 }
 
+function pausar(ms) { somaEstado.pausadoAte = Math.max(somaEstado.pausadoAte, Date.now() + ms); }
+
 function registrarFalha() {
   somaEstado.falhas++;
   if (somaEstado.falhas >= 3) { somaEstado.pausadoAte = Date.now() + SOMA_PAUSA_MS; somaEstado.falhas = 0; }
@@ -52,6 +55,9 @@ function registrarFalha() {
 
 // Nunca lança: qualquer problema vira { ok:false, motivo } e a rota fica com o nacional.
 async function tentarSoma(nacional, turno, env) {
+  // Autoauditoria primeiro: um nacional mais novo e menor que a soma já mostrada derruba a soma por 15 min.
+  const anomalia = anomaliaNacional(somaEstado.entregue, nacional);
+  if (anomalia) { somaEstado.entregue = null; pausar(SOMA_PAUSA_ANOMALIA_MS); return { ok: false, motivo: 'anomalia', detalhe: anomalia }; }
   if (Date.now() < somaEstado.pausadoAte) return { ok: false, motivo: 'disjuntor_aberto' };
   // Sem apuração em andamento (não começou ou 100%) não há o que ganhar e nem se gasta pedido ao TSE.
   if (!emAndamento(nacional)) return { ok: false, motivo: 'nacional_sem_andamento' };
@@ -88,7 +94,7 @@ export default async function handler(req, res) {
   // Combinação inválida (cargo, uf ou turno): 400 aqui, sem pedir nada ao TSE (404 em excesso bloqueia o IP por 10 min).
   if (!alvo) return res.status(400).json({ erro: 'cargo, uf ou turno inválido' });
   const limite = Math.min(100, Math.max(5, parseInt(req.query.limite, 10) || 30));
-  const modoSoma = cargo === 'presidente' ? modoDaSoma(process.env) : 'off';
+  const modoSoma = cargo === 'presidente' ? modoDaSoma(process.env, Date.now()) : 'off';
   const origemPedida = String(req.query.origem || '');
   const chave = `${alvo.url}|${limite}|${modoSoma}|${origemPedida}`;
 
@@ -114,7 +120,10 @@ export default async function handler(req, res) {
         console.log(`apuracao-soma[${modoSoma}]: ${motivo}${soma.detalhe ? ` (${soma.detalhe})` : ''}${soma.ok ? ` adianta ${soma.corpo.votos.total - corpo.votos.total} votos; nacional ${corpo.gerado_em}` : ''}`);
       }
       const entregar = soma.ok && (modoSoma === 'on' || origemPedida === 'soma');
-      if (entregar) corpo = { ...soma.corpo, turno: alvo.turno, fonte_url: alvo.url };
+      if (entregar) {
+        corpo = { ...soma.corpo, turno: alvo.turno, fonte_url: alvo.url };
+        if (modoSoma === 'on') somaEstado.entregue = { total: soma.corpo.votos.total, carimbo: carimbo(soma.corpo.gerado_em) };
+      }
       else if (origemPedida === 'soma') { // diagnóstico: diz por que não há soma
         res.setHeader('Cache-Control', 'public, s-maxage=10');
         return res.status(503).json({ erro: 'soma_indisponivel', motivo, detalhe: soma.detalhe || null });

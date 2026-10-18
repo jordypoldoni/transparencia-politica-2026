@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { reduzirResultado } from '../src/lib/apuracaoTse.js';
-import { UFS_SOMA, combinarComSoma, montarCorpoDaSoma, pct2, carimbo, parteValida } from '../src/lib/somaEstados.js';
+import { UFS_SOMA, combinarComSoma, montarCorpoDaSoma, pct2, carimbo, parteValida, modoDaSoma, anomaliaNacional, AUTO_LIGA_EM } from '../src/lib/somaEstados.js';
 
 const dir = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', '..', 'docs', 'fixtures_tse', 'turno1');
 const temFixtures = fs.existsSync(path.join(dir, 'br.json'));
@@ -112,4 +112,28 @@ test('soma nunca devolve ok sem origem e nunca altera as entradas', { skip: !tem
   const r = combinarComSoma(c);
   assert.equal(JSON.stringify(c), antes);
   assert.equal(r.ok && r.corpo.origem, 'soma_dos_estados');
+});
+
+test('modoDaSoma: explicito vale sempre; ausente/auto/desconhecido vira sombra ate 23/10 09h e on depois', () => {
+  const antes = AUTO_LIGA_EM - 1, depois = AUTO_LIGA_EM;
+  for (const t of [antes, depois]) {
+    assert.equal(modoDaSoma({ APURACAO_SOMA_ESTADOS: 'off' }, t), 'off');
+    assert.equal(modoDaSoma({ APURACAO_SOMA_ESTADOS: 'sombra' }, t), 'sombra');
+    assert.equal(modoDaSoma({ APURACAO_SOMA_ESTADOS: ' ON ' }, t), 'on');
+  }
+  for (const env of [{}, { APURACAO_SOMA_ESTADOS: '' }, { APURACAO_SOMA_ESTADOS: 'auto' }, { APURACAO_SOMA_ESTADOS: 'talvez' }]) {
+    assert.equal(modoDaSoma(env, antes), 'sombra'); assert.equal(modoDaSoma(env, depois), 'on');
+  }
+  assert.equal(AUTO_LIGA_EM, Date.parse('2026-10-23T12:00:00Z'));
+});
+
+test('anomaliaNacional: so acusa nacional igual ou mais novo e menor', () => {
+  const ent = { total: 1000, carimbo: carimbo('05/10/2026 12:00:00') };
+  const nac = (gerado_em, total) => ({ gerado_em, votos: { total } });
+  assert.equal(anomaliaNacional(null, nac('05/10/2026 13:00:00', 1)), null);
+  assert.equal(anomaliaNacional(ent, nac('05/10/2026 11:59:59', 1)), null);   // mais antigo: pode estar parado
+  assert.ok(anomaliaNacional(ent, nac('05/10/2026 12:00:00', 999)));          // mesmo instante e menor
+  assert.ok(anomaliaNacional(ent, nac('05/10/2026 12:30:00', 500)));          // mais novo e menor
+  assert.equal(anomaliaNacional(ent, nac('05/10/2026 12:30:00', 1000)), null); // alcancou
+  assert.equal(anomaliaNacional(ent, nac('lixo', 1)), null);                   // carimbo ilegivel: nao acusa
 });
