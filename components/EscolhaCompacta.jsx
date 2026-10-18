@@ -10,7 +10,8 @@ import { Seta } from './icones';
 // opções não há o que buscar, e um campo de texto abriria o teclado do celular à toa.
 // `opcoes`: [{ valor, rotulo, href? }]. Com href, cada item é um link (navegação entre páginas);
 // sem href, chama aoEscolher(valor) (troca de aba na mesma página).
-export default function EscolhaCompacta({ opcoes, valor, aoEscolher, rotulo }) {
+// `prefixo`: texto fixo antes da opção atual, em cinza (ex.: "Ordenar por"), para o campo dizer o que escolhe.
+export default function EscolhaCompacta({ opcoes, valor, aoEscolher, rotulo, prefixo }) {
   const [aberto, setAberto] = useState(false);
   const raiz = useRef(null);
   const atual = opcoes.find((o) => o.valor === valor) || opcoes[0];
@@ -38,7 +39,7 @@ export default function EscolhaCompacta({ opcoes, valor, aoEscolher, rotulo }) {
           fontFamily: t.fonte.corpo, fontSize: '0.95rem', fontWeight: 700, textAlign: 'left',
           boxShadow: aberto ? `inset 0 0 0 2.5px ${t.cor.ouro}, ${t.sombra.clicavel}, ${t.sombra.anelFoco}` : `inset 0 0 0 1px #CC7A22, ${t.sombra.clicavel}`,
           transition: 'box-shadow .15s' }}>
-        <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{atual?.rotulo}</span>
+        <span style={{ minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{prefixo && <span style={{ color: t.cor.cinza, fontWeight: 500 }}>{prefixo}: </span>}{atual?.rotulo}</span>
         <Seta aberta={aberto} size={16} />
       </button>
       {aberto && (

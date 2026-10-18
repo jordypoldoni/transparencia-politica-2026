@@ -114,8 +114,11 @@ function nomeDaPagina(pathname) {
   return extra ? extra[1] : '';
 }
 
+// /estado/RS (a bancada de um estado) não é filha de nenhuma das três listas, mas é Parlamentares:
+// sem isto o menu não dizia onde a pessoa estava (18/10/2026).
 const grupoAtivo = (item, pathname) =>
-  !!item.filhos && item.filhos.some((f) => ehAtivo(f.href, pathname));
+  !!item.filhos && (item.filhos.some((f) => ehAtivo(f.href, pathname))
+    || (item.rotulo === 'Parlamentares' && pathname.startsWith('/estado/')));
 
 // ONDE VOCÊ ESTÁ = PASTILHA ÂMBAR. (pedido do Jordy, 19/09/2026)
 // Era `papelQuente2`, um bege acinzentado que se confundia com o fundo do cabeçalho: marcava

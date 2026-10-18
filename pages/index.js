@@ -101,7 +101,11 @@ export default function Home({ votacoes, parlamentares = [], uniao = null, estad
         @media (max-width: 880px) { .hero-topo { flex-direction: column; align-items: flex-start; gap: 12px; } }
         @media (max-width: 560px) { .hero-passos { grid-template-columns: 1fr; } }
       `}</style>
-      <section className="surgir pagina">
+      {/* z-index 3 (18/10/2026): a animação `surgir` deixa um transform preso nesta seção, que vira uma
+          camada própria; sem z-index ela ficava ABAIXO dos cartões de candidato mais abaixo (z-index 2)
+          e as listas das duas buscas abriam por trás da foto do Lula e do Flávio. A lista (z 70) só
+          vale dentro da camada da seção, então é a seção que precisa ficar acima dos cartões. */}
+      <section className="surgir pagina" style={{ position: 'relative', zIndex: 3 }}>
         <div className="hero-grid hero-esticado">
           <div className="hero-esq">
             {/* 12/10/2026 (Jordy): sem a faixa "Dados oficiais · em português claro"; o texto de apoio passa para o lado do título

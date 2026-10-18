@@ -580,12 +580,43 @@ const ServicoAPI = {
     getRadarPorEstado: async (uf, ano = 2026) => {
         const { data, error } = await supabase
             .from('radar_gastos')
-            .select('id, slug, nome_urna, partido_atual, uf_sede, foto_url, total, n_notas, casa, meses_com_gasto')
+            .select('id, slug, nome_urna, partido_atual, uf_sede, foto_url, total, n_notas, casa, meses_com_gasto, situacao_atual')
             .eq('ano', ano)
             .eq('uf_sede', uf)
             .order('total', { ascending: false });
         if (error) { console.error('getRadarPorEstado:', error.message); return []; }
         return data || [];
+    },
+
+    // Presença em votações de toda a bancada de um estado, de uma vez (18/10/2026, tela /estado/[uf]).
+    // A conta é a MESMA do perfil (função presenca_votacoes): votou Sim, Não, Abstenção ou
+    // Obstrução ÷ votações nominais da casa que o Lume tem. O total é igual para todos da mesma
+    // casa, então vem de UMA chamada da função; os votos de cada um vêm de uma leitura só (paginada,
+    // porque o PostgREST corta em 1.000 linhas). Chamar a função 32 vezes varreria a tabela 32 vezes.
+    // grupos: [{ chave, ids: [uuid] }]. Devolve { [id]: { compareceu, total } }. Casa sem votos
+    // coletados (total 0, como as Assembleias fora do RS) fica de fora: a tela diz que a fonte não informa.
+    getPresencaDoEstado: async (grupos = []) => {
+        const REGISTRADOS = new Set(['sim', 'não', 'nao', 'abstenção', 'abstencao', 'obstrução', 'obstrucao']);
+        const saida = {};
+        for (const g of grupos) {
+            const ids = g.ids || [];
+            if (ids.length === 0) continue;
+            try {
+                const { data: pres } = await supabase.rpc('presenca_votacoes', { p_agente: ids[0] });
+                if (!pres || !(pres.total > 0)) continue;
+                const linhas = await buscarTudo(
+                    () => supabase.from('votos_parlamentares').select('agente_id, votacao_id_externa, voto_tipo').in('agente_id', ids).order('id'),
+                    'getPresencaDoEstado',
+                );
+                const vistos = {};
+                for (const v of linhas) {
+                    if (!REGISTRADOS.has(String(v.voto_tipo || '').toLowerCase())) continue;
+                    (vistos[v.agente_id] = vistos[v.agente_id] || new Set()).add(v.votacao_id_externa);
+                }
+                for (const id of ids) saida[id] = { compareceu: vistos[id] ? vistos[id].size : 0, total: pres.total };
+            } catch (e) { console.error('getPresencaDoEstado:', e.message); }
+        }
+        return saida;
     },
 
     // Lista as categorias/temas disponíveis (com palavras-chave) — para o questionário
