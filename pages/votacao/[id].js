@@ -10,6 +10,7 @@ import CampoBusca from '../../components/CampoBusca';
 import { t } from '../../src/estilo/tokens';
 import { Seta } from '../../components/icones';
 import BotaoVoltar from '../../components/BotaoVoltar';
+import ReportarErro from '../../components/ReportarErro';
 import { dataBr } from '../../src/lib/datas';
 import { grafo, organizacao, site, migalhas, pagina, jsonSeguro } from '../../src/lib/dadosEstruturados';
 
@@ -240,6 +241,9 @@ export default function Votacao({ meta, votos }) {
           );
         })}
         {buscando && filtrados.length === 0 && <p style={{ color: t.cor.cinza }}>Ninguém encontrado com esse nome/partido nesta votação.</p>}
+        <p style={{ margin: '20px 0 0' }}>
+          <ReportarErro assunto={`Votação: ${String(assunto || 'sem título').slice(0, 80)}`} />
+        </p>
       </div>
     </>
   );

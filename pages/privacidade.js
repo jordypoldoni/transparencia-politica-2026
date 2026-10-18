@@ -1,6 +1,7 @@
 import Head from 'next/head';
 import Link from 'next/link';
 import { t } from '../src/estilo/tokens';
+import { CONTATO } from '../src/lib/contato';
 
 // POLÍTICA DE PRIVACIDADE (26/09/2026). Nasceu porque o Google só publica o "Entrar com Google"
 // com um endereço de política de privacidade, mas o motivo de verdade é outro: a página "Pra você"
@@ -10,7 +11,7 @@ import { t } from '../src/estilo/tokens';
 // Regra da página: descrever o que o CÓDIGO faz, sem promessa que o código não cumpre. Mudou o
 // código (novo dado guardado, novo serviço externo), muda esta página e a data de ATUALIZADA.
 const ATUALIZADA = '26 de setembro de 2026';
-const CONTATO = 'jordyoldoni07@gmail.com'; // e-mail público para pedidos sobre dados pessoais (escolhido pelo Jordy em 26/09)
+// CONTATO (e-mail público para pedidos sobre dados pessoais, escolhido pelo Jordy em 26/09) mora em src/lib/contato.js.
 
 const h2 = { fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.4rem', margin: '36px 0 12px' };
 const p = { color: t.cor.cinza, lineHeight: 1.65, margin: '0 0 12px' };

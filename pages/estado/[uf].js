@@ -6,6 +6,8 @@ import ServicoAPI from '../../src/servicos/servico_api';
 import { t } from '../../src/estilo/tokens';
 import { Seta, Pino } from '../../components/icones';
 import Avatar from '../../components/Avatar';
+import ReportarErro from '../../components/ReportarErro';
+import ChamadaAfinidade from '../../components/ChamadaAfinidade';
 import Trilha from '../../components/Trilha';
 import CampoSelect from '../../components/CampoSelect';
 import CampoBusca from '../../components/CampoBusca';
@@ -275,6 +277,8 @@ function Estado({ uf, nome, deputados, presenca, inicial, canonical }) {
 
             <ComoLer grupo={grupo} nome={nome} temTeto={temTeto} temVotos={temVotos} totalVotos={totalVotos} ehRS={uf === 'RS'} />
 
+            {(temVotos || uf === 'RS') && <ChamadaAfinidade uf={uf} alvo={`de quem representa ${nome}`} style={{ margin: '0 0 16px' }} />}
+
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px 14px', marginBottom: '10px' }}>
               <div className="est-ctl" style={{ flex: '1 1 260px', maxWidth: '460px', minWidth: 0 }}>
                 <CampoBusca valor={busca} aoMudar={setBusca} placeholder="Buscar por nome ou partido…" aoLabel={`Buscar entre ${grupo.plural}`} />
@@ -308,6 +312,9 @@ function Estado({ uf, nome, deputados, presenca, inicial, canonical }) {
 
         <p style={{ marginTop: '32px' }}>
           <Link href="/deputados" style={{ color: t.cor.verde, fontWeight: 700, textDecoration: 'none' }}><Seta direcao="esquerda" size={14} emTexto />ver parlamentares de todos os estados</Link>
+        </p>
+        <p style={{ marginTop: '12px' }}>
+          <ReportarErro assunto={`Página do estado ${nome}`} />
         </p>
       </div>
     </>

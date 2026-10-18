@@ -85,6 +85,12 @@ export default function Sobre() {
         na página, e a ementa oficial aparece ao lado, para você comparar com o texto original.
       </p>
 
+      <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.5rem', margin: '0 0 16px' }}>Achou um erro?</h2>
+      <p style={{ color: t.cor.cinza, lineHeight: 1.6, margin: '0 0 28px' }}>
+        Avise pelo link &ldquo;Encontrou um erro? Avise&rdquo;, que está em cada perfil, votação e página de estado. Erro confirmado é corrigido e fica
+        registrado, com data e fonte, em <Link href="/correcoes" style={{ color: t.cor.verde, fontWeight: 700 }}>Correções</Link>.
+      </p>
+
       <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.5rem', margin: '0 0 16px' }}>Conta e privacidade</h2>
       <p style={{ color: t.cor.cinza, lineHeight: 1.6, margin: '0 0 28px' }}>
         Entrar com uma conta Google é opcional e serve para levar seus favoritos e preferências a outros aparelhos. Sem conta, nada que

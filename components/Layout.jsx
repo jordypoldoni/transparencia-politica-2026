@@ -435,6 +435,10 @@ export default function Layout({ children, pageProps }) {
             <p style={{ margin: '8px 0 0' }}>
               <Link href="/privacidade" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>Privacidade: o que guardamos sobre você</Link>
             </p>
+            {/* 18/10/2026 (B7): canal de erro e histórico público de correções. */}
+            <p style={{ margin: '8px 0 0' }}>
+              <Link href="/correcoes" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>Encontrou um erro? Avise e veja as correções</Link>
+            </p>
           </div>
           <div>
             <p style={{ margin: '0 0 8px', fontWeight: 700, color: t.cor.tinta }}>Fontes oficiais</p>

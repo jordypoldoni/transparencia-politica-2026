@@ -16,6 +16,9 @@ import SeloAtualizacao from './SeloAtualizacao';
 import { fonteGastosDoPerfil, fonteVotosDoPerfil } from '../src/lib/selosFonte';
 import NotasDaCategoria from './NotasDaCategoria';
 import { dataBr, idadeEm } from '../src/lib/datas';
+import ReportarErro from './ReportarErro';
+import ChamadaAfinidade from './ChamadaAfinidade';
+import { montarCobrancaVoto, montarCobrancaGasto } from '../src/lib/cobranca';
 
 const brl = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v || 0);
 const brlExato = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
@@ -470,9 +473,53 @@ export default function PerfilPolitico({ dados }) {
     URL.revokeObjectURL(url);
   };
 
+  // B6 (18/10/2026): card de cobrança. Um fato oficial, a fonte, a data e a pergunta-padrão (a mesma para todos).
+  // Sem texto livre. Em celular abre o compartilhamento do aparelho; no computador baixa a imagem.
+  const cobrar = async (c) => {
+    if (!c) return;
+    const cv = document.createElement('canvas');
+    cv.width = 1080; cv.height = 1080;
+    const x = cv.getContext('2d');
+    x.fillStyle = '#241E52'; x.fillRect(0, 0, 1080, 1080);
+    x.fillStyle = '#FF8A00'; x.fillRect(0, 0, 1080, 18);
+    x.textAlign = 'left';
+    x.fillStyle = 'rgba(255,255,255,0.6)'; x.font = '700 28px Georgia, serif';
+    x.fillText('PERGUNTA PÚBLICA, COM FATO E FONTE', 90, 110);
+    x.fillStyle = '#fff'; x.font = '600 54px Georgia, serif';
+    let y = wrapCanvas(x, c.quem, 90, 200, 900, 62);
+    y += 78;
+    x.fillStyle = 'rgba(255,255,255,0.55)'; x.font = '700 28px Georgia, serif';
+    x.fillText(c.rotulo, 90, y);
+    x.fillStyle = '#FF8A00'; x.font = '700 66px Georgia, serif';
+    y = wrapCanvas(x, c.fato, 90, y + 76, 900, 74);
+    x.fillStyle = 'rgba(255,255,255,0.85)'; x.font = '400 36px Georgia, serif';
+    y = wrapCanvas(x, c.contexto, 90, y + 62, 900, 46);
+    if (c.tipo === 'voto' && c.data) {
+      x.fillStyle = 'rgba(255,255,255,0.55)'; x.font = '400 30px Georgia, serif';
+      y += 50; x.fillText(c.data, 90, y);
+    }
+    x.fillStyle = '#fff'; x.font = '700 60px Georgia, serif';
+    wrapCanvas(x, c.pergunta, 90, Math.max(y + 110, 700), 900, 70);
+    x.fillStyle = 'rgba(255,255,255,0.55)'; x.font = '400 26px Georgia, serif';
+    x.fillText(c.aviso, 90, 990);
+    x.fillStyle = 'rgba(255,255,255,0.7)'; x.font = '400 28px Georgia, serif';
+    x.fillText(`${c.fonte}. Confira você mesmo: lumecidadao.com.br`, 90, 1034);
+
+    const blob = await new Promise((r) => cv.toBlob(r, 'image/png'));
+    const file = new File([blob], `pergunta-${perfil.slug || 'politico'}.png`, { type: 'image/png' });
+    const url = typeof window !== 'undefined' ? window.location.href : '';
+    if (typeof navigator !== 'undefined' && navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file], title: perfil.nome_urna, text: `${c.texto} ${url}` }); return; } catch (e) {}
+    }
+    const u = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = u; a.download = file.name; a.click();
+    URL.revokeObjectURL(u);
+  };
+
   return (
     <div className="pagina">
-      <style jsx global>{`html{scroll-behavior:smooth}`}</style>
+      <style jsx global>{`html{scroll-behavior:smooth}
+        @media (max-width:560px){.voto-par{flex-direction:column}.voto-par .voto-cobrar{align-self:flex-end;padding:6px 14px !important}}`}</style>
       {/* Voltar + navegação por seções: barra fixa abaixo do cabeçalho.
           AJUSTADA EM 22/09/2026, pedido do Jordy:
           - top era 56px, mas o cabeçalho mede 74px (medido no site, desktop e celular). A barra
@@ -583,6 +630,9 @@ export default function PerfilPolitico({ dados }) {
           <button onClick={compartilhar} style={{ ...pilula, background: t.cor.ouro, color: t.cor.tinta }}>↗ Compartilhar</button>
           <button onClick={gerarCard} style={{ ...pilula, background: 'rgba(255,255,255,0.12)', color: '#fff' }}>📷 Gerar card</button>
           <button onClick={() => setModal(true)} style={{ ...pilula, background: 'rgba(255,255,255,0.12)', color: '#fff' }}>🔗 Ver na fonte oficial</button>
+          <span style={{ display: 'inline-flex', alignItems: 'center', padding: '0 4px' }}>
+            <ReportarErro escuro assunto={`Perfil de ${perfil.nome_urna} (${[perfil.partido_atual, perfil.uf_sede].filter(Boolean).join('-')})`} />
+          </span>
         </div>
         </>
         )}
@@ -590,6 +640,9 @@ export default function PerfilPolitico({ dados }) {
 
       {/* DETALHE: quem é + gastos + atuação + votos */}
       <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr)', gap: '20px' }}>
+
+        {/* B5 (18/10/2026): porta de entrada para a afinidade, só onde há voto registrado para comparar. */}
+        {votos.length > 0 && perfil.uf_sede && <ChamadaAfinidade uf={perfil.uf_sede} alvo={`de ${perfil.nome_urna} e dos demais de ${perfil.uf_sede}`} />}
 
         {/* QUEM É — cartão biográfico (Ficha 360°) */}
         <Secao id="quem-e" titulo="Quem é" aberta={secoesAbertas['quem-e']} onToggle={() => toggleSecao('quem-e')}>
@@ -724,6 +777,13 @@ export default function PerfilPolitico({ dados }) {
                 <strong style={{ color: t.cor.tinta }}>Como a média é calculada:</strong> somamos {temNotaFiscal ? 'todas as notas' : 'todas as despesas publicadas'} de {anoSel} e dividimos pelo número de meses com gasto registrado ({dadosAno.meses_com_gasto}). Meses sem {temNotaFiscal ? 'nota' : 'despesa'} não entram na conta, por isso a média pode ficar acima do gasto de um mês isolado. Fonte: {fonteNome}.
               </p>
             </div>
+            {nNotasAno > 0 && totalAno > 0 && (
+              <div style={{ marginTop: '18px' }}>
+                <button type="button" onClick={() => cobrar(montarCobrancaGasto({ perfil, ano: anoSel, total: totalAno, media: mediaAno || media_mensal, pctTeto: tetoInfo ? tetoInfo.pct : null, fonteNome }))}
+                  title="Gerar card com este gasto e uma pergunta"
+                  style={{ ...pilula, background: '#fff', color: t.cor.tinta, boxShadow: t.sombra.botao }}>Cobrar sobre este gasto</button>
+              </div>
+            )}
           </Secao>
         )}
 
@@ -1138,9 +1198,16 @@ export default function PerfilPolitico({ dados }) {
                             </>
                           );
                           const rowStyle = { padding: '8px 10px', borderRadius: t.raio.sm, background: '#fff', minWidth: 0, textDecoration: 'none', color: 'inherit' };
-                          return linkavel
-                            ? <Link key={j} href={`/votacao/${v.votacao_id_externa}`} className="voto-linha" style={rowStyle}>{conteudo}</Link>
-                            : <div key={j} className="voto-linha" style={rowStyle}>{conteudo}</div>;
+                          return (
+                            <div key={j} className="voto-par" style={{ display: 'flex', gap: '6px', alignItems: 'stretch' }}>
+                              {linkavel
+                                ? <Link href={`/votacao/${v.votacao_id_externa}`} className="voto-linha" style={{ ...rowStyle, flex: '1 1 auto' }}>{conteudo}</Link>
+                                : <div className="voto-linha" style={{ ...rowStyle, flex: '1 1 auto' }}>{conteudo}</div>}
+                              <button type="button" className="voto-cobrar" onClick={() => cobrar(montarCobrancaVoto({ perfil, voto: v, titulo: tituloExib, fonteNome }))}
+                                aria-label={`Cobrar ${perfil.nome_urna}: gerar card com este voto e uma pergunta`} title="Gerar card com este voto e uma pergunta"
+                                style={{ flexShrink: 0, border: `1px solid ${t.cor.papelQuente2}`, background: '#fff', color: t.cor.tinta, fontFamily: t.fonte.corpo, fontSize: '0.74rem', fontWeight: 700, padding: '0 12px', borderRadius: t.raio.sm, cursor: 'pointer' }}>Cobrar</button>
+                            </div>
+                          );
                         })}
                       </div>
                     </div>

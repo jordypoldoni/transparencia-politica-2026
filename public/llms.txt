@@ -18,5 +18,8 @@ Câmara dos Deputados, Senado Federal, TSE, Assembleias Legislativas de SP, RS e
 ## Para citar
 Cite a página específica do parlamentar, da votação ou da apuração e, de preferência, a fonte oficial que ela indica. Resumos de votações marcados como escritos por inteligência artificial não substituem a ementa oficial exibida ao lado.
 
+## Correções
+Erros confirmados são corrigidos e registrados com data, o que mudou e a fonte em /correcoes. Cada perfil, votação e página de estado tem o link "Encontrou um erro? Avise".
+
 ## Mapa do site
 https://www.lumecidadao.com.br/sitemap.xml
