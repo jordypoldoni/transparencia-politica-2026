@@ -40,7 +40,7 @@ function PainelEstado({ uf, e: eEstado, agregado }) {
   if (!e) {
     return (
       <div>
-        <div className="mg-cab"><strong>{nome}</strong><span><i style={{ background: reg.cor }} />{etiqueta}</span></div>
+        <div className="mg-cab"><strong>{nome}</strong><span>{etiqueta}</span></div>
         <p className="mg-mudo">{agregado ? 'O TSE ainda não publicou o resultado dos estados desta região.' : 'O TSE ainda não publicou o resultado deste estado.'}</p>
       </div>
     );
@@ -48,7 +48,7 @@ function PainelEstado({ uf, e: eEstado, agregado }) {
   const lista = todos ? e.candidatos : e.candidatos.slice(0, TOPO);
   return (
     <div>
-      <div className="mg-cab"><strong>{nome}</strong><span><i style={{ background: reg.cor }} />{etiqueta}</span></div>
+      <div className="mg-cab"><strong>{nome}</strong><span>{etiqueta}</span></div>
       <p className="mg-sub">Seções apuradas: <b>{fmt(e.secoes.totalizadas)}</b> de {fmt(e.secoes.total)} ({e.secoes.pct_totalizadas}%)</p>
       <ol className="mg-lista">
         {lista.map((c, i) => (
@@ -184,10 +184,11 @@ export default function MapaGradeApuracao({ turno = 1 }) {
       <style jsx global>{`
         .mg-raiz { margin-top: 4px; }
         .mg-seg { margin: 0 0 12px; }
-        .mg-seg .seg-compacto .seg-op { padding: 6px 9px; font-size: 0.84rem; }
-        .mg-seg .seg-compacto .seg-ponto { margin-right: 6px; }
+        .mg-seg .segmentado { display: flex; flex-wrap: nowrap; width: 100%; box-sizing: border-box; }
+        .mg-seg .seg-op { flex: 1 1 auto; padding: 6px clamp(3px, 1vw, 5px); font-size: clamp(11px, 3.14vw, 12px); text-align: center; }
+        .mg-seg .seg-ponto { width: 8px; height: 8px; margin-right: 4px; }
+        @media (max-width: 350px) { .mg-seg .seg-ponto { display: none; } }
         .mg-parcial { margin: 8px 0 0; font-size: 0.8rem; color: ${t.cor.alertaTexto}; }
-        .mg-cab i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; vertical-align: 0; }
         .mg-grade { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; margin-bottom: 16px; }
         .mg-vazio { height: 44px; }
         .mg-tile { height: 44px; padding: 0; border: none; border-radius: 11px; color: #fff; font: inherit; font-size: 0.9rem; font-weight: 800; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.22); transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.2s ease; -webkit-tap-highlight-color: transparent; }
@@ -199,7 +200,7 @@ export default function MapaGradeApuracao({ turno = 1 }) {
         .mg-vazio-painel { text-align: center; color: ${t.cor.cinza}; font-size: 0.92rem; padding: 8px 0; }
         .mg-vazio-painel p { margin: 6px 0 0; line-height: 1.45; }
         .mg-vazio-painel b { color: ${t.cor.tinta}; }
-        .mg-cab { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+        .mg-cab { display: flex; justify-content: flex-start; align-items: baseline; gap: 12px; flex-wrap: wrap; }
         .mg-cab strong { font-family: ${t.fonte.titulo}; font-weight: 600; font-size: 1.2rem; }
         .mg-cab span { font-size: 0.8rem; color: ${t.cor.cinza}; white-space: nowrap; }
         .mg-sub { margin: 6px 0 12px; font-size: 0.84rem; color: ${t.cor.tinta}; }
