@@ -216,7 +216,6 @@ function ParaOndeFoi({ destino, pop, todas, setTodas }) {
   const [abertas, setAbertas] = useState({});
   const alterna = (k) => setAbertas((a) => ({ ...a, [k]: !a[k] }));
   const linhas = todas ? destino.itens : destino.principais;
-  const maior = destino.itens.length ? destino.itens[0].valor : 1;
   const fecho = !todas && destino.outras;
   const temDetalhe = destino.itens.some((f) => f.subs);
   const Cabeca = ({ f }) => (
@@ -232,7 +231,6 @@ function ParaOndeFoi({ destino, pop, todas, setTodas }) {
   const linhaCab = { display: 'flex', justifyContent: 'space-between', gap: '10px', alignItems: 'baseline', flexWrap: 'wrap', width: '100%' };
   const Linha = ({ f, cor, trilho, nota }) => {
     const aberta = !!(f.subs && abertas[f.rotulo]);
-    const maiorSub = f.subs ? f.subs[0].valor : 1;
     return (
       <div style={{ marginBottom: '15px', ...(f.divida ? { background: '#E9E7F3', borderRadius: t.raio.md, padding: '12px 14px', margin: '0 -14px 15px' } : null) }}>
         {f.subs ? (
@@ -245,7 +243,7 @@ function ParaOndeFoi({ destino, pop, todas, setTodas }) {
         )}
         {(f.desc || nota) && <div style={{ fontSize: '0.8rem', color: t.cor.cinza, margin: '1px 0 5px', lineHeight: 1.4 }}>{f.desc || nota}</div>}
         <div aria-hidden="true" style={{ height: '10px', background: trilho || t.cor.papelQuente2, borderRadius: t.raio.pill, overflow: 'hidden', marginTop: f.desc || nota ? 0 : '5px' }}>
-          <div style={{ width: `${Math.max(2, Math.round((f.valor / maior) * 100))}%`, height: '100%', background: cor || t.cor.ouro, borderRadius: t.raio.pill }} />
+          <div style={{ width: `${Math.min(100, Math.max(1.5, f.pct))}%`, height: '100%', background: cor || t.cor.ouro, borderRadius: t.raio.pill }} />
         </div>
         {aberta && (
           <div style={{ background: f.divida ? '#F6F5FB' : t.cor.papelQuente, borderRadius: t.raio.md, padding: '12px 14px', marginTop: '10px' }}>
@@ -261,7 +259,7 @@ function ParaOndeFoi({ destino, pop, todas, setTodas }) {
                   </span>
                 </div>
                 <div aria-hidden="true" style={{ height: '6px', background: '#FFFFFF', borderRadius: t.raio.pill, overflow: 'hidden', marginTop: '4px' }}>
-                  <div style={{ width: `${Math.max(2, Math.round((x.valor / maiorSub) * 100))}%`, height: '100%', background: f.divida ? t.cor.verde : t.cor.ouro, opacity: 0.75, borderRadius: t.raio.pill }} />
+                  <div style={{ width: `${Math.min(100, Math.max(1.5, x.pct))}%`, height: '100%', background: f.divida ? t.cor.verde : t.cor.ouro, opacity: 0.75, borderRadius: t.raio.pill }} />
                 </div>
               </div>
             ))}
