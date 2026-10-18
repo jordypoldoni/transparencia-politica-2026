@@ -126,17 +126,20 @@ export function montarDestino({ funcoes, encargos, subfuncoes, intra, esfera, ma
 export function montarOrigemGeral(resumo) {
   const rec = (resumo && resumo.detalhe && resumo.detalhe.receita) || {};
   const total = Number(resumo && resumo.receita_total);
-  if (!ok(rec.tributaria, rec.contribuicoes, rec.transferencias_correntes, rec.operacoes_credito) || !(total > 0)) return null;
+  if (!ok(rec.tributaria, rec.contribuicoes, rec.transferencias_correntes) || !(total > 0)) return null;
+  // Alguns entes não publicam a linha de operações de crédito: sem ela, nada é afirmado sobre empréstimos
+  // e o que sobra vai para "Outras receitas".
+  const temCredito = ok(rec.operacoes_credito);
   const partes = [
     { chave: 'impostos', rotulo: 'Impostos e taxas', valor: Number(rec.tributaria) },
     { chave: 'transferencias', rotulo: 'Transferências de outros governos', valor: Number(rec.transferencias_correntes) },
     { chave: 'contribuicoes', rotulo: 'Contribuições sociais', valor: Number(rec.contribuicoes) },
-    { chave: 'credito', rotulo: 'Empréstimos (dívida nova)', valor: Number(rec.operacoes_credito) },
+    ...(temCredito ? [{ chave: 'credito', rotulo: 'Empréstimos (dívida nova)', valor: Number(rec.operacoes_credito) }] : []),
   ];
   const soma = partes.reduce((a, p) => a + p.valor, 0);
   if (soma > total * 1.001) return null;
   const outras = total - soma;
-  if (outras > total * 0.0005) partes.push({ chave: 'outras', rotulo: 'Patrimônio, serviços e outras', valor: outras });
+  if (outras > total * 0.0005) partes.push({ chave: 'outras', rotulo: temCredito ? 'Patrimônio, serviços e outras' : 'Outras receitas (patrimônio, serviços e demais)', valor: outras });
   return partes.filter((p) => p.valor > 0).sort((a, b) => (a.chave === 'outras') - (b.chave === 'outras') || b.valor - a.valor)
     .map((p) => ({ ...p, pct: (p.valor / total) * 100 }));
 }

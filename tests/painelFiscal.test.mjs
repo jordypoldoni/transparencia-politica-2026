@@ -137,6 +137,10 @@ test('origem geral (estados): fecha em 100% e põe "outras" por último', () => 
 
 test('origem geral: sem alguma linha principal, ou soma maior que o total, não mostra nada', () => {
   assert.equal(montarOrigemGeral({ ...rs, detalhe: { receita: { tributaria: 1 } } }), null);
+  // ente sem a linha de operações de crédito (RJ, GO, RR): sem afirmar nada sobre empréstimos
+  const semCredito = montarOrigemGeral({ ...rs, detalhe: { receita: { ...rs.detalhe.receita, operacoes_credito: null } } });
+  assert.ok(!semCredito.some((x) => x.chave === 'credito'));
+  assert.ok(Math.abs(semCredito.reduce((a, x) => a + x.pct, 0) - 100) < 1e-9);
   assert.equal(montarOrigemGeral({ receita_total: 10, detalhe: rs.detalhe }), null);
   assert.equal(montarOrigemGeral(null), null);
 });
