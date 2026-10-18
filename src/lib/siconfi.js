@@ -221,6 +221,24 @@ export function parseSubfuncoes(items) {
   return Object.keys(out).length ? out : null;
 }
 
+// Anexo 02: despesas INTRA-ORÇAMENTÁRIAS por função (gasto entre órgãos do próprio governo, como a
+// contribuição patronal do governo ao INSS). O Tesouro as lista à parte (cod_conta termina em "Intra")
+// e a função "cheia" que guardamos em fiscal_funcao já as inclui; as subfunções, não. Guardar o valor
+// por função deixa a página explicar a diferença em vez de chamá-la de "outras". { "Educação": valor }.
+export function parseIntraPorFuncao(items) {
+  const col = colunaDespesaRealizada(items);
+  if (!col) return null;
+  const canon = new Map(FUNCOES_OFICIAIS.map((f) => [f.toLowerCase(), f]));
+  const out = {};
+  for (const i of items) {
+    if (i.coluna !== col || !/Intra$/i.test(i.cod_conta || '')) continue;
+    const f = canon.get((i.conta || '').trim().toLowerCase());
+    const v = num(i.valor);
+    if (f && v != null && v > 0) out[f] = (out[f] || 0) + v;
+  }
+  return Object.keys(out).length ? out : null;
+}
+
 // Coleta o resumo fiscal de um ente para um (ano, período) específico.
 export async function coletarEnteEmPeriodo({ idEnte, esfera, ano, periodo }) {
   const [a01, a02, a06] = await Promise.all([
@@ -238,6 +256,7 @@ export async function coletarEnteEmPeriodo({ idEnte, esfera, ano, periodo }) {
     resultados: parseResultados(a06),
     encargos: parseEncargos(a02),
     subfuncoes: parseSubfuncoes(a02),
+    intra: parseIntraPorFuncao(a02),
   };
   return { ano, periodo, receita_total, despesa_total, funcoes, detalhe };
 }

@@ -39,7 +39,7 @@ test('total e funções saem da coluna acumulada', () => {
 });
 
 // ---- Detalhe (página de gastos públicos v2). Valores reais da União, 4º bimestre de 2026. ----
-import { parseReceitaDetalhe, parseResultados, parseEncargos, parseSubfuncoes } from '../src/lib/siconfi.js';
+import { parseReceitaDetalhe, parseResultados, parseEncargos, parseSubfuncoes, parseIntraPorFuncao } from '../src/lib/siconfi.js';
 
 test('origem da receita lê as linhas "Até o Bimestre" pelo código da conta', () => {
   const ate = 'Até o Bimestre (c)';
@@ -143,4 +143,17 @@ test('subfunções: agrupa por função, usa a coluna acumulada e para nas intra
 test('subfunções: ente sem coluna acumulada ou sem subfunções devolve nulo', () => {
   assert.equal(parseSubfuncoes([]), null);
   assert.equal(parseSubfuncoes([{ conta: 'Saúde', coluna: 'DESPESAS LIQUIDADAS ATÉ O BIMESTRE (d)', valor: 5 }]), null);
+});
+
+test('intra-orçamentárias: soma por função só das linhas Intra da coluna acumulada', () => {
+  const col = 'DESPESAS LIQUIDADAS ATÉ O BIMESTRE (d)';
+  const r = parseIntraPorFuncao([
+    { conta: 'Educação', cod_conta: 'RREO2TotalDespesas', coluna: col, valor: 100 },
+    { conta: 'Educação', cod_conta: 'RREO2TotalDespesasIntra', coluna: col, valor: 8.7 },
+    { conta: 'Educação', cod_conta: 'RREO2TotalDespesasIntra', coluna: 'DOTAÇÃO INICIAL', valor: 999 },
+    { conta: 'FU12 - Administração Geral', cod_conta: 'RREO2TotalDespesasIntra', coluna: col, valor: 3 },
+    { conta: 'Judiciária', cod_conta: 'RREO2TotalDespesasIntra', coluna: col, valor: 3.4 },
+  ]);
+  assert.deepEqual(r, { 'Educação': 8.7, 'Judiciária': 3.4 });
+  assert.equal(parseIntraPorFuncao([{ conta: 'Educação', cod_conta: 'RREO2TotalDespesas', coluna: col, valor: 1 }]), null);
 });

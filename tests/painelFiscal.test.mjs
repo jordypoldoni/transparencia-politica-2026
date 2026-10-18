@@ -116,3 +116,10 @@ test('destino: serviço da dívida abre em interna e externa; outros encargos ab
   assert.equal(por('Outros encargos').subs[1].valor, 150);   // 250 de outros = 100 detalhado + 150 sem detalhe
   assert.deepEqual(por('Saúde').subs.map((x) => x.nome), ['Atenção Básica', 'Hospitalar']);
 });
+
+test('montarSubs: intra-orçamentárias entram como linha própria e fecham a conta da área', () => {
+  const r = montarSubs(100, [['A', 60], ['B', 30]], 10);
+  assert.deepEqual(r.map((x) => x.nome), ['A', 'B', 'Despesas entre órgãos do próprio governo']);
+  assert.ok(!r.some((x) => x.nome === 'Outras subfunções'));
+  assert.ok(Math.abs(r.reduce((a, x) => a + x.pct, 0) - 100) < 1e-9);
+});
