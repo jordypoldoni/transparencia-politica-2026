@@ -44,7 +44,8 @@ const corVoto = (tipo) => {
   if (x === 'abstenção' || x === 'abstencao') return { bg: '#F0EFE9', fg: t.cor.cinza };
   return { bg: '#EEEDE8', fg: t.cor.cinza };
 };
-const corCoerencia = (p) => (p >= 80 ? t.cor.sim : p >= 50 ? t.cor.ouro : t.cor.nao);
+// Presença e coerência saem na cor do texto, sem verde/âmbar/vermelho (18/10/2026): os cortes de 80% e 50%
+// eram nossos, sem regra pública, e pintavam um veredito sobre o número (D-003). A conta fica à vista ao lado.
 
 const dicionario = {
   'Publicidade e Marketing': 'Divulgação do mandato: redes, sites, impressos.',
@@ -1037,7 +1038,7 @@ export default function PerfilPolitico({ dados }) {
 
           {presenca && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px', background: t.cor.papelQuente, borderRadius: t.raio.md, marginBottom: '16px', boxShadow: t.sombra.sutil }}>
-              <span style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '2.2rem', color: corCoerencia(presenca.percentual) }}>{presenca.percentual.toFixed(0)}%</span>
+              <span style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '2.2rem', color: t.cor.tinta }}>{presenca.percentual.toFixed(0)}%</span>
               <span style={{ fontSize: '0.9rem', color: t.cor.cinza, lineHeight: 1.45 }}>
                 <strong style={{ color: t.cor.tinta }}>Presença nas votações.</strong> Registrou voto em <strong style={{ color: t.cor.tinta }}>{presenca.compareceu}</strong> das <strong style={{ color: t.cor.tinta }}>{presenca.total}</strong> votações nominais do período que coletamos. Ausências justificadas (licença, missão) também contam como não registrado.
               </span>
@@ -1046,7 +1047,7 @@ export default function PerfilPolitico({ dados }) {
 
           {coerencia && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px', background: t.cor.papelQuente, borderRadius: t.raio.md, marginBottom: '20px', boxShadow: t.sombra.sutil }}>
-              <span style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '2.2rem', color: corCoerencia(coerencia.percentual) }}>{coerencia.percentual.toFixed(0)}%</span>
+              <span style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '2.2rem', color: t.cor.tinta }}>{coerencia.percentual.toFixed(0)}%</span>
               <span style={{ fontSize: '0.9rem', color: t.cor.cinza, lineHeight: 1.45 }}>
                 das vezes votou junto com a maioria do <strong style={{ color: t.cor.tinta }}>{coerencia.partido}</strong> ({coerencia.alinhados} de {coerencia.considerados} votações nominais).
               </span>

@@ -91,3 +91,10 @@ test('fraseResumo: faixa, mediana (só com 4 ou mais), teto e sem adjetivo', () 
   const est = fraseResumo({ ...g, chave: 'estadual', plural: 'deputados estaduais' }, resumoDoGrupo(l4, 'estadual', 'RS'));
   assert.ok(!/teto/.test(est));
 });
+
+test('perfil: presença e coerência não têm cor de aprovação (sem semáforo, D-003)', async () => {
+  const { readFileSync } = await import('node:fs');
+  const fonte = readFileSync(new URL('../components/PerfilPolitico.jsx', import.meta.url), 'utf8');
+  assert.ok(!/corCoerencia/.test(fonte));
+  assert.ok(!/p >= 80/.test(fonte));
+});
