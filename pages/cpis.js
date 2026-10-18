@@ -13,6 +13,7 @@ import { createClient } from '@supabase/supabase-js';
 import { cpisSenado } from '../src/lib/cpisAoVivo';
 import { t } from '../src/estilo/tokens';
 import { dataBr } from '../src/lib/datas';
+import { situacaoLegivel } from '../src/lib/situacaoCamara';
 
 const rotulo = {
   display: 'inline-block', fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.04em',
@@ -73,8 +74,8 @@ function CartaoPedido({ p }) {
             {p.primeiro ? <>, a primeira de {p.primeiro}</> : null}.
           </li>
         )}
-        {p.situacao && <li>Situação na Câmara: {p.situacao}.</li>}
-        {p.despacho && <li>Último despacho{p.dataSituacao ? ` (${dataBr(p.dataSituacao)})` : ''}: {p.despacho}</li>}
+        <li>Situação na Câmara: {situacaoLegivel(p.situacao) ? `${situacaoLegivel(p.situacao)}.` : 'a fonte não informa.'}</li>
+        {p.despacho && <li>Última movimentação{p.dataSituacao ? ` (${dataBr(p.dataSituacao)})` : ''}: {p.despacho}</li>}
       </ul>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
         {p.inteiroTeor && <a href={p.inteiroTeor} target="_blank" rel="noopener noreferrer" style={botaoLink}>Ler o requerimento</a>}
