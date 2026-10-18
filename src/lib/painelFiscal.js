@@ -28,7 +28,10 @@ export const brlPreciso = (v) => {
   if (abs >= 1e9 && abs < 1e12) return junta(`R$ ${(n / 1e9).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} bi`);
   return brlCompacto(v);
 };
-export const pct = (p) => `${p.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 1 })}%`;
+// Valor positivo que arredondaria para 0% aparece como "<0,1%" (nunca "0%", que diria que não houve gasto).
+export const pct = (p) => (p > 0 && p < 0.05
+  ? '<0,1%'
+  : `${p.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 1 })}%`);
 
 const ok = (...vs) => vs.every((v) => v != null && Number.isFinite(Number(v)));
 

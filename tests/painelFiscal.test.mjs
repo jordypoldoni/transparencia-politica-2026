@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { montarPainel, montarDestino, brlCompacto } from '../src/lib/painelFiscal.js';
+import { montarPainel, montarDestino, brlCompacto, pct } from '../src/lib/painelFiscal.js';
 
 // Valores reais da União, 4º bimestre de 2026.
 const detalheUniao = {
@@ -79,4 +79,11 @@ test('ente sem resultado primário (estados hoje): não é v2 e o destino contin
   assert.equal(p.v2, false);
   assert.ok(p.destino.itens.length > 0);
   assert.equal(montarPainel({ resumo: { detalhe: null }, funcoes: [], ente: null }).v2, false);
+});
+
+test('pct: valor positivo minusculo nunca aparece como 0%', () => {
+  assert.equal(pct(0.02), '<0,1%');
+  assert.equal(pct(0), '0%');
+  assert.equal(pct(0.1), '0,1%');
+  assert.equal(pct(23.34), '23,3%');
 });
