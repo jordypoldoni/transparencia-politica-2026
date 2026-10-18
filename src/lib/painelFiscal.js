@@ -134,12 +134,13 @@ export function montarOrigemGeral(resumo) {
     { chave: 'impostos', rotulo: 'Impostos e taxas', valor: Number(rec.tributaria) },
     { chave: 'transferencias', rotulo: 'Transferências de outros governos', valor: Number(rec.transferencias_correntes) },
     { chave: 'contribuicoes', rotulo: 'Contribuições sociais', valor: Number(rec.contribuicoes) },
+    ...(ok(rec.patrimonial) ? [{ chave: 'patrimonial', rotulo: 'Receita patrimonial (rendimentos, royalties e concessões)', valor: Number(rec.patrimonial) }] : []),
     ...(temCredito ? [{ chave: 'credito', rotulo: 'Empréstimos (dívida nova)', valor: Number(rec.operacoes_credito) }] : []),
   ];
   const soma = partes.reduce((a, p) => a + p.valor, 0);
   if (soma > total * 1.001) return null;
   const outras = total - soma;
-  if (outras > total * 0.0005) partes.push({ chave: 'outras', rotulo: temCredito ? 'Patrimônio, serviços e outras' : 'Outras receitas (patrimônio, serviços e demais)', valor: outras });
+  if (outras > total * 0.0005) partes.push({ chave: 'outras', rotulo: temCredito ? 'Serviços e outras receitas' : 'Outras receitas (serviços, empréstimos e demais)', valor: outras });
   return partes.filter((p) => p.valor > 0).sort((a, b) => (a.chave === 'outras') - (b.chave === 'outras') || b.valor - a.valor)
     .map((p) => ({ ...p, pct: (p.valor / total) * 100 }));
 }

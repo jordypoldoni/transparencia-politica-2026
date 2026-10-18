@@ -125,11 +125,11 @@ test('montarSubs: intra-orçamentárias entram como linha própria e fecham a co
 });
 
 // Rio Grande do Sul, 4º bimestre de 2026 (Anexo 01 do Tesouro).
-const rs = { receita_total: 49436561235.36, detalhe: { receita: { tributaria: 28912848741, contribuicoes: 3985754702.21, transferencias_correntes: 9080639195.96, operacoes_credito: 1899376836.19 } } };
+const rs = { receita_total: 49436561235.36, detalhe: { receita: { tributaria: 28912848741, contribuicoes: 3985754702.21, transferencias_correntes: 9080639195.96, operacoes_credito: 1899376836.19, patrimonial: 4026449916.54 } } };
 
 test('origem geral (estados): fecha em 100% e põe "outras" por último', () => {
   const o = montarOrigemGeral(rs);
-  assert.deepEqual(o.map((x) => x.chave), ['impostos', 'transferencias', 'contribuicoes', 'credito', 'outras']);
+  assert.deepEqual(o.map((x) => x.chave), ['impostos', 'transferencias', 'patrimonial', 'contribuicoes', 'credito', 'outras']);
   assert.ok(Math.abs(o.reduce((a, x) => a + x.pct, 0) - 100) < 1e-9);
   assert.ok(Math.abs(o[0].pct - 58.49) < 0.01);       // 28,9 bi de 49,4 bi
   assert.ok(Math.abs(o.reduce((a, x) => a + x.valor, 0) - 49436561235.36) < 1);
