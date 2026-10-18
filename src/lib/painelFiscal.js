@@ -73,7 +73,7 @@ export function montarSubs(valorArea, lista, intra = 0) {
   const resto = valorArea - soma;
   if (resto > valorArea * 0.005) outras += resto;
   subs.sort((a, b) => b.valor - a.valor);
-  if (outras > 0) subs.push({ nome: 'Outras subfunções', valor: outras });
+  if (outras > 0) subs.push({ nome: 'Outras subfunções', valor: outras, semDetalhe: true });
   if (subs.length < 2) return null;
   return subs.map((x) => ({ ...x, pct: (x.valor / valorArea) * 100 }));
 }

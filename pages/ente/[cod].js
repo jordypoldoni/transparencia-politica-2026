@@ -258,6 +258,7 @@ function ParaOndeFoi({ destino, pop, todas, setTodas }) {
                     <strong style={{ color: t.cor.tinta }}>{brlCompacto(x.valor)}</strong> · {pct(x.pct)} da área
                   </span>
                 </div>
+                {x.semDetalhe && <div style={{ fontSize: '0.76rem', color: t.cor.cinza, lineHeight: 1.35, marginTop: '1px' }}>O Tesouro agrupa estes gastos sem detalhar o que são.</div>}
                 <div aria-hidden="true" style={{ height: '6px', background: '#FFFFFF', borderRadius: t.raio.pill, overflow: 'hidden', marginTop: '4px' }}>
                   <div style={{ width: `${Math.min(100, Math.max(1.5, x.pct))}%`, height: '100%', background: f.divida ? t.cor.verde : t.cor.ouro, opacity: 0.75, borderRadius: t.raio.pill }} />
                 </div>
