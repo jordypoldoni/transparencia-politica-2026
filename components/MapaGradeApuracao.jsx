@@ -1,13 +1,16 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { t } from '../src/estilo/tokens';
 import { NOMES_UF } from '../src/lib/cotas';
 import { REGIOES, ORDEM_REGIOES, REGIAO_DE } from '../src/lib/mapaRegioes';
+import { somarRegiao } from '../src/lib/somaRegiao';
+import Segmentado from './Segmentado';
 
 // GRADE DE ESTADOS PARA O CELULAR (13/10/2026, D-032). O mapa de verdade (MapaBrasilApuracao) depende de hover e tem estados
 // minúsculos (RN, PB, AL, SE, ES, RJ, DF), por isso fica só no computador. No celular cada estado é um quadrado do mesmo
 // tamanho (44 px), na posição aproximada do mapa; tocar abre o resultado do estado logo abaixo. Mesmos dados do mapa
-// (/api/apuracao-estados), mesma cor por REGIÃO (nunca partido), ordem só por votos. Não tem filtro por região nem
-// "Ver no mapa": isso é só do computador por enquanto.
+// (/api/apuracao-estados), mesma cor por REGIÃO (nunca partido), ordem só por votos. Desde 18/10/2026 a legenda é o MESMO
+// controle do computador (Segmentado): tocar numa região apaga as outras e mostra os votos somados dos estados dela
+// (mesma conta do computador, src/lib/somaRegiao.js). Não tem "Ver no mapa": isso é só do computador.
 const GRADE = [
   '. RR . AP . . .',
   '. AM . PA MA CE RN',
@@ -27,22 +30,25 @@ const numPct = (s) => { const v = Number(String(s ?? '0').replace(/\./g, '').rep
 const chaveCand = (c) => `${c.numero}|${c.nome}`;
 const TOPO = 5;
 
-function PainelEstado({ uf, e }) {
+// Um estado (`uf` + `e`) ou uma região inteira (`agregado`, já somado por somarRegiao).
+function PainelEstado({ uf, e: eEstado, agregado }) {
   const [todos, setTodos] = useState(false);
-  const reg = REGIOES[REGIAO_DE[uf]];
-  const nome = NOMES_UF[uf] || uf;
+  const e = agregado ? agregado.e : eEstado;
+  const reg = REGIOES[agregado ? agregado.regiao : REGIAO_DE[uf]];
+  const nome = agregado ? agregado.nome : (NOMES_UF[uf] || uf);
+  const etiqueta = agregado ? `${agregado.nEstados} ${agregado.nEstados === 1 ? 'estado' : 'estados'}` : reg.nome;
   if (!e) {
     return (
       <div>
-        <div className="mg-cab"><strong>{nome}</strong><span><i style={{ background: reg.cor }} />{reg.nome}</span></div>
-        <p className="mg-mudo">O TSE ainda não publicou o resultado deste estado.</p>
+        <div className="mg-cab"><strong>{nome}</strong><span><i style={{ background: reg.cor }} />{etiqueta}</span></div>
+        <p className="mg-mudo">{agregado ? 'O TSE ainda não publicou o resultado dos estados desta região.' : 'O TSE ainda não publicou o resultado deste estado.'}</p>
       </div>
     );
   }
   const lista = todos ? e.candidatos : e.candidatos.slice(0, TOPO);
   return (
     <div>
-      <div className="mg-cab"><strong>{nome}</strong><span><i style={{ background: reg.cor }} />{reg.nome}</span></div>
+      <div className="mg-cab"><strong>{nome}</strong><span><i style={{ background: reg.cor }} />{etiqueta}</span></div>
       <p className="mg-sub">Seções apuradas: <b>{fmt(e.secoes.totalizadas)}</b> de {fmt(e.secoes.total)} ({e.secoes.pct_totalizadas}%)</p>
       <ol className="mg-lista">
         {lista.map((c, i) => (
@@ -66,6 +72,9 @@ function PainelEstado({ uf, e }) {
         Brancos: <b>{fmt(e.votos.brancos)}</b> ({e.votos.pct_brancos}%) · Nulos: <b>{fmt(e.votos.nulos)}</b> ({e.votos.pct_nulos}%)
       </p>
       <p className="mg-rodape">Porcentagens sobre os votos válidos, como o TSE publica.</p>
+      {agregado && agregado.faltam.length > 0 && (
+        <p className="mg-parcial">Total parcial: o TSE ainda não publicou {agregado.faltam.join(', ')}.</p>
+      )}
     </div>
   );
 }
@@ -74,6 +83,7 @@ export default function MapaGradeApuracao({ turno = 1 }) {
   const [dados, setDados] = useState(null);
   const [erro, setErro] = useState(null);
   const [sel, setSel] = useState(null);
+  const [regiao, setRegiao] = useState(null); // região escolhida (filtro): soma os estados dela
   const painelRef = useRef(null);
 
   // Só busca no celular (até 640px, mesmo corte do `so-celular`): no computador quem aparece é o mapa de verdade e esta
@@ -101,9 +111,20 @@ export default function MapaGradeApuracao({ turno = 1 }) {
     return () => ctrl.abort();
   }, [turno, celular]);
 
+  const agregado = useMemo(() => {
+    if (!regiao || !dados) return null;
+    return somarRegiao(dados.estados, regiao, Object.keys(REGIAO_DE).filter((u) => REGIAO_DE[u] === regiao));
+  }, [regiao, dados]);
+
   // O painel fica abaixo da grade: depois do toque, leva a tela até ele só se ele estiver fora da vista.
-  const escolher = (uf) => {
-    setSel(uf);
+  // Estado e região são escolhas excludentes (como no computador): escolher um limpa o outro; tocar de novo desmarca.
+  const escolher = (uf) => { setRegiao(null); setSel(uf); rolarAoPainel(); };
+  const escolherRegiao = (k) => {
+    setSel(null);
+    setRegiao((r) => (r === k ? null : k));
+    rolarAoPainel();
+  };
+  const rolarAoPainel = () => {
     setTimeout(() => {
       const el = painelRef.current;
       if (!el) return;
@@ -130,43 +151,46 @@ export default function MapaGradeApuracao({ turno = 1 }) {
 
   return (
     <div className="mg-raiz">
-      <ul className="mg-legenda" aria-label="Cores por região">
-        {ORDEM_REGIOES.map((k) => <li key={k}><i style={{ background: REGIOES[k].cor }} />{REGIOES[k].nome}</li>)}
-      </ul>
-      <div className="mg-grade" role="group" aria-label="Estados do Brasil. Toque em um estado para ver o resultado de presidente nele.">
+      <div className="mg-seg">
+        <Segmentado className="seg-compacto" aria="Somar os estados de uma região" itens={ORDEM_REGIOES.map((k) => ({ chave: k, rotulo: REGIOES[k].nome, cor: REGIOES[k].cor, ativo: regiao === k, aoClicar: () => escolherRegiao(k) }))} />
+      </div>
+      <div className="mg-grade" role="group" aria-label="Estados do Brasil. Toque em um estado para ver o resultado de presidente nele, ou escolha uma região acima para ver a soma dela.">
         {GRADE.map((linha, r) => linha.map((uf, c) => {
           if (uf === '.') return <i key={`${r}-${c}`} className="mg-vazio" aria-hidden="true" />;
-          const regiao = REGIAO_DE[uf];
+          const regiaoDoEstado = REGIAO_DE[uf];
           const tem = !!dados.estados[uf];
           return (
             <button
               key={uf} type="button"
-              className={`mg-tile${sel === uf ? ' mg-sel' : ''}${TEXTO_ESCURO.has(regiao) && tem ? ' mg-esc' : ''}`}
-              style={{ background: tem ? REGIOES[regiao].cor : SEM_DADOS }}
+              className={`mg-tile${sel === uf ? ' mg-sel' : ''}${TEXTO_ESCURO.has(regiaoDoEstado) && tem ? ' mg-esc' : ''}`}
+              style={{ background: tem ? REGIOES[regiaoDoEstado].cor : SEM_DADOS, opacity: regiao && regiao !== regiaoDoEstado ? 0.22 : 1 }}
               aria-pressed={sel === uf}
-              aria-label={`${NOMES_UF[uf] || uf}, ${REGIOES[regiao].nome}${tem ? '' : ', sem resultado ainda'}`}
+              aria-label={`${NOMES_UF[uf] || uf}, ${REGIOES[regiaoDoEstado].nome}${tem ? '' : ', sem resultado ainda'}`}
               onClick={() => escolher(uf)}
             >{uf}</button>
           );
         }))}
       </div>
 
-      <section ref={painelRef} className="mg-painel" aria-live="polite" aria-label="Resultado do estado escolhido">
-        {sel ? <PainelEstado key={sel} uf={sel} e={dados.estados[sel]} /> : (
+      <section ref={painelRef} className="mg-painel" aria-live="polite" aria-label="Resultado do estado ou da região escolhida">
+        {regiao && agregado ? <PainelEstado key={`reg-${regiao}`} agregado={agregado} /> : sel ? <PainelEstado key={sel} uf={sel} e={dados.estados[sel]} /> : (
           <div className="mg-vazio-painel">
             <svg width="40" height="40" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z" fill="#CC7A22" /></svg>
-            <p><b>Toque em um estado</b><br />para ver quem foi mais votado nele.</p>
+            <p><b>Toque em um estado</b><br />para ver quem foi mais votado nele,<br />ou escolha uma região para ver a soma.</p>
           </div>
         )}
       </section>
 
       <style jsx global>{`
         .mg-raiz { margin-top: 4px; }
-        .mg-legenda { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 0.8rem; color: ${t.cor.tinta}; }
-        .mg-legenda i, .mg-cab i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; vertical-align: 0; }
+        .mg-seg { margin: 0 0 12px; }
+        .mg-seg .seg-compacto .seg-op { padding: 6px 9px; font-size: 0.84rem; }
+        .mg-seg .seg-compacto .seg-ponto { margin-right: 6px; }
+        .mg-parcial { margin: 8px 0 0; font-size: 0.8rem; color: ${t.cor.alertaTexto}; }
+        .mg-cab i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 5px; vertical-align: 0; }
         .mg-grade { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; margin-bottom: 16px; }
         .mg-vazio { height: 44px; }
-        .mg-tile { height: 44px; padding: 0; border: none; border-radius: 11px; color: #fff; font: inherit; font-size: 0.9rem; font-weight: 800; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.22); transition: transform 0.15s ease, box-shadow 0.15s ease; -webkit-tap-highlight-color: transparent; }
+        .mg-tile { height: 44px; padding: 0; border: none; border-radius: 11px; color: #fff; font: inherit; font-size: 0.9rem; font-weight: 800; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.22); transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.2s ease; -webkit-tap-highlight-color: transparent; }
         .mg-tile.mg-esc { color: ${t.cor.tinta}; }
         .mg-tile:active { transform: scale(0.96); }
         .mg-tile:focus-visible { outline: none; box-shadow: ${t.sombra.anelFoco}, 0 1px 3px rgba(0,0,0,0.22); }

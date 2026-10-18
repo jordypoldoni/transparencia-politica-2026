@@ -5,6 +5,7 @@ import { NOMES_UF } from '../src/lib/cotas';
 import { MAPA_BRASIL } from '../src/lib/mapaBrasilGeo';
 import { REGIOES, ORDEM_REGIOES } from '../src/lib/mapaRegioes';
 import Segmentado from './Segmentado';
+import { somarRegiao } from '../src/lib/somaRegiao';
 
 // MAPA DO BRASIL NA APURAÇÃO (12/10/2026, D-026). Presidente por estado, lido de /api/apuracao-estados.
 // Só é montado quando o usuário abre a opção "por estados": o que ele carrega (27 arquivos do TSE, em cache) não
@@ -166,36 +167,10 @@ export default function MapaBrasilApuracao({ turno = 1 }) {
     const o = {}; [...MAPA_BRASIL.estados].sort((a, b) => a.cx - b.cx).forEach((e, i) => { o[e.uf] = i; }); return o;
   }, []);
 
-  // Soma da região escolhida (12/10/2026): votos de cada candidato, válidos, brancos, nulos e seções dos estados da região.
-  // A porcentagem é sobre os votos válidos da região; brancos e nulos sobre o total de votos (como o TSE faz por estado).
-  // Estado da região que o TSE ainda não publicou fica de fora e a lista `faltam` avisa que o total é parcial.
+  // Soma da região escolhida: conta compartilhada com o celular (src/lib/somaRegiao.js).
   const agregado = useMemo(() => {
     if (!regiao || !dados) return null;
-    const ufs = MAPA_BRASIL.estados.filter((g) => g.regiao === regiao).map((g) => g.uf);
-    const com = ufs.filter((u) => dados.estados[u]);
-    const faltam = ufs.filter((u) => !dados.estados[u]);
-    const por = new Map(); let validos = 0; let brancos = 0; let nulos = 0; let tot = 0; let total = 0;
-    for (const u of com) {
-      const e = dados.estados[u];
-      validos += e.votos.validos; brancos += e.votos.brancos; nulos += e.votos.nulos;
-      tot += e.secoes.totalizadas; total += e.secoes.total;
-      for (const c of e.candidatos) {
-        const k = chaveCand(c); const a = por.get(k);
-        if (a) a.votos += c.votos; else por.set(k, { numero: c.numero, nome: c.nome, partido: c.partido, votos: c.votos });
-      }
-    }
-    if (!com.length) return { regiao, nome: REGIOES[regiao].nome, nEstados: 0, faltam, e: null };
-    const todos = validos + brancos + nulos;
-    const candidatos = [...por.values()].sort((a, b) => b.votos - a.votos)
-      .map((c) => ({ ...c, pct: fmtPct(validos ? (c.votos / validos) * 100 : 0) }));
-    return {
-      regiao, nome: REGIOES[regiao].nome, nEstados: com.length, faltam,
-      e: {
-        secoes: { totalizadas: tot, total, pct_totalizadas: fmtPct(total ? (tot / total) * 100 : 0) },
-        votos: { validos, brancos, nulos, pct_brancos: fmtPct(todos ? (brancos / todos) * 100 : 0), pct_nulos: fmtPct(todos ? (nulos / todos) * 100 : 0) },
-        candidatos,
-      },
-    };
+    return somarRegiao(dados.estados, regiao, MAPA_BRASIL.estados.filter((g) => g.regiao === regiao).map((g) => g.uf));
   }, [regiao, dados]);
 
   // Escala do candidato em foco: menor e maior % entre os estados (só os da região, se uma estiver escolhida).
