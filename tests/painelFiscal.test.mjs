@@ -82,7 +82,8 @@ test('ente sem resultado primário (estados hoje): não é v2 e o destino contin
 });
 
 test('pct: valor positivo minusculo nunca aparece como 0%', () => {
-  assert.equal(pct(0.02), '<0,1%');
+  assert.equal(pct(0.0343), '0,03%');
+  assert.equal(pct(0.0075), '<0,01%');
   assert.equal(pct(0), '0%');
   assert.equal(pct(0.1), '0,1%');
   assert.equal(pct(23.34), '23,3%');
