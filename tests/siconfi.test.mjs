@@ -127,15 +127,15 @@ test('subfunções: agrupa por função, usa a coluna acumulada e para nas intra
   const l = (conta, valor, coluna = col) => ({ conta, coluna, valor });
   const r = parseSubfuncoes([
     l('DESPESAS (EXCETO INTRA-ORÇAMENTÁRIAS) (I)', 999),
-    l('Saúde', 100), l('Atenção Básica', 40), l('Assistência Hospitalar e Ambulatorial', 50), l('Demais Subfunções', 10),
+    l('Saúde', 100), l('Atenção Básica', 40), l('Assistência Hospitalar e Ambulatorial', 40), l('FU10 - Administração Geral', 10), l('FU10 - Demais Subfunções', 10),
     l('Atenção Básica', 7, outra),
     l('Trabalho', 30), l('Proteção e Benefícios ao Trabalhador', 30),
     l('Encargos Especiais', 70), l('Serviço da Dívida Interna', 50), l('Transferências', 0), l('Outros Encargos Especiais', 20),
     l('DESPESAS (INTRA-ORÇAMENTÁRIAS) (II)', 5),
-    l('FU18 - Administração Geral', 5),
+    l('FU18 - Administração Geral', 5), l('Legislativa', 5),
     l('Saúde', 999), l('Subfunção intra', 999),
   ]);
-  assert.deepEqual(r['Saúde'], [['Atenção Básica', 40], ['Assistência Hospitalar e Ambulatorial', 50], ['Demais Subfunções', 10]]);
+  assert.deepEqual(r['Saúde'], [['Atenção Básica', 40], ['Assistência Hospitalar e Ambulatorial', 40], ['Administração Geral', 10], ['Demais Subfunções', 10]]);
   assert.deepEqual(r['Trabalho'], [['Proteção e Benefícios ao Trabalhador', 30]]);
   assert.deepEqual(r['Encargos Especiais'], [['Serviço da Dívida Interna', 50], ['Outros Encargos Especiais', 20]]);
 });

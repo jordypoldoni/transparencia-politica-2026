@@ -195,7 +195,7 @@ export function parseEncargos(items) {
 
 // Anexo 02: subfunções de cada função (ex.: Saúde -> Atenção Básica, Assistência Hospitalar...).
 // As linhas vêm em sequência: a função e, logo abaixo, as subfunções dela. Lemos até a próxima função;
-// paramos ao chegar nas despesas intra-orçamentárias ou em linhas de total. Devolve
+// paramos ao chegar nas despesas intra-orçamentárias (linha "DESPESAS (INTRA...") ou em linhas de total. Devolve
 // { "Saúde": [[nome, valor], ...] } só com valores positivos, ou null se o ente não detalha.
 export function parseSubfuncoes(items) {
   const col = colunaDespesaRealizada(items);
@@ -206,13 +206,16 @@ export function parseSubfuncoes(items) {
   for (const i of items.filter((x) => x.coluna === col)) {
     const nome = (i.conta || '').trim();
     if (/^DESPESAS\s*\(/i.test(nome)) { if (atual) break; continue; }
-    if (/^(TOTAL|SUBTOTAL|SUPER[AÁ]VIT|D[EÉ]FICIT)/i.test(nome) || /^FU\d+/i.test(nome)) { if (atual) break; continue; }
+    if (/^(TOTAL|SUBTOTAL|SUPER[AÁ]VIT|D[EÉ]FICIT)/i.test(nome)) { if (atual) break; continue; }
     const f = canon.get(nome.toLowerCase());
     if (f) { atual = f; out[atual] = out[atual] || []; continue; }
     if (!atual) continue;
     const v = num(i.valor);
     if (v == null || v <= 0) continue;
-    if (!out[atual].some((x) => x[0] === nome)) out[atual].push([nome, v]);
+    // O Tesouro lista, no fim de cada função, "FU01 - Administração Geral" e "FU01 - Demais Subfunções":
+    // são subfunções da função 01, só com o prefixo. Tiramos o prefixo.
+    const rotulo = nome.replace(/^FU\d+\s*-\s*/i, '');
+    if (!out[atual].some((x) => x[0] === rotulo)) out[atual].push([rotulo, v]);
   }
   for (const k of Object.keys(out)) if (!out[k].length) delete out[k];
   return Object.keys(out).length ? out : null;
