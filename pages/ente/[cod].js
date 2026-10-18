@@ -213,29 +213,70 @@ function Ponte({ painel }) {
 }
 
 function ParaOndeFoi({ destino, pop, todas, setTodas }) {
+  const [abertas, setAbertas] = useState({});
+  const alterna = (k) => setAbertas((a) => ({ ...a, [k]: !a[k] }));
   const linhas = todas ? destino.itens : destino.principais;
   const maior = destino.itens.length ? destino.itens[0].valor : 1;
   const fecho = !todas && destino.outras;
-  const Linha = ({ f, cor, trilho, nota }) => (
-    <div style={{ marginBottom: '15px', ...(f.divida ? { background: '#E9E7F3', borderRadius: t.raio.md, padding: '12px 14px', margin: '0 -14px 15px' } : null) }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '10px', alignItems: 'baseline', flexWrap: 'wrap' }}>
-        <span style={{ fontWeight: 600, fontSize: '0.95rem', color: t.cor.tinta }}>{f.rotulo}</span>
-        <span style={{ fontSize: '0.85rem', color: t.cor.cinza }}>
-          <strong style={{ color: t.cor.tinta }}>{brlCompacto(f.valor)}</strong> · {pct(f.pct)}{porHab(f.valor, pop) ? ` · ${porHab(f.valor, pop)}` : ''}
-        </span>
-      </div>
-      {(f.desc || nota) && <div style={{ fontSize: '0.8rem', color: t.cor.cinza, margin: '1px 0 5px', lineHeight: 1.4 }}>{f.desc || nota}</div>}
-      <div aria-hidden="true" style={{ height: '10px', background: trilho || t.cor.papelQuente2, borderRadius: t.raio.pill, overflow: 'hidden', marginTop: f.desc || nota ? 0 : '5px' }}>
-        <div style={{ width: `${Math.max(2, Math.round((f.valor / maior) * 100))}%`, height: '100%', background: cor || t.cor.ouro, borderRadius: t.raio.pill }} />
-      </div>
-    </div>
+  const temDetalhe = destino.itens.some((f) => f.subs);
+  const Cabeca = ({ f }) => (
+    <>
+      <span style={{ fontWeight: 600, fontSize: '0.95rem', color: t.cor.tinta, display: 'inline-flex', alignItems: 'center', gap: '6px', textAlign: 'left' }}>
+        {f.rotulo}{f.subs && <Seta aberta={!!abertas[f.rotulo]} size={13} />}
+      </span>
+      <span style={{ fontSize: '0.85rem', color: t.cor.cinza, textAlign: 'right' }}>
+        <strong style={{ color: t.cor.tinta }}>{brlCompacto(f.valor)}</strong> · {pct(f.pct)}{porHab(f.valor, pop) ? ` · ${porHab(f.valor, pop)}` : ''}
+      </span>
+    </>
   );
+  const linhaCab = { display: 'flex', justifyContent: 'space-between', gap: '10px', alignItems: 'baseline', flexWrap: 'wrap', width: '100%' };
+  const Linha = ({ f, cor, trilho, nota }) => {
+    const aberta = !!(f.subs && abertas[f.rotulo]);
+    const maiorSub = f.subs ? f.subs[0].valor : 1;
+    return (
+      <div style={{ marginBottom: '15px', ...(f.divida ? { background: '#E9E7F3', borderRadius: t.raio.md, padding: '12px 14px', margin: '0 -14px 15px' } : null) }}>
+        {f.subs ? (
+          <button type="button" onClick={() => alterna(f.rotulo)} aria-expanded={aberta}
+            style={{ ...linhaCab, background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontFamily: 'inherit' }}>
+            <Cabeca f={f} />
+          </button>
+        ) : (
+          <div style={linhaCab}><Cabeca f={f} /></div>
+        )}
+        {(f.desc || nota) && <div style={{ fontSize: '0.8rem', color: t.cor.cinza, margin: '1px 0 5px', lineHeight: 1.4 }}>{f.desc || nota}</div>}
+        <div aria-hidden="true" style={{ height: '10px', background: trilho || t.cor.papelQuente2, borderRadius: t.raio.pill, overflow: 'hidden', marginTop: f.desc || nota ? 0 : '5px' }}>
+          <div style={{ width: `${Math.max(2, Math.round((f.valor / maior) * 100))}%`, height: '100%', background: cor || t.cor.ouro, borderRadius: t.raio.pill }} />
+        </div>
+        {aberta && (
+          <div style={{ background: f.divida ? '#F6F5FB' : t.cor.papelQuente, borderRadius: t.raio.md, padding: '12px 14px', marginTop: '10px' }}>
+            <div style={{ fontSize: '0.74rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: t.cor.cinza, marginBottom: '8px' }}>
+              Dentro de {f.rotulo}
+            </div>
+            {f.subs.map((x) => (
+              <div key={x.nome} style={{ marginBottom: '10px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'baseline' }}>
+                  <span style={{ fontSize: '0.88rem', color: t.cor.tinta, flex: 1, minWidth: 0 }}>{x.nome}</span>
+                  <span style={{ fontSize: '0.82rem', color: t.cor.cinza, whiteSpace: 'nowrap', textAlign: 'right' }}>
+                    <strong style={{ color: t.cor.tinta }}>{brlCompacto(x.valor)}</strong> · {pct(x.pct)} da área
+                  </span>
+                </div>
+                <div aria-hidden="true" style={{ height: '6px', background: '#FFFFFF', borderRadius: t.raio.pill, overflow: 'hidden', marginTop: '4px' }}>
+                  <div style={{ width: `${Math.max(2, Math.round((x.valor / maiorSub) * 100))}%`, height: '100%', background: f.divida ? t.cor.verde : t.cor.ouro, opacity: 0.75, borderRadius: t.raio.pill }} />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
   return (
     <div style={{ background: t.cor.papelCartao, borderRadius: t.raio.lg, padding: 'clamp(20px,3vw,32px)', boxShadow: t.sombra.sutil, marginBottom: '20px' }}>
       <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.4rem', margin: '0 0 6px' }}>Para onde foi o dinheiro</h2>
       <p style={{ color: t.cor.cinza, fontSize: '0.9rem', margin: '0 0 20px', lineHeight: 1.5 }}>
         Tudo que o orçamento aplicou no ano, por <strong>área de governo</strong>: <strong>{brlCompacto(destino.total)}</strong>. Inclui o pagamento da dívida e outros encargos.
         {pop ? ' Ao lado, o valor por habitante.' : ''}
+        {temDetalhe ? ' Toque numa área com a seta para ver como o valor se divide.' : ''}
       </p>
       <div>
         {linhas.map((f) => <Linha key={f.rotulo} f={f} cor={f.divida ? t.cor.verde : t.cor.ouro} trilho={f.divida ? '#D6D2EA' : null} />)}

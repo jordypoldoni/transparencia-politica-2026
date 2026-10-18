@@ -51,20 +51,59 @@ const DESC_UNIAO = {
   'Defesa Nacional': 'Forças Armadas.',
 };
 
+// Subfunções de uma área: [{ nome, valor, pct }] com o percentual sobre o valor da ÁREA.
+// "Demais subfunções" vira "Outras subfunções" e vai para o fim. O que a área tem a mais que a soma
+// das subfunções entra em "Outras subfunções"; se a soma passar do valor da área (leitura
+// duvidosa), não mostramos nada em vez de mostrar número errado. Menos de 2 linhas: não há o que abrir.
+export function montarSubs(valorArea, lista) {
+  if (!Array.isArray(lista) || !(valorArea > 0)) return null;
+  let outras = 0;
+  const subs = [];
+  for (const par of lista) {
+    const nome = String(par[0] || '').trim();
+    const v = Number(par[1]);
+    if (!nome || !(v > 0)) continue;
+    if (/^demais subfun[cç][oõ]es$/i.test(nome)) outras += v; else subs.push({ nome, valor: v });
+  }
+  const soma = subs.reduce((a, x) => a + x.valor, 0) + outras;
+  if (soma > valorArea * 1.02) return null;
+  const resto = valorArea - soma;
+  if (resto > valorArea * 0.005) outras += resto;
+  subs.sort((a, b) => b.valor - a.valor);
+  if (outras > 0) subs.push({ nome: 'Outras subfunções', valor: outras });
+  if (subs.length < 2) return null;
+  return subs.map((x) => ({ ...x, pct: (x.valor / valorArea) * 100 }));
+}
+
 // Para onde foi o dinheiro: as funções de governo, com "Encargos Especiais" aberto em serviço da
 // dívida, repasses e outros (o nome sozinho não diz nada ao cidadão). Percentual sobre a soma dos itens.
-export function montarDestino({ funcoes, encargos, esfera, maxPrincipais = 9 }) {
+// Cada área pode trazer `subs` (como o valor se divide por dentro), quando o ente detalha.
+export function montarDestino({ funcoes, encargos, subfuncoes, esfera, maxPrincipais = 9 }) {
   const lista = (funcoes || []).map((f) => ({ rotulo: f.funcao, valor: Number(f.valor) || 0 })).filter((f) => f.valor > 0);
+  const subDe = (f) => montarSubs(f.valor, subfuncoes && subfuncoes[f.rotulo]);
   const enc = lista.find((f) => f.rotulo === 'Encargos Especiais');
-  let itens = lista;
+  let itens = lista.map((f) => (f === enc ? f : { ...f, subs: subDe(f) }));
   if (enc && encargos && (ok(encargos.divida_interna) || ok(encargos.divida_externa) || ok(encargos.transferencias))) {
-    const divida = (Number(encargos.divida_interna) || 0) + (Number(encargos.divida_externa) || 0);
+    const interna = Number(encargos.divida_interna) || 0;
+    const externa = Number(encargos.divida_externa) || 0;
+    const divida = interna + externa;
     const repasses = Number(encargos.transferencias) || 0;
     const outros = Math.max(0, enc.valor - divida - repasses);
-    itens = lista.filter((f) => f !== enc);
-    if (divida > 0) itens.push({ rotulo: 'Serviço da dívida', valor: divida, divida: true });
+    itens = itens.filter((f) => f !== enc);
+    if (divida > 0) {
+      const subs = [];
+      if (interna > 0) subs.push({ nome: 'Dívida interna (credores no Brasil)', valor: interna, pct: (interna / divida) * 100 });
+      if (externa > 0) subs.push({ nome: 'Dívida externa (credores no exterior)', valor: externa, pct: (externa / divida) * 100 });
+      itens.push({ rotulo: 'Serviço da dívida', valor: divida, divida: true, subs: subs.length > 1 ? subs : null });
+    }
     if (repasses > 0) itens.push({ rotulo: 'Repasses a estados e municípios', valor: repasses });
-    if (outros > 0) itens.push({ rotulo: 'Outros encargos', valor: outros });
+    if (outros > 0) {
+      const resto = ((subfuncoes && subfuncoes['Encargos Especiais']) || [])
+        .filter(([n]) => !/^(servi[cç]o da d[ií]vida (interna|externa)|transfer[eê]ncias)$/i.test(String(n).trim()));
+      itens.push({ rotulo: 'Outros encargos', valor: outros, subs: montarSubs(outros, resto) });
+    }
+  } else if (enc) {
+    itens = itens.map((f) => (f === enc ? { ...f, subs: subDe(f) } : f));
   }
   const total = itens.reduce((a, f) => a + f.valor, 0);
   itens = itens.sort((a, b) => b.valor - a.valor).map((f) => ({
@@ -83,7 +122,7 @@ export function montarPainel({ resumo, funcoes, ente }) {
   const d = (resumo && resumo.detalhe) || {};
   const r = d.resultados || {};
   const rec = d.receita || {};
-  const destino = montarDestino({ funcoes, encargos: d.encargos, esfera: ente && ente.esfera });
+  const destino = montarDestino({ funcoes, encargos: d.encargos, subfuncoes: d.subfuncoes, esfera: ente && ente.esfera });
   const v2 = ok(r.receita_primaria, r.despesa_primaria_paga, r.resultado_primario, r.resultado_nominal,
     r.juros_ativos, r.juros_passivos, r.divida_liquida_inicio, r.divida_liquida_atual);
   if (!v2) return { v2: false, destino };

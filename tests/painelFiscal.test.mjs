@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { montarPainel, montarDestino, brlCompacto, pct } from '../src/lib/painelFiscal.js';
+import { montarPainel, montarDestino, montarSubs, brlCompacto, pct } from '../src/lib/painelFiscal.js';
 
 // Valores reais da União, 4º bimestre de 2026.
 const detalheUniao = {
@@ -87,4 +87,32 @@ test('pct: valor positivo minusculo nunca aparece como 0%', () => {
   assert.equal(pct(0), '0%');
   assert.equal(pct(0.1), '0,1%');
   assert.equal(pct(23.34), '23,3%');
+});
+
+test('montarSubs: percentual sobre a área, "Demais" vira "Outras" no fim e o resto não explicado entra nela', () => {
+  const r = montarSubs(100, [['Atenção Básica', 40], ['Demais Subfunções', 10], ['Hospitalar', 30]]);
+  assert.deepEqual(r.map((x) => x.nome), ['Atenção Básica', 'Hospitalar', 'Outras subfunções']);
+  assert.equal(r[2].valor, 30);               // 10 de "Demais" + 20 que sobraram
+  assert.ok(Math.abs(r.reduce((a, x) => a + x.pct, 0) - 100) < 1e-9);
+});
+
+test('montarSubs: soma maior que a área ou uma linha só não vira detalhe', () => {
+  assert.equal(montarSubs(100, [['A', 80], ['B', 80]]), null);
+  assert.equal(montarSubs(100, [['A', 100]]), null);
+  assert.equal(montarSubs(100, null), null);
+});
+
+test('destino: serviço da dívida abre em interna e externa; outros encargos abre no que o Tesouro detalha', () => {
+  const d = montarDestino({
+    funcoes: [{ funcao: 'Encargos Especiais', valor: 1000 }, { funcao: 'Saúde', valor: 100 }],
+    encargos: { divida_interna: 500, divida_externa: 50, transferencias: 200, outros: 100 },
+    subfuncoes: { Saúde: [['Atenção Básica', 60], ['Hospitalar', 40]], 'Encargos Especiais': [['Serviço da Dívida Interna', 500], ['Outros Encargos Especiais', 100]] },
+    esfera: 'U',
+  });
+  const por = (n) => d.itens.find((i) => i.rotulo === n);
+  assert.deepEqual(por('Serviço da dívida').subs.map((x) => x.valor), [500, 50]);
+  assert.equal(por('Repasses a estados e municípios').subs, undefined);
+  assert.deepEqual(por('Outros encargos').subs.map((x) => x.nome), ['Outros Encargos Especiais', 'Outras subfunções']);
+  assert.equal(por('Outros encargos').subs[1].valor, 150);   // 250 de outros = 100 detalhado + 150 sem detalhe
+  assert.deepEqual(por('Saúde').subs.map((x) => x.nome), ['Atenção Básica', 'Hospitalar']);
 });

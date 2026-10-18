@@ -193,6 +193,31 @@ export function parseEncargos(items) {
   return Object.values(out).every((v) => v == null) ? null : out;
 }
 
+// Anexo 02: subfunções de cada função (ex.: Saúde -> Atenção Básica, Assistência Hospitalar...).
+// As linhas vêm em sequência: a função e, logo abaixo, as subfunções dela. Lemos até a próxima função;
+// paramos ao chegar nas despesas intra-orçamentárias ou em linhas de total. Devolve
+// { "Saúde": [[nome, valor], ...] } só com valores positivos, ou null se o ente não detalha.
+export function parseSubfuncoes(items) {
+  const col = colunaDespesaRealizada(items);
+  if (!col) return null;
+  const canon = new Map(FUNCOES_OFICIAIS.map((f) => [f.toLowerCase(), f]));
+  const out = {};
+  let atual = null;
+  for (const i of items.filter((x) => x.coluna === col)) {
+    const nome = (i.conta || '').trim();
+    if (/^DESPESAS\s*\(/i.test(nome)) { if (atual) break; continue; }
+    if (/^(TOTAL|SUBTOTAL|SUPER[AÁ]VIT|D[EÉ]FICIT)/i.test(nome) || /^FU\d+/i.test(nome)) { if (atual) break; continue; }
+    const f = canon.get(nome.toLowerCase());
+    if (f) { atual = f; out[atual] = out[atual] || []; continue; }
+    if (!atual) continue;
+    const v = num(i.valor);
+    if (v == null || v <= 0) continue;
+    if (!out[atual].some((x) => x[0] === nome)) out[atual].push([nome, v]);
+  }
+  for (const k of Object.keys(out)) if (!out[k].length) delete out[k];
+  return Object.keys(out).length ? out : null;
+}
+
 // Coleta o resumo fiscal de um ente para um (ano, período) específico.
 export async function coletarEnteEmPeriodo({ idEnte, esfera, ano, periodo }) {
   const [a01, a02, a06] = await Promise.all([
@@ -209,6 +234,7 @@ export async function coletarEnteEmPeriodo({ idEnte, esfera, ano, periodo }) {
     receita: parseReceitaDetalhe(a01),
     resultados: parseResultados(a06),
     encargos: parseEncargos(a02),
+    subfuncoes: parseSubfuncoes(a02),
   };
   return { ano, periodo, receita_total, despesa_total, funcoes, detalhe };
 }

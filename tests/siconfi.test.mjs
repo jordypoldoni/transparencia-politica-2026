@@ -39,7 +39,7 @@ test('total e funções saem da coluna acumulada', () => {
 });
 
 // ---- Detalhe (página de gastos públicos v2). Valores reais da União, 4º bimestre de 2026. ----
-import { parseReceitaDetalhe, parseResultados, parseEncargos } from '../src/lib/siconfi.js';
+import { parseReceitaDetalhe, parseResultados, parseEncargos, parseSubfuncoes } from '../src/lib/siconfi.js';
 
 test('origem da receita lê as linhas "Até o Bimestre" pelo código da conta', () => {
   const ate = 'Até o Bimestre (c)';
@@ -119,4 +119,28 @@ test('encargos especiais: separa dívida, repasses e outros, parando na próxima
 
 test('encargos especiais: sem a função devolve nulo', () => {
   assert.equal(parseEncargos([{ conta: 'Saúde', coluna: 'DESPESAS LIQUIDADAS ATÉ O BIMESTRE (d)', valor: 1 }]), null);
+});
+
+test('subfunções: agrupa por função, usa a coluna acumulada e para nas intra-orçamentárias e totais', () => {
+  const col = 'DESPESAS LIQUIDADAS ATÉ O BIMESTRE (d)';
+  const outra = 'DESPESAS EMPENHADAS ATÉ O BIMESTRE (c)';
+  const l = (conta, valor, coluna = col) => ({ conta, coluna, valor });
+  const r = parseSubfuncoes([
+    l('DESPESAS (EXCETO INTRA-ORÇAMENTÁRIAS) (I)', 999),
+    l('Saúde', 100), l('Atenção Básica', 40), l('Assistência Hospitalar e Ambulatorial', 50), l('Demais Subfunções', 10),
+    l('Atenção Básica', 7, outra),
+    l('Trabalho', 30), l('Proteção e Benefícios ao Trabalhador', 30),
+    l('Encargos Especiais', 70), l('Serviço da Dívida Interna', 50), l('Transferências', 0), l('Outros Encargos Especiais', 20),
+    l('DESPESAS (INTRA-ORÇAMENTÁRIAS) (II)', 5),
+    l('FU18 - Administração Geral', 5),
+    l('Saúde', 999), l('Subfunção intra', 999),
+  ]);
+  assert.deepEqual(r['Saúde'], [['Atenção Básica', 40], ['Assistência Hospitalar e Ambulatorial', 50], ['Demais Subfunções', 10]]);
+  assert.deepEqual(r['Trabalho'], [['Proteção e Benefícios ao Trabalhador', 30]]);
+  assert.deepEqual(r['Encargos Especiais'], [['Serviço da Dívida Interna', 50], ['Outros Encargos Especiais', 20]]);
+});
+
+test('subfunções: ente sem coluna acumulada ou sem subfunções devolve nulo', () => {
+  assert.equal(parseSubfuncoes([]), null);
+  assert.equal(parseSubfuncoes([{ conta: 'Saúde', coluna: 'DESPESAS LIQUIDADAS ATÉ O BIMESTRE (d)', valor: 5 }]), null);
 });
