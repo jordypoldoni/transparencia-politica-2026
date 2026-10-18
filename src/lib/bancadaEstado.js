@@ -157,6 +157,9 @@ export function fraseResumo(grupo, resumo, ano = 2026) {
 export function posicaoNaBancada(deputados, perfil, uf) {
   const grupo = agruparPorCasa(deputados).find((g) => g.daPara(casaDoPerfil(perfil)));
   if (!grupo) return null;
+  // Senado fica sem posição (decisão do Jordy, 18/10/2026): são 3 por estado, então "2º de 3" não diz nada.
+  // A página do estado mostra os valores lado a lado, pelo mesmo motivo.
+  if (grupo.chave === 'senado') return null;
   const linhas = montarLinhas(grupo, uf);
   const eu = linhas.find((l) => l.d.id === perfil.id);
   if (!eu || eu.media == null) return null;

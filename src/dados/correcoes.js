@@ -6,4 +6,12 @@
 // Formato de cada item:
 // { data: 'AAAA-MM-DD', pagina: '/deputado/fulano' (ou texto livre), erro: 'o que estava errado',
 //   correcao: 'o que mudou', fonte: 'onde conferir (texto ou link)' }
-export const CORRECOES = [];
+export const CORRECOES = [
+  {
+    data: '2026-10-18',
+    pagina: 'Páginas de votação (/votacao/...)',
+    erro: 'Votações do Senado e da Assembleia do RS apareciam com a casa e a explicação da Câmara dos Deputados.',
+    correcao: 'Cada votação passa a mostrar a casa de origem (Câmara, Senado ou Assembleia) e a explicação dessa casa. Erro encontrado por nós, não enviado por leitor.',
+    fonte: 'A ementa oficial de cada votação aparece na própria página, ao lado do resumo.',
+  },
+];

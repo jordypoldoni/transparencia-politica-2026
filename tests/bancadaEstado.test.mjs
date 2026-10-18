@@ -120,3 +120,8 @@ test('posicaoNaBancada: sem média, bancada de 1 pessoa ou fora da lista devolve
   assert.equal(posicaoNaBancada([dep('a', 1, 1)], { id: 'a', casa: 'Câmara' }, 'RS'), null);
   assert.equal(posicaoNaBancada(l, { id: 'a', casa: 'Câmara' }, 'RS').mediana, null);
 });
+
+test('posicaoNaBancada: senador não recebe posição (3 por estado), mesmo com média', () => {
+  const l = [dep('a', 100000, 10, { casa: 'Senado' }), dep('b', 80000, 10, { casa: 'Senado' }), dep('c', 60000, 10, { casa: 'Senado' }), dep('d', 40000, 10, { casa: 'Senado' })];
+  assert.equal(posicaoNaBancada(l, { id: 'a', casa: 'Senado', cargo_atual: 'Senador(a)' }, 'RS'), null);
+});
