@@ -1107,17 +1107,19 @@ export default function PerfilPolitico({ dados }) {
                           const linkavel = v.votacao_id_externa && v.ementa_votacao;
                           const conteudo = (
                             <>
-                              <span style={{ flexShrink: 0, fontSize: '0.78rem', fontWeight: 800, padding: '4px 10px', borderRadius: '6px', background: corVoto(v.voto_tipo).bg, color: corVoto(v.voto_tipo).fg, minWidth: '54px', textAlign: 'center' }}>{v.voto_tipo}</span>
-                              <span style={{ flex: 1, minWidth: 0, fontSize: '0.8rem', fontWeight: 600, color: t.cor.tinta }}>{papel}</span>
-                              {res && <span style={{ flexShrink: 0, fontSize: '0.74rem', color: res === 'Aprovado' ? t.cor.sim : t.cor.nao, fontWeight: 600 }}>{res} no plenário</span>}
-                              <span style={{ flexShrink: 0, fontSize: '0.72rem', color: t.cor.cinza }}>{dataBr(v.data_voto)}</span>
-                              {linkavel && <span style={{ flexShrink: 0, fontSize: '0.72rem', fontWeight: 700, color: t.cor.ouroTexto }}>ver<Seta direcao="direita" size={13} emTexto /></span>}
+                              <span className="voto-tipo" style={{ flexShrink: 0, fontSize: '0.78rem', fontWeight: 800, padding: '4px 10px', borderRadius: '6px', background: corVoto(v.voto_tipo).bg, color: corVoto(v.voto_tipo).fg, minWidth: '54px', textAlign: 'center' }}>{v.voto_tipo}</span>
+                              <span className="voto-papel" style={{ flex: 1, minWidth: 0, fontSize: '0.8rem', fontWeight: 600, color: t.cor.tinta }}>{papel}</span>
+                              <span className="voto-meta">
+                                {res && <span style={{ flexShrink: 0, fontSize: '0.74rem', color: res === 'Aprovado' ? t.cor.sim : t.cor.nao, fontWeight: 600 }}>{res} no plenário</span>}
+                                <span style={{ flexShrink: 0, fontSize: '0.72rem', color: t.cor.cinza }}>{dataBr(v.data_voto)}</span>
+                              </span>
+                              {linkavel && <span className="voto-ver" style={{ flexShrink: 0, fontSize: '0.72rem', fontWeight: 700, color: t.cor.ouroTexto }}>ver<Seta direcao="direita" size={13} emTexto /></span>}
                             </>
                           );
-                          const rowStyle = { display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 10px', borderRadius: t.raio.sm, background: '#fff', textDecoration: 'none', color: 'inherit' };
+                          const rowStyle = { padding: '8px 10px', borderRadius: t.raio.sm, background: '#fff', minWidth: 0, textDecoration: 'none', color: 'inherit' };
                           return linkavel
-                            ? <Link key={j} href={`/votacao/${v.votacao_id_externa}`} style={rowStyle}>{conteudo}</Link>
-                            : <div key={j} style={rowStyle}>{conteudo}</div>;
+                            ? <Link key={j} href={`/votacao/${v.votacao_id_externa}`} className="voto-linha" style={rowStyle}>{conteudo}</Link>
+                            : <div key={j} className="voto-linha" style={rowStyle}>{conteudo}</div>;
                         })}
                       </div>
                     </div>

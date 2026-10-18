@@ -305,6 +305,24 @@ export default function App({ Component, pageProps }) {
         }
         .etapa-linha { display: flex; align-items: center; gap: 10px; min-width: 0; }
 
+        /* Linha de voto do parlamentar (aba "Como votou"). No desktop e uma linha so: voto,
+           papel da votacao, resultado, data e "ver". No celular essa soma nao cabe (~290px
+           uteis) e os textos se sobrepunham. Ali vira uma grade: o voto na esquerda, o papel
+           em cima e o resultado com a data embaixo, e "ver" na ponta direita. */
+        .voto-linha { display: flex; align-items: center; gap: 10px; }
+        .voto-meta { display: contents; }
+        @media (max-width: 520px) {
+          .voto-linha {
+            display: grid; grid-template-columns: auto minmax(0, 1fr) auto;
+            grid-template-areas: "tipo papel ver" "tipo meta ver";
+            column-gap: 10px; row-gap: 2px; align-items: center;
+          }
+          .voto-tipo { grid-area: tipo; }
+          .voto-papel { grid-area: papel; line-height: 1.3; }
+          .voto-meta { grid-area: meta; display: flex; flex-wrap: wrap; gap: 0 10px; align-items: baseline; }
+          .voto-ver { grid-area: ver; }
+        }
+
         /* Painel de entrada da /votacoes (19/09/2026): um cartao por casa, em tres colunas,
            ocupando a largura inteira. Em grade de tres cartoes lado a lado o texto que explica
            o que cada decisao alcanca virava uma coluna de sete palavras por linha, e e
