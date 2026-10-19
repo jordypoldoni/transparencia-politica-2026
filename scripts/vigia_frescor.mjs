@@ -17,6 +17,8 @@ export const REGRAS = [
   { fonte: 'votos_camara', maxHoras: 3 * DIA },
   { fonte: 'votos_senado', maxHoras: 3 * DIA },
   { fonte: 'gastos_senado', maxHoras: 3 * DIA },
+  // recursos do Senado (19/10/2026): soAviso ate confirmar a rodada diaria no coletar.yml
+  { fonte: 'recursos_senado', maxHoras: 3 * DIA, soAviso: true },
   { fonte: 'gastos_alesp', maxHoras: 3 * DIA },
   { fonte: 'proposicoes', maxHoras: 3 * DIA },
   { fonte: 'pedidos_cpi_camara', maxHoras: 3 * DIA },

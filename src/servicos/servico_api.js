@@ -129,6 +129,19 @@ const ServicoAPI = {
             `getPoliticoCompleto.gastos(${id})`,
         );
 
+        // Recursos do Senado (19/10/2026): gastos fora da cota, beneficios e pessoal. Uma linha por ano
+        // (poucas por senador). Falha aqui nao derruba o perfil; sem o dado, a secao some.
+        let recursos_senado = [];
+        try {
+            if (/senado/i.test(perfil.fonte_api || '')) {
+                const { data: rec, error: eRec } = await supabase.from('senado_recursos')
+                    .select('ano, cotas_total, nao_inclusos, nao_inclusos_total, beneficios, pessoal, coletado_em')
+                    .eq('agente_id', id).order('ano', { ascending: false });
+                if (eRec) throw eRec;
+                recursos_senado = rec || [];
+            }
+        } catch (e) { console.error('recursos_senado:', e.message); }
+
         // Série histórica: agrupa por ANO e por MÊS (todos os anos com dados)
         const todosGastos = gastos || [];
         const serie = {};
@@ -320,7 +333,8 @@ const ServicoAPI = {
             coerencia,
             presenca,
             candidatura_2026,
-            posicao_estado
+            posicao_estado,
+            recursos_senado
         };
     },
 

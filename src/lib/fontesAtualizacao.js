@@ -13,6 +13,7 @@ export const GRUPOS = [
   { titulo: 'Gastos', itens: [
     { fonte: 'gastos_camara', nome: 'Câmara dos Deputados (CEAP)', frequencia: 'Todo dia' },
     { fonte: 'gastos_senado', nome: 'Senado Federal (CEAPS)', frequencia: 'Todo dia' },
+    { fonte: 'recursos_senado', nome: 'Senado Federal (fora da cota, benefícios e pessoal)', frequencia: 'Todo dia' },
     { fonte: 'gastos_alesp', escopo: 'SP', nome: 'Assembleia de São Paulo', frequencia: 'Todo dia', mes: true },
     { fonte: 'gastos_alergs', escopo: 'RS', nome: 'Assembleia do Rio Grande do Sul', frequencia: 'Todo dia 8', mes: true },
     { fonte: 'gastos_almg', escopo: 'MG', nome: 'Assembleia de Minas Gerais', frequencia: 'Sem rotina fixa ainda' },

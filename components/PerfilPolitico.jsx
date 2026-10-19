@@ -15,6 +15,7 @@ import BotaoFavorito from './BotaoFavorito';
 import SeloAtualizacao from './SeloAtualizacao';
 import { fonteGastosDoPerfil, fonteVotosDoPerfil } from '../src/lib/selosFonte';
 import NotasDaCategoria from './NotasDaCategoria';
+import RecursosSenado from './RecursosSenado';
 import { dataBr, idadeEm } from '../src/lib/datas';
 import ReportarErro from './ReportarErro';
 import ChamadaAfinidade from './ChamadaAfinidade';
@@ -59,7 +60,7 @@ const dicionario = {
   'Alimentação': 'Refeições do parlamentar em atividade.',
   'Segurança': 'Serviços de segurança para o mandato.',
   'Outros Operacionais': 'Demais despesas operacionais do mandato.',
-  'Outras despesas': 'Lançamentos que o arquivo da verba do Senado traz sem tipo de despesa, sem detalhamento e sem número de documento. O total oficial das cotas que o Senado publica para o senador não os inclui (conferimos no portal), por isso não entram no total do Lume. Mostramos à parte, exatamente como publicados, sem afirmar de que se tratam.',
+  'Outras despesas': 'Lançamentos que o arquivo da verba do Senado traz sem tipo de despesa, sem detalhamento e sem número de documento. O total oficial das cotas que o Senado publica para o senador não os inclui (conferimos no portal), por isso não entram no total do Lume. Mostramos à parte, exatamente como publicados. Em alguns casos o número de lançamentos coincide com os meses de auxílio-moradia que o Senado informa (veja "Fora da cota e benefícios"), mas o arquivo não os classifica e não afirmamos de que se tratam.',
 };
 
 const MES_LETRA = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
@@ -224,7 +225,7 @@ export default function PerfilPolitico({ dados }) {
 
   const { perfil, resumo_gastos, total_geral, n_notas, media_mensal, maior_categoria, lista_detalhada, votos = [], resumo_votos = {}, coerencia = null,
     serie_mensal = [], anos_disponiveis = [], ano_referencia, meses_com_gasto = 0, presenca = null,
-    candidatura_2026 = null, posicao_estado = null } = dados;
+    candidatura_2026 = null, posicao_estado = null, recursos_senado = [] } = dados;
 
   // Ficha 360°: dados biográficos e de atuação (podem estar vazios até o coletor rodar)
   const idade = idadeDe(perfil.data_nascimento);
@@ -351,6 +352,7 @@ export default function PerfilPolitico({ dados }) {
     { id: 'resumo', rotulo: 'Resumo' },
     temBio && { id: 'quem-e', rotulo: 'Quem é' },
     dadosAno && { id: 'gastos', rotulo: 'Gastos' },
+    recursos_senado.length > 0 && { id: 'fora-da-cota', rotulo: 'Fora da cota' },
     { id: 'atuacao', rotulo: 'Atuação' },
     temTrajetoria && { id: 'trajetoria', rotulo: 'Trajetória' },
     { id: 'proposicoes', rotulo: 'Proposições' },
@@ -828,6 +830,15 @@ export default function PerfilPolitico({ dados }) {
             ))}
           </div>
         </Secao>
+
+        {/* FORA DA COTA E BENEFÍCIOS — só senadores (19/10/2026): blocos do portal do Senado */}
+        {recursos_senado.length > 0 && (
+          <Secao id="fora-da-cota" titulo="Fora da cota e benefícios" aberta={secoesAbertas['fora-da-cota']} onToggle={() => toggleSecao('fora-da-cota')}>
+            <SeloAtualizacao fonte="recursos_senado" tipo="coleta" />
+            <SeletorAno anos={recursos_senado.map((r) => r.ano)} atual={anoSel} aoTrocar={trocarAno} rotulo="Ano dos recursos" />
+            <RecursosSenado recurso={recursos_senado.find((r) => r.ano === anoSel) || null} ano={anoSel} />
+          </Secao>
+        )}
 
         {/* ATUAÇÃO — comissões e frentes (Ficha 360°) */}
         <Secao id="atuacao" titulo={comSujeito(genero, 'Onde', 'atua')} aberta={secoesAbertas.atuacao} onToggle={() => toggleSecao('atuacao')}>
