@@ -18,7 +18,12 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const norm = (s) => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9 ]/g, '').trim();
 
+// 19/10/2026: o CSV do Senado traz lancamentos com TIPO_DESPESA, DETALHAMENTO e DOCUMENTO vazios
+// (ex.: R$3.500 mensais a imobiliarias/hotel; ~50 linhas por ano, 8 senadores em 2026). Nao da para
+// classificar sem inventar, entao ficam numa categoria propria, com nota no site (dicionario do PerfilPolitico).
+const CATEGORIA_SEM_TIPO = 'Outras despesas';
 function categoria(tipo) {
+  if (!String(tipo || '').trim()) return CATEGORIA_SEM_TIPO;
   const x = (tipo || '').toLowerCase();
   if (x.includes('passagem') || x.includes('hospedag') || x.includes('aérea') || x.includes('aerea')) return 'Viagens e Estadias';
   if (x.includes('locomo') || x.includes('combust') || x.includes('veícul') || x.includes('veicul') || x.includes('aluguel de veículos')) return 'Transporte e Mobilidade';

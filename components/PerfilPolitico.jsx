@@ -59,6 +59,7 @@ const dicionario = {
   'Alimentação': 'Refeições do parlamentar em atividade.',
   'Segurança': 'Serviços de segurança para o mandato.',
   'Outros Operacionais': 'Demais despesas operacionais do mandato.',
+  'Outras despesas': 'Lançamentos que o Senado publica na verba (CEAPS) sem tipo de despesa, sem detalhamento e sem número de documento. Não conseguimos classificá-los, então mostramos à parte, com valor e fornecedor exatamente como publicados. Não afirmamos de que se tratam.',
 };
 
 const MES_LETRA = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
