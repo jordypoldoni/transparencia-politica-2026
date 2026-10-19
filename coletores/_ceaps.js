@@ -13,7 +13,9 @@
 // continuacao do anterior. Valor que nao parece numero NAO vira 0 calado: entra em `anomalias`.
 
 const limpar = (c) => String(c ?? '').replace(/^"|"$/g, '').trim();
-const VALOR = /^-?\d{1,3}(\.\d{3})*(,\d+)?$|^-?\d+(,\d+)?$/;
+// Aceita 1.234,56, 4000,00, -50,00 e tambem ,10 (sem zero antes da virgula, como o Senado publica centavos).
+const VALOR_FORMA = /^-?(\d{1,3}(\.\d{3})+|\d+)?(,\d+)?$/;
+const ehValor = (v) => VALOR_FORMA.test(v || '') && /\d/.test(v);
 
 export function lerCeaps(texto) {
   const linhas = String(texto || '').split(/\r?\n/);
@@ -52,7 +54,7 @@ export function lerCeaps(texto) {
     const cols = bruto.split(';').map(limpar);
     if (cols.length < nCab) { anomalias.push({ motivo: 'colunas a menos', linha: bruto.slice(0, 120) }); continue; }
     const v = pega(cols, I.valor);
-    if (!VALOR.test(v || '')) { anomalias.push({ motivo: 'valor que nao parece numero', valor: v, linha: bruto.slice(0, 120) }); continue; }
+    if (!ehValor(v)) { anomalias.push({ motivo: 'valor que nao parece numero', valor: v, linha: bruto.slice(0, 120) }); continue; }
     lancamentos.push({
       ano: pega(cols, I.ano), mes: pega(cols, I.mes), senador: pega(cols, I.sen), tipo: pega(cols, I.tipo),
       cnpj: pega(cols, I.cnpj), fornecedor: pega(cols, I.forn), documento: pega(cols, I.doc),

@@ -54,6 +54,12 @@ test('valor com milhar (1.234,56) e negativo sao aceitos', () => {
   assert.deepEqual(r.lancamentos.map((x) => x.valor), ['1.234,56', '-50,00']);
 });
 
+test('centavos sem zero antes da virgula (",10") sao aceitos; vazio e so sinal nao', () => {
+  const r = lerCeaps(arq(normal.replace('"4000,00"', '",10"'), normal.replace('"4000,00"', '""'), normal.replace('"4000,00"', '"-"')));
+  assert.deepEqual(r.lancamentos.map((l) => l.valor), [',10']);
+  assert.equal(r.anomalias.length, 2);
+});
+
 test('cabecalho sem coluna obrigatoria derruba a leitura (formato mudou)', () => {
   assert.throws(() => lerCeaps('"ANO";"SENADOR";"VALOR"\r\n"2026";"X";"1,00"'), /sem as colunas/);
 });
