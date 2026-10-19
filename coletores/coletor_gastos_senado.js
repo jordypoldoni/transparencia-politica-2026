@@ -135,6 +135,10 @@ async function main() {
     const somaPass = dele.filter((r) => /passagem/i.test(r.tipo)).reduce((t, r) => t + valor(r.valor), 0);
     const resumoDry = `DRY ${ANO}: ${linhasOut.length} lançamentos casados (${total} no arquivo, ${anomalias.length} ilegíveis, ${semMatch.size} senadores sem correspondência); passagens ${passagens.length} (${passZero} zeradas). ${process.env.SENADOR_AMOSTRA || 'Paulo Paim'}: ${dele.length} notas, total ${soma.toFixed(2)}, passagens ${somaPass.toFixed(2)}.`;
     if (process.env.GITHUB_ACTIONS) console.log(`::notice title=CEAPS ${ANO} (conferência)::${resumoDry}`);
+    const porTipo = {};
+    for (const r of dele) { const k = String(r.tipo).slice(0, 40); porTipo[k] = porTipo[k] || { n: 0, v: 0 }; porTipo[k].n++; porTipo[k].v += valor(r.valor); }
+    const linhaTipos = Object.entries(porTipo).map(([k, x]) => `${JSON.stringify(k)}=${x.n}/${x.v.toFixed(2)}`).join(' | ');
+    if (process.env.GITHUB_ACTIONS) console.log(`::notice title=CEAPS ${ANO} por tipo::${linhaTipos}`);
     console.log(`DRY ${ANO}: ${linhasOut.length} lançamentos casados. ${process.env.SENADOR_AMOSTRA || 'Paulo Paim'}: ${dele.length} notas, total ${soma.toFixed(2)}, passagens ${somaPass.toFixed(2)}.`);
     return;
   }
