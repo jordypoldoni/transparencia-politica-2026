@@ -22,7 +22,7 @@ export function descricaoDoPerfil(dados, casa) {
     partes.push(`Em ${ano}, usou ${brl(dados.total_geral)} da ${verba}${notas}.`);
   }
   const pr = dados && dados.presenca;
-  if (pr && pr.total > 0) partes.push(`Registrou voto em ${pr.compareceu} de ${pr.total} votações nominais (${pct(pr.percentual)}).`);
+  if (pr && pr.total > 0) partes.push(pr.soSimNao ? `Votou Sim ou Não em ${pr.compareceu} de ${pr.total} votações publicadas pela Assembleia.` : `Registrou voto em ${pr.compareceu} de ${pr.total} votações nominais (${pct(pr.percentual)}).`);
   const co = dados && dados.coerencia;
   if (co && Number.isFinite(co.percentual)) partes.push(`Acompanhou o próprio partido em ${pct(co.percentual)} das votações.`);
   if (casa && casa.fonteNome) partes.push(`Fonte: ${casa.fonteNome}.`);

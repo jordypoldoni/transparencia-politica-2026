@@ -277,6 +277,9 @@ const ServicoAPI = {
                     compareceu: pres.compareceu,
                     total: pres.total,
                     casa: pres.casa,
+                    // Assembleia do RS (19/10/2026): o portal so publica votos Sim e Nao; abstencao e ausencia
+                    // aparecem iguais (sem voto). Por isso a tela nao chama de presenca nem mostra %.
+                    soSimNao: pres.casa === 'alergs',
                     percentual: (pres.compareceu / pres.total) * 100,
                 };
             }
@@ -1139,7 +1142,7 @@ const ServicoAPI = {
         try {
             const { data: pres } = await supabase.rpc('presenca_votacoes', { p_agente: agenteId });
             if (pres && pres.total > 0) {
-                presenca = { compareceu: pres.compareceu, total: pres.total, percentual: (pres.compareceu / pres.total) * 100 };
+                presenca = { compareceu: pres.compareceu, total: pres.total, soSimNao: pres.casa === 'alergs', percentual: (pres.compareceu / pres.total) * 100 };
             }
         } catch (e) { console.error('presenca_votacoes:', e.message); }
 

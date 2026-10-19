@@ -145,6 +145,7 @@ function ComoLer({ grupo, nome, temTeto, temVotos, totalVotos, ehRS }) {
   if (grupo.chave === 'estadual') visiveis.push('Cada Assembleia tem a sua verba e publica no seu ritmo: não compare com outro estado nem com os federais.');
   visiveis.push('Gasto alto ou baixo, sozinho, não mede o trabalho de ninguém.');
   if (temVotos) visiveis.push('Votos registrados não contam ausência justificada (licença, missão), e quem assumiu depois teve menos votações para participar.');
+  if (temVotos && grupo.chave === 'estadual' && ehRS) visiveis.push('A Assembleia do RS só publica votos Sim e Não: quem se absteve ou faltou aparece igual, sem voto.');
   if (grupo.chave === 'estadual' && (!temTeto || !temVotos)) {
     const faltam = [!temTeto && 'o teto desta verba', !temVotos && 'a presença nas votações desta Assembleia'].filter(Boolean).join(' nem ');
     visiveis.push(`O Lume ainda não tem ${faltam}, por isso ${!temTeto && !temVotos ? 'essas colunas não aparecem' : 'essa coluna não aparece'}.`);

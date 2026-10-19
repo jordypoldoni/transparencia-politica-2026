@@ -312,9 +312,11 @@ export default function FichaCandidatoLegislativo({ candidato, canonical, cargo 
             />
             {m.presenca && (
               <Numero
-                valor={`${Math.round(m.presenca.percentual)}%`}
-                rotulo="Presença nas votações"
-                contexto={`Registrou voto em ${m.presenca.compareceu} das ${m.presenca.total} votações nominais do período. Ausência justificada também conta como não registrada.`}
+                valor={m.presenca.soSimNao ? `${m.presenca.compareceu} de ${m.presenca.total}` : `${Math.round(m.presenca.percentual)}%`}
+                rotulo={m.presenca.soSimNao ? 'Votos registrados' : 'Presença nas votações'}
+                contexto={m.presenca.soSimNao
+                  ? 'Votou Sim ou Não nas votações que a Assembleia publica. O portal não publica abstenção nem ausência: elas aparecem iguais, sem voto.'
+                  : `Registrou voto em ${m.presenca.compareceu} das ${m.presenca.total} votações nominais do período. Ausência justificada também conta como não registrada.`}
                 fonte={fonteMandato}
               />
             )}

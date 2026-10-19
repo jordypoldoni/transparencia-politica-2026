@@ -1135,10 +1135,16 @@ export default function PerfilPolitico({ dados }) {
 
           {presenca && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '16px', background: t.cor.papelQuente, borderRadius: t.raio.md, marginBottom: '16px', boxShadow: t.sombra.sutil }}>
-              <span style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '2.2rem', color: t.cor.tinta }}>{presenca.percentual.toFixed(0)}%</span>
-              <span style={{ fontSize: '0.9rem', color: t.cor.cinza, lineHeight: 1.45 }}>
-                <strong style={{ color: t.cor.tinta }}>Presença nas votações.</strong> Registrou voto em <strong style={{ color: t.cor.tinta }}>{presenca.compareceu}</strong> das <strong style={{ color: t.cor.tinta }}>{presenca.total}</strong> votações nominais do período que coletamos. Ausências justificadas (licença, missão) também contam como não registrado.
-              </span>
+              <span style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '2.2rem', color: t.cor.tinta }}>{presenca.soSimNao ? `${presenca.compareceu}/${presenca.total}` : `${presenca.percentual.toFixed(0)}%`}</span>
+              {presenca.soSimNao ? (
+                <span style={{ fontSize: '0.9rem', color: t.cor.cinza, lineHeight: 1.45 }}>
+                  <strong style={{ color: t.cor.tinta }}>Votos registrados.</strong> Votou Sim ou Não em <strong style={{ color: t.cor.tinta }}>{presenca.compareceu}</strong> das <strong style={{ color: t.cor.tinta }}>{presenca.total}</strong> votações que a Assembleia publica. O portal da Assembleia não publica abstenção nem ausência: elas aparecem iguais, sem voto. Quem assumiu depois teve menos votações para participar.
+                </span>
+              ) : (
+                <span style={{ fontSize: '0.9rem', color: t.cor.cinza, lineHeight: 1.45 }}>
+                  <strong style={{ color: t.cor.tinta }}>Presença nas votações.</strong> Registrou voto em <strong style={{ color: t.cor.tinta }}>{presenca.compareceu}</strong> das <strong style={{ color: t.cor.tinta }}>{presenca.total}</strong> votações nominais do período que coletamos. Ausências justificadas (licença, missão) também contam como não registrado.
+                </span>
+              )}
             </div>
           )}
 
