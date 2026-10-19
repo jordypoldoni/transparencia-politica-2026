@@ -161,3 +161,33 @@ export async function pedidosCamara(anoAtual = new Date().getFullYear()) {
 
   return itens.sort((a, b) => (b.ano - a.ano) || (b.numero - a.numero));
 }
+
+// ---------- Camara: tramitacao de um pedido (movimentacoes) ----------
+// A fonte devolve a lista inteira, em ordem de data. O numero `sequencia` REPETE em movimentacoes
+// diferentes (RCP 2/2023 e 4/2023, conferido em 19/10/2026), por isso a chave e `ordem`, a posicao
+// na lista (1, 2, 3...). Linha sem data invalida a leitura inteira: melhor pular o pedido do que
+// gravar uma tramitacao com buraco. Funcao pura (testada em tests/cpisTramitacao.test.mjs).
+export function normalizarTramitacoes(dados, pedidoId) {
+  if (!Array.isArray(dados)) throw new Error('tramitacao: resposta sem lista');
+  const limpo = (v) => (v == null ? null : String(v).replace(/\s+/g, ' ').trim() || null);
+  const linhas = dados.map((x, i) => ({
+    i,
+    pedido_id: pedidoId,
+    sequencia: Number.isInteger(x?.sequencia) ? x.sequencia : null,
+    data_hora: /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(x?.dataHora || '') ? String(x.dataHora).slice(0, 19) : null,
+    sigla_orgao: limpo(x?.siglaOrgao),
+    tipo: limpo(x?.descricaoTramitacao),
+    cod_tipo: limpo(x?.codTipoTramitacao),
+    despacho: limpo(x?.despacho),
+    url: limpo(x?.url),
+  }));
+  if (linhas.some((l) => !l.data_hora)) throw new Error('tramitacao: movimentacao sem data valida');
+  // Ordem cronologica; empate pela ordem em que a fonte entregou (estavel).
+  linhas.sort((a, b) => (a.data_hora < b.data_hora ? -1 : a.data_hora > b.data_hora ? 1 : a.i - b.i));
+  return linhas.map(({ i, ...resto }, k) => ({ ...resto, ordem: k + 1 }));
+}
+
+export async function tramitacoesPedido(id) {
+  const j = await buscar(`${CAMARA}/proposicoes/${id}/tramitacoes`, 'json', 3);
+  return normalizarTramitacoes(j?.dados, id);
+}
