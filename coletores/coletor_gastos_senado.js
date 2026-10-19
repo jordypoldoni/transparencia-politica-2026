@@ -4,10 +4,12 @@
 import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
 import { registrarStatus, ultimaEmissao } from './_status.js';
+import { lerCeaps } from './_ceaps.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const ANO = parseInt(process.argv[2] || process.env.ANO || '2026', 10); // uso: node coletor_gastos_senado.js 2025
+const DRY = process.argv.includes('--dry'); // so le e confere, nao grava
+const ANO = parseInt(process.argv.find((a) => /^\d{4}$/.test(a)) || process.env.ANO || '2026', 10); // uso: node coletor_gastos_senado.js 2025 [--dry]
 // URL configurável (a CEAPS publica um CSV por ano)
 const CEAPS_URL = process.env.CEAPS_URL || `https://www.senado.gov.br/transparencia/LAI/verba/despesa_ceaps_${ANO}.csv`;
 
@@ -88,40 +90,52 @@ async function main() {
   if (!resp.ok) throw new Error(`HTTP ${resp.status} ao baixar CEAPS`);
   const buf = Buffer.from(await resp.arrayBuffer());
   const texto = buf.toString('latin1');
-  const linhas = texto.split(/\r?\n/);
 
-  // Acha a linha de cabeçalho (contém ANO e SENADOR)
-  let iCab = linhas.findIndex((l) => /ANO/i.test(l) && /SENADOR/i.test(l));
-  if (iCab < 0) iCab = 0;
-  const cab = linhas[iCab].split(';').map((c) => c.replace(/"/g, '').trim().toUpperCase());
-  const idx = (nome) => cab.indexOf(nome);
-  const iAno = idx('ANO'), iMes = idx('MES'), iSen = idx('SENADOR'), iTipo = idx('TIPO_DESPESA'),
-        iCnpj = idx('CNPJ_CPF'), iForn = idx('FORNECEDOR'), iDoc = idx('DOCUMENTO'), iData = idx('DATA'),
-        iValor = idx('VALOR_REEMBOLSADO'), iCod = idx('COD_DOCUMENTO');
+  // Leitura em coletores/_ceaps.js (corrige o desvio de colunas das passagens aereas, 19/10/2026).
+  const { lancamentos, anomalias, total } = lerCeaps(texto);
+  console.log(`📄 ${total} lançamentos no arquivo; ${anomalias.length} ilegíveis.`);
+  if (anomalias.length) console.warn('   ilegíveis (amostra):', anomalias.slice(0, 3));
+  // Trava: mais de 0,5% ilegível = o formato do arquivo mudou. Nao apaga nem regrava nada.
+  if (anomalias.length > Math.max(5, total * 0.005)) throw new Error(`CEAPS ${ANO}: ${anomalias.length} de ${total} lançamentos ilegíveis; nada foi gravado.`);
 
   const linhasOut = [];
   let semMatch = new Set();
-  for (let i = iCab + 1; i < linhas.length; i++) {
-    const cols = linhas[i].split(';').map((c) => c.replace(/^"|"$/g, '').trim());
-    if (cols.length < cab.length || !cols[iSen]) continue;
-    const agenteId = matchSenador(cols[iSen]);
-    if (!agenteId) { semMatch.add(cols[iSen]); continue; }
+  for (const r of lancamentos) {
+    const agenteId = matchSenador(r.senador);
+    if (!agenteId) { semMatch.add(r.senador); continue; }
     linhasOut.push({
       agente_id: agenteId,
-      ano: parseInt(cols[iAno], 10) || ANO,
-      mes: parseInt(cols[iMes], 10) || null,
-      tipo_despesa: cols[iTipo] || null,
-      categoria_normalizada: categoria(cols[iTipo]),
-      fornecedor_nome: cols[iForn] || null,
-      fornecedor_cnpj_cpf: cols[iCnpj] || null,
-      valor_liquido: valor(cols[iValor]),
-      data_emissao: data(cols[iData]),
-      id_externo_documento: cols[iCod] || cols[iDoc] || null,
+      ano: parseInt(r.ano, 10) || ANO,
+      mes: parseInt(r.mes, 10) || null,
+      tipo_despesa: r.tipo || null,
+      categoria_normalizada: categoria(r.tipo),
+      fornecedor_nome: r.fornecedor || null,
+      fornecedor_cnpj_cpf: r.cnpj || null,
+      valor_liquido: valor(r.valor),
+      data_emissao: data(r.data),
+      id_externo_documento: r.cod || r.documento || null,
       casa_legislativa: 'Senado',
     });
   }
   console.log(`📊 ${linhasOut.length} lançamentos válidos; ${semMatch.size} senadores sem correspondência.`);
   if (semMatch.size) console.log('   sem match (amostra):', [...semMatch].slice(0, 5));
+
+  // Assinatura do bug antigo (colunas deslocadas): passagem com valor 0 e o valor dentro do id.
+  const passagens = linhasOut.filter((r) => /passagem/i.test(r.tipo_despesa || ''));
+  const passZero = passagens.filter((r) => r.valor_liquido === 0).length;
+  const idValor = linhasOut.filter((r) => /^\d+,\d{1,2}$/.test(r.id_externo_documento || '')).length;
+  console.log(`🔎 passagens: ${passagens.length} (${passZero} com valor 0); ids que parecem valor: ${idValor}.`);
+  if (idValor > 5 || (passagens.length > 20 && passZero / passagens.length > 0.5)) {
+    throw new Error(`CEAPS ${ANO}: colunas parecem deslocadas (${idValor} ids que parecem valor, ${passZero}/${passagens.length} passagens zeradas); nada foi gravado.`);
+  }
+  if (DRY) {
+    const alvo = norm(process.env.SENADOR_AMOSTRA || 'Paulo Paim');
+    const dele = lancamentos.filter((r) => norm(r.senador).includes(alvo));
+    const soma = dele.reduce((t, r) => t + valor(r.valor), 0);
+    const somaPass = dele.filter((r) => /passagem/i.test(r.tipo)).reduce((t, r) => t + valor(r.valor), 0);
+    console.log(`DRY ${ANO}: ${linhasOut.length} lançamentos casados. ${process.env.SENADOR_AMOSTRA || 'Paulo Paim'}: ${dele.length} notas, total ${soma.toFixed(2)}, passagens ${somaPass.toFixed(2)}.`);
+    return;
+  }
 
   // 3) Idempotência: limpa o Senado deste ano e reinsere
   await supabase.from('despesas_parlamentares').delete().eq('casa_legislativa', 'Senado').eq('ano', ANO);

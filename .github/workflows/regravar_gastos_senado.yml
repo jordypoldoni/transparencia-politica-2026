@@ -1,0 +1,60 @@
+# regravar_gastos_senado.yml: refaz os gastos do Senado (CEAPS) de anos escolhidos. (19/10/2026)
+#
+# POR QUE EXISTE: o coletor lia errado as linhas de passagem aerea (colunas deslocadas por ';'
+# dentro do DETALHAMENTO), entao 2024, 2025 e 2026 ficaram com o gasto do Senado subestimado em
+# milhoes. O cron diario do coletar.yml so refaz o ano corrente; este roda sob demanda para os outros.
+# Sempre rode primeiro com dry = true (so le e confere o total de um senador contra o portal).
+#
+# SO MANUAL (workflow_dispatch). Falha barulhenta de proposito: sem continue-on-error.
+name: Regravar gastos do Senado (CEAPS)
+
+on:
+  workflow_dispatch:
+    inputs:
+      anos:
+        description: 'Anos separados por espaco (ex.: 2026 2025 2024)'
+        required: true
+        default: '2026 2025 2024'
+      dry:
+        description: 'dry = true so confere, nao grava'
+        required: true
+        default: 'true'
+      senador:
+        description: 'Senador de amostra para conferir o total'
+        required: false
+        default: 'Paulo Paim'
+
+permissions:
+  contents: read
+
+jobs:
+  regravar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Instalar dependências
+        run: npm install --ignore-scripts
+
+      - name: Rodar coletor de gastos do Senado
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SENADOR_AMOSTRA: ${{ github.event.inputs.senador }}
+          ANOS: ${{ github.event.inputs.anos }}
+          DRY: ${{ github.event.inputs.dry }}
+        run: |
+          for ano in $ANOS; do
+            if [ "$DRY" = "true" ]; then
+              node coletores/coletor_gastos_senado.js "$ano" --dry
+            else
+              node coletores/coletor_gastos_senado.js "$ano"
+            fi
+          done
