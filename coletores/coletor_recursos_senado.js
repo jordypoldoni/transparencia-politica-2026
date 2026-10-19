@@ -21,9 +21,9 @@ const dorme = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function buscar(cod, ano) {
   let ultimo;
-  for (let t = 1; t <= 3; t++) {
+  for (let t = 1; t <= 2; t++) {
     try {
-      const r = await fetch(`${BASE}/${cod}/recursos-utilizados?ano=${ano}&formato=json`, { headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(30000) });
+      const r = await fetch(`${BASE}/${cod}/recursos-utilizados?ano=${ano}&formato=json`, { headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(15000) });
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       return await r.json();
     } catch (e) { ultimo = e; await dorme(1500 * t); }
@@ -42,7 +42,11 @@ async function main() {
     const { data: radar } = await supabase.from('radar_gastos').select('id, total').eq('casa', 'Senado').eq('ano', ano);
     const nosso = new Map((radar || []).map((r) => [r.id, Number(r.total)]));
     const linhas = [];
+    let n = 0, t0 = Date.now();
     for (const s of senadores) {
+      if (++n % 20 === 0 && process.env.GITHUB_ACTIONS) console.log(`::notice title=Recursos ${ano} progresso::${n}/${senadores.length} em ${Math.round((Date.now() - t0) / 1000)}s, ${falhas.length} falhas`);
+      // Fonte fora do ar: 8 falhas seguidas no inicio derrubam a rodada em vez de esperar 88 timeouts.
+      if (n === 9 && linhas.length === 0 && falhas.length >= 8) throw new Error(`Recursos do Senado: as 8 primeiras chamadas falharam (${falhas[0]})`);
       try {
         const rec = lerRecursos(await buscar(s.id_externo_api, ano));
         if (!rec) { vazias++; continue; }
