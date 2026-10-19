@@ -15,8 +15,9 @@
 // candidaturas), e uma data que mente faz o buscador confiar menos em todas as outras.
 
 import { CASAS_VOTACAO, hrefPerfil } from './casa.js';
+import { slugPedido } from './cpisRotas.js';
 
-export const TIPOS = ['paginas', 'perfis', 'candidatos', 'votacoes', 'fiscal'];
+export const TIPOS = ['paginas', 'perfis', 'candidatos', 'votacoes', 'fiscal', 'cpis'];
 
 export const LIMITE_POR_ARQUIVO = 50000; // limite do protocolo
 
@@ -68,6 +69,7 @@ export function indice(base, tipos = TIPOS) {
 //   candidatos: ['/presidencial/slug', ...]
 //   votacoes:   [{ votacao_id_externa, data_insercao }]
 //   fiscal:     [{ cod_ibge }]  (entes com painel fiscal já coletado)
+//   cpis:       [{ numero, ano, data_situacao }]  (pedidos de CPI da Câmara; lastmod = data da última movimentação)
 export function entradasDoTipo(tipo, dados = {}) {
   switch (tipo) {
     case 'paginas':
@@ -89,6 +91,9 @@ export function entradasDoTipo(tipo, dados = {}) {
         .map((v) => ({ caminho: `/votacao/${encodeURIComponent(v.votacao_id_externa)}`, lastmod: v.data_insercao }));
     case 'fiscal':
       return (dados.fiscal || []).filter((e) => e && e.cod_ibge).map((e) => `/ente/${e.cod_ibge}`);
+    case 'cpis':
+      return (dados.cpis || []).filter((c) => c && c.numero && c.ano)
+        .map((c) => ({ caminho: `/cpis/${slugPedido(c.numero, c.ano)}`, lastmod: c.data_situacao }));
     default:
       return null; // tipo desconhecido: a página responde 404
   }

@@ -1,3 +1,4 @@
+import { createClient } from '@supabase/supabase-js';
 import ServicoAPI from '../../src/servicos/servico_api';
 import { TIPOS, entradasDoTipo, conjuntoDeUrls } from '../../src/lib/sitemap.js';
 
@@ -12,6 +13,12 @@ const BUSCAS = {
   candidatos: async () => ({ candidatos: await ServicoAPI.listarCandidatosParaSitemap() }),
   votacoes: async () => ({ votacoes: await ServicoAPI.listarVotacoesParaSitemap() }),
   fiscal: async () => ({ fiscal: await ServicoAPI.listarEntesParaSitemap() }),
+  cpis: async () => {
+    const banco = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+    const { data, error } = await banco.from('pedidos_cpi_camara').select('numero, ano, data_situacao');
+    if (error) throw new Error(error.message);
+    return { cpis: data || [] };
+  },
 };
 
 export async function getServerSideProps({ res, req, params }) {

@@ -81,3 +81,10 @@ test('candidatos: devolve os caminhos como vieram; tipo desconhecido devolve nul
 test('escapar cobre os cinco caracteres do XML', () => {
   assert.equal(escapar(`<&>"'`), '&lt;&amp;&gt;&quot;&apos;');
 });
+
+test('cpis: /cpis/rcp-N-AAAA com lastmod da ultima movimentacao; sem numero ou ano fica fora', () => {
+  const r = entradasDoTipo('cpis', { cpis: [{ numero: 1, ano: 2026, data_situacao: '2026-07-20' }, { numero: 2, ano: 2023, data_situacao: null }, {}, { numero: 3 }] });
+  assert.deepEqual(r, [{ caminho: '/cpis/rcp-1-2026', lastmod: '2026-07-20' }, { caminho: '/cpis/rcp-2-2023', lastmod: null }]);
+  assert.ok(TIPOS.includes('cpis'));
+});
+

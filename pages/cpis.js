@@ -10,12 +10,14 @@
 
 import { grafo, organizacao, site, migalhas, conjuntoDeDados, jsonSeguro } from '../src/lib/dadosEstruturados';
 import Head from 'next/head';
+import Link from 'next/link';
 import { useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { cpisSenado } from '../src/lib/cpisAoVivo';
 import { buscarTudo } from '../src/lib/paginar';
 import { resumirTramitacao } from '../src/lib/tramitacaoCpi';
 import { Seta } from '../components/icones';
+import { slugPedido } from '../src/lib/cpisRotas';
 import { t } from '../src/estilo/tokens';
 import { dataBr } from '../src/lib/datas';
 import { situacaoLegivel } from '../src/lib/situacaoCamara';
@@ -35,7 +37,6 @@ const acaoTexto = {
   color: t.cor.ouroTexto, font: 'inherit', fontSize: '0.86rem', fontWeight: 700, cursor: 'pointer',
   textDecoration: 'underline', textUnderlineOffset: '3px',
 };
-const linkFonte = { color: t.cor.ouroTexto, fontWeight: 700 };
 const aviso = { margin: 0, fontSize: '0.9rem', color: t.cor.cinza, lineHeight: 1.5 };
 
 function plural(n, um, varios) { return `${n} ${n === 1 ? um : varios}`; }
@@ -82,7 +83,7 @@ function periodo(inicio, fim) {
 
 // Cada movimento e um bloco: a data fica EM CIMA do texto, colada a ele (proximidade), e os blocos
 // se separam entre si por um espaco maior que o de dentro (Gestalt). Sem borda lateral.
-function ResumoTramitacao({ id, r, p }) {
+function ResumoTramitacao({ id, r }) {
   return (
     <div id={id} style={{ background: t.cor.papelCartao, borderRadius: t.raio.md, padding: '16px', margin: '10px 0 4px', boxShadow: t.sombra.sutil }}>
       <h4 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.02rem', margin: '0 0 12px', color: t.cor.tinta }}>
@@ -98,10 +99,7 @@ function ResumoTramitacao({ id, r, p }) {
       </ul>
       <p style={{ margin: '12px 0 0', fontSize: '0.8rem', lineHeight: 1.55, color: t.cor.cinza }}>
         Resumo montado com a tramitação oficial da Câmara: tipos com até 3 registros aparecem um a um; os demais, somados.
-        {r.restantes > 0 ? ` Mais ${plural(r.restantes, 'movimentação ficou', 'movimentações ficaram')} fora deste resumo.` : ''}
-        {' '}Fontes oficiais:{' '}
-        {p.inteiroTeor ? <><a href={p.inteiroTeor} target="_blank" rel="noopener noreferrer" style={linkFonte}>requerimento (PDF)</a>{' · '}</> : null}
-        <a href={p.ficha} target="_blank" rel="noopener noreferrer" style={linkFonte}>ficha de tramitação</a>.
+        {r.restantes > 0 ? ` Mais ${plural(r.restantes, 'movimentação ficou', 'movimentações ficaram')} fora deste resumo; todas estão na tramitação completa.` : ''}
       </p>
     </div>
   );
@@ -124,21 +122,18 @@ function CartaoPedido({ p }) {
         <li>Situação na Câmara: {situacaoLegivel(p.situacao) ? `${situacaoLegivel(p.situacao)}.` : 'a fonte não informa.'}</li>
         {p.despacho && <li>Última movimentação{p.dataSituacao ? ` (${dataBr(p.dataSituacao)})` : ''}: {p.despacho}</li>}
       </ul>
-      {p.resumo && p.resumo.total > 0 ? (
-        <>
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', columnGap: '22px' }}>
+        {p.resumo && p.resumo.total > 0 && (
           <button type="button" className="acao-texto" style={acaoTexto} aria-expanded={aberto} aria-controls={idResumo} onClick={() => setAberto((v) => !v)}>
             {aberto ? 'Ocultar o resumo da tramitação' : 'Ver o resumo da tramitação'}
             <Seta aberta={aberto} size={16} emTexto />
           </button>
-          {aberto && <ResumoTramitacao id={idResumo} r={p.resumo} p={p} />}
-        </>
-      ) : (
-        <p style={{ margin: 0, fontSize: '0.84rem', color: t.cor.cinza }}>
-          Fontes oficiais:{' '}
-          {p.inteiroTeor ? <><a href={p.inteiroTeor} target="_blank" rel="noopener noreferrer" style={linkFonte}>requerimento (PDF)</a>{' · '}</> : null}
-          <a href={p.ficha} target="_blank" rel="noopener noreferrer" style={linkFonte}>ficha de tramitação</a>.
-        </p>
-      )}
+        )}
+        <Link href={`/cpis/${slugPedido(p.numero, p.ano)}`} className="acao-texto" style={acaoTexto}>
+          Ver a tramitação completa<Seta direcao="direita" size={16} emTexto />
+        </Link>
+      </div>
+      {aberto && p.resumo && p.resumo.total > 0 && <ResumoTramitacao id={idResumo} r={p.resumo} />}
     </div>
   );
 }
