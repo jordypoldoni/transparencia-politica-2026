@@ -136,6 +136,16 @@ async function main() {
     const resumoDry = `DRY ${ANO}: ${linhasOut.length} lançamentos casados (${total} no arquivo, ${anomalias.length} ilegíveis, ${semMatch.size} senadores sem correspondência); passagens ${passagens.length} (${passZero} zeradas). ${process.env.SENADOR_AMOSTRA || 'Paulo Paim'}: ${dele.length} notas, total ${soma.toFixed(2)}, passagens ${somaPass.toFixed(2)}.`;
     if (process.env.GITHUB_ACTIONS) console.log(`::notice title=CEAPS ${ANO} (conferência)::${resumoDry}`);
     if (anomalias.length && process.env.GITHUB_ACTIONS) console.log(`::notice title=CEAPS ${ANO} ilegíveis::${anomalias.slice(0, 4).map((a) => `${a.motivo} [${a.valor ?? ''}] ${String(a.linha).replace(/[\r\n]+/g, ' ')}`).join(' || ')}`);
+    // Diagnostico das linhas sem TIPO_DESPESA (19/10/2026): mostra o que o CSV realmente traz.
+    const semTipo = lancamentos.filter((r) => !String(r.tipo || '').trim());
+    const somaSemTipo = semTipo.reduce((t, r) => t + valor(r.valor), 0);
+    if (process.env.GITHUB_ACTIONS) {
+      console.log(`::notice title=CEAPS ${ANO} sem tipo::${semTipo.length} linhas, R$ ${somaSemTipo.toFixed(2)}, ${new Set(semTipo.map((r) => r.senador)).size} senadores`);
+      const amostra = semTipo.filter((r) => /CHIOVATO|HOTUR|WT ADMIN/i.test(r.fornecedor || '')).slice(0, 3).concat(semTipo.slice(0, 3));
+      console.log(`::notice title=CEAPS ${ANO} sem tipo amostra::${amostra.map((r) => [r.senador, r.mes, r.fornecedor, r.documento, r.detalhamento, r.valor].join(' / ')).join(' || ')}`);
+      const crua = texto.split(/\r?\n/).filter((l) => /CHIOVATO/i.test(l)).slice(0, 2);
+      console.log(`::notice title=CEAPS ${ANO} linha crua::${crua.join(' || ')}`);
+    }
     const porTipo = {};
     for (const r of dele) { const k = String(r.tipo).slice(0, 40); porTipo[k] = porTipo[k] || { n: 0, v: 0 }; porTipo[k].n++; porTipo[k].v += valor(r.valor); }
     const linhaTipos = Object.entries(porTipo).map(([k, x]) => `${JSON.stringify(k)}=${x.n}/${x.v.toFixed(2)}`).join(' | ');
