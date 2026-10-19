@@ -273,7 +273,7 @@ function Estado({ uf, nome, deputados, presenca, inicial, canonical }) {
             )}
             <div style={{ margin: '0 0 16px' }}>
               {selosGastos && <SeloAtualizacao {...selosGastos} semLink={!!selosVotos} style={{ margin: '0 0 2px' }} />}
-              {selosVotos && <SeloAtualizacao {...selosVotos} nome={`Votos (${grupo.chave === 'senado' ? 'Senado' : 'Câmara'})`} style={{ margin: 0 }} />}
+              {selosVotos && <SeloAtualizacao {...selosVotos} nome={`Votos (${grupo.chave === 'senado' ? 'Senado' : grupo.chave === 'federal' ? 'Câmara' : `Assembleia ${uf}`})`} style={{ margin: 0 }} />}
             </div>
 
             <ComoLer grupo={grupo} nome={nome} temTeto={temTeto} temVotos={temVotos} totalVotos={totalVotos} ehRS={uf === 'RS'} />
