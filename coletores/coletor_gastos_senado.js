@@ -133,6 +133,8 @@ async function main() {
     const dele = lancamentos.filter((r) => norm(r.senador).includes(alvo));
     const soma = dele.reduce((t, r) => t + valor(r.valor), 0);
     const somaPass = dele.filter((r) => /passagem/i.test(r.tipo)).reduce((t, r) => t + valor(r.valor), 0);
+    const resumoDry = `DRY ${ANO}: ${linhasOut.length} lançamentos casados (${total} no arquivo, ${anomalias.length} ilegíveis, ${semMatch.size} senadores sem correspondência); passagens ${passagens.length} (${passZero} zeradas). ${process.env.SENADOR_AMOSTRA || 'Paulo Paim'}: ${dele.length} notas, total ${soma.toFixed(2)}, passagens ${somaPass.toFixed(2)}.`;
+    if (process.env.GITHUB_ACTIONS) console.log(`::notice title=CEAPS ${ANO} (conferência)::${resumoDry}`);
     console.log(`DRY ${ANO}: ${linhasOut.length} lançamentos casados. ${process.env.SENADOR_AMOSTRA || 'Paulo Paim'}: ${dele.length} notas, total ${soma.toFixed(2)}, passagens ${somaPass.toFixed(2)}.`);
     return;
   }
@@ -144,6 +146,7 @@ async function main() {
     if (e) { console.warn('insert:', e.message); break; }
   }
   console.log(`✅ ${linhasOut.length} despesas do Senado gravadas.`);
+  if (process.env.GITHUB_ACTIONS) console.log(`::notice title=CEAPS ${ANO} gravado::${linhasOut.length} despesas gravadas (${passagens.length} passagens, ${passZero} zeradas).`);
   await registrarStatus(supabase, { fonte: 'gastos_senado', dadosAte: await ultimaEmissao(supabase, 'Senado', ANO), linhas: linhasOut.length });
 }
 
