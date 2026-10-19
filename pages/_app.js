@@ -294,6 +294,16 @@ export default function App({ Component, pageProps }) {
         @media (pointer: coarse) { .paginacao-botao { min-height: 40px; } }
         /* Acao em texto dentro de cartao (ex.: resumo da tramitacao em /cpis): hover engrossa o sublinhado; alvo 40px no toque. */
         .acao-texto:hover { text-decoration-thickness: 2px; }
+        /* Pagina do pedido de CPI: celular em uma coluna (ementa, fatos, tramitacao). A partir de
+           1000px os 3 fatos formam uma coluna fixa a direita, para o texto manter linha legivel. */
+        .pedido-grade { display: grid; grid-template-columns: minmax(0, 1fr); }
+        .pedido-fatos { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); margin: 0 0 24px; }
+        @media (min-width: 1000px) {
+          .pedido-grade { grid-template-columns: minmax(0, 1fr) 320px; grid-template-areas: "ementa fatos" "tramitacao fatos"; column-gap: 32px; max-width: 1180px; }
+          .pedido-ementa { grid-area: ementa; }
+          .pedido-tramitacao { grid-area: tramitacao; }
+          .pedido-fatos { grid-area: fatos; grid-template-columns: minmax(0, 1fr); align-content: start; align-self: start; position: sticky; top: 88px; margin: 0; }
+        }
         @media (pointer: coarse) { .acao-texto { min-height: 40px; } }
         .radar-titulo { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 6px; }
         /* Recolher o ranking e so do celular: no computador o painel nao empurra a lista. */

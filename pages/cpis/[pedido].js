@@ -103,10 +103,13 @@ export default function PaginaPedido({ pedido, movs, tramitacaoOk, lidoEm }) {
           <span style={rotulo}>Pedido de CPI · Câmara dos Deputados</span>
           <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.6rem,4vw,2.1rem)', margin: '0 0 12px' }}>{nome}</h1>
 
+          <div className="pedido-grade">
+          <div className="pedido-ementa">
           <span style={rotulo}>Ementa oficial</span>
           <p style={{ margin: '0 0 16px', fontSize: '0.98rem', lineHeight: 1.6, color: t.cor.tinta, maxWidth: '75ch' }}>{pedido.ementa || 'A fonte não informa a ementa.'}</p>
+          </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '10px', margin: '0 0 24px' }}>
+          <div className="pedido-fatos">
             <div style={fato}>Apresentado em<span style={fatoValor}>{pedido.data_apresentacao ? dataBr(pedido.data_apresentacao) : 'a fonte não informa'}</span></div>
             <div style={fato}>Assinaturas no requerimento
               <span style={fatoValor}>{pedido.assinaturas != null ? pedido.assinaturas : 'a fonte não informa'}</span>
@@ -115,6 +118,7 @@ export default function PaginaPedido({ pedido, movs, tramitacaoOk, lidoEm }) {
             <div style={fato}>Situação na Câmara<span style={{ ...fatoValor, fontSize: '0.95rem' }}>{situ || 'a fonte não informa'}</span></div>
           </div>
 
+          <div className="pedido-tramitacao">
           <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.3rem', margin: '0 0 4px' }}>Tramitação completa</h2>
           {tramitacaoOk && movs.length > 0 ? (
             <>
@@ -129,6 +133,8 @@ export default function PaginaPedido({ pedido, movs, tramitacaoOk, lidoEm }) {
               {tramitacaoOk ? 'A tramitação deste pedido ainda não foi coletada.' : 'Não foi possível carregar a tramitação agora.'} A ficha oficial na Câmara mostra tudo.
             </p>
           )}
+          </div>
+          </div>
 
           <p style={{ margin: '22px 0 0', fontSize: '0.8rem', lineHeight: 1.6, color: t.cor.cinza }}>
             <strong style={{ color: t.cor.tinta }}>Um pedido de CPI não é uma acusação.</strong> Esta página só registra o que a Câmara publica.
