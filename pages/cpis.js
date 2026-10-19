@@ -242,7 +242,8 @@ async function pedidosDaTabela() {
     if (movs.length !== count) throw new Error(`leitura incompleta: ${movs.length} de ${count}`);
     const porPedido = {};
     for (const m of movs) (porPedido[m.pedido_id] ||= []).push(m);
-    for (const [id, lista] of Object.entries(porPedido)) resumos[id] = resumirTramitacao(lista);
+    const ementaDe = Object.fromEntries((data || []).map((r) => [r.id, r.ementa]));
+    for (const [id, lista] of Object.entries(porPedido)) resumos[id] = resumirTramitacao(lista, { ementa: ementaDe[id] });
   } catch (e) {
     console.error('cpis/tramitacao:', e.message);
     resumos = {};

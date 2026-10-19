@@ -9,7 +9,7 @@
 // A lista completa fica na pagina do pedido; aqui so o resumo.
 
 const MAX_ITENS = 8;
-const MAX_TEXTO = 220;
+const MAX_TEXTO = 300;
 
 // Nome do tipo (cod_tipo da Camara) no singular e no plural, para a linha agrupada.
 // Tipo desconhecido cai no texto generico com o nome oficial, nunca some.
@@ -25,6 +25,18 @@ const ROTULOS = {
   '605': ['despacho publicado', 'despachos publicados'],
   '431': ['declaração de voto em separado', 'declarações de voto em separado'],
 };
+
+// O despacho de apresentacao cita a ementa entre aspas ("..., que \"Requer a criacao de...\""). Quando a
+// citacao e so a ementa do proprio pedido (que a tela ja mostra no cartao), ela sai do texto; citacao
+// diferente (ex.: o assunto de um oficio) fica. Nada e reescrito: so se tira o trecho repetido.
+const norm = (v) => String(v || '').toLowerCase().replace(/\s+/g, ' ').replace(/[.\s]+$/, '').trim();
+export function semEmentaRepetida(despacho, ementa) {
+  const m = /^(.*?),?\s+que\s+"([^"]+)"\.?\s*$/s.exec(String(despacho || '').trim());
+  if (!m) return despacho;
+  const citado = norm(m[2]);
+  if (citado.length < 20 || !norm(ementa).includes(citado)) return despacho;
+  return `${m[1].replace(/[ ,;:.]+$/, '')}.`;
+}
 
 const dia = (dh) => String(dh || '').slice(0, 10);
 
@@ -43,7 +55,7 @@ function textoAgrupado(n, tipo, cod) {
 }
 
 // movs: [{ ordem, data_hora, tipo, cod_tipo, despacho }] de UM pedido.
-export function resumirTramitacao(movs, max = MAX_ITENS) {
+export function resumirTramitacao(movs, { max = MAX_ITENS, ementa = '' } = {}) {
   const lista = [...(movs || [])].sort((a, b) => a.ordem - b.ordem);
   const grupos = new Map();
   for (const m of lista) {
@@ -55,7 +67,7 @@ export function resumirTramitacao(movs, max = MAX_ITENS) {
   for (const g of grupos.values()) {
     if (g.length <= 3) {
       for (const m of g) {
-        entradas.push({ ordem: m.ordem, inicio: dia(m.data_hora), fim: dia(m.data_hora), n: 1, texto: cortar(m.despacho || m.tipo) });
+        entradas.push({ ordem: m.ordem, inicio: dia(m.data_hora), fim: dia(m.data_hora), n: 1, texto: cortar(semEmentaRepetida(m.despacho, ementa) || m.tipo) });
       }
     } else {
       entradas.push({

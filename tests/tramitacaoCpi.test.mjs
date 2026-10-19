@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { resumirTramitacao } from '../src/lib/tramitacaoCpi.js';
+import { resumirTramitacao, semEmentaRepetida } from '../src/lib/tramitacaoCpi.js';
 
 const m = (ordem, data, cod, tipo, despacho) => ({ ordem, data_hora: `${data}T10:00:00`, cod_tipo: cod, tipo, despacho });
 
@@ -51,11 +51,27 @@ test('despacho longo e cortado em palavra inteira; vazio usa o tipo', () => {
   const longo = 'palavra '.repeat(80);
   const r = resumirTramitacao([m(1, '2026-01-01', '1', 'A', longo), m(2, '2026-01-02', '2', 'Tipo B', '')]);
   assert.ok(r.itens[0].texto.endsWith('…'));
-  assert.ok(r.itens[0].texto.length <= 221);
+  assert.ok(r.itens[0].texto.length <= 301);
   assert.equal(r.itens[1].texto, 'Tipo B');
 });
 
 test('entrada vazia nao quebra', () => {
   assert.deepEqual(resumirTramitacao([]), { total: 0, itens: [], restantes: 0 });
   assert.deepEqual(resumirTramitacao(undefined), { total: 0, itens: [], restantes: 0 });
+});
+
+test('tira do despacho a citacao que e so a ementa do pedido; citacao diferente fica', () => {
+  const ementa = 'Requer a criação de Comissão Parlamentar de Inquérito para investigar as fraudes financeiras ocorridas na relação entre o Banco Master e o Banco Regional de Brasília – BRB.';
+  const d1 = 'Apresentação do RCP n. 1/2026 (Requerimento de Instituição de CPI), pelos Deputado Rodrigo Rollemberg (PSB/DF) e outros, que "Requer a criação de Comissão Parlamentar de Inquérito para investigar as fraudes financeiras ocorridas na relação entre o Banco Master e o Banco Regional de Brasília – BRB".';
+  assert.equal(semEmentaRepetida(d1, ementa), 'Apresentação do RCP n. 1/2026 (Requerimento de Instituição de CPI), pelos Deputado Rodrigo Rollemberg (PSB/DF) e outros.');
+  const d2 = 'Apresentação do OF n. 1/2026 (Ofício), pelo Deputado Alencar Santana, que "Manifestação de apoio ao RCP nº 1/2026 que visa instauração da CPI".';
+  assert.equal(semEmentaRepetida(d2, ementa), d2);
+  assert.equal(semEmentaRepetida('Indeferido o Requerimento n. 3181/2026.', ementa), 'Indeferido o Requerimento n. 3181/2026.');
+  const r = resumirTramitacao([{ ordem: 1, data_hora: '2026-02-02T09:54:00', cod_tipo: '100', tipo: 'x', despacho: d1 }], { ementa });
+  assert.ok(!r.itens[0].texto.includes('Requer a criação'));
+});
+
+test('opcao max limita as linhas', () => {
+  const movs = Array.from({ length: 5 }, (_, c) => m(c + 1, `2026-01-0${c + 1}`, `c${c}`, `T${c}`, `d${c}`));
+  assert.equal(resumirTramitacao(movs, { max: 2 }).itens.length, 2);
 });
