@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { t } from '../src/estilo/tokens';
 import Avatar from './Avatar';
-import { pctDoTeto, CATEGORIA_FORA_DO_TOTAL } from '../src/lib/cotas';
+import { pctDoTeto, CATEGORIA_FORA_DO_TOTAL, CEAPS_FONTE } from '../src/lib/cotas';
 import { nomeTipoProposicao, legendaDosTipos } from '../src/lib/proposicoes';
 import { explicarTipo, agruparPorMateria, papelVotacao, situacaoCidada } from '../src/lib/votacao';
 import { casaDoPerfil, hrefPerfil } from '../src/lib/casa';
@@ -606,6 +606,11 @@ export default function PerfilPolitico({ dados }) {
             <p style={{ margin: '8px 0 0', fontSize: '0.82rem', opacity: 0.8 }}>
               Média de <strong>{brl(media_mensal)}/mês</strong> comparada ao teto mensal de referência do estado ({brl(tetoInfo.teto)}). O saldo não usado pode acumular ao longo do ano, então a média pode variar entre os meses. Tire suas próprias conclusões com base nos dados.
             </p>
+            {ehSenado && (
+              <p style={{ margin: '8px 0 0', fontSize: '0.8rem', opacity: 0.8, lineHeight: 1.5 }}>
+                <strong>Sobre este teto:</strong> usamos a tabela oficial da cota do Senado (R$ 15.000 por mês mais 5 passagens aéreas de ida e volta, que variam por estado), publicada em documento sem data. O Senado pode ter atualizado os valores, e a norma permite usar em um mês o saldo de outro dentro do mesmo ano. Passar de 100% na média, sozinho, não prova irregularidade. <a href={CEAPS_FONTE} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>Ver a tabela do Senado</a>.
+              </p>
+            )}
           </div>
         )}
 
