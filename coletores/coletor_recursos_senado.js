@@ -24,6 +24,7 @@ async function buscar(cod, ano) {
   for (let t = 1; t <= 2; t++) {
     try {
       const r = await fetch(`${BASE}/${cod}/recursos-utilizados?ano=${ano}&formato=json`, { headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(15000) });
+      if (r.status === 404) return { data: [] }; // sem registro naquele ano (ex-senador): nao e falha nem merece nova tentativa
       if (!r.ok) throw new Error(`HTTP ${r.status}`);
       return await r.json();
     } catch (e) { ultimo = e; await dorme(1500 * t); }
@@ -32,7 +33,7 @@ async function buscar(cod, ano) {
 }
 
 async function main() {
-  const { data: senadores, error } = await supabase.from('agentes_politicos').select('id, nome_urna, id_externo_api').ilike('fonte_api', '%senado%').not('id_externo_api', 'is', null);
+  const { data: senadores, error } = await supabase.from('agentes_politicos').select('id, nome_urna, id_externo_api, em_exercicio').ilike('fonte_api', '%senado%').not('id_externo_api', 'is', null);
   if (error) throw error;
   console.log(`Senadores no banco: ${senadores.length}. Anos: ${ANOS.join(', ')}${DRY ? ' (dry)' : ''}.`);
 
@@ -43,8 +44,10 @@ async function main() {
     const nosso = new Map((radar || []).map((r) => [r.id, Number(r.total)]));
     const linhas = [];
     let n = 0, t0 = Date.now();
-    for (const s of senadores) {
-      if (++n % 20 === 0 && process.env.GITHUB_ACTIONS) console.log(`::notice title=Recursos ${ano} progresso::${n}/${senadores.length} em ${Math.round((Date.now() - t0) / 1000)}s, ${falhas.length} falhas`);
+    // So quem esta em exercicio ou teve gasto no ano: ex-senadores nao tem registro e so gastariam tempo.
+    const doAno = senadores.filter((s) => s.em_exercicio !== false || nosso.has(s.id));
+    for (const s of doAno) {
+      if (++n % 20 === 0 && process.env.GITHUB_ACTIONS) console.log(`::notice title=Recursos ${ano} progresso::${n}/${doAno.length} em ${Math.round((Date.now() - t0) / 1000)}s, ${falhas.length} falhas`);
       // Fonte fora do ar: 8 falhas seguidas no inicio derrubam a rodada em vez de esperar 88 timeouts.
       if (n === 9 && linhas.length === 0 && falhas.length >= 8) throw new Error(`Recursos do Senado: as 8 primeiras chamadas falharam (${falhas[0]})`);
       try {
@@ -54,7 +57,7 @@ async function main() {
         const meu = nosso.get(s.id);
         if (meu !== undefined && Math.abs(meu - rec.cotas_total) > 1) divergentes.push(`${s.nome_urna} ${ano}: Lume ${meu.toFixed(2)} x Senado ${rec.cotas_total.toFixed(2)}`);
       } catch (e) { falhas.push(`${s.nome_urna} ${ano}: ${e.message}`); }
-      await dorme(150);
+      await dorme(100);
     }
     if (!DRY && linhas.length) {
       for (let i = 0; i < linhas.length; i += 100) {
