@@ -121,7 +121,7 @@ async function main() {
   if (semMatch.size) console.log('   sem match (amostra):', [...semMatch].slice(0, 5));
 
   // Assinatura do bug antigo (colunas deslocadas): passagem com valor 0 e o valor dentro do id.
-  const passagens = linhasOut.filter((r) => /passagem/i.test(r.tipo_despesa || ''));
+  const passagens = linhasOut.filter((r) => /passagen/i.test(r.tipo_despesa || ''));
   const passZero = passagens.filter((r) => r.valor_liquido === 0).length;
   const idValor = linhasOut.filter((r) => /^\d+,\d{1,2}$/.test(r.id_externo_documento || '')).length;
   console.log(`🔎 passagens: ${passagens.length} (${passZero} com valor 0); ids que parecem valor: ${idValor}.`);
@@ -132,9 +132,10 @@ async function main() {
     const alvo = norm(process.env.SENADOR_AMOSTRA || 'Paulo Paim');
     const dele = lancamentos.filter((r) => norm(r.senador).includes(alvo));
     const soma = dele.reduce((t, r) => t + valor(r.valor), 0);
-    const somaPass = dele.filter((r) => /passagem/i.test(r.tipo)).reduce((t, r) => t + valor(r.valor), 0);
+    const somaPass = dele.filter((r) => /passagen/i.test(r.tipo)).reduce((t, r) => t + valor(r.valor), 0);
     const resumoDry = `DRY ${ANO}: ${linhasOut.length} lançamentos casados (${total} no arquivo, ${anomalias.length} ilegíveis, ${semMatch.size} senadores sem correspondência); passagens ${passagens.length} (${passZero} zeradas). ${process.env.SENADOR_AMOSTRA || 'Paulo Paim'}: ${dele.length} notas, total ${soma.toFixed(2)}, passagens ${somaPass.toFixed(2)}.`;
     if (process.env.GITHUB_ACTIONS) console.log(`::notice title=CEAPS ${ANO} (conferência)::${resumoDry}`);
+    if (anomalias.length && process.env.GITHUB_ACTIONS) console.log(`::notice title=CEAPS ${ANO} ilegíveis::${anomalias.slice(0, 4).map((a) => `${a.motivo} [${a.valor ?? ''}] ${String(a.linha).replace(/[\r\n]+/g, ' ')}`).join(' || ')}`);
     const porTipo = {};
     for (const r of dele) { const k = String(r.tipo).slice(0, 40); porTipo[k] = porTipo[k] || { n: 0, v: 0 }; porTipo[k].n++; porTipo[k].v += valor(r.valor); }
     const linhaTipos = Object.entries(porTipo).map(([k, x]) => `${JSON.stringify(k)}=${x.n}/${x.v.toFixed(2)}`).join(' | ');
