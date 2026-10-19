@@ -292,6 +292,9 @@ export default function App({ Component, pageProps }) {
           .pg-rotulo { display: block; font-size: 0.72rem; font-weight: 600; }
         }
         @media (pointer: coarse) { .paginacao-botao { min-height: 40px; } }
+        /* Acao em texto dentro de cartao (ex.: resumo da tramitacao em /cpis): hover engrossa o sublinhado; alvo 40px no toque. */
+        .acao-texto:hover { text-decoration-thickness: 2px; }
+        @media (pointer: coarse) { .acao-texto { min-height: 40px; } }
         .radar-titulo { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 6px; }
         /* Recolher o ranking e so do celular: no computador o painel nao empurra a lista. */
         .radar-alternar { display: none; }

@@ -10,8 +10,12 @@
 
 import { grafo, organizacao, site, migalhas, conjuntoDeDados, jsonSeguro } from '../src/lib/dadosEstruturados';
 import Head from 'next/head';
+import { useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { cpisSenado } from '../src/lib/cpisAoVivo';
+import { buscarTudo } from '../src/lib/paginar';
+import { resumirTramitacao } from '../src/lib/tramitacaoCpi';
+import { Seta } from '../components/icones';
 import { t } from '../src/estilo/tokens';
 import { dataBr } from '../src/lib/datas';
 import { situacaoLegivel } from '../src/lib/situacaoCamara';
@@ -26,6 +30,12 @@ const botaoLink = {
   display: 'inline-block', textDecoration: 'none', padding: '8px 16px', borderRadius: t.raio.pill,
   background: t.cor.verde, color: t.cor.ouro, fontSize: '0.8rem', fontWeight: 700, boxShadow: t.sombra.botao,
 };
+const acaoTexto = {
+  display: 'inline-flex', alignItems: 'center', background: 'none', border: 'none', padding: '6px 0', margin: 0,
+  color: t.cor.ouroTexto, font: 'inherit', fontSize: '0.86rem', fontWeight: 700, cursor: 'pointer',
+  textDecoration: 'underline', textUnderlineOffset: '3px',
+};
+const linkFonte = { color: t.cor.ouroTexto, fontWeight: 700 };
 const aviso = { margin: 0, fontSize: '0.9rem', color: t.cor.cinza, lineHeight: 1.5 };
 
 function plural(n, um, varios) { return `${n} ${n === 1 ? um : varios}`; }
@@ -63,12 +73,48 @@ function CartaoSenado({ c }) {
   );
 }
 
+// Data sempre com ano (dd/mm/aaaa). Periodo: "04/02/2026 a 26/05/2026"; dia unico: so a data.
+function periodo(inicio, fim) {
+  const a = dataBr(inicio);
+  const b = dataBr(fim);
+  return a === b || !fim ? a : `${a} a ${b}`;
+}
+
+// Cada movimento e um bloco: a data fica EM CIMA do texto, colada a ele (proximidade), e os blocos
+// se separam entre si por um espaco maior que o de dentro (Gestalt). Sem borda lateral.
+function ResumoTramitacao({ id, r, p }) {
+  return (
+    <div id={id} style={{ background: t.cor.papelCartao, borderRadius: t.raio.md, padding: '16px', margin: '10px 0 4px', boxShadow: t.sombra.sutil }}>
+      <h4 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.02rem', margin: '0 0 12px', color: t.cor.tinta }}>
+        Resumo da tramitação · {plural(r.total, 'movimentação', 'movimentações')}
+      </h4>
+      <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'grid', gap: '10px' }}>
+        {r.itens.map((x, i) => (
+          <li key={i} style={{ background: t.cor.papelQuente, borderRadius: t.raio.sm, padding: '10px 14px', display: 'grid', gap: '2px' }}>
+            <span style={{ fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.02em', color: t.cor.ouroTexto }}>{periodo(x.inicio, x.fim)}</span>
+            <span style={{ fontSize: '0.92rem', lineHeight: 1.45, color: t.cor.tinta }}>{x.texto}</span>
+          </li>
+        ))}
+      </ul>
+      <p style={{ margin: '12px 0 0', fontSize: '0.8rem', lineHeight: 1.55, color: t.cor.cinza }}>
+        Resumo montado com a tramitação oficial da Câmara: tipos com até 3 registros aparecem um a um; os demais, somados.
+        {r.restantes > 0 ? ` Mais ${plural(r.restantes, 'movimentação ficou', 'movimentações ficaram')} fora deste resumo.` : ''}
+        {' '}Fontes oficiais:{' '}
+        {p.inteiroTeor ? <><a href={p.inteiroTeor} target="_blank" rel="noopener noreferrer" style={linkFonte}>requerimento (PDF)</a>{' · '}</> : null}
+        <a href={p.ficha} target="_blank" rel="noopener noreferrer" style={linkFonte}>ficha de tramitação</a>.
+      </p>
+    </div>
+  );
+}
+
 function CartaoPedido({ p }) {
+  const [aberto, setAberto] = useState(false);
+  const idResumo = `resumo-rcp-${p.numero}-${p.ano}`;
   return (
     <div style={linhaItem}>
       <span style={rotulo}>Pedido RCP {p.numero}/{p.ano}{p.data ? ` · apresentado em ${dataBr(p.data)}` : ''}</span>
       {p.ementa && <p style={{ margin: '0 0 10px', fontSize: '0.92rem', lineHeight: 1.5, color: t.cor.tinta }}>{p.ementa}</p>}
-      <ul style={{ margin: '0 0 12px', padding: 0, listStyle: 'none', fontSize: '0.84rem', lineHeight: 1.55, color: t.cor.cinza }}>
+      <ul style={{ margin: '0 0 8px', padding: 0, listStyle: 'none', fontSize: '0.84rem', lineHeight: 1.55, color: t.cor.cinza }}>
         {p.assinaturas != null && (
           <li>
             {plural(p.assinaturas, 'assinatura registrada', 'assinaturas registradas')} no requerimento
@@ -78,10 +124,21 @@ function CartaoPedido({ p }) {
         <li>Situação na Câmara: {situacaoLegivel(p.situacao) ? `${situacaoLegivel(p.situacao)}.` : 'a fonte não informa.'}</li>
         {p.despacho && <li>Última movimentação{p.dataSituacao ? ` (${dataBr(p.dataSituacao)})` : ''}: {p.despacho}</li>}
       </ul>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-        {p.inteiroTeor && <a href={p.inteiroTeor} target="_blank" rel="noopener noreferrer" style={botaoLink}>Ler o requerimento</a>}
-        <a href={p.ficha} target="_blank" rel="noopener noreferrer" style={botaoLink}>Ver a tramitação</a>
-      </div>
+      {p.resumo && p.resumo.total > 0 ? (
+        <>
+          <button type="button" className="acao-texto" style={acaoTexto} aria-expanded={aberto} aria-controls={idResumo} onClick={() => setAberto((v) => !v)}>
+            {aberto ? 'Ocultar o resumo da tramitação' : 'Ver o resumo da tramitação'}
+            <Seta aberta={aberto} size={16} emTexto />
+          </button>
+          {aberto && <ResumoTramitacao id={idResumo} r={p.resumo} p={p} />}
+        </>
+      ) : (
+        <p style={{ margin: 0, fontSize: '0.84rem', color: t.cor.cinza }}>
+          Fontes oficiais:{' '}
+          {p.inteiroTeor ? <><a href={p.inteiroTeor} target="_blank" rel="noopener noreferrer" style={linkFonte}>requerimento (PDF)</a>{' · '}</> : null}
+          <a href={p.ficha} target="_blank" rel="noopener noreferrer" style={linkFonte}>ficha de tramitação</a>.
+        </p>
+      )}
     </div>
   );
 }
@@ -174,6 +231,23 @@ async function pedidosDaTabela() {
     situacao: r.situacao, despacho: r.despacho, dataSituacao: r.data_situacao,
     assinaturas: r.assinaturas, primeiro: r.primeiro_autor, inteiroTeor: r.inteiro_teor, ficha: r.ficha,
   }));
+  // Tramitacao: resumida aqui, no servidor, para a pagina levar so o resumo. A tabela passa de 1.000
+  // linhas (buscarTudo) e leitura incompleta NAO vira resumo: confere com a contagem exata.
+  let resumos = {};
+  try {
+    const { count, error: ec } = await banco.from('pedidos_cpi_tramitacoes').select('pedido_id', { count: 'exact', head: true });
+    if (ec) throw new Error(ec.message);
+    const movs = await buscarTudo(() => banco.from('pedidos_cpi_tramitacoes')
+      .select('pedido_id, ordem, data_hora, tipo, cod_tipo, despacho').order('pedido_id').order('ordem'), 'cpis/tramitacao');
+    if (movs.length !== count) throw new Error(`leitura incompleta: ${movs.length} de ${count}`);
+    const porPedido = {};
+    for (const m of movs) (porPedido[m.pedido_id] ||= []).push(m);
+    for (const [id, lista] of Object.entries(porPedido)) resumos[id] = resumirTramitacao(lista);
+  } catch (e) {
+    console.error('cpis/tramitacao:', e.message);
+    resumos = {};
+  }
+  for (const it of itens) it.resumo = resumos[it.id] || null;
   const atualizadoEm = (data || []).reduce((m, r) => (r.coletado_em > m ? r.coletado_em : m), '') || null;
   return { itens, atualizadoEm };
 }
