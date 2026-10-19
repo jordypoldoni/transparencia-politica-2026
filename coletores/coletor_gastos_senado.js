@@ -144,12 +144,30 @@ async function main() {
     return;
   }
 
-  // 3) Idempotência: limpa o Senado deste ano e reinsere
-  await supabase.from('despesas_parlamentares').delete().eq('casa_legislativa', 'Senado').eq('ano', ANO);
+  // 3) Idempotência: limpa o Senado deste ano e reinsere.
+  // 19/10/2026: o apagar antigo era UM delete do ano inteiro (~23 mil linhas) e o erro era ignorado.
+  // Na regravacao de 2025 ele nao apagou nada, o insert seguiu, e o ano ficou DUPLICADO (total dobrado).
+  // Agora: apaga mes a mes (lotes pequenos), confere o erro de cada um, confere que o ano ficou vazio
+  // antes de inserir, e confere a contagem final. Qualquer divergencia derruba a execucao.
+  for (const mes of [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, null]) {
+    let q = supabase.from('despesas_parlamentares').delete().eq('casa_legislativa', 'Senado').eq('ano', ANO);
+    q = mes === null ? q.is('mes', null) : q.eq('mes', mes);
+    const { error: eDel } = await q;
+    if (eDel) throw new Error(`CEAPS ${ANO}: falha ao apagar o mês ${mes ?? 'vazio'}: ${eDel.message}`);
+  }
+  const contar = async () => {
+    const { count, error: eCount } = await supabase.from('despesas_parlamentares').select('id', { count: 'exact', head: true }).eq('casa_legislativa', 'Senado').eq('ano', ANO);
+    if (eCount) throw new Error(`CEAPS ${ANO}: falha ao contar: ${eCount.message}`);
+    return count;
+  };
+  const sobrou = await contar();
+  if (sobrou !== 0) throw new Error(`CEAPS ${ANO}: depois de apagar ainda há ${sobrou} linhas; nada foi inserido.`);
   for (let i = 0; i < linhasOut.length; i += 500) {
     const { error: e } = await supabase.from('despesas_parlamentares').insert(linhasOut.slice(i, i + 500));
-    if (e) { console.warn('insert:', e.message); break; }
+    if (e) throw new Error(`CEAPS ${ANO}: falha ao inserir o lote ${i}: ${e.message}`);
   }
+  const final = await contar();
+  if (final !== linhasOut.length) throw new Error(`CEAPS ${ANO}: gravadas ${linhasOut.length} mas o banco tem ${final}.`);
   console.log(`✅ ${linhasOut.length} despesas do Senado gravadas.`);
   if (process.env.GITHUB_ACTIONS) console.log(`::notice title=CEAPS ${ANO} gravado::${linhasOut.length} despesas gravadas (${passagens.length} passagens, ${passZero} zeradas).`);
   await registrarStatus(supabase, { fonte: 'gastos_senado', dadosAte: await ultimaEmissao(supabase, 'Senado', ANO), linhas: linhasOut.length });
