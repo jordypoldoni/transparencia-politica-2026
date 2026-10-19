@@ -101,6 +101,8 @@ async function main() {
     }
   }
   console.log(`${totalTram} movimentacoes gravadas em ${completos.length - tramPulados.length} pedidos.`);
+  // So carimba a tramitacao se nenhum pedido foi pulado: e isso que o vigia de frescor cobra.
+  if (!tramPulados.length) await registrarStatus(supabase, { fonte: 'pedidos_cpi_tramitacoes', linhas: totalTram });
   if (pulados.length || tramPulados.length) process.exit(1); // sinaliza a execucao como parcial
 }
 

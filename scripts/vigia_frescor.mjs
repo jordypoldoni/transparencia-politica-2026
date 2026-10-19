@@ -20,6 +20,8 @@ export const REGRAS = [
   { fonte: 'gastos_alesp', maxHoras: 3 * DIA },
   { fonte: 'proposicoes', maxHoras: 3 * DIA },
   { fonte: 'pedidos_cpi_camara', maxHoras: 3 * DIA },
+  // tramitacao dos pedidos (19/10/2026): so carimba se nenhum pedido foi pulado; soAviso ate a 1a linha aparecer
+  { fonte: 'pedidos_cpi_tramitacoes', maxHoras: 3 * DIA, soAviso: true },
   // coletar.yml, só às segundas
   { fonte: 'indicacoes_executivo', maxHoras: 10 * DIA },
   // coletar_alergs.yml: votos às segundas; gastos no dia 8 de cada mês

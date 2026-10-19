@@ -25,6 +25,7 @@ export const GRUPOS = [
   { titulo: 'Propostas, CPIs e indicações', itens: [
     { fonte: 'proposicoes', nome: 'Proposições de deputados e senadores', frequencia: 'Todo dia' },
     { fonte: 'pedidos_cpi_camara', nome: 'Pedidos de CPI na Câmara', frequencia: 'Todo dia' },
+    { fonte: 'pedidos_cpi_tramitacoes', nome: 'Tramitação dos pedidos de CPI', frequencia: 'Todo dia' },
     { fonte: 'indicacoes_executivo', nome: 'Indicações do Executivo', frequencia: 'Toda segunda' },
   ] },
   { titulo: 'Candidatos 2026', itens: [
