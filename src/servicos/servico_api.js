@@ -7,6 +7,7 @@ import { todosCandidatosEstaduais } from '../lib/candidatosEstaduais.js';
 import { mandatoEstadual } from '../lib/mandatoEstadual.js';
 import { ASSEMBLEIAS } from '../lib/assembleias.js';
 import { posicaoNaBancada } from '../lib/bancadaEstado.js';
+import { CATEGORIA_FORA_DO_TOTAL } from '../lib/cotas.js';
 
 const ServicoAPI = {
     // Busca o ranking de maiores gastadores
@@ -134,7 +135,10 @@ const ServicoAPI = {
         for (const g of todosGastos) {
             const a = g.ano; if (!a) continue;
             const v = parseFloat(g.valor_liquido || 0);
-            if (!serie[a]) serie[a] = { total: 0, meses: {}, cats: {}, n_notas: 0 };
+            if (!serie[a]) serie[a] = { total: 0, meses: {}, cats: {}, n_notas: 0, fora: { total: 0, n_notas: 0 } };
+            // 19/10/2026: lancamentos do Senado sem tipo ficam FORA do total (o total oficial das
+            // cotas do Senado nao os inclui, conferido ao centavo). Aparecem a parte no perfil.
+            if (g.categoria_normalizada === CATEGORIA_FORA_DO_TOTAL) { serie[a].fora.total += v; serie[a].fora.n_notas++; continue; }
             serie[a].total += v;
             if (g.mes) serie[a].meses[g.mes] = (serie[a].meses[g.mes] || 0) + v;
             const cat = g.categoria_normalizada || 'Outros';
@@ -151,6 +155,7 @@ const ServicoAPI = {
                 meses: Array.from({ length: 12 }, (_, i) => ({ mes: i + 1, valor: serie[a].meses[i + 1] || 0 })),
                 meses_com_gasto: Object.keys(serie[a].meses).length,
                 n_notas: serie[a].n_notas,
+                fora_do_total: serie[a].fora.n_notas > 0 ? serie[a].fora : null,
                 maior_categoria: catEntries[0]?.[0] || null,
                 // Resumo por categoria DAQUELE ano, para a secao "Em que ele gastou" poder
                 // trocar de ano sem ida ao servidor (20/09/2026). Sao ~8 pares por ano: o
@@ -161,9 +166,10 @@ const ServicoAPI = {
 
         // Agregados do veredito usam o ANO DE REFERÊNCIA (atual, ou o mais recente com dados)
         const gastosAno = todosGastos.filter((g) => g.ano === anoReferencia);
+        const gastosAnoNoTotal = gastosAno.filter((g) => g.categoria_normalizada !== CATEGORIA_FORA_DO_TOTAL);
 
         // Processa os gastos do ano de referência em resumo por categoria
-        const categorias = gastosAno.reduce((acc, item) => {
+        const categorias = gastosAnoNoTotal.reduce((acc, item) => {
             const cat = item.categoria_normalizada || 'Outros';
             acc[cat] = (acc[cat] || 0) + parseFloat(item.valor_liquido || 0);
             return acc;
@@ -292,8 +298,8 @@ const ServicoAPI = {
         } catch (e) { console.error('posicao_estado:', e.message); }
 
         const total_geral = Object.values(categorias).reduce((a, b) => a + b, 0);
-        const n_notas = gastosAno.length;
-        const mesesSet = new Set(gastosAno.map((g) => g.mes).filter(Boolean));
+        const n_notas = gastosAnoNoTotal.length;
+        const mesesSet = new Set(gastosAnoNoTotal.map((g) => g.mes).filter(Boolean));
         const media_mensal = mesesSet.size > 0 ? total_geral / mesesSet.size : total_geral;
         const maiorCategoria = Object.entries(categorias).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
 

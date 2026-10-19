@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { t } from '../src/estilo/tokens';
 import Avatar from './Avatar';
-import { pctDoTeto } from '../src/lib/cotas';
+import { pctDoTeto, CATEGORIA_FORA_DO_TOTAL } from '../src/lib/cotas';
 import { nomeTipoProposicao, legendaDosTipos } from '../src/lib/proposicoes';
 import { explicarTipo, agruparPorMateria, papelVotacao, situacaoCidada } from '../src/lib/votacao';
 import { casaDoPerfil, hrefPerfil } from '../src/lib/casa';
@@ -59,7 +59,7 @@ const dicionario = {
   'Alimentação': 'Refeições do parlamentar em atividade.',
   'Segurança': 'Serviços de segurança para o mandato.',
   'Outros Operacionais': 'Demais despesas operacionais do mandato.',
-  'Outras despesas': 'Lançamentos que o Senado publica na verba (CEAPS) sem tipo de despesa, sem detalhamento e sem número de documento. Não conseguimos classificá-los, então mostramos à parte, com valor e fornecedor exatamente como publicados. Não afirmamos de que se tratam.',
+  'Outras despesas': 'Lançamentos que o arquivo da verba do Senado traz sem tipo de despesa, sem detalhamento e sem número de documento. O total oficial das cotas que o Senado publica para o senador não os inclui (conferimos no portal), por isso não entram no total do Lume. Mostramos à parte, exatamente como publicados, sem afirmar de que se tratam.',
 };
 
 const MES_LETRA = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
@@ -795,10 +795,10 @@ export default function PerfilPolitico({ dados }) {
             Em que {perfil.nome_urna} usou a verba em <strong>{anoSel}</strong>. Toque numa categoria para ver as notas e o link de cada documento.
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {Object.entries(resumoDoAno || {}).sort((a, b) => b[1] - a[1]).map(([cat, val]) => (
+            {[...Object.entries(resumoDoAno || {}).sort((a, b) => b[1] - a[1]), ...(dadosAno?.fora_do_total ? [[CATEGORIA_FORA_DO_TOTAL, dadosAno.fora_do_total.total]] : [])].map(([cat, val]) => (
               <div key={cat} style={{ background: t.cor.papelQuente, borderRadius: t.raio.md, overflow: 'hidden', boxShadow: t.sombra.clicavel }}>
                 <div onClick={() => abrirCategoria(cat)} title={dicionario[cat] || ''} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 16px', cursor: 'pointer' }}>
-                  <span style={{ fontWeight: 700, color: t.cor.tinta, fontSize: '0.95rem' }}>{cat}</span>
+                  <span style={{ fontWeight: 700, color: t.cor.tinta, fontSize: '0.95rem' }}>{cat}{cat === CATEGORIA_FORA_DO_TOTAL && <span style={{ fontWeight: 400, color: t.cor.cinza, fontSize: '0.8rem' }}> (fora do total)</span>}</span>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                     <strong>{brlExato(val)}</strong>
                     <Seta aberta={aberta === cat} size={14} />

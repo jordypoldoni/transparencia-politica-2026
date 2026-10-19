@@ -53,3 +53,8 @@ export function pctDoTeto({ fonteApi, casa, uf }, mediaMensal) {
   if (!teto || !mediaMensal || mediaMensal <= 0) return null;
   return { pct: Math.round((mediaMensal / teto) * 100), teto, tipo };
 }
+
+// Categoria dos lancamentos do Senado com TIPO_DESPESA vazio (19/10/2026). Fica FORA do total:
+// o total oficial das cotas (CEAPS) publicado pelo Senado nao os inclui. O valor tambem esta
+// escrito em coletores/coletor_gastos_senado.js e na migracao radar_gastos_sem_outras_despesas.
+export const CATEGORIA_FORA_DO_TOTAL = 'Outras despesas';
