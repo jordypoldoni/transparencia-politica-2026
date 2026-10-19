@@ -1,0 +1,42 @@
+# coletar_recursos_senado.yml: coleta sob demanda dos recursos do Senado (cotas, gastos fora da cota,
+# beneficios, pessoal) de anos escolhidos. (19/10/2026) O ano corrente roda todo dia no coletar.yml.
+# Rode primeiro com dry = true (so le e confere o total das cotas contra o do Lume).
+name: Coletar recursos do Senado
+
+on:
+  workflow_dispatch:
+    inputs:
+      anos:
+        description: 'Anos separados por espaco (ex.: 2026 2025 2024)'
+        required: true
+        default: '2026 2025 2024'
+      dry:
+        description: 'dry = true so confere, nao grava'
+        required: true
+        default: 'true'
+
+permissions:
+  contents: read
+
+jobs:
+  coletar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --ignore-scripts
+      - name: Rodar coletor de recursos do Senado
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          ANOS: ${{ github.event.inputs.anos }}
+          DRY: ${{ github.event.inputs.dry }}
+        run: |
+          if [ "$DRY" = "true" ]; then
+            node coletores/coletor_recursos_senado.js $ANOS --dry
+          else
+            node coletores/coletor_recursos_senado.js $ANOS
+          fi

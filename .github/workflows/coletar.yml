@@ -69,6 +69,13 @@ jobs:
         continue-on-error: true
         run: node coletores/coletor_gastos_senado.js
 
+      - name: Recursos do Senado (cotas, fora da cota, beneficios, pessoal)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        continue-on-error: true
+        run: node coletores/coletor_recursos_senado.js
+
       - name: Piloto estadual — deputados de SP (ALESP)
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
