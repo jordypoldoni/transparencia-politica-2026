@@ -646,22 +646,28 @@ export default function PerfilPolitico({ dados }) {
 
       {/* CAMADA ZERO — veredito em português claro */}
       <div id="resumo" className="surgir" style={{ ...ancora, background: t.cor.verde, color: '#fff', borderRadius: t.raio.lg, padding: 'clamp(24px,4vw,40px)', marginBottom: '24px' }}>
-        <div style={{ display: 'flex', gap: '20px', alignItems: 'center', flexWrap: 'wrap' }}>
-          <Avatar nome={perfil.nome_urna} foto={perfil.foto_url} size={92} borda="3px solid rgba(255,255,255,0.3)" />
-          <div style={{ flex: 1, minWidth: '220px' }}>
-            <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.6rem,4vw,2.4rem)', margin: '0 0 2px' }}>{perfil.nome_urna}</h1>
-            <p style={{ margin: 0, opacity: 0.85 }}>{perfil.cargo_atual || 'Deputado Federal'} · {perfil.partido_atual} · {perfil.uf_sede || 'BR'}</p>
-            {/* O ano escolhido aqui vale para o perfil inteiro: o veredito desta camada zero, o
-                grafico mes a mes e as categorias leem o mesmo estado. No topo porque e aqui que
-                o leitor chega primeiro, e o numero grande logo abaixo ja e do ano escolhido. */}
-            <div style={{ marginTop: '10px' }}>
-              <SeletorAno anos={anos_disponiveis} atual={anoSel} aoTrocar={trocarAno} rotulo="Ano dos dados deste perfil" escuro margem="0" />
+        {/* CABEÇALHO COMPACTO (20/10/2026, item 2 do Jordy): foto menor com nome, cargo, partido e UF ao lado,
+            e o ano dos dados com o coração e o recolher na linha de baixo. Antes a foto ocupava uma linha e o
+            nome caía embaixo dela no celular (o texto exigia 220px), deixando o cartão alto. */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
+            <Avatar nome={perfil.nome_urna} foto={perfil.foto_url} size={72} borda="3px solid rgba(255,255,255,0.3)" />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.4rem,4vw,2.4rem)', lineHeight: 1.1, margin: '0 0 4px', overflowWrap: 'anywhere' }}>{perfil.nome_urna}</h1>
+              <p style={{ margin: 0, opacity: 0.85, lineHeight: 1.35 }}>{perfil.cargo_atual || 'Deputado Federal'}<br />{perfil.partido_atual} · {perfil.uf_sede || 'BR'}</p>
             </div>
           </div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px 16px', flexWrap: 'wrap' }}>
+            {/* O ano escolhido aqui vale para o perfil inteiro: o veredito desta camada zero, o grafico mes a mes
+                e as categorias leem o mesmo estado. */}
+            <SeletorAno anos={anos_disponiveis} atual={anoSel} aoTrocar={trocarAno} rotulo="Ano dos dados deste perfil" escuro margem="0" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           {/* Coração (26/09/2026): no cartão escuro, o par invertido (âmbar com coração índigo). */}
           <BotaoFavorito tipo="parlamentar" chave={hrefPerfil(perfil)} rotulo={perfil.nome_urna} escuro
             detalhe={[perfil.cargo_atual || casaDoPerfil(perfil).cargoPadrao, perfil.partido_atual, perfil.uf_sede].filter(Boolean).join(' · ')} foto={perfil.foto_url} />
           <button type="button" onClick={() => toggleSecao('resumo')} aria-expanded={secoesAbertas.resumo} aria-label={secoesAbertas.resumo ? 'Recolher resumo' : 'Expandir resumo'} style={{ flexShrink: 0, background: 'rgba(255,255,255,0.14)', border: 'none', color: '#fff', cursor: 'pointer', borderRadius: '999px', width: '36px', height: '36px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}><Seta aberta={secoesAbertas.resumo} size={18} /></button>
+            </div>
+          </div>
         </div>
 
         {secoesAbertas.resumo && (
