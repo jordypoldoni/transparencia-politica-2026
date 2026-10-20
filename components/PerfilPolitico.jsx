@@ -1351,7 +1351,7 @@ export default function PerfilPolitico({ dados }) {
                                 : <div className="voto-linha" style={{ ...rowStyle, flex: '1 1 auto' }}>{conteudo}</div>}
                               <button type="button" className="voto-cobrar" onClick={() => cobrar(montarCobrancaVoto({ perfil, voto: v, titulo: tituloExib, fonteNome }))}
                                 aria-label={`Cobrar ${perfil.nome_urna}: gerar card com este voto e uma pergunta`} title="Gerar card com este voto e uma pergunta"
-                                style={{ flexShrink: 0, alignSelf: 'center', height: '28px', border: 'none', background: t.cor.verde, color: t.cor.ouro, fontFamily: t.fonte.corpo, fontSize: '0.78rem', fontWeight: 700, padding: '0 14px', borderRadius: t.raio.pill, boxShadow: '0 1px 3px rgba(36,30,82,0.20), 0 4px 10px rgba(36,30,82,0.22)', cursor: 'pointer' }}>Cobrar</button>
+                                style={{ flexShrink: 0, height: '28px', border: 'none', background: t.cor.verde, color: t.cor.ouro, fontFamily: t.fonte.corpo, fontSize: '0.78rem', fontWeight: 700, padding: '0 14px', borderRadius: t.raio.pill, boxShadow: '0 1px 3px rgba(36,30,82,0.20), 0 4px 10px rgba(36,30,82,0.22)', cursor: 'pointer' }}>Cobrar</button>
                             </div>
                           );
                         })}
