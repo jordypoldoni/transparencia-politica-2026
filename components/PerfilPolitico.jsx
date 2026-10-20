@@ -595,6 +595,30 @@ export default function PerfilPolitico({ dados }) {
   return (
     <div className="pagina">
       <style jsx global>{`html{scroll-behavior:smooth}
+        /* CABECALHO DO PERFIL (20/10/2026, item 2). Celular: linha 1 foto + nome/cargo; linha 2 ano + coracao +
+           recolher (a quebra forcada .cab-quebra separa as duas). Computador (880px+): grade com foto, nome e
+           cargo na mesma linha, e coracao + recolher no canto superior direito, alinhados com o nome. */
+        .cab-perfil{display:flex;flex-wrap:wrap;align-items:center;gap:14px 12px}
+        .cab-texto{flex:1 1 0;min-width:0}
+        .cab-quebra{flex-basis:100%;height:0;margin:-14px 0 0}
+        .cab-ano{display:flex}
+        .cab-acoes{display:flex;align-items:center;gap:8px}
+        .cab-cargo{margin:4px 0 0;opacity:.85;line-height:1.35}
+        .cab-cargo span{display:block}
+        .cab-cargo .cab-sep{display:none}
+        .resumo-par{max-width:62ch}
+        @media (min-width:880px){
+          .cab-perfil{display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"foto texto acoes" "ano ano ano";gap:14px 18px;align-items:center}
+          .cab-perfil>:first-child{grid-area:foto}
+          .cab-texto{grid-area:texto;display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 16px}
+          .cab-quebra{display:none}
+          .cab-ano{grid-area:ano}
+          .cab-acoes{grid-area:acoes;align-self:center;gap:10px}
+          .cab-cargo{margin:0;font-size:1.05rem}
+          .cab-cargo span{display:inline}
+          .cab-cargo .cab-sep{display:inline}
+          .resumo-par{max-width:none}
+        }
         .barra-secoes{position:sticky;top:var(--topo-h,64px);z-index:40;margin-bottom:10px;padding:10px 0;display:flex;gap:10px;align-items:center}
         .barra-secoes::before{content:"";position:absolute;top:0;bottom:0;left:50%;width:100vw;transform:translateX(-50%);background:#F7F6F3;z-index:-1;transition:box-shadow .15s ease}
         .barra-secoes.grudada::before{box-shadow:0 10px 14px -12px rgba(74,52,30,0.35)}
@@ -649,30 +673,30 @@ export default function PerfilPolitico({ dados }) {
         {/* CABEÇALHO COMPACTO (20/10/2026, item 2 do Jordy): foto menor com nome, cargo, partido e UF ao lado,
             e o ano dos dados com o coração e o recolher na linha de baixo. Antes a foto ocupava uma linha e o
             nome caía embaixo dela no celular (o texto exigia 220px), deixando o cartão alto. */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-          <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
-            <Avatar nome={perfil.nome_urna} foto={perfil.foto_url} size={72} borda="3px solid rgba(255,255,255,0.3)" />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.4rem,4vw,2.4rem)', lineHeight: 1.1, margin: '0 0 4px', overflowWrap: 'anywhere' }}>{perfil.nome_urna}</h1>
-              <p style={{ margin: 0, opacity: 0.85, lineHeight: 1.35 }}>{perfil.cargo_atual || 'Deputado Federal'}<br />{perfil.partido_atual} · {perfil.uf_sede || 'BR'}</p>
-            </div>
+        <div className="cab-perfil">
+          <Avatar nome={perfil.nome_urna} foto={perfil.foto_url} size={72} borda="3px solid rgba(255,255,255,0.3)" />
+          <div className="cab-texto">
+            <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.4rem,4vw,2.4rem)', lineHeight: 1.1, margin: 0, overflowWrap: 'anywhere' }}>{perfil.nome_urna}</h1>
+            {/* Celular: cargo em cima e partido embaixo. Computador: tudo numa linha, ao lado do nome. */}
+            <p className="cab-cargo"><span>{perfil.cargo_atual || 'Deputado Federal'}</span><span className="cab-sep"> · </span><span>{perfil.partido_atual} · {perfil.uf_sede || 'BR'}</span></p>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px 12px', flexWrap: 'wrap' }}>
+          <div className="cab-quebra" aria-hidden="true" />
+          <div className="cab-ano">
             {/* O ano escolhido aqui vale para o perfil inteiro: o veredito desta camada zero, o grafico mes a mes
                 e as categorias leem o mesmo estado. */}
             <SeletorAno anos={anos_disponiveis} atual={anoSel} aoTrocar={trocarAno} rotulo="Ano dos dados deste perfil" escuro margem="0" />
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {/* Coração (26/09/2026): no cartão escuro, o par invertido (âmbar com coração índigo). */}
+          </div>
+          <div className="cab-acoes">
+            {/* Coração (26/09/2026): no cartão escuro, o par invertido (âmbar com coração índigo). */}
           <BotaoFavorito tipo="parlamentar" chave={hrefPerfil(perfil)} rotulo={perfil.nome_urna} escuro
             detalhe={[perfil.cargo_atual || casaDoPerfil(perfil).cargoPadrao, perfil.partido_atual, perfil.uf_sede].filter(Boolean).join(' · ')} foto={perfil.foto_url} />
           <button type="button" onClick={() => toggleSecao('resumo')} aria-expanded={secoesAbertas.resumo} aria-label={secoesAbertas.resumo ? 'Recolher resumo' : 'Expandir resumo'} style={{ flexShrink: 0, background: 'rgba(255,255,255,0.14)', border: 'none', color: '#fff', cursor: 'pointer', borderRadius: '999px', width: '36px', height: '36px', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: 0 }}><Seta aberta={secoesAbertas.resumo} size={18} /></button>
-            </div>
           </div>
         </div>
 
         {secoesAbertas.resumo && (
         <>
-        <p style={{ fontSize: '1.15rem', lineHeight: 1.6, margin: '24px 0 0', maxWidth: '62ch' }}>
+        <p className="resumo-par" style={{ fontSize: '1.15rem', lineHeight: 1.6, margin: '24px 0 0' }}>
           {nNotasAno > 0 ? (
             <>Em <strong>{anoSel}</strong>, {perfil.nome_urna} usou <strong style={{ color: t.cor.ouro }}>{brl(totalAno)}</strong> da verba pública de mandato
             {' '}(a <button onClick={() => setExplicaCota(!explicaCota)} style={{ background: 'none', border: 'none', color: t.cor.ouro, fontWeight: 700, cursor: 'pointer', padding: 0, fontSize: 'inherit', textDecoration: 'underline dotted' }}>{rotuloCota}</button>)
