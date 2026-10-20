@@ -18,9 +18,22 @@ export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).end();
   let alvo;
   try { alvo = new URL(String(req.query.u || '')); } catch { return res.status(400).end(); }
+  // O banco guarda parte das fotos em http:// (Senado, por exemplo). Para endereço da lista, sobe para https.
+  if (alvo.protocol === 'http:' && PERMITIDOS.has(alvo.hostname) && !alvo.port) alvo.protocol = 'https:';
   if (alvo.protocol !== 'https:' || alvo.username || alvo.password || alvo.port || !PERMITIDOS.has(alvo.hostname)) return res.status(400).end();
   try {
-    const r = await fetch(alvo.toString(), { redirect: 'error', signal: AbortSignal.timeout(6000), headers: { 'user-agent': 'LumeCidadao/1.0 (+https://www.lumecidadao.com.br)' } });
+    // Redirecionamento só para outro endereço da mesma lista (até 3 saltos).
+    let atual = alvo.toString();
+    let r;
+    for (let salto = 0; salto < 4; salto++) {
+      r = await fetch(atual, { redirect: 'manual', signal: AbortSignal.timeout(6000), headers: { 'user-agent': 'LumeCidadao/1.0 (+https://www.lumecidadao.com.br)' } });
+      if (r.status < 300 || r.status >= 400) break;
+      let prox;
+      try { prox = new URL(r.headers.get('location') || '', atual); } catch { return res.status(404).end(); }
+      if (prox.protocol === 'http:' && PERMITIDOS.has(prox.hostname) && !prox.port) prox.protocol = 'https:';
+      if (prox.protocol !== 'https:' || prox.port || !PERMITIDOS.has(prox.hostname)) return res.status(404).end();
+      atual = prox.toString();
+    }
     const tipo = r.headers.get('content-type') || '';
     if (!r.ok || !/^image\/(jpeg|png|webp|gif)/i.test(tipo)) return res.status(404).end();
     const buf = Buffer.from(await r.arrayBuffer());
