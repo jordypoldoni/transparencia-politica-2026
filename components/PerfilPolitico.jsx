@@ -20,6 +20,8 @@ import { dataBr, idadeEm } from '../src/lib/datas';
 import ReportarErro from './ReportarErro';
 import ChamadaAfinidade from './ChamadaAfinidade';
 import { montarCobrancaVoto, montarCobrancaGasto } from '../src/lib/cobranca';
+import { gerarImagemCobranca } from '../src/lib/cartaoCobranca';
+import JanelaCobranca from './JanelaCobranca';
 
 const brl = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v || 0);
 const brlExato = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0);
@@ -172,6 +174,7 @@ function SeletorAno({ anos, atual, aoTrocar, rotulo, escuro = false, margem = '1
 export default function PerfilPolitico({ dados }) {
   const router = useRouter();
   const [aberta, setAberta] = useState(null);
+  const [cobrando, setCobrando] = useState(null); // { montar(pergunta) } do voto ou gasto em cobrança
   const [modal, setModal] = useState(false);
   const [explicaCota, setExplicaCota] = useState(false);
   const [bioAberta, setBioAberta] = useState(false);
@@ -549,39 +552,13 @@ export default function PerfilPolitico({ dados }) {
     URL.revokeObjectURL(url);
   };
 
-  // B6 (18/10/2026): card de cobrança. Um fato oficial, a fonte, a data e a pergunta-padrão (a mesma para todos).
-  // Sem texto livre. Em celular abre o compartilhamento do aparelho; no computador baixa a imagem.
+  // B6 (18/10/2026), refeito em 20/10/2026 (item 5): card de cobrança. Um fato oficial, a fonte, a data e a
+  // pergunta (padrão ou escrita pelo cidadão, D-057). Desenho em src/lib/cartaoCobranca.js; a janela onde o
+  // cidadão escreve é components/JanelaCobranca.jsx. Em celular abre o compartilhamento do aparelho; no
+  // computador baixa a imagem.
   const cobrar = async (c) => {
     if (!c) return;
-    const cv = document.createElement('canvas');
-    cv.width = 1080; cv.height = 1080;
-    const x = cv.getContext('2d');
-    x.fillStyle = '#241E52'; x.fillRect(0, 0, 1080, 1080);
-    x.fillStyle = '#FF8A00'; x.fillRect(0, 0, 1080, 18);
-    x.textAlign = 'left';
-    x.fillStyle = 'rgba(255,255,255,0.6)'; x.font = '700 28px Georgia, serif';
-    x.fillText('PERGUNTA PÚBLICA, COM FATO E FONTE', 90, 110);
-    x.fillStyle = '#fff'; x.font = '600 54px Georgia, serif';
-    let y = wrapCanvas(x, c.quem, 90, 200, 900, 62);
-    y += 78;
-    x.fillStyle = 'rgba(255,255,255,0.55)'; x.font = '700 28px Georgia, serif';
-    x.fillText(c.rotulo, 90, y);
-    x.fillStyle = '#FF8A00'; x.font = '700 66px Georgia, serif';
-    y = wrapCanvas(x, c.fato, 90, y + 76, 900, 74);
-    x.fillStyle = 'rgba(255,255,255,0.85)'; x.font = '400 36px Georgia, serif';
-    y = wrapCanvas(x, c.contexto, 90, y + 62, 900, 46);
-    if (c.tipo === 'voto' && c.data) {
-      x.fillStyle = 'rgba(255,255,255,0.55)'; x.font = '400 30px Georgia, serif';
-      y += 50; x.fillText(c.data, 90, y);
-    }
-    x.fillStyle = '#fff'; x.font = '700 60px Georgia, serif';
-    wrapCanvas(x, c.pergunta, 90, Math.max(y + 110, 700), 900, 70);
-    x.fillStyle = 'rgba(255,255,255,0.55)'; x.font = '400 26px Georgia, serif';
-    x.fillText(c.aviso, 90, 990);
-    x.fillStyle = 'rgba(255,255,255,0.7)'; x.font = '400 28px Georgia, serif';
-    x.fillText(`${c.fonte}. Confira você mesmo: lumecidadao.com.br`, 90, 1034);
-
-    const blob = await new Promise((r) => cv.toBlob(r, 'image/png'));
+    const blob = await gerarImagemCobranca(c, perfil.foto_url);
     const file = new File([blob], `pergunta-${perfil.slug || 'politico'}.png`, { type: 'image/png' });
     const url = typeof window !== 'undefined' ? window.location.href : '';
     if (typeof navigator !== 'undefined' && navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -594,6 +571,7 @@ export default function PerfilPolitico({ dados }) {
 
   return (
     <div className="pagina">
+      {cobrando && <JanelaCobranca montar={cobrando.montar} nome={perfil.nome_urna} aoFechar={() => setCobrando(null)} aoGerar={(c) => cobrar(c)} />}
       <style jsx global>{`html{scroll-behavior:smooth}
         /* CABECALHO DO PERFIL (20/10/2026, item 2). Celular: linha 1 foto + nome/cargo; linha 2 ano + coracao +
            recolher (a quebra forcada .cab-quebra separa as duas). Computador (880px+): grade com foto, nome e
@@ -910,7 +888,7 @@ export default function PerfilPolitico({ dados }) {
             </div>
             {nNotasAno > 0 && totalAno > 0 && (
               <div style={{ marginTop: '18px' }}>
-                <button type="button" onClick={() => cobrar(montarCobrancaGasto({ perfil, ano: anoSel, total: totalAno, media: mediaAno || media_mensal, pctTeto: tetoInfo ? tetoInfo.pct : null, fonteNome }))}
+                <button type="button" onClick={() => setCobrando({ montar: (pergunta) => montarCobrancaGasto({ perfil, ano: anoSel, total: totalAno, media: mediaAno || media_mensal, pctTeto: tetoInfo ? tetoInfo.pct : null, teto: tetoInfo ? tetoInfo.teto : null, notas: nNotasAno, fonteNome, pergunta }) })}
                   title="Gerar card com este gasto e uma pergunta"
                   style={{ ...pilula, background: t.cor.verde, color: t.cor.ouro, boxShadow: t.sombra.botao }}>Cobrar sobre este gasto</button>
               </div>
@@ -1349,7 +1327,7 @@ export default function PerfilPolitico({ dados }) {
                               {linkavel
                                 ? <Link href={`/votacao/${v.votacao_id_externa}`} className="voto-linha" style={{ ...rowStyle, flex: '1 1 auto' }}>{conteudo}</Link>
                                 : <div className="voto-linha" style={{ ...rowStyle, flex: '1 1 auto' }}>{conteudo}</div>}
-                              <button type="button" className="voto-cobrar" onClick={() => cobrar(montarCobrancaVoto({ perfil, voto: v, titulo: tituloExib, fonteNome }))}
+                              <button type="button" className="voto-cobrar" onClick={() => setCobrando({ montar: (pergunta) => montarCobrancaVoto({ perfil, voto: v, titulo: tituloExib, fonteNome, pergunta, materia: g.titulo, etapa: papel === 'Votação' ? '' : papel, resultado: res ? `${res} no plenário` : '' }) })}
                                 aria-label={`Cobrar ${perfil.nome_urna}: gerar card com este voto e uma pergunta`} title="Gerar card com este voto e uma pergunta"
                                 style={{ flexShrink: 0, height: '28px', border: 'none', background: t.cor.verde, color: t.cor.ouro, fontFamily: t.fonte.corpo, fontSize: '0.78rem', fontWeight: 700, padding: '0 14px', borderRadius: t.raio.pill, boxShadow: '0 1px 3px rgba(36,30,82,0.20), 0 4px 10px rgba(36,30,82,0.22)', cursor: 'pointer' }}>Cobrar</button>
                             </div>

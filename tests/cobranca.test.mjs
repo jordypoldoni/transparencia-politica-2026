@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { montarCobrancaVoto, montarCobrancaGasto, PERGUNTA_VOTO, PERGUNTA_GASTO, AVISO_PADRAO } from '../src/lib/cobranca.js';
+import { montarCobrancaVoto, montarCobrancaGasto, validarPergunta, PERGUNTA_VOTO, PERGUNTA_GASTO, AVISO_PADRAO, AVISO_CIDADAO } from '../src/lib/cobranca.js';
 import { linkErro, CONTATO, BASE_SITE } from '../src/lib/contato.js';
 import { CORRECOES } from '../src/dados/correcoes.js';
 
@@ -18,7 +18,7 @@ test('cobrança de voto: fato, data, fonte e a pergunta-padrão', () => {
 
 test('cobrança de voto: título longo é cortado; sem voto devolve null', () => {
   const c = montarCobrancaVoto({ perfil, voto: { voto_tipo: 'Não', data_voto: '2026-09-10' }, titulo: 'x '.repeat(300), fonteNome: 'Senado Federal' });
-  assert.ok(c.contexto.length <= 170);
+  assert.ok(c.contexto.length <= 230);
   assert.ok(c.contexto.endsWith('…'));
   assert.equal(montarCobrancaVoto({ perfil, voto: null, titulo: 'a', fonteNome: 'x' }), null);
 });
@@ -60,4 +60,43 @@ test('CORRECOES: cada item tem data, erro e correção', () => {
     assert.match(c.data, /^\d{4}-\d{2}-\d{2}$/);
     assert.ok(c.erro && c.correcao);
   }
+});
+
+test('pergunta do cidadão: vale quando válida, rotula como cidadão e segue no texto de compartilhar', () => {
+  const c = montarCobrancaVoto({ perfil, voto: { voto_tipo: 'Sim', data_voto: '2026-09-10' }, titulo: 'Altera a lei X', fonteNome: 'Câmara', pergunta: 'Por que o senhor votou a favor desta urgência?', materia: 'PL 1/2026', etapa: 'Urgência', resultado: 'Aprovado no plenário' });
+  assert.equal(c.personalizada, true);
+  assert.equal(c.pergunta, 'Por que o senhor votou a favor desta urgência?');
+  assert.equal(c.aviso, AVISO_CIDADAO);
+  assert.equal(c.materia, 'PL 1/2026 · Urgência');
+  assert.match(c.texto, /Pergunta de um cidadão: "Por que o senhor votou/);
+  assert.match(c.texto, /aprovado no plenário/);
+});
+
+test('pergunta do cidadão: igual à padrão, vazia ou inválida volta para a padrão', () => {
+  const base = { perfil, voto: { voto_tipo: 'Sim', data_voto: '2026-09-10' }, titulo: 't', fonteNome: 'f' };
+  assert.equal(montarCobrancaVoto({ ...base, pergunta: 'pode explicar o voto?' }).personalizada, false);
+  assert.equal(montarCobrancaVoto({ ...base, pergunta: '' }).pergunta, PERGUNTA_VOTO);
+  const ruim = montarCobrancaVoto({ ...base, pergunta: 'Fulano é um ladrão' });
+  assert.equal(ruim.pergunta, PERGUNTA_VOTO);
+  assert.equal(ruim.aviso, AVISO_PADRAO);
+  assert.equal(montarCobrancaGasto({ perfil, ano: 2026, total: 10, media: 1, pctTeto: null, fonteNome: 'f', pergunta: 'Onde foi usada essa verba?' }).personalizada, true);
+});
+
+test('validarPergunta: tamanho, ofensa, acusação, link, contato e maiúsculas', () => {
+  assert.equal(validarPergunta('Qual foi o motivo desse voto?').ok, true);
+  assert.equal(validarPergunta('curto').ok, false);
+  assert.equal(validarPergunta('a '.repeat(80)).ok, false);
+  for (const ruim of ['Esse ladrão vai explicar?', 'Você é um VERGONHA para o estado', 'Veja em www.site.com o que ele fez', 'Fale comigo em joao@email.com agora', 'Ligue 51 99999-8888 para saber', 'ISSO FOI UM ABSURDO TOTAL DELES', 'Foi corrupção esse voto?']) {
+    assert.equal(validarPergunta(ruim).ok, false, ruim);
+  }
+  assert.match(validarPergunta('Esse ladrão vai explicar?').motivo, /ofensa ou uma acusação/);
+  // palavra comum que contém uma bloqueada não pode ser barrada à toa
+  assert.equal(validarPergunta('O projeto trata de mateus e de compra pública. Pode explicar?').ok, true);
+});
+
+test('resumo do voto: corta no fim de uma frase quando possível', () => {
+  const longo = `${'Frase curta e clara sobre o tema. '.repeat(10)}`;
+  const c = montarCobrancaVoto({ perfil, voto: { voto_tipo: 'Sim', data_voto: '2026-09-10' }, titulo: longo, fonteNome: 'f' });
+  assert.ok(c.contexto.length <= 230);
+  assert.ok(c.contexto.endsWith('.') || c.contexto.endsWith('…'));
 });
