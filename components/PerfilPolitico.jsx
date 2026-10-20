@@ -657,7 +657,7 @@ export default function PerfilPolitico({ dados }) {
               <p style={{ margin: 0, opacity: 0.85, lineHeight: 1.35 }}>{perfil.cargo_atual || 'Deputado Federal'}<br />{perfil.partido_atual} · {perfil.uf_sede || 'BR'}</p>
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px 12px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px 12px', flexWrap: 'wrap' }}>
             {/* O ano escolhido aqui vale para o perfil inteiro: o veredito desta camada zero, o grafico mes a mes
                 e as categorias leem o mesmo estado. */}
             <SeletorAno anos={anos_disponiveis} atual={anoSel} aoTrocar={trocarAno} rotulo="Ano dos dados deste perfil" escuro margem="0" />
