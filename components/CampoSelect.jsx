@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { t } from '../src/estilo/tokens';
 import { Seta } from './icones';
+import Giro from './Giro';
+import { useNavegacao, anunciarDestino } from '../src/lib/navegacao';
 
 const norm = (s) => String(s || '').normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
 
@@ -13,9 +15,24 @@ export default function CampoSelect({
   const [aberto, setAberto] = useState(false);
   const [texto, setTexto] = useState('');
   const [ativo, setAtivo] = useState(0);
+  const [escolhida, setEscolhida] = useState(null);
   const raiz = useRef(null);
+  const { navegando } = useNavegacao();
+  const viuNavegar = useRef(false);
 
-  const selecionada = opcoes.find((o) => o.valor === valor) || null;
+  // Campo que navega (estado da home, busca de parlamentar) nao recebe `valor`: antes, ao escolher, o
+  // campo voltava a ficar vazio e parecia que nada tinha acontecido (20/10/2026, item 7). Agora guarda
+  // a escolha e mostra um giro enquanto a pagina abre. Se a navegacao nao comecar em ~0,5s, ou se
+  // terminar com o campo ainda na tela, esquece a escolha e volta ao normal.
+  useEffect(() => {
+    if (!escolhida) { viuNavegar.current = false; return undefined; }
+    if (navegando) { viuNavegar.current = true; return undefined; }
+    const espera = setTimeout(() => setEscolhida(null), viuNavegar.current ? 0 : 500);
+    return () => clearTimeout(espera);
+  }, [escolhida, navegando]);
+
+  const selecionada = opcoes.find((o) => o.valor === valor) || escolhida || null;
+  const ocupado = !!escolhida && navegando;
   const display = aberto ? texto : (selecionada ? selecionada.rotulo : '');
 
   const filtradas = useMemo(() => {
@@ -33,7 +50,13 @@ export default function CampoSelect({
   }, [aberto]);
   useEffect(() => { setAtivo(0); }, [texto, aberto]);
 
-  const escolher = (o) => { setTexto(''); setAberto(false); aoSelecionar?.(o.valor); };
+  const escolher = (o) => {
+    setTexto(''); setAberto(false);
+    viuNavegar.current = false;
+    setEscolhida(o);
+    anunciarDestino(o.rotulo);
+    aoSelecionar?.(o.valor);
+  };
 
   const aoTeclado = (e) => {
     if (e.key === 'ArrowDown') { e.preventDefault(); setAberto(true); setAtivo((i) => Math.min(i + 1, visiveis.length - 1)); }
@@ -54,7 +77,7 @@ export default function CampoSelect({
       }}>
         {icone && <span aria-hidden style={{ flexShrink: 0, color: aberto ? t.cor.ouro : t.cor.cinza, display: 'flex' }}>{icone}</span>}
         <input
-          value={display} placeholder={placeholder} aria-label={aoLabel}
+          value={display} placeholder={placeholder} aria-label={aoLabel} aria-busy={ocupado}
           role="combobox" aria-expanded={aberto} aria-autocomplete="list"
           onChange={(e) => { setTexto(e.target.value); setAberto(true); }}
           onFocus={() => { setAberto(true); setTexto(''); }}
@@ -64,7 +87,9 @@ export default function CampoSelect({
             fontSize: '1rem', fontFamily: t.fonte.corpo, background: 'transparent', color: t.cor.tinta,
           }} />
         <span aria-hidden onMouseDown={(e) => { e.preventDefault(); setAberto((a) => !a); }}
-          style={{ flexShrink: 0, cursor: 'pointer', display: 'inline-flex' }}><Seta aberta={aberto} size={16} /></span>
+          style={{ flexShrink: 0, cursor: 'pointer', display: 'inline-flex' }}>
+          {ocupado ? <Giro tamanho={16} /> : <Seta aberta={aberto} size={16} />}
+        </span>
       </div>
 
       {aberto && (

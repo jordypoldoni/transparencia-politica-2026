@@ -1,27 +1,30 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Layout from '../components/Layout';
+import IndicadorNavegacao from '../components/IndicadorNavegacao';
+import { comecouNavegacao, terminouNavegacao, cancelouNavegacao, falhouNavegacao } from '../src/lib/navegacao';
 
 export default function App({ Component, pageProps }) {
   const router = useRouter();
-  const [carregando, setCarregando] = useState(false);
-
+  // Estado de navegacao (20/10/2026): src/lib/navegacao.js e a fonte unica; o IndicadorNavegacao e o
+  // CampoSelect leem dele. Navegacao cancelada (outro clique antes de abrir) nao e erro.
   useEffect(() => {
-    const inicio = () => setCarregando(true);
-    const fim = () => setCarregando(false);
+    const inicio = (url) => comecouNavegacao(url);
+    const fim = () => terminouNavegacao();
+    const erro = (err) => (err && err.cancelled ? cancelouNavegacao() : falhouNavegacao());
     router.events.on('routeChangeStart', inicio);
     router.events.on('routeChangeComplete', fim);
-    router.events.on('routeChangeError', fim);
+    router.events.on('routeChangeError', erro);
     return () => {
       router.events.off('routeChangeStart', inicio);
       router.events.off('routeChangeComplete', fim);
-      router.events.off('routeChangeError', fim);
+      router.events.off('routeChangeError', erro);
     };
   }, [router]);
 
   return (
     <Layout pageProps={pageProps}>
-      {carregando && <div className="barra-carregando" aria-hidden />}
+      <IndicadorNavegacao />
       <Component {...pageProps} />
       <style jsx global>{`
         * { box-sizing: border-box; }
@@ -374,16 +377,20 @@ export default function App({ Component, pageProps }) {
         }
         .surgir { animation: surgir .5s cubic-bezier(.2,.7,.2,1) both; }
 
-        .barra-carregando {
-          position: fixed; top: 0; left: 0; height: 3px; z-index: 9999;
-          background: #FF8A00; box-shadow: 0 0 8px #FF8A00;
-          animation: progresso 1.2s ease-in-out infinite;
-        }
-        @keyframes progresso {
-          0% { width: 0%; left: 0; }
-          50% { width: 70%; }
-          100% { width: 100%; left: 0; opacity: .4; }
-        }
+        /* Indicador de navegacao (20/10/2026, components/IndicadorNavegacao.jsx). Barra de 4px que
+           avanca depressa no comeco e desacelera ate ~92% (nao chega a 100% sozinha); ao abrir a
+           pagina fecha em 100% e some. Aviso abaixo do cabecalho: nao clica, entao retangulo. */
+        .barra-nav { position: fixed; top: 0; left: 0; height: 4px; z-index: 9999; background: #FF8A00; box-shadow: 0 0 8px rgba(255,138,0,.7); pointer-events: none; }
+        .barra-nav.andando { width: 92%; animation: avanco 14s cubic-bezier(.1,.7,.2,1) both; }
+        .barra-nav.concluindo { width: 100%; animation: fechar .25s ease-out forwards; }
+        @keyframes avanco { from { width: 0; } to { width: 92%; } }
+        @keyframes fechar { 0% { width: var(--w, 90%); opacity: 1; } 60% { width: 100%; opacity: 1; } 100% { width: 100%; opacity: 0; } }
+        .aviso-nav { position: fixed; left: 0; right: 0; margin: 0 auto; width: max-content; z-index: 9998; display: flex; align-items: center; gap: 12px; max-width: min(92vw, 420px); padding: 11px 16px; border-radius: 10px; background: #241E52; color: #fff; font-size: 0.9rem; line-height: 1.35; box-shadow: 0 8px 24px rgba(36,30,82,.28); animation: surgir .2s ease-out both; }
+        .aviso-nav small { display: block; margin-top: 2px; font-size: 0.78rem; color: rgba(255,255,255,.75); }
+        @media (max-width: 640px) { .aviso-nav { left: 14px; right: 14px; width: auto; max-width: none; } }
+        .giro { display: inline-block; flex-shrink: 0; border-radius: 50%; border: 2.5px solid rgba(255,138,0,.3); border-top-color: #FF8A00; animation: giro .8s linear infinite; }
+        @keyframes giro { to { transform: rotate(360deg); } }
+        @media (prefers-reduced-motion: reduce) { .giro { animation: none !important; border-top-color: #FF8A00; } .barra-nav.andando { animation: none !important; width: 60%; } }
       `}</style>
     </Layout>
   );
