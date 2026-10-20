@@ -628,7 +628,9 @@ export default function PerfilPolitico({ dados }) {
         .borda-secoes{position:absolute;top:0;bottom:0;width:34px;pointer-events:none}
         .borda-esq{left:0;background:linear-gradient(90deg,#FF8A00 30%,rgba(255,138,0,0))}
         .borda-dir{right:0;background:linear-gradient(270deg,#FF8A00 30%,rgba(255,138,0,0))}
-        @media (max-width:560px){.voto-par{flex-direction:column}.voto-par .voto-cobrar{align-self:flex-end;padding:6px 14px !important}}`}</style>
+        /* Cobrar do voto (20/10/2026, item 4): botao padrao do site (indigo com texto ambar), pequeno e ao lado da linha do voto, no computador e no celular. */
+        .voto-par{align-items:center !important}
+        @media (pointer:coarse){.voto-cobrar{min-height:40px}}`}</style>
       {/* Voltar + navegação por seções: barra fixa abaixo do cabeçalho.
           AJUSTADA EM 22/09/2026, pedido do Jordy:
           - top era 56px, mas o cabeçalho mede 74px (medido no site, desktop e celular). A barra
@@ -908,7 +910,7 @@ export default function PerfilPolitico({ dados }) {
               <div style={{ marginTop: '18px' }}>
                 <button type="button" onClick={() => cobrar(montarCobrancaGasto({ perfil, ano: anoSel, total: totalAno, media: mediaAno || media_mensal, pctTeto: tetoInfo ? tetoInfo.pct : null, fonteNome }))}
                   title="Gerar card com este gasto e uma pergunta"
-                  style={{ ...pilula, background: '#fff', color: t.cor.tinta, boxShadow: t.sombra.botao }}>Cobrar sobre este gasto</button>
+                  style={{ ...pilula, background: t.cor.verde, color: t.cor.ouro, boxShadow: t.sombra.botao }}>Cobrar sobre este gasto</button>
               </div>
             )}
           </Secao>
@@ -1347,7 +1349,7 @@ export default function PerfilPolitico({ dados }) {
                                 : <div className="voto-linha" style={{ ...rowStyle, flex: '1 1 auto' }}>{conteudo}</div>}
                               <button type="button" className="voto-cobrar" onClick={() => cobrar(montarCobrancaVoto({ perfil, voto: v, titulo: tituloExib, fonteNome }))}
                                 aria-label={`Cobrar ${perfil.nome_urna}: gerar card com este voto e uma pergunta`} title="Gerar card com este voto e uma pergunta"
-                                style={{ flexShrink: 0, border: `1px solid ${t.cor.papelQuente2}`, background: '#fff', color: t.cor.tinta, fontFamily: t.fonte.corpo, fontSize: '0.74rem', fontWeight: 700, padding: '0 12px', borderRadius: t.raio.sm, cursor: 'pointer' }}>Cobrar</button>
+                                style={{ flexShrink: 0, alignSelf: 'center', height: '32px', border: 'none', background: t.cor.verde, color: t.cor.ouro, fontFamily: t.fonte.corpo, fontSize: '0.78rem', fontWeight: 700, padding: '0 14px', borderRadius: t.raio.pill, boxShadow: '0 1px 3px rgba(36,30,82,0.20), 0 4px 10px rgba(36,30,82,0.22)', cursor: 'pointer' }}>Cobrar</button>
                             </div>
                           );
                         })}
