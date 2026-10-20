@@ -645,7 +645,7 @@ export default function PerfilPolitico({ dados }) {
       </div>
 
       {/* CAMADA ZERO — veredito em português claro */}
-      <div id="resumo" className="surgir" style={{ ...ancora, background: t.cor.verde, color: '#fff', borderRadius: t.raio.lg, padding: 'clamp(24px,4vw,40px)', marginBottom: '24px' }}>
+      <div id="resumo" className="surgir" style={{ ...ancora, background: t.cor.verde, color: '#fff', borderRadius: t.raio.lg, padding: 'clamp(18px,4vw,40px)', marginBottom: '24px' }}>
         {/* CABEÇALHO COMPACTO (20/10/2026, item 2 do Jordy): foto menor com nome, cargo, partido e UF ao lado,
             e o ano dos dados com o coração e o recolher na linha de baixo. Antes a foto ocupava uma linha e o
             nome caía embaixo dela no celular (o texto exigia 220px), deixando o cartão alto. */}
@@ -657,11 +657,11 @@ export default function PerfilPolitico({ dados }) {
               <p style={{ margin: 0, opacity: 0.85, lineHeight: 1.35 }}>{perfil.cargo_atual || 'Deputado Federal'}<br />{perfil.partido_atual} · {perfil.uf_sede || 'BR'}</p>
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px 16px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px 12px', flexWrap: 'wrap' }}>
             {/* O ano escolhido aqui vale para o perfil inteiro: o veredito desta camada zero, o grafico mes a mes
                 e as categorias leem o mesmo estado. */}
             <SeletorAno anos={anos_disponiveis} atual={anoSel} aoTrocar={trocarAno} rotulo="Ano dos dados deste perfil" escuro margem="0" />
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {/* Coração (26/09/2026): no cartão escuro, o par invertido (âmbar com coração índigo). */}
           <BotaoFavorito tipo="parlamentar" chave={hrefPerfil(perfil)} rotulo={perfil.nome_urna} escuro
             detalhe={[perfil.cargo_atual || casaDoPerfil(perfil).cargoPadrao, perfil.partido_atual, perfil.uf_sede].filter(Boolean).join(' · ')} foto={perfil.foto_url} />
