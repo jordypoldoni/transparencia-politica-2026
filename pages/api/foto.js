@@ -7,6 +7,7 @@
 const PERMITIDOS = new Set([
   'www.camara.leg.br',
   'www.senado.leg.br',
+  'legis.senado.leg.br', // o Senado redireciona www.senado.leg.br/senadores/img/... para ca
   'www.almg.gov.br',
   'ww2.al.rs.gov.br',
   'fedxytdorrecllugnicu.supabase.co',
