@@ -35,14 +35,18 @@ export default async function handler(req, res) {
       atual = prox.toString();
     }
     const tipo = r.headers.get('content-type') || '';
-    if (!r.ok || !/^image\/(jpeg|png|webp|gif)/i.test(tipo)) return res.status(404).end();
+    if (!r.ok || !/^image\/(jpeg|png|webp|gif)/i.test(tipo)) {
+      res.setHeader('X-Foto-Motivo', `origem ${r.status} ${tipo}`.slice(0, 120));
+      return res.status(404).end();
+    }
     const buf = Buffer.from(await r.arrayBuffer());
     if (buf.length > MAX_BYTES) return res.status(413).end();
     res.setHeader('Content-Type', tipo.split(';')[0]);
     res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=604800, immutable');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     return res.status(200).send(buf);
-  } catch {
+  } catch (e) {
+    res.setHeader('X-Foto-Motivo', `erro ${String((e && (e.cause && e.cause.code || e.name)) || 'desconhecido')}`.slice(0, 120));
     return res.status(404).end();
   }
 }
