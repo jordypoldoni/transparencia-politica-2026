@@ -110,7 +110,10 @@ function wrapCanvas(ctx, text, x, y, maxW, lh) {
 }
 
 const SOMBRA_ATALHO = '0 1px 2px rgba(36,30,82,0.18), 0 2px 6px rgba(36,30,82,0.14)'; // atalhos do menu rápido, em repouso
-const ANCORA = { scrollMarginTop: '112px' }; // compensa header + barra fixa ao rolar até a âncora
+// Margem de rolagem das seções (20/10/2026): vem de uma variável CSS medida no navegador (cabeçalho +
+// barra de atalhos + 12px de respiro), em vez de um número fixo. Era 112px aqui e 150px no Resumo,
+// e a barra termina perto de 131px: o título da seção ficava escondido atrás dela ao clicar no atalho.
+const ANCORA = { scrollMarginTop: 'var(--secoes-margem, 150px)' };
 
 // Caixa de seção recolhível: cabeçalho sempre visível (clicável) + corpo que expande/recolhe.
 function Secao({ id, titulo, aberta, onToggle, children }) {
@@ -181,41 +184,111 @@ export default function PerfilPolitico({ dados }) {
   // está fica azul com texto dourado. Muda ao clicar e acompanha a rolagem. Depois de um clique
   // a rolagem suave passa por seções intermediárias; durante esse tempo o acompanhamento fica
   // parado (`pausaSpy`), senão o destaque pularia de atalho em atalho até chegar.
+  //
+  // REFEITO EM 20/10/2026 (pedido do Jordy: o menu de seções funcionava mal ao rolar, no computador e
+  // no celular). Causas, medidas no site no ar:
+  //  1. A barra ficava em `top: 86px` fixo, mas o cabeçalho mede 62px no celular e 64px no
+  //     computador: sobrava um vão de 24px por onde o conteúdo passava. Agora a altura do cabeçalho
+  //     e da barra é MEDIDA (ResizeObserver) e vai para variáveis CSS (--topo-h, --secoes-margem).
+  //  2. A barra não tinha fundo: o conteúdo aparecia entre o botão Voltar e a pílula e atrás dela.
+  //     Agora há uma faixa opaca na cor do papel, de ponta a ponta da tela.
+  //  3. Na pílula que rola na horizontal o atalho ativo podia ficar fora da vista ("Atuação" cortado).
+  //     Agora o ativo é centralizado, e há degradê nas pontas quando existe mais atalho de cada lado.
+  //  4. O Resumo usava margem de rolagem de 150px e as demais seções 112px: o título delas ficava
+  //     atrás da barra. Agora é uma margem só, medida.
+  //  5. O acompanhamento da rolagem dependia de requestAnimationFrame e de uma pausa fixa de 1s,
+  //     que acabava antes do fim da rolagem suave em páginas longas. Agora lê direto no evento de
+  //     rolagem e só retoma quando a rolagem para.
   const [secaoAtiva, setSecaoAtiva] = useState('resumo');
+  const [grudada, setGrudada] = useState(false);
+  const [bordas, setBordas] = useState({ esq: false, dir: false });
   const idsSecoes = useRef([]);
-  const pausaSpy = useRef(0);
+  const barraRef = useRef(null);
+  const navRef = useRef(null);
+  const medidas = useRef({ topo: 64, barra: 63 });
+  const navegando = useRef(false);
+  const fimNavegacao = useRef(null);
+  const refazer = useRef(null);
+  const encerrarNavegacao = (espera) => {
+    clearTimeout(fimNavegacao.current);
+    fimNavegacao.current = setTimeout(() => { navegando.current = false; if (refazer.current) refazer.current(); }, espera);
+  };
   const irParaSecao = (id) => {
     setSecaoAtiva(id);
-    pausaSpy.current = Date.now() + 1000;
+    navegando.current = true;
+    encerrarNavegacao(900); // se a rolagem não vier, solta em 0,9s; cada evento de rolagem reinicia a espera
     setSecoesAbertas((s) => ({ ...s, [id]: true }));
     setAlvoScroll(id);
   };
+  const medirBordas = () => {
+    const n = navRef.current;
+    if (!n) return;
+    const esq = n.scrollLeft > 2;
+    const dir = n.scrollLeft + n.clientWidth < n.scrollWidth - 2;
+    setBordas((b) => (b.esq === esq && b.dir === dir ? b : { esq, dir }));
+  };
   useEffect(() => {
-    let quadro = null;
+    const raiz = document.documentElement;
+    const topo = document.querySelector('header');
+    const medir = () => {
+      const hTopo = topo ? Math.round(topo.getBoundingClientRect().height) : 64;
+      const hBarra = barraRef.current ? Math.round(barraRef.current.getBoundingClientRect().height) : 63;
+      medidas.current = { topo: hTopo, barra: hBarra };
+      raiz.style.setProperty('--topo-h', `${hTopo}px`);
+      raiz.style.setProperty('--secoes-margem', `${hTopo + hBarra + 12}px`);
+    };
     const atualizar = () => {
-      quadro = null;
-      if (Date.now() < pausaSpy.current) return;
+      const { topo: hTopo, barra: hBarra } = medidas.current;
+      const barra = barraRef.current;
+      if (barra) setGrudada(barra.getBoundingClientRect().top <= hTopo + 1);
+      if (navegando.current) return; // durante a rolagem de um clique o ativo é o que foi clicado
       const ids = idsSecoes.current;
       if (!ids.length) return;
+      const linha = hTopo + hBarra + 20; // logo abaixo da barra: a seção que está lá é a atual
       let ativo = ids[0];
       for (const id of ids) {
         const el = document.getElementById(id);
-        if (el && el.getBoundingClientRect().top <= 170) ativo = id;
+        if (el && el.getBoundingClientRect().top <= linha) ativo = id;
       }
       // No fim da página a última seção nunca chega ao topo: vale a última.
       if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4) ativo = ids[ids.length - 1];
       setSecaoAtiva(ativo);
     };
-    const aoRolar = () => { if (quadro == null) quadro = requestAnimationFrame(atualizar); };
+    const aoRolar = () => {
+      if (navegando.current) encerrarNavegacao(250);
+      atualizar();
+    };
+    const aoRedimensionar = () => { medir(); atualizar(); medirBordas(); };
+    refazer.current = atualizar;
+    medir(); atualizar(); medirBordas();
     window.addEventListener('scroll', aoRolar, { passive: true });
-    window.addEventListener('resize', aoRolar);
-    aoRolar();
+    window.addEventListener('resize', aoRedimensionar);
+    let obs = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      obs = new ResizeObserver(() => { medir(); medirBordas(); });
+      if (topo) obs.observe(topo);
+      if (barraRef.current) obs.observe(barraRef.current);
+    }
     return () => {
       window.removeEventListener('scroll', aoRolar);
-      window.removeEventListener('resize', aoRolar);
-      if (quadro != null) cancelAnimationFrame(quadro);
+      window.removeEventListener('resize', aoRedimensionar);
+      if (obs) obs.disconnect();
+      clearTimeout(fimNavegacao.current);
+      raiz.style.removeProperty('--topo-h');
+      raiz.style.removeProperty('--secoes-margem');
     };
   }, []);
+  // Abrir ou fechar uma seção muda a altura da página sem evento de rolagem: refaz o ativo.
+  useEffect(() => { if (refazer.current) refazer.current(); }, [secoesAbertas]);
+  // O atalho ativo fica centralizado na pílula (só rola a pílula, nunca a página).
+  useEffect(() => {
+    const nav = navRef.current;
+    if (!nav || nav.scrollWidth <= nav.clientWidth) return;
+    const chip = nav.querySelector('[aria-current="true"]');
+    if (!chip) return;
+    const alvo = chip.offsetLeft - (nav.clientWidth - chip.offsetWidth) / 2;
+    nav.scrollTo({ left: Math.max(0, alvo), behavior: 'smooth' });
+  }, [secaoAtiva]);
   useEffect(() => {
     if (!alvoScroll) return;
     const el = typeof document !== 'undefined' ? document.getElementById(alvoScroll) : null;
@@ -360,7 +433,7 @@ export default function PerfilPolitico({ dados }) {
     { id: 'votos', rotulo: 'Votos' },
   ].filter(Boolean);
   idsSecoes.current = secoes.map((x) => x.id);
-  const ancora = { scrollMarginTop: '150px' }; // cabeçalho (74) + respiro (12) + barra (~48) + folga. Era 112, calculado com a barra em 56.
+  const ancora = ANCORA; // margem medida no navegador (cabeçalho + barra + respiro), ver o comentário do menu de seções
 
   // A casa do parlamentar sai do fonte_api ('alesp' | 'alergs' | url da camara | url do senado).
   // BUG CORRIGIDO EM 10/09/2026: fonteNome era fixo em 'ALESP' para qualquer estadual, entao
@@ -522,6 +595,15 @@ export default function PerfilPolitico({ dados }) {
   return (
     <div className="pagina">
       <style jsx global>{`html{scroll-behavior:smooth}
+        .barra-secoes{position:sticky;top:var(--topo-h,64px);z-index:40;margin-bottom:10px;padding:10px 0;display:flex;gap:10px;align-items:center}
+        .barra-secoes::before{content:"";position:absolute;top:0;bottom:0;left:50%;width:100vw;transform:translateX(-50%);background:#F7F6F3;z-index:-1;transition:box-shadow .15s ease}
+        .barra-secoes.grudada::before{box-shadow:0 10px 14px -12px rgba(74,52,30,0.35)}
+        .pilula-secoes{position:relative;flex:0 1 auto;min-width:0;border-radius:999px;background:#FF8A00;box-shadow:0 1px 2px rgba(74,52,30,0.06),0 4px 16px rgba(74,52,30,0.05);overflow:hidden}
+        .nav-secoes{position:relative;display:flex;gap:7px;padding:7px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}
+        .nav-secoes::-webkit-scrollbar{display:none}
+        .borda-secoes{position:absolute;top:0;bottom:0;width:34px;pointer-events:none}
+        .borda-esq{left:0;background:linear-gradient(90deg,#FF8A00 30%,rgba(255,138,0,0))}
+        .borda-dir{right:0;background:linear-gradient(270deg,#FF8A00 30%,rgba(255,138,0,0))}
         @media (max-width:560px){.voto-par{flex-direction:column}.voto-par .voto-cobrar{align-self:flex-end;padding:6px 14px !important}}`}</style>
       {/* Voltar + navegação por seções: barra fixa abaixo do cabeçalho.
           AJUSTADA EM 22/09/2026, pedido do Jordy:
@@ -534,9 +616,13 @@ export default function PerfilPolitico({ dados }) {
           - Fundo âmbar do site. Os botões dentro são brancos com texto tinta: texto claro sobre
             âmbar é proibido (branco dá 2,36:1), e a superfície branca com a sombra de clicável é
             o que diz "isto se aperta". */}
-      <div style={{ position: 'sticky', top: '86px', zIndex: 40, marginBottom: '20px', display: 'flex', gap: '10px', alignItems: 'center' }}>
+      {/* Barra refeita em 20/10/2026 (ver o comentário do menu de seções, acima): faixa opaca, grudada
+          no cabeçalho pela altura medida, atalho ativo centralizado e degradê nas pontas. As classes
+          estão no <style jsx global> logo acima. */}
+      <div ref={barraRef} className={`barra-secoes${grudada ? ' grudada' : ''}`}>
         <BotaoVoltar margem="0" style={{ flexShrink: 0 }} />
-        <nav aria-label="Seções do perfil" style={{ flex: '0 1 auto', minWidth: 0, padding: '7px', display: 'flex', gap: '7px', overflowX: 'auto', background: t.cor.ouro, borderRadius: t.raio.pill, boxShadow: t.sombra.sutil }}>
+        <div className="pilula-secoes">
+        <nav ref={navRef} className="nav-secoes" aria-label="Seções do perfil" onScroll={medirBordas}>
           {secoes.map((s) => (
             <button key={s.id} type="button" onClick={() => irParaSecao(s.id)}
               aria-current={secaoAtiva === s.id ? 'true' : undefined}
@@ -553,6 +639,9 @@ export default function PerfilPolitico({ dados }) {
               }}>{s.rotulo}</button>
           ))}
         </nav>
+        {bordas.esq && <span className="borda-secoes borda-esq" aria-hidden="true" />}
+        {bordas.dir && <span className="borda-secoes borda-dir" aria-hidden="true" />}
+        </div>
       </div>
 
       {/* CAMADA ZERO — veredito em português claro */}
