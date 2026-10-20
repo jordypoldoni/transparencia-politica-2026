@@ -628,9 +628,11 @@ export default function PerfilPolitico({ dados }) {
         .borda-secoes{position:absolute;top:0;bottom:0;width:34px;pointer-events:none}
         .borda-esq{left:0;background:linear-gradient(90deg,#FF8A00 30%,rgba(255,138,0,0))}
         .borda-dir{right:0;background:linear-gradient(270deg,#FF8A00 30%,rgba(255,138,0,0))}
-        /* Cobrar do voto (20/10/2026, item 4): botao padrao do site (indigo com texto ambar), pequeno e ao lado da linha do voto, no computador e no celular. */
-        .voto-par{align-items:center !important}
-        @media (pointer:coarse){.voto-cobrar{min-height:40px}}`}</style>
+        /* Cobrar do voto (20/10/2026, item 4): botao padrao do site (indigo com texto ambar), 28px. Computador: ao lado da linha do voto. Celular: embaixo, a direita (ao lado empurrava o ver e a seta). A area de toque cresce com ::after. */
+        .voto-cobrar{position:relative}
+        .voto-cobrar::after{content:"";position:absolute;top:-6px;bottom:-6px;left:-4px;right:-4px}
+        @media (min-width:561px){.voto-par{align-items:center !important}}
+        @media (max-width:560px){.voto-par{flex-direction:column}.voto-par .voto-cobrar{align-self:flex-end}}`}</style>
       {/* Voltar + navegação por seções: barra fixa abaixo do cabeçalho.
           AJUSTADA EM 22/09/2026, pedido do Jordy:
           - top era 56px, mas o cabeçalho mede 74px (medido no site, desktop e celular). A barra
@@ -1349,7 +1351,7 @@ export default function PerfilPolitico({ dados }) {
                                 : <div className="voto-linha" style={{ ...rowStyle, flex: '1 1 auto' }}>{conteudo}</div>}
                               <button type="button" className="voto-cobrar" onClick={() => cobrar(montarCobrancaVoto({ perfil, voto: v, titulo: tituloExib, fonteNome }))}
                                 aria-label={`Cobrar ${perfil.nome_urna}: gerar card com este voto e uma pergunta`} title="Gerar card com este voto e uma pergunta"
-                                style={{ flexShrink: 0, alignSelf: 'center', height: '32px', border: 'none', background: t.cor.verde, color: t.cor.ouro, fontFamily: t.fonte.corpo, fontSize: '0.78rem', fontWeight: 700, padding: '0 14px', borderRadius: t.raio.pill, boxShadow: '0 1px 3px rgba(36,30,82,0.20), 0 4px 10px rgba(36,30,82,0.22)', cursor: 'pointer' }}>Cobrar</button>
+                                style={{ flexShrink: 0, alignSelf: 'center', height: '28px', border: 'none', background: t.cor.verde, color: t.cor.ouro, fontFamily: t.fonte.corpo, fontSize: '0.78rem', fontWeight: 700, padding: '0 14px', borderRadius: t.raio.pill, boxShadow: '0 1px 3px rgba(36,30,82,0.20), 0 4px 10px rgba(36,30,82,0.22)', cursor: 'pointer' }}>Cobrar</button>
                             </div>
                           );
                         })}
