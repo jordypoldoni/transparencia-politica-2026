@@ -31,7 +31,10 @@ export default async function handler(req, res) {
       let prox;
       try { prox = new URL(r.headers.get('location') || '', atual); } catch { return res.status(404).end(); }
       if (prox.protocol === 'http:' && PERMITIDOS.has(prox.hostname) && !prox.port) prox.protocol = 'https:';
-      if (prox.protocol !== 'https:' || prox.port || !PERMITIDOS.has(prox.hostname)) return res.status(404).end();
+      if (prox.protocol !== 'https:' || prox.port || !PERMITIDOS.has(prox.hostname)) {
+        res.setHeader('X-Foto-Motivo', `redirecionou ${r.status} para ${prox.protocol}//${prox.hostname}${prox.port ? ':' + prox.port : ''}`.slice(0, 120));
+        return res.status(404).end();
+      }
       atual = prox.toString();
     }
     const tipo = r.headers.get('content-type') || '';
