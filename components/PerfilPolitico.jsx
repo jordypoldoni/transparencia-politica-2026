@@ -739,7 +739,7 @@ export default function PerfilPolitico({ dados }) {
               {posicao_estado.teto ? <>. Teto mensal: {brl(posicao_estado.teto)}</> : null}.
             </p>
             <p style={{ margin: '8px 0 0', fontSize: '0.82rem', opacity: 0.85, lineHeight: 1.5 }}>
-              Como lemos: 1º é a maior média mensal ({posicao_estado.ano}, total ÷ meses com gasto). Comparamos só quem é da mesma casa e do mesmo estado, que têm o mesmo teto. A posição mostra quanto se gasta, não a qualidade do mandato.
+              Como lemos: 1º é a maior média mensal ({posicao_estado.ano}, {posicao_estado.grupo.chave === 'estadual' ? 'total ÷ meses com gasto' : 'gasto ÷ meses em exercício'}). Comparamos só quem é da mesma casa e do mesmo estado, que têm o mesmo teto. A posição mostra quanto se gasta, não a qualidade do mandato.
               {' '}Fonte: {fonteNome}.{' '}
               <Link href={`/estado/${posicao_estado.uf}?casa=${posicao_estado.grupo.chave}`} style={{ color: t.cor.ouro, fontWeight: 700, textDecoration: 'underline' }}>Ver os {posicao_estado.de} de {posicao_estado.uf}<Seta direcao="direita" size={14} emTexto /></Link>
             </p>
