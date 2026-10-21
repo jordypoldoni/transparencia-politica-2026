@@ -1,0 +1,41 @@
+# carga_restituicao_glosa.yml: carga única, no lugar, de restituição e glosa da cota da Câmara. (21/10/2026)
+# dry=true só mede. Manual.
+name: Carga restituicao e glosa da Camara
+
+on:
+  workflow_dispatch:
+    inputs:
+      ano:
+        description: 'Ano (ex.: 2026)'
+        required: true
+        default: '2026'
+      dry:
+        description: 'dry = true so mede, nao grava'
+        required: true
+        default: 'true'
+
+permissions:
+  contents: read
+
+jobs:
+  diagnostico:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --ignore-scripts
+      - name: Ler o arquivo anual
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          ANO: ${{ github.event.inputs.ano }}
+          DRY: ${{ github.event.inputs.dry }}
+        run: |
+          if [ "$DRY" = "true" ]; then
+            node coletores/carga_restituicao_glosa.js "$ANO" --dry-run
+          else
+            node coletores/carga_restituicao_glosa.js "$ANO"
+          fi
