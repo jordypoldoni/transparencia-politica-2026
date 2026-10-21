@@ -376,15 +376,14 @@ function PaginaGastos({ casaChave, ano, radar, agreg, ufInicial, canonical }) {
           Quanto cada parlamentar usou da verba a que tem direito, comparado de forma justa: pela cota do estado de cada um e só pelos meses em que estava em exercício.
         </p>
 
-        <div className="so-celular" style={{ marginBottom: '14px' }}>
-          <EscolhaCompacta rotulo="Casa" valor={casa.chave} aoEscolher={(c) => router.push({ pathname: '/gastos-parlamentares', query: { casa: c, ano } })}
-            opcoes={CASAS.map((c) => ({ valor: c.chave, rotulo: c.rotulo }))} />
-        </div>
-        <div className="so-computador" style={{ marginBottom: '14px' }}>
-          <Segmentado aria="Casa" itens={CASAS.map((c) => ({ chave: c.chave, rotulo: c.rotulo, ativo: c.chave === casa.chave, aoClicar: () => router.push({ pathname: '/gastos-parlamentares', query: { casa: c.chave, ano } }) }))} />
-        </div>
-
         <div className="gp-controles">
+          <div className="so-celular gp-ctl">
+            <EscolhaCompacta rotulo="Casa" valor={casa.chave} aoEscolher={(c) => router.push({ pathname: '/gastos-parlamentares', query: { casa: c, ano } })}
+              opcoes={CASAS.map((c) => ({ valor: c.chave, rotulo: c.rotulo }))} />
+          </div>
+          <div className="so-computador">
+            <Segmentado aria="Casa" itens={CASAS.map((c) => ({ chave: c.chave, rotulo: c.rotulo, ativo: c.chave === casa.chave, aoClicar: () => router.push({ pathname: '/gastos-parlamentares', query: { casa: c.chave, ano } }) }))} />
+          </div>
           <div className="gp-ctl">
             <EscolhaCompacta rotulo="Ano" prefixo="Ano" valor={String(ano)} aoEscolher={(a) => irPara({ ano: a })} opcoes={anos.map((a) => ({ valor: String(a), rotulo: String(a) }))} />
           </div>
