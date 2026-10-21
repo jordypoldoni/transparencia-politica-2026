@@ -8,6 +8,7 @@ import { mandatoEstadual } from '../lib/mandatoEstadual.js';
 import { ASSEMBLEIAS } from '../lib/assembleias.js';
 import { posicaoNaBancada } from '../lib/bancadaEstado.js';
 import { CATEGORIA_FORA_DO_TOTAL } from '../lib/cotas.js';
+import { resumoDevolucoes } from '../lib/devolucoes.js';
 
 const ServicoAPI = {
     // Busca o ranking de maiores gastadores
@@ -171,6 +172,18 @@ const ServicoAPI = {
             if (eBases) throw eBases;
             for (const b of bases || []) baseJusta[b.ano] = b;
         } catch (e) { console.error('radar_gastos_base:', e.message); }
+        // Devolução de valores à Câmara (21/10/2026): só linhas com valor_restituido > 0 (poucas por deputado).
+        // Falha aqui não derruba o perfil: sem o dado, a linha some.
+        const devolucoes = {};
+        try {
+            if (/camara/i.test(perfil.fonte_api || '')) {
+                const { data: dv, error: eDv } = await supabase.from('despesas_parlamentares')
+                    .select('ano, valor_restituido, data_restituicao')
+                    .eq('agente_id', id).not('valor_restituido', 'is', null);
+                if (eDv) throw eDv;
+                for (const l of dv || []) { (devolucoes[l.ano] = devolucoes[l.ano] || []).push(l); }
+            }
+        } catch (e) { console.error('devolucoes:', e.message); }
         const serieMensal = anosDisponiveis.map((a) => {
             const catEntries = Object.entries(serie[a].cats || {}).sort((x, y) => y[1] - x[1]);
             return {
@@ -181,6 +194,7 @@ const ServicoAPI = {
                 meses_base: baseJusta[a] ? baseJusta[a].meses_base : null,
                 total_base: baseJusta[a] ? baseJusta[a].total_base : null,
                 total_divulgacao_base: baseJusta[a] ? baseJusta[a].total_divulgacao_base : null,
+                devolucao: resumoDevolucoes(devolucoes[a]),
                 n_notas: serie[a].n_notas,
                 fora_do_total: serie[a].fora.n_notas > 0 ? serie[a].fora : null,
                 maior_categoria: catEntries[0]?.[0] || null,

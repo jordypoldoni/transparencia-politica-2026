@@ -3,7 +3,8 @@ import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { t } from '../src/estilo/tokens';
 import Avatar from './Avatar';
-import { pctDoTeto, CATEGORIA_FORA_DO_TOTAL, CEAPS_FONTE, ATO_MESA_DIVULGACAO } from '../src/lib/cotas';
+import { pctDoTeto, CATEGORIA_FORA_DO_TOTAL, CEAPS_FONTE, ATO_MESA_DIVULGACAO, arquivoCotaCamara } from '../src/lib/cotas';
+import { textoDevolucao } from '../src/lib/devolucoes';
 import { nomeTipoProposicao, legendaDosTipos } from '../src/lib/proposicoes';
 import { explicarTipo, agruparPorMateria, papelVotacao, situacaoCidada } from '../src/lib/votacao';
 import { casaDoPerfil, hrefPerfil } from '../src/lib/casa';
@@ -427,6 +428,7 @@ export default function PerfilPolitico({ dados }) {
   // e nota sobre a trava eleitoral (21/10/2026, proposta aprovada pelo Jordy). Só com base justa e valor acima de zero.
   const temDivulgacao = temBase && Number(dadosAno.total_divulgacao_base) > 0 && Number(dadosAno.total_base) > 0;
   const pctDivulgacao = temDivulgacao ? Math.round((Number(dadosAno.total_divulgacao_base) / Number(dadosAno.total_base)) * 100) : 0;
+  const devolucaoAno = dadosAno ? textoDevolucao(dadosAno.devolucao) : null; // 21/10/2026: só deputado federal com devolução no ano
   const mediaAno = !dadosAno ? 0
     : temBase ? (Number(dadosAno.meses_base) > 0 ? Number(dadosAno.total_base) / Number(dadosAno.meses_base) : null)
     : (dadosAno.meses_com_gasto > 0 ? dadosAno.total / dadosAno.meses_com_gasto : 0);
@@ -896,6 +898,16 @@ export default function PerfilPolitico({ dados }) {
               {temDivulgacao && (
                 <div style={{ fontSize: '0.9rem', marginBottom: '8px' }}>
                   <strong>Divulgação da atividade parlamentar:</strong> {brl(dadosAno.total_divulgacao_base)} ({pctDivulgacao}% do gasto contado)
+                </div>
+              )}
+              {devolucaoAno && (
+                <div style={{ fontSize: '0.9rem', marginBottom: '8px' }}>
+                  <strong>{devolucaoAno.rotulo}</strong> {devolucaoAno.texto}
+                  <small style={{ display: 'block', color: t.cor.cinza, fontSize: '0.82rem', marginTop: '2px', lineHeight: 1.45 }}>
+                    Valor devolvido pelo deputado, registrado no{' '}
+                    <a href={arquivoCotaCamara(anoSel)} target="_blank" rel="noopener noreferrer" style={{ color: t.cor.ouroTexto, fontWeight: 600 }}>arquivo da cota de {anoSel}</a>
+                    {' '}(baixa um .zip). A fonte não informa o motivo.
+                  </small>
                 </div>
               )}
               <p style={{ margin: 0, fontSize: '0.82rem', color: t.cor.cinza, lineHeight: 1.5 }}>

@@ -63,3 +63,6 @@ export const CATEGORIA_FORA_DO_TOTAL = 'Outras despesas';
 // Veda a impressão e a distribuição de produtos gráficos de divulgação nos 120 dias antes da eleição, salvo se o
 // deputado não for candidato. Li um resumo do ato: conferir o texto integral antes de ampliar o que a nota afirma.
 export const ATO_MESA_DIVULGACAO = 'https://www2.camara.leg.br/legin/int/atomes/2013/atodamesa-108-11-setembro-2013-777043-publicacaooriginal-141111-cd-mesa.html';
+
+// Arquivo anual da cota da Câmara (o mesmo que o coletor lê). Link da nota de devolução no perfil (21/10/2026).
+export const arquivoCotaCamara = (ano) => `https://www.camara.leg.br/cotas/Ano-${ano}.csv.zip`;
