@@ -160,6 +160,17 @@ const ServicoAPI = {
         }
         const anosDisponiveis = Object.keys(serie).map(Number).sort((a, b) => b - a);
         const anoReferencia = anosDisponiveis.includes(2026) ? 2026 : (anosDisponiveis[0] || 2026);
+        // Base justa da média (21/10/2026): meses em exercício e já fechados. Mesma view da tela /estado/[uf].
+        // Sem a linha (view fora do ar, ou casa sem histórico), fica null e a tela usa a conta antiga.
+        const baseJusta = {};
+        try {
+            const { data: bases, error: eBases } = await supabase
+                .from('radar_gastos_base')
+                .select('ano, meses_base, total_base, total_divulgacao_base')
+                .eq('id', id);
+            if (eBases) throw eBases;
+            for (const b of bases || []) baseJusta[b.ano] = b;
+        } catch (e) { console.error('radar_gastos_base:', e.message); }
         const serieMensal = anosDisponiveis.map((a) => {
             const catEntries = Object.entries(serie[a].cats || {}).sort((x, y) => y[1] - x[1]);
             return {
@@ -167,6 +178,9 @@ const ServicoAPI = {
                 total: serie[a].total,
                 meses: Array.from({ length: 12 }, (_, i) => ({ mes: i + 1, valor: serie[a].meses[i + 1] || 0 })),
                 meses_com_gasto: Object.keys(serie[a].meses).length,
+                meses_base: baseJusta[a] ? baseJusta[a].meses_base : null,
+                total_base: baseJusta[a] ? baseJusta[a].total_base : null,
+                total_divulgacao_base: baseJusta[a] ? baseJusta[a].total_divulgacao_base : null,
                 n_notas: serie[a].n_notas,
                 fora_do_total: serie[a].fora.n_notas > 0 ? serie[a].fora : null,
                 maior_categoria: catEntries[0]?.[0] || null,
@@ -316,7 +330,12 @@ const ServicoAPI = {
         const total_geral = Object.values(categorias).reduce((a, b) => a + b, 0);
         const n_notas = gastosAnoNoTotal.length;
         const mesesSet = new Set(gastosAnoNoTotal.map((g) => g.mes).filter(Boolean));
-        const media_mensal = mesesSet.size > 0 ? total_geral / mesesSet.size : total_geral;
+        // Média do ano de referência: pela base justa quando existe (null se ainda não há mês fechado em
+        // exercício); senão a conta antiga, total ÷ meses com gasto.
+        const baseRef = baseJusta[anoReferencia];
+        const media_mensal = baseRef
+            ? (Number(baseRef.meses_base) > 0 ? Number(baseRef.total_base) / Number(baseRef.meses_base) : null)
+            : (mesesSet.size > 0 ? total_geral / mesesSet.size : total_geral);
         const maiorCategoria = Object.entries(categorias).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
 
         return {
@@ -621,7 +640,26 @@ const ServicoAPI = {
             .eq('uf_sede', uf)
             .order('total', { ascending: false });
         if (error) { console.error('getRadarPorEstado:', error.message); return []; }
-        return data || [];
+        const linhas = data || [];
+        // 21/10/2026: base justa do ranking (view radar_gastos_base): só meses em exercício (15 dias ou
+        // mais) e já fechados (30 dias após o fim do mês). Sem a linha (view fora do ar), cai na conta antiga.
+        try {
+            const ids = linhas.map((l) => l.id);
+            if (ids.length) {
+                const { data: base, error: eBase } = await supabase
+                    .from('radar_gastos_base')
+                    .select('id, meses_base, total_base, total_divulgacao_base')
+                    .eq('ano', ano)
+                    .in('id', ids);
+                if (eBase) throw eBase;
+                const porId = new Map((base || []).map((b) => [b.id, b]));
+                for (const l of linhas) {
+                    const b = porId.get(l.id);
+                    if (b) { l.meses_base = b.meses_base; l.total_base = b.total_base; l.total_divulgacao_base = b.total_divulgacao_base; }
+                }
+            }
+        } catch (e) { console.error('getRadarPorEstado (base):', e.message); }
+        return linhas;
     },
 
     // Presença em votações de toda a bancada de um estado, de uma vez (18/10/2026, tela /estado/[uf]).

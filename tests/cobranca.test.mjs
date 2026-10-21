@@ -100,3 +100,12 @@ test('resumo do voto: corta no fim de uma frase quando possível', () => {
   assert.ok(c.contexto.length <= 230);
   assert.ok(c.contexto.endsWith('.') || c.contexto.endsWith('…'));
 });
+
+test('gasto: sem média (nenhum mês fechado em exercício) não escreve "R$ 0 por mês"', () => {
+  const perfil = { nome_urna: 'Fulano', partido_atual: 'XX', uf_sede: 'RS', fonte_api: 'camara', slug: 'fulano' };
+  const c = montarCobrancaGasto({ perfil, ano: 2026, total: 50000, media: null, pctTeto: null, fonteNome: 'Câmara dos Deputados' });
+  assert.ok(c);
+  assert.equal(c.contexto, '');
+  assert.ok(!/por mês/.test(c.texto));
+  assert.ok(!/R\$\s?0\b/.test(c.texto.replace(/R\$\s?50/g, '')));
+});

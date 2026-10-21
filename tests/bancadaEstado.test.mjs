@@ -4,6 +4,16 @@ import { mediaMensal, mediana, agruparPorCasa, montarLinhas, ordenar, ordensDisp
 
 const dep = (nome, total, meses, extra = {}) => ({ id: nome, slug: nome, nome_urna: nome, partido_atual: 'XX', uf_sede: 'RS', casa: 'Câmara', total, meses_com_gasto: meses, n_notas: 10, ...extra });
 
+test('mediaMensal: com a base justa usa total_base ÷ meses_base e ignora total e meses com gasto', () => {
+  assert.equal(mediaMensal({ total: 999999, meses_com_gasto: 9, total_base: 240000, meses_base: 8 }), 30000);
+  // mês em exercício sem gasto entra no divisor: a média cai
+  assert.equal(mediaMensal({ total: 240000, meses_com_gasto: 6, total_base: 240000, meses_base: 8 }), 30000);
+  // nenhum mês fechado em exercício ainda: sem média, nunca zero nem a conta antiga
+  assert.equal(mediaMensal({ total: 5000, meses_com_gasto: 1, total_base: 0, meses_base: 0 }), null);
+  // base nula (view fora do ar ou casa sem histórico): conta antiga
+  assert.equal(mediaMensal({ total: 300000, meses_com_gasto: 10, meses_base: null, total_base: null }), 30000);
+});
+
 test('mediaMensal: total dividido pelos meses com gasto; sem meses vira null', () => {
   assert.equal(mediaMensal({ total: 300000, meses_com_gasto: 10 }), 30000);
   assert.equal(mediaMensal({ total: 5000, meses_com_gasto: 1 }), 5000);

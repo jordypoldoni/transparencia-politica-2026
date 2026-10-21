@@ -106,7 +106,8 @@ export function montarCobrancaVoto({ perfil, voto, titulo, fonteNome, pergunta, 
 // gasto: { ano, total, media, pctTeto, teto, notas } (pctTeto/teto podem ser null onde o Lume não tem o teto).
 export function montarCobrancaGasto({ perfil, ano, total, media, pctTeto, teto, notas, fonteNome, pergunta }) {
   if (!perfil || !(Number(total) > 0)) return null;
-  const partes = [`Média de ${reais(media)} por mês`];
+  // media null = nenhum mês fechado em exercício ainda (base justa, 21/10/2026): não inventa "R$ 0 por mês".
+  const partes = media == null || !Number.isFinite(Number(media)) ? [] : [`Média de ${reais(media)} por mês`];
   if (pctTeto != null) partes.push(`${pctTeto}% do teto mensal${teto ? ` do estado (${reais(teto)})` : ''}`);
   const fonte = `Fonte: ${fonteNome}`;
   const p = resolvePergunta(pergunta, PERGUNTA_GASTO);
@@ -119,13 +120,13 @@ export function montarCobrancaGasto({ perfil, ano, total, media, pctTeto, teto, 
     fato: `${perfil.nome_urna} usou ${reais(total)}`,
     destaque: reais(total),
     notas: Number(notas) > 0 ? `em ${notas} ${Number(notas) === 1 ? 'nota fiscal' : 'notas fiscais'}` : '',
-    contexto: `${partes.join(', ')}.`,
+    contexto: partes.length ? `${partes.join(', ')}.` : '',
     rotuloContexto: pctTeto != null ? 'EM COMPARAÇÃO COM O TETO' : 'MÉDIA MENSAL',
     data: String(ano),
     pergunta: p.pergunta,
     personalizada: p.personalizada,
     fonte,
     aviso: p.personalizada ? AVISO_CIDADAO : AVISO_PADRAO,
-    texto: `${quem(perfil)} usou ${reais(total)} da verba de mandato em ${ano} (${partes.join(', ')}). ${sufixo} ${fonte}.`,
+    texto: `${quem(perfil)} usou ${reais(total)} da verba de mandato em ${ano}${partes.length ? ` (${partes.join(', ')})` : ''}. ${sufixo} ${fonte}.`,
   };
 }

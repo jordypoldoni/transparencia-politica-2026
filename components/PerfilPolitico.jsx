@@ -420,7 +420,12 @@ export default function PerfilPolitico({ dados }) {
   const [erroNotas, setErroNotas] = useState(null);
   const dadosAno = serie_mensal.find((s) => s.ano === anoSel) || serie_mensal[0] || null;
   const maxMes = dadosAno ? Math.max(...dadosAno.meses.map((m) => m.valor), 1) : 1;
-  const mediaAno = dadosAno && dadosAno.meses_com_gasto > 0 ? dadosAno.total / dadosAno.meses_com_gasto : 0;
+  // Média do ano (21/10/2026): pela base justa (meses em exercício e já fechados) quando a view a traz;
+  // senão a conta antiga, total ÷ meses com gasto. null = ainda nenhum mês contou.
+  const temBase = !!dadosAno && dadosAno.meses_base != null;
+  const mediaAno = !dadosAno ? 0
+    : temBase ? (Number(dadosAno.meses_base) > 0 ? Number(dadosAno.total_base) / Number(dadosAno.meses_base) : null)
+    : (dadosAno.meses_com_gasto > 0 ? dadosAno.total / dadosAno.meses_com_gasto : 0);
 
   // Navegação por seções (só lista as que existem para este parlamentar)
   // ATENÇÃO: precisa vir DEPOIS de `dadosAno` — referenciar antes causa TDZ ("Cannot access before initialization") no build de produção.
@@ -446,7 +451,7 @@ export default function PerfilPolitico({ dados }) {
   const { fonteApi, ehAlesp, ehAlergs, ehAlmg, ehEstadual, ehSenado, fonteNome, fonteNomeCom, temNotaFiscal, nomeVerba } = casaDoPerfil(perfil);
   const rotuloCota = ehEstadual ? `cota (${nomeVerba}) ?` : 'cota parlamentar ?';
   // % do teto mensal da cota — federal (CEAP), senador (CEAPS) e estadual-SP (verba ALESP)
-  const tetoInfo = pctDoTeto({ fonteApi: perfil.fonte_api, casa: perfil.casa_legislativa, uf: perfil.uf_sede }, mediaAno || media_mensal);
+  const tetoInfo = pctDoTeto({ fonteApi: perfil.fonte_api, casa: perfil.casa_legislativa, uf: perfil.uf_sede }, temBase ? mediaAno : (mediaAno || media_mensal));
   const selGastos = fonteGastosDoPerfil(perfil); // data da coleta (T10), null onde nao ha coleta registrada
   const selVotos = fonteVotosDoPerfil(perfil);
   // Valores do ANO SELECIONADO (reativo ao seletor de ano)
@@ -682,7 +687,7 @@ export default function PerfilPolitico({ dados }) {
           {nNotasAno > 0 ? (
             <>Em <strong>{anoSel}</strong>, {perfil.nome_urna} usou <strong style={{ color: t.cor.ouro }}>{brl(totalAno)}</strong> da verba pública de mandato
             {' '}(a <button onClick={() => setExplicaCota(!explicaCota)} style={{ background: 'none', border: 'none', color: t.cor.ouro, fontWeight: 700, cursor: 'pointer', padding: 0, fontSize: 'inherit', textDecoration: 'underline dotted' }}>{rotuloCota}</button>)
-            {' '}em <strong>{nNotasAno}</strong> notas fiscais, cerca de <strong>{brl(mediaAno || media_mensal)} por mês</strong>{maiorCatAno ? <>, com mais gasto em <strong>{maiorCatAno}</strong></> : null}.</>
+            {' '}em <strong>{nNotasAno}</strong> notas fiscais{(temBase ? mediaAno : (mediaAno || media_mensal)) != null ? <>, cerca de <strong>{brl(temBase ? mediaAno : (mediaAno || media_mensal))} por mês</strong></> : null}{maiorCatAno ? <>, com mais gasto em <strong>{maiorCatAno}</strong></> : null}.</>
           ) : (
             <>Ainda estamos reunindo os gastos da <button onClick={() => setExplicaCota(!explicaCota)} style={{ background: 'none', border: 'none', color: t.cor.ouro, fontWeight: 700, cursor: 'pointer', padding: 0, fontSize: 'inherit', textDecoration: 'underline dotted' }}>{rotuloCota}</button> de {perfil.nome_urna}, em breve aqui.</>
           )}
@@ -705,7 +710,7 @@ export default function PerfilPolitico({ dados }) {
               <div style={{ width: `${Math.min(tetoInfo.pct, 100)}%`, height: '100%', background: corBarra, borderRadius: '999px', transition: 'width .5s ease' }} />
             </div>
             <p style={{ margin: '8px 0 0', fontSize: '0.82rem', opacity: 0.8 }}>
-              Média de <strong>{brl(media_mensal)}/mês</strong> comparada ao teto mensal de referência do estado ({brl(tetoInfo.teto)}). O saldo não usado pode acumular ao longo do ano, então a média pode variar entre os meses. Tire suas próprias conclusões com base nos dados.
+              Média de <strong>{brl(temBase ? mediaAno : (mediaAno || media_mensal))}/mês</strong> comparada ao teto mensal de referência do estado ({brl(tetoInfo.teto)}). O saldo não usado pode acumular ao longo do ano, então a média pode variar entre os meses. Tire suas próprias conclusões com base nos dados.
             </p>
             {ehSenado && (
               <p style={{ margin: '8px 0 0', fontSize: '0.8rem', opacity: 0.8, lineHeight: 1.5 }}>
@@ -879,16 +884,20 @@ export default function PerfilPolitico({ dados }) {
             <div style={{ marginTop: '18px', background: t.cor.papelQuente, borderRadius: t.raio.md, padding: '14px 16px' }}>
               <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', marginBottom: '8px' }}>
                 <span style={{ fontSize: '0.9rem' }}><strong>Total {anoSel}:</strong> {brl(dadosAno.total)}</span>
-                <span style={{ fontSize: '0.9rem' }}><strong>Média:</strong> {brl(mediaAno)}/mês</span>
-                <span style={{ fontSize: '0.9rem', color: t.cor.cinza }}>{dadosAno.meses_com_gasto} {dadosAno.meses_com_gasto === 1 ? 'mês' : 'meses'} com gasto</span>
+                <span style={{ fontSize: '0.9rem' }}><strong>Média:</strong> {mediaAno == null ? 'sem mês fechado ainda' : `${brl(mediaAno)}/mês`}</span>
+                <span style={{ fontSize: '0.9rem', color: t.cor.cinza }}>{temBase
+                  ? `${dadosAno.meses_base} ${Number(dadosAno.meses_base) === 1 ? 'mês' : 'meses'} em exercício e fechados`
+                  : `${dadosAno.meses_com_gasto} ${dadosAno.meses_com_gasto === 1 ? 'mês' : 'meses'} com gasto`}</span>
               </div>
               <p style={{ margin: 0, fontSize: '0.82rem', color: t.cor.cinza, lineHeight: 1.5 }}>
-                <strong style={{ color: t.cor.tinta }}>Como a média é calculada:</strong> somamos {temNotaFiscal ? 'todas as notas' : 'todas as despesas publicadas'} de {anoSel} e dividimos pelo número de meses com gasto registrado ({dadosAno.meses_com_gasto}). Meses sem {temNotaFiscal ? 'nota' : 'despesa'} não entram na conta, por isso a média pode ficar acima do gasto de um mês isolado. Fonte: {fonteNome}.
+                <strong style={{ color: t.cor.tinta }}>Como a média é calculada:</strong> {temBase
+                  ? <>somamos {temNotaFiscal ? 'as notas' : 'as despesas publicadas'} dos meses de {anoSel} em que {perfil.nome_urna} esteve em exercício por 15 dias ou mais e que já fecharam (30 dias depois do fim do mês, quando quase todas as notas já foram emitidas), e dividimos por esses meses ({dadosAno.meses_base}). Mês em exercício sem gasto entra na conta. O total de {anoSel} acima inclui todos os meses com gasto.</>
+                  : <>somamos {temNotaFiscal ? 'todas as notas' : 'todas as despesas publicadas'} de {anoSel} e dividimos pelo número de meses com gasto registrado ({dadosAno.meses_com_gasto}). Meses sem {temNotaFiscal ? 'nota' : 'despesa'} não entram na conta, por isso a média pode ficar acima do gasto de um mês isolado.</>} Fonte: {fonteNome}.
               </p>
             </div>
             {nNotasAno > 0 && totalAno > 0 && (
               <div style={{ marginTop: '18px' }}>
-                <button type="button" onClick={() => setCobrando({ montar: (pergunta) => montarCobrancaGasto({ perfil, ano: anoSel, total: totalAno, media: mediaAno || media_mensal, pctTeto: tetoInfo ? tetoInfo.pct : null, teto: tetoInfo ? tetoInfo.teto : null, notas: nNotasAno, fonteNome, pergunta }) })}
+                <button type="button" onClick={() => setCobrando({ montar: (pergunta) => montarCobrancaGasto({ perfil, ano: anoSel, total: totalAno, media: temBase ? mediaAno : (mediaAno || media_mensal), pctTeto: tetoInfo ? tetoInfo.pct : null, teto: tetoInfo ? tetoInfo.teto : null, notas: nNotasAno, fonteNome, pergunta }) })}
                   title="Gerar card com este gasto e uma pergunta"
                   style={{ ...pilula, background: t.cor.verde, color: t.cor.ouro, boxShadow: t.sombra.botao }}>Cobrar sobre este gasto</button>
               </div>

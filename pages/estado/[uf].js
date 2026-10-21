@@ -100,7 +100,9 @@ function Linha({ l, cols }) {
             {media == null ? semDado : (
               <>
                 <span style={{ display: 'block', fontWeight: 800 }}>{reais(media)}</span>
-                <span style={{ display: 'block', fontSize: '0.72rem', color: t.cor.cinza, whiteSpace: 'nowrap' }}>{reais(d.total)} no ano</span>
+                <span style={{ display: 'block', fontSize: '0.72rem', color: t.cor.cinza, whiteSpace: 'nowrap' }}>
+                  {d.meses_base != null ? `${reais(d.total_base)} em ${d.meses_base} ${d.meses_base === 1 ? 'mês' : 'meses'}` : `${reais(d.total)} no ano`}
+                </span>
               </>
             )}
           </span>
@@ -162,7 +164,9 @@ function ComoLer({ grupo, nome, temTeto, temVotos, totalVotos, ehRS }) {
       </button>
       {aberto && (
         <div style={{ marginTop: '4px' }}>
-          <p style={p(0)}><strong>Gasto por mês:</strong> total do ano dividido pelos meses com gasto no ano. É a mesma conta do perfil.</p>
+          <p style={p(0)}><strong>Gasto por mês:</strong> {grupo.chave === 'estadual'
+            ? 'total do ano dividido pelos meses com gasto no ano. É a mesma conta do perfil.'
+            : 'gasto dos meses em que a pessoa esteve em exercício (15 dias ou mais), dividido por esses meses. Só entram meses já fechados, 30 dias depois do fim do mês, quando quase todas as notas já foram emitidas. Mês em exercício sem gasto entra na conta. É a mesma conta do perfil.'}</p>
           {temTeto && <p style={p(1)}><strong>Uso do teto:</strong> gasto por mês dividido pelo teto mensal da {grupo.chave === 'senado' ? 'cota do Senado' : 'cota da Câmara'} para o estado{fonteTeto && <> (<a href={fonteTeto} target="_blank" rel="noopener noreferrer" style={link}>tabela oficial</a>)</>}. Acima de 100% quer dizer que a média ficou acima do valor dessa tabela; confira na fonte.</p>}
           {temVotos && <p style={p(1)}><strong>Votos registrados:</strong> votações nominais em que a pessoa votou Sim, Não, Abstenção ou Obstrução, entre as {totalVotos} que o Lume tem desta casa.</p>}
           {ehRS && grupo.chave === 'estadual' && <p style={p(1)}>A Assembleia do RS publica só o total mensal por categoria, sem as notas.</p>}

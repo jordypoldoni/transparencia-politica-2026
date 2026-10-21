@@ -5,8 +5,12 @@
 //
 // REGRAS DE CONTEÚDO (D-003: só fato e fonte, sem nota e sem adjetivo)
 // - Nada aqui diz quem é "bom" ou "ruim". Só ordena e mostra a conta com a regra à vista.
-// - Gasto é comparado como MÉDIA MENSAL (total ÷ meses com gasto no ano), a mesma conta do perfil.
-//   O total puro castiga quem assumiu no meio do ano (suplente) e não diz nada sobre o ritmo.
+// - Gasto é comparado como MÉDIA MENSAL, a mesma conta do perfil. O total puro castiga quem assumiu no
+//   meio do ano (suplente) e não diz nada sobre o ritmo.
+//   Desde 21/10/2026, para Câmara e Senado a média é total_base ÷ meses_base (view radar_gastos_base):
+//   só meses em que a pessoa esteve em exercício (15 dias ou mais) e que já fecharam (30 dias depois do
+//   fim do mês, prazo em que 98% do valor já tem nota emitida). Mês em exercício sem gasto entra no
+//   divisor. Assembleias e quem não tem histórico de exercício seguem a conta antiga (total ÷ meses com gasto).
 // - Dado que a fonte não traz fica como null e a tela diz isso; nunca vira zero nem estimativa.
 // - Comparar só faz sentido dentro da mesma casa e do mesmo estado: o teto da verba é o mesmo ali.
 
@@ -24,8 +28,14 @@ export const norm = (s) => String(s || '').normalize('NFD').replace(/\p{Diacriti
 // O espaço entre "R$" e o número é o inseparável do Intl: sem ele a frase quebra o "R$" sozinho no fim da linha.
 export const reais = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v || 0);
 
-// Média mensal do ano: total ÷ meses com gasto. null quando a linha não diz quantos meses.
+// Média mensal do ano. Com a base justa (meses_base, total_base) usa só os meses contados; sem ela, a conta
+// antiga: total ÷ meses com gasto. null quando a linha não diz quantos meses (ou nenhum mês contou ainda).
 export function mediaMensal(d) {
+  if (d && d.meses_base != null) {
+    const mb = Number(d.meses_base);
+    const tb = Number(d.total_base);
+    return mb > 0 && Number.isFinite(tb) ? tb / mb : null;
+  }
   const meses = Number(d?.meses_com_gasto);
   const total = Number(d?.total);
   if (!(meses > 0) || !Number.isFinite(total)) return null;
