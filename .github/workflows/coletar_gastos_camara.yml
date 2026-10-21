@@ -1,0 +1,52 @@
+# coletar_gastos_camara.yml: roda só o coletor de gastos da Câmara (arquivo anual) sob demanda. (21/10/2026)
+#
+# POR QUE EXISTE: o coletar.yml diário roda este coletor junto de outros passos (até 1h30). Depois de corrigir
+# quem o coletor enxerga (deputado com id 'CAMARA-BR-...' ficava de fora), é preciso rodar só ele, e antes
+# em simulação. Sempre rode primeiro com dry = true (só lê e conta, não grava).
+#
+# SÓ MANUAL (workflow_dispatch). Falha barulhenta de propósito: sem continue-on-error.
+name: Coletar gastos da Câmara (sob demanda)
+
+on:
+  workflow_dispatch:
+    inputs:
+      ano:
+        description: 'Ano a coletar (ex.: 2026)'
+        required: true
+        default: '2026'
+      dry:
+        description: 'dry = true so confere, nao grava'
+        required: true
+        default: 'true'
+
+permissions:
+  contents: read
+
+jobs:
+  gastos-camara:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Instalar dependências
+        run: npm install --ignore-scripts
+
+      - name: Rodar coletor de gastos da Câmara
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          ANO: ${{ github.event.inputs.ano }}
+          DRY: ${{ github.event.inputs.dry }}
+        run: |
+          if [ "$DRY" = "true" ]; then
+            node coletores/coletor_gastos_arquivo.js "$ANO" --dry-run
+          else
+            node coletores/coletor_gastos_arquivo.js "$ANO"
+          fi

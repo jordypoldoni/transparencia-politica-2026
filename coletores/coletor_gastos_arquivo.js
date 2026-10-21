@@ -59,11 +59,19 @@ function abortar(msg) {
 async function main() {
   console.log(`🚀 Gastos da Câmara ${ANO} pelo arquivo anual${DRY ? ' (SIMULAÇÃO, nada será gravado)' : ''}.`);
 
+  // 21/10/2026: a busca por fonte_api ilike '%camara%' deixava de fora quem veio de outra sincronização
+  // (Carlos Gomes, RS: fonte 'Sincronização Lote 2026' e id 'CAMARA-BR-178962'). O gasto dele nunca entrava
+  // e a média justa mostrava R$ 19 por mês. Agora acha por cargo OU fonte, e compara só a parte numérica do id
+  // (o ideCadastro do arquivo é só número).
   const { data: agentes, error } = await supabase
-    .from('agentes_politicos').select('id, id_externo_api, nome_urna').ilike('fonte_api', '%camara%');
+    .from('agentes_politicos').select('id, id_externo_api, nome_urna')
+    .or('fonte_api.ilike.%camara%,cargo_atual.ilike.%deputado%federal%');
   if (error) throw error;
   const porIdExterno = new Map();
-  for (const a of agentes || []) if (a.id_externo_api) porIdExterno.set(String(a.id_externo_api).trim(), a);
+  for (const a of agentes || []) {
+    const num = String(a.id_externo_api || '').trim().match(/(\d+)$/);
+    if (num) porIdExterno.set(num[1], a);
+  }
   console.log(`👥 ${porIdExterno.size} deputados cadastrados no banco.`);
 
   const linhas = lerCsv(await baixarCotaAnual(ANO));
