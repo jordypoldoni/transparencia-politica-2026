@@ -221,7 +221,7 @@ function PorMes({ agreg, casa, ano }) {
   return (
     <section className="gp-cartao" aria-labelledby="gp-mes">
       <p className="gp-sobre">Por mês</p>
-      <h2 className="gp-h2" id="gp-mes">Gasto da {casa.rotulo === 'Câmara' ? 'Câmara' : 'Senado'} mês a mês</h2>
+      <h2 className="gp-h2" id="gp-mes">Gasto {casa.rotulo === 'Câmara' ? 'da Câmara' : 'do Senado'} mês a mês</h2>
       <p className="gp-sub">{temAnterior ? `${ano} contra ${ano - 1}.` : `${ano}.`} Meses ainda abertos, que seguem recebendo notas, aparecem mais claros.</p>
       <div className="gp-colunas" role="img" aria-label={`Gasto por mês em ${ano}`}>
         {atual.map((m, i) => (
@@ -260,7 +260,7 @@ function OndeVai({ agreg, casa, ano }) {
   return (
     <section className="gp-cartao" aria-labelledby="gp-tipo">
       <p className="gp-sobre">Onde o dinheiro vai</p>
-      <h2 className="gp-h2" id="gp-tipo">Gasto da {casa.rotulo} por tipo, {ano}</h2>
+      <h2 className="gp-h2" id="gp-tipo">Gasto {casa.rotulo === 'Câmara' ? 'da Câmara' : casa.rotulo === 'Senado' ? 'do Senado' : `das ${casa.rotulo}`} por tipo, {ano}</h2>
       <p className="gp-sub">Total do ano: {mi(total)}. A divulgação da atividade parlamentar aparece em âmbar porque tem regra própria nas eleições.</p>
       <ul className="gp-lista">
         {topo.map((x) => (
