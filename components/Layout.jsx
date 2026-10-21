@@ -65,7 +65,15 @@ const navItens = [
       { href: '/cpis', rotulo: 'CPIs', nota: 'investigações do Congresso' },
     ],
   },
-  { href: '/gastos-publicos', rotulo: 'Gastos públicos' },
+  // 21/10/2026 (decisão do Jordy): "Gastos públicos" vira o grupo "Gastos", com duas páginas: as contas dos
+  // governos e a comparação dos gastos dos parlamentares (antes um ranking no topo das listas de parlamentares).
+  {
+    rotulo: 'Gastos',
+    filhos: [
+      { href: '/gastos-publicos', rotulo: 'Gastos públicos', nota: 'municípios e estados' },
+      { href: '/gastos-parlamentares', rotulo: 'Gastos parlamentares', curto: 'Gastos parl.', nota: 'a cota de cada parlamentar' },
+    ],
+  },
   { href: '/candidatos-2026', rotulo: 'Eleições 2026' },
   // 17/10/2026 (decisão do Jordy): Entenda vira grupo, como Pra você, Parlamentares e Decisões:
   // abre as subpáginas para o usuário escolher. "Quem é quem" mantém o endereço antigo /entenda
