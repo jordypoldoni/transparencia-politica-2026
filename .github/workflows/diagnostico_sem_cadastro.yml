@@ -1,0 +1,31 @@
+# diagnostico_perfil_colunas.yml: quem está no arquivo da cota e não casa com agentes_politicos. (21/10/2026)
+# SÓ LEITURA, não usa banco. O resultado sai como anotações da execução. Manual.
+name: Diagnostico sem cadastro da Camara
+
+on:
+  workflow_dispatch:
+    inputs:
+      ano:
+        description: 'Ano (ex.: 2026)'
+        required: true
+        default: '2026'
+
+permissions:
+  contents: read
+
+jobs:
+  diagnostico:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --ignore-scripts
+      - name: Ler o arquivo anual
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          ANO: ${{ github.event.inputs.ano }}
+        run: node coletores/diagnostico_sem_cadastro.js "$ANO"
