@@ -72,11 +72,15 @@ create unique index idx_radar_gastos_base_id_ano on public.radar_gastos_base usi
 grant select on public.radar_gastos_base to anon, authenticated, service_role;
 
 -- O refresh diário que os coletores já chamam passa a atualizar as duas views.
+-- ATENÇÃO: manter o statement_timeout de 300s (coletores/migracao_refresh_radar_timeout.sql). O refresh das duas
+-- views leva cerca de 32 s + 25 s e o limite da API é 8 s; sem isso o rpc falha em silêncio (aviso amarelo no Actions).
+-- Na primeira versão desta migração o ajuste foi perdido por engano e corrigido no mesmo dia.
 create or replace function public.refresh_radar_gastos()
 returns void
 language plpgsql
 security definer
 set search_path = public, pg_temp
+set statement_timeout = '300s'
 as $$
 begin
   refresh materialized view concurrently radar_gastos;

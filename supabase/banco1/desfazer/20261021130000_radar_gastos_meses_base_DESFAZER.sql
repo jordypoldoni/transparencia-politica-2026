@@ -5,6 +5,7 @@ returns void
 language plpgsql
 security definer
 set search_path = public, pg_temp
+set statement_timeout = '300s'
 as $$
 begin
   refresh materialized view concurrently radar_gastos;
