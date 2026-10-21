@@ -284,13 +284,22 @@ export default function App({ Component, pageProps }) {
         .radar-valor { flex-shrink: 0; text-align: right; }
         .radar-valor .rv-total { display: block; }
         .radar-valor .rv-total + span { white-space: nowrap; }
-        /* Paginacao (components/Paginacao.jsx), 28/09/2026: sempre numa linha so, juntos no centro. */
-        .paginacao { display: flex; align-items: center; justify-content: center; gap: 14px; flex-wrap: nowrap; }
-        .paginacao-botao { min-width: 124px; padding: 12px 20px; }
+        /* Paginacao (components/Paginacao.jsx), 21/10/2026: uma linha so. Esquerda: "Mostrando X a Y de Z"; centro: botoes em texto dourado com seta e a pagina. */
+        .paginacao-linha { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; column-gap: 16px; }
+        .paginacao-detalhe { margin: 0; font-size: 0.8rem; text-align: left; }
+        .paginacao { display: flex; align-items: center; justify-content: center; gap: 18px; flex-wrap: nowrap; }
+        .paginacao-botao { display: inline-flex; align-items: center; gap: 6px; padding: 10px 6px; border: none; background: transparent; box-shadow: none; font-family: inherit; font-size: 0.92rem; font-weight: 700; color: #A85B00; cursor: pointer; white-space: nowrap; }
+        .paginacao-botao:hover:not(:disabled) { text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 2px; }
+        .paginacao-botao:focus-visible { outline: none; box-shadow: 0 0 0 2.5px #FF8A00; border-radius: 8px; }
+        .paginacao-botao:disabled { opacity: 0.35; cursor: default; }
         .paginacao-info { font-size: 0.85rem; font-weight: 600; text-align: center; white-space: nowrap; }
+        @media (max-width: 720px) {
+          .paginacao-linha { grid-template-columns: 1fr; row-gap: 6px; }
+          .paginacao-linha > span { display: none; }
+          .paginacao-detalhe { order: 2; text-align: center; }
+        }
         @media (max-width: 520px) {
-          .paginacao { gap: 10px; }
-          .paginacao-botao { min-width: 0; flex: 1 1 0; max-width: 150px; padding: 12px 14px; }
+          .paginacao { gap: 8px; justify-content: space-between; }
           .paginacao-info { line-height: 1.25; }
           .pg-rotulo { display: block; font-size: 0.72rem; font-weight: 600; }
         }
