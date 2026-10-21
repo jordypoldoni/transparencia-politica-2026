@@ -158,6 +158,7 @@ function Comparacao({ casa, linhas, filtros, setFiltro, ano }) {
                       {ehAssembleia || l.pct == null ? reais(l.media) : `${l.pct}% do teto`}
                       <small>{ehAssembleia || l.pct == null ? `em ${l.meses} ${l.meses === 1 ? 'mês' : 'meses'}` : `${reais(l.media)} por mês, ${l.meses} ${l.meses === 1 ? 'mês' : 'meses'}`}</small>
                       {d.total != null && <small>{reais(d.total)} no ano</small>}
+                      {l.teto != null && <small>teto de {reais(l.teto)} por mês</small>}
                     </span>
                   </Link>
                 </li>
