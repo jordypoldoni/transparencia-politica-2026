@@ -159,6 +159,23 @@ async function main() {
   }
 
   if (DRY) {
+    // Quanto uma carga real mexeria (21/10/2026): quem não tem nenhuma linha no ano entra por inteiro (cresce o
+    // banco); quem tem impressão digital diferente seria apagado e regravado (risco de inchar a tabela).
+    const { data: resumoSim } = await supabase.rpc('resumo_despesas_por_agente', { p_ano: ANO, p_casa: 'Câmara' });
+    const dig = new Map();
+    for (const r of resumoSim || []) dig.set(r.agente_id, `${r.n}|${r.centavos}|${r.ultima_emissao || ''}`);
+    const nPorAg = new Map((resumoSim || []).map((r) => [r.agente_id, Number(r.n)]));
+    let novosAg = 0, novosLin = 0, difAg = 0, difLin = 0, difAntes = 0, igAg = 0;
+    for (const [agenteId, lote] of porAgente) {
+      if (!dig.has(agenteId)) { novosAg++; novosLin += lote.length; continue; }
+      const centavos = lote.reduce((t, l) => t + Math.round((Number(l.valor_liquido) || 0) * 100), 0);
+      const ultima = lote.reduce((m, l) => (l.data_emissao && l.data_emissao > m ? l.data_emissao : m), '');
+      if (dig.get(agenteId) === `${lote.length}|${centavos}|${ultima}`) { igAg++; continue; }
+      difAg++; difLin += lote.length; difAntes += nPorAg.get(agenteId) || 0;
+    }
+    const msg = `ano ${ANO}: ${novosAg} deputados novos (${novosLin} linhas a inserir) · ${difAg} com impressão diferente (${difLin} linhas no arquivo, ${difAntes} hoje no banco, seriam regravados) · ${igAg} iguais`;
+    console.log(`\n🔎 ${msg}`);
+    if (process.env.GITHUB_ACTIONS) console.log(`::notice title=simulacao gastos Camara::${msg}`);
     console.log('\n✅ Simulação encerrada. Nada foi gravado. Rode sem --dry-run para valer.');
     return;
   }
