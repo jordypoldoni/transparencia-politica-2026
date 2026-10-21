@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   chaveDaCasa, linhasDaCasa, comparacaoJusta, usoPorEstado, mesAberto, serieMensal, porTipo,
-  divulgacaoMensal, passagensPorAno, anosDisponiveis, partidosDe,
+  divulgacaoMensal, passagensPorAno, anosDisponiveis, partidosDe, resumoRecursosSenado,
 } from '../src/lib/gastosParlamentares.js';
 import { TETO_CEAP } from '../src/lib/cotas.js';
 
@@ -111,4 +111,16 @@ test('divulgacaoMensal e serieMensal', () => {
 test('anosDisponiveis e partidosDe', () => {
   assert.deepEqual(anosDisponiveis(agreg, 'Câmara'), [2026, 2025]);
   assert.deepEqual(partidosDe(linhasDaCasa([dep('A', 'SP', 1, 1, { partido_atual: 'ZZ' }), dep('B', 'SP', 1, 1, { partido_atual: 'AA' })], 'camara')), ['AA', 'ZZ']);
+});
+
+test('resumoRecursosSenado: soma fora da cota, conta quem usa cada benefício e devolve null sem linhas', () => {
+  assert.equal(resumoRecursosSenado([]), null);
+  const r = resumoRecursosSenado([
+    { nao_inclusos: [{ recurso: 'Correios', valor: 10 }, { recurso: 'Diárias', valor: 0 }], beneficios: [{ beneficio: 'Auxílio-Moradia', utilizacao: 'Utilizou' }, { beneficio: 'Imóvel Funcional', utilizacao: 'Não utilizou' }] },
+    { nao_inclusos: [{ recurso: 'Correios', valor: 5 }, { recurso: 'Diárias', valor: 20 }], beneficios: [{ beneficio: 'Auxílio-Moradia', utilizacao: 'Não utilizou' }, { beneficio: 'Imóvel Funcional', utilizacao: 'Utilizou' }] },
+  ]);
+  assert.equal(r.n, 2);
+  assert.deepEqual(r.itens.map((x) => [x.recurso, x.valor, x.usam]), [['Diárias', 20, 1], ['Correios', 15, 2]]);
+  assert.equal(r.total, 35);
+  assert.deepEqual(r.beneficios, [{ beneficio: 'Auxílio-Moradia', usam: 1, n: 2 }, { beneficio: 'Imóvel Funcional', usam: 1, n: 2 }]);
 });

@@ -20,7 +20,7 @@ import { NOMES_UF, CEAP_FONTE, CEAPS_FONTE, ATO_MESA_DIVULGACAO } from '../src/l
 import { grafo, organizacao, site, migalhas, pagina as paginaLd } from '../src/lib/dadosEstruturados';
 import {
   CASAS, MINIMOS, MINIMO_PADRAO, linhasDaCasa, comparacaoJusta, partidosDe, ufsDe, usoPorEstado,
-  serieMensal, porTipo, ehDivulgacao, divulgacaoMensal, passagensPorAno, anosDisponiveis, chaveDaCasa,
+  serieMensal, porTipo, ehDivulgacao, divulgacaoMensal, passagensPorAno, resumoRecursosSenado, anosDisponiveis, chaveDaCasa,
 } from '../src/lib/gastosParlamentares';
 
 // PÁGINA NOVA (21/10/2026, pedido do Jordy, item 6): a análise dos gastos dos parlamentares num lugar só.
@@ -323,6 +323,37 @@ function Passagens({ agreg, casa, anoAtual }) {
   );
 }
 
+// Senado: o que fica fora da cota e os benefícios (21/10/2026). Só fato e fonte: sem posição, sem nota.
+function ForaDaCota({ recursos, ano }) {
+  const r = useMemo(() => resumoRecursosSenado(recursos), [recursos]);
+  if (!r || r.itens.every((x) => x.valor === 0)) return null;
+  const max = r.itens[0].valor || 1;
+  return (
+    <section className="gp-cartao" aria-labelledby="gp-fora">
+      <p className="gp-sobre">Fora da cota e benefícios</p>
+      <h2 className="gp-h2" id="gp-fora">O que o Senado paga além da cota, {ano}</h2>
+      <p className="gp-sub">Total de {r.n} senadores: {mi(r.total)}. Esses valores não entram na média nem no uso do teto acima. Os nomes são os que o Senado usa.</p>
+      <ul className="gp-lista">
+        {r.itens.map((x) => (
+          <li key={x.recurso} className="gp-linha gp-linha-tipo">
+            <span style={{ fontSize: '0.88rem', overflowWrap: 'anywhere' }}>{x.recurso}<small style={{ display: 'block', color: t.cor.cinza }}>{x.usam} de {r.n} senadores</small></span>
+            <Trilho pct={(x.valor / max) * 100} cor={t.cor.verde} />
+            <span className="gp-num">{milhares(x.valor)}</span>
+          </li>
+        ))}
+      </ul>
+      {r.beneficios.length > 0 && (
+        <div className="gp-faixa">
+          {r.beneficios.map((b) => (
+            <p key={b.beneficio}><strong>{b.beneficio}:</strong> {b.usam} de {b.n} senadores utilizam.</p>
+          ))}
+        </div>
+      )}
+      <p className="gp-sub" style={{ margin: '8px 0 0' }}>Fonte: <a href="https://adm.senado.gov.br/adm-dadosabertos" target="_blank" rel="noopener noreferrer" style={{ color: t.cor.ouroTexto, fontWeight: 600 }}>dados abertos do Senado (recursos utilizados)</a>.</p>
+    </section>
+  );
+}
+
 function ComoLemos({ casa }) {
   const [aberto, setAberto] = useState(false);
   const p = { margin: '8px 0 0', fontSize: '0.86rem', lineHeight: 1.55 };
@@ -348,7 +379,7 @@ function ComoLemos({ casa }) {
   );
 }
 
-function PaginaGastos({ casaChave, ano, anosDaCasa, radar, agreg, ufInicial, canonical }) {
+function PaginaGastos({ casaChave, ano, anosDaCasa, radar, agreg, recursos, ufInicial, canonical }) {
   const router = useRouter();
   const casa = CASAS.find((c) => c.chave === casaChave) || CASAS[0];
   const linhas = useMemo(() => linhasDaCasa(radar, casa.chave), [radar, casa.chave]);
@@ -433,6 +464,7 @@ function PaginaGastos({ casaChave, ano, anosDaCasa, radar, agreg, ufInicial, can
         )}
         {casa.casaAgregada && <OndeVai agreg={agreg} casa={casa} ano={ano} />}
         {casa.casaAgregada && <Passagens agreg={agreg} casa={casa} anoAtual={ano} />}
+        {casa.chave === 'senado' && <ForaDaCota recursos={recursos} ano={ano} />}
         <ComoLemos casa={casa} />
 
         <p style={{ marginTop: '24px' }}><ReportarErro assunto="Página Gastos parlamentares" /></p>
@@ -453,7 +485,7 @@ export async function getServerSideProps({ query, req }) {
   const anosDaCasa = [...new Set(Object.entries(anosPorCasaRadar).filter(([c]) => chaveDaCasa(c) === casaChave).flatMap(([, a]) => a))].sort((a, b) => b - a);
   const anoPedido = parseInt(query.ano, 10);
   const ano = anosDaCasa.includes(anoPedido) ? anoPedido : (anosDaCasa[0] || 2026);
-  const [radarTudo, agreg] = await Promise.all([ServicoAPI.getRadarCompleto(ano), ServicoAPI.getGastosAgregados()]);
+  const [radarTudo, agreg, recursos] = await Promise.all([ServicoAPI.getRadarCompleto(ano), ServicoAPI.getGastosAgregados(), casaChave === 'senado' ? ServicoAPI.getRecursosSenado(ano) : Promise.resolve([])]);
   // Só a casa pedida vai para o navegador, e só os campos que a tela usa (o payload cheio passava de 190 kB; sem foto, que a lista não mostra).
   const radar = linhasDaCasa(radarTudo, casaChave).map(({ d }) => ({
     id: d.id, slug: d.slug, nome_urna: d.nome_urna, partido_atual: d.partido_atual, uf_sede: d.uf_sede,
@@ -468,5 +500,5 @@ export async function getServerSideProps({ query, req }) {
   const ufInicial = UF_VALIDA.test(ufUrl) ? ufUrl : (casaChave === 'assembleias' ? ufAssembleia : '');
   const proto = req.headers['x-forwarded-proto'] || 'http';
   const canonical = `${proto}://${req.headers.host}/gastos-parlamentares`;
-  return { props: { casaChave, ano, anosDaCasa, radar: JSON.parse(JSON.stringify(radar)), agreg: JSON.parse(JSON.stringify(agregCasa)), ufInicial, canonical } };
+  return { props: { casaChave, ano, anosDaCasa, radar: JSON.parse(JSON.stringify(radar)), agreg: JSON.parse(JSON.stringify(agregCasa)), recursos: JSON.parse(JSON.stringify(recursos)), ufInicial, canonical } };
 }

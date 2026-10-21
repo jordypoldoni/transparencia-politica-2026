@@ -685,6 +685,15 @@ const ServicoAPI = {
         );
     },
 
+    // Senado: gastos fora da cota e benefícios de todos os senadores de um ano (81 linhas; página /gastos-parlamentares).
+    getRecursosSenado: async (ano) => {
+        const { data, error } = await supabase.from('senado_recursos')
+            .select('nao_inclusos, beneficios')
+            .eq('ano', ano);
+        if (error) { console.error('getRecursosSenado:', error.message); return []; }
+        return data || [];
+    },
+
     // Ranking de gastos dos deputados de um estado (página /estado/[uf])
     getRadarPorEstado: async (uf, ano = 2026) => {
         const { data, error } = await supabase

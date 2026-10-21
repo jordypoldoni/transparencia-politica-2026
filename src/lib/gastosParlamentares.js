@@ -180,3 +180,34 @@ export function passagensPorAno(agreg, casa, anos) {
 export function anosDisponiveis(agreg, casa) {
   return [...new Set((agreg || []).filter((r) => r.casa === casa).map((r) => Number(r.ano)))].sort((a, b) => b - a);
 }
+
+// Senado: o que fica FORA da cota e os benefícios, somados dos senadores de um ano (tabela senado_recursos).
+// Sem posição e sem ranking. Devolve null quando não há linha (a seção some). Valores como a fonte traz.
+export function resumoRecursosSenado(linhas) {
+  const rows = Array.isArray(linhas) ? linhas : [];
+  if (rows.length === 0) return null;
+  const itens = new Map();
+  const bens = new Map();
+  for (const r of rows) {
+    for (const x of Array.isArray(r.nao_inclusos) ? r.nao_inclusos : []) {
+      const v = Number(x.valor) || 0;
+      const it = itens.get(x.recurso) || { recurso: x.recurso, valor: 0, usam: 0 };
+      it.valor += v;
+      if (v > 0) it.usam += 1;
+      itens.set(x.recurso, it);
+    }
+    for (const b of Array.isArray(r.beneficios) ? r.beneficios : []) {
+      const it = bens.get(b.beneficio) || { beneficio: b.beneficio, usam: 0, n: 0 };
+      it.n += 1;
+      if (/^utilizou/i.test(String(b.utilizacao || '').trim())) it.usam += 1;
+      bens.set(b.beneficio, it);
+    }
+  }
+  const lista = [...itens.values()].sort((a, b) => b.valor - a.valor);
+  return {
+    n: rows.length,
+    itens: lista,
+    total: lista.reduce((t, x) => t + x.valor, 0),
+    beneficios: [...bens.values()],
+  };
+}
