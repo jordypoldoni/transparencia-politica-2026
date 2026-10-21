@@ -42,3 +42,23 @@ nota(`preenchimento das colunas não guardadas (${ANO})`, [
 ]);
 nota('amostra de glosa', amostraGlosa.length ? amostraGlosa : ['(nenhuma)']);
 nota('tipos que trazem trecho', [...tiposComTrecho.entries()].sort((a, b) => b[1] - a[1]).map(([t, n]) => `${t}: ${n}`));
+
+// Detalhe das restituições e das linhas em que documento - glosa não bate com o líquido. (21/10/2026, 2ª medição)
+const rest = [];
+const disc = { comRest: 0, liqNeg: 0, docZero: 0, outras: 0, somaOutras: 0 };
+const amostraOutras = [];
+for (const l of dados) {
+  const doc = paraNumero(f(l, 'vlrDocumento')), gl = paraNumero(f(l, 'vlrGlosa')), liq = paraNumero(f(l, 'vlrLiquido')), r = paraNumero(f(l, 'vlrRestituicao'));
+  if (r !== 0) rest.push(`cad ${f(l, 'ideCadastro')} mês ${f(l, 'numMes')} | ${f(l, 'txtDescricao').slice(0, 28)} | doc ${doc} glosa ${gl} liq ${liq} rest ${r} | pagto ${f(l, 'datPagamentoRestituicao').slice(0, 10)} | ressarc ${f(l, 'numRessarcimento')}`);
+  if (Math.abs(doc - gl - liq) > 0.01) {
+    if (r !== 0) disc.comRest++;
+    else if (liq < 0) disc.liqNeg++;
+    else if (doc === 0) disc.docZero++;
+    else { disc.outras++; disc.somaOutras += doc - gl - liq; if (amostraOutras.length < 6) amostraOutras.push(`${f(l, 'txtDescricao').slice(0, 28)} doc ${doc} glosa ${gl} liq ${liq}`); }
+  }
+}
+nota('restituições (todas as linhas)', rest.length ? rest.slice(0, 30) : ['(nenhuma)']);
+nota('linhas em que doc - glosa difere do líquido: por que', [
+  `com restituição: ${disc.comRest}`, `líquido negativo: ${disc.liqNeg}`, `documento zero: ${disc.docZero}`,
+  `outras: ${disc.outras} (diferença somada ${disc.somaOutras.toFixed(2)})`, ...amostraOutras,
+]);
