@@ -35,6 +35,7 @@ const args = process.argv.slice(2);
 const ANO = parseInt(args.find((a) => /^\d{4}$/.test(a)) || process.env.ANO || '2026', 10);
 const DRY = args.includes('--dry-run');
 const FORCAR = args.includes('--forcar');
+const SO_NOVOS = args.includes('--so-novos'); // insere só quem não tem NENHUMA linha no ano; não apaga nem regrava ninguém
 const TUDO = args.includes('--tudo'); // regrava todos, mesmo sem mudança (uso raro)
 const MAX_LINHAS = parseInt(process.env.MAX_LINHAS || '400000', 10);
 
@@ -123,6 +124,16 @@ async function main() {
     });
   }
 
+  // MODO SÓ-NOVOS (21/10/2026): anos antigos (2024, 2025) vieram de outro coletor e a impressão digital de
+  // TODO deputado difere do arquivo atual; o modo normal apagaria e regravaria ~200 mil linhas por ano e
+  // incharia a tabela. Aqui só entra quem não tem nenhuma linha no ano (suplente cadastrado depois).
+  if (SO_NOVOS) {
+    const { data: tem, error: errTem } = await supabase.rpc('resumo_despesas_por_agente', { p_ano: ANO, p_casa: 'Câmara' });
+    if (errTem) throw new Error(`modo só-novos precisa de resumo_despesas_por_agente: ${errTem.message}`);
+    const jaTem = new Set((tem || []).map((r) => r.agente_id));
+    for (const id of [...porAgente.keys()]) if (jaTem.has(id)) porAgente.delete(id);
+    console.log(`🆕 modo só-novos: ${porAgente.size} deputados sem linha no ano; os outros ficam intocados.`);
+  }
   const aproveitaveis = [...porAgente.values()].reduce((s, v) => s + v.length, 0);
   const { count: existentes } = await supabase.from('despesas_parlamentares')
     .select('*', { count: 'exact', head: true }).eq('ano', ANO).eq('casa_legislativa', 'Câmara');
@@ -143,11 +154,15 @@ async function main() {
   }
 
   // ── TRAVA 1 ──
+  if (aproveitaveis === 0 && SO_NOVOS) {
+    console.log('✅ Nada novo para inserir neste ano.');
+    return;
+  }
   if (aproveitaveis === 0) {
     abortar('zero lançamentos aproveitáveis no arquivo anual. Fonte anômala. NADA foi apagado.');
   }
   // ── TRAVA 2 ──
-  if ((existentes ?? 0) > 0 && aproveitaveis < (existentes ?? 0) * 0.8 && !FORCAR) {
+  if (!SO_NOVOS && (existentes ?? 0) > 0 && aproveitaveis < (existentes ?? 0) * 0.8 && !FORCAR) {
     abortar(
       `a carga nova (${aproveitaveis}) é menor que 80% do que já existe (${existentes}). ` +
       'Arquivo possivelmente truncado na origem. Confira antes. Para insistir: --forcar.'

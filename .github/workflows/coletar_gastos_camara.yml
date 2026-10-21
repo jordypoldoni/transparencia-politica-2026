@@ -18,6 +18,10 @@ on:
         description: 'dry = true so confere, nao grava'
         required: true
         default: 'true'
+      so_novos:
+        description: 'so_novos = true insere so quem nao tem linha no ano (use em 2024 e 2025)'
+        required: false
+        default: 'false'
 
 permissions:
   contents: read
@@ -44,9 +48,9 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           ANO: ${{ github.event.inputs.ano }}
           DRY: ${{ github.event.inputs.dry }}
+          SO_NOVOS: ${{ github.event.inputs.so_novos }}
         run: |
-          if [ "$DRY" = "true" ]; then
-            node coletores/coletor_gastos_arquivo.js "$ANO" --dry-run
-          else
-            node coletores/coletor_gastos_arquivo.js "$ANO"
-          fi
+          ARGS=""
+          if [ "$SO_NOVOS" = "true" ]; then ARGS="--so-novos"; fi
+          if [ "$DRY" = "true" ]; then ARGS="$ARGS --dry-run"; fi
+          node coletores/coletor_gastos_arquivo.js "$ANO" $ARGS
