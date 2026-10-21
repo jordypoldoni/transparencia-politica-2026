@@ -1220,6 +1220,21 @@ const ServicoAPI = {
         const anoGasto = porAno[anoFechado] ? anoFechado : (anosComDado[0] ?? null);
         const bloco = anoGasto ? porAno[anoGasto] : null;
         const mesesComGasto = bloco ? bloco.meses.size : 0;
+        // Média justa (21/10/2026): meses em exercício e já fechados, a mesma da página /gastos-parlamentares e do
+        // perfil. Sem a linha na view (fora do ar ou sem histórico), cai para a conta antiga abaixo.
+        let baseJustaFicha = null;
+        if (anoGasto) {
+            try {
+                const { data: bs, error: eb } = await supabase
+                    .from('radar_gastos_base')
+                    .select('meses_base, total_base')
+                    .eq('id', agenteId)
+                    .eq('ano', anoGasto)
+                    .maybeSingle();
+                if (eb) throw eb;
+                baseJustaFicha = bs || null;
+            } catch (e) { console.error('radar_gastos_base (ficha):', e.message); }
+        }
 
         // Votos: contagem simples por tipo. Só Sim/Não entram no que a tela mostra como
         // "votações em que registrou voto" — ausência não é voto.
@@ -1259,9 +1274,11 @@ const ServicoAPI = {
                 ano: anoGasto,
                 total: bloco.total,
                 n_notas: bloco.n,
-                // media mensal sobre os meses QUE TIVERAM gasto, nao sobre 12: nao inventa
-                // meses de mandato que talvez nao existam.
-                media_mensal: mesesComGasto ? bloco.total / mesesComGasto : null,
+                // media mensal pela base justa (meses em exercício e fechados) quando existe; sem ela, sobre os
+                // meses QUE TIVERAM gasto, nao sobre 12: nao inventa meses de mandato que talvez nao existam.
+                media_mensal: baseJustaFicha
+                    ? (Number(baseJustaFicha.meses_base) > 0 ? Number(baseJustaFicha.total_base) / Number(baseJustaFicha.meses_base) : null)
+                    : (mesesComGasto ? bloco.total / mesesComGasto : null),
                 meses_com_gasto: mesesComGasto,
             } : null,
             votos: { total: totalVotos, sim: contaVoto('sim'), nao: contaVoto('não') },
