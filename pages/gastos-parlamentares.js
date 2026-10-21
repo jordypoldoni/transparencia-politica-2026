@@ -43,8 +43,10 @@ const CSS = `
   .gp-h2 { font-family: ${t.fonte.titulo}; font-weight: 600; font-size: clamp(1.25rem, 3vw, 1.5rem); line-height: 1.2; margin: 0 0 6px; }
   .gp-sub { color: ${t.cor.cinza}; font-size: 0.9rem; line-height: 1.5; margin: 0 0 16px; max-width: 70ch; }
   .gp-controles { display: flex; flex-wrap: wrap; gap: 10px 12px; align-items: center; margin: 0 0 20px; }
-  .gp-ctl { flex: 0 1 200px; min-width: 150px; }
-  .gp-ctl-uf { flex: 0 1 260px; min-width: 200px; }
+  .gp-ctl { flex: 1 1 180px; min-width: 180px; max-width: 240px; }
+  .gp-ctl-uf { flex: 1.3 1 215px; min-width: 205px; max-width: 300px; }
+  .gp-controles .so-computador { flex: 0 0 auto; }
+  @media (min-width: 1240px) { .gp-controles { flex-wrap: nowrap; } .gp-ctl, .gp-ctl-uf { flex-basis: 0; min-width: 0; } }
   .gp-lista { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; }
   .gp-linha { display: grid; grid-template-columns: minmax(180px, 320px) 1fr 170px; align-items: center; column-gap: 16px; padding: 8px 10px; border-radius: ${t.raio.sm}; text-decoration: none; color: inherit; transition: background .15s; }
   a.gp-linha:hover, button.gp-linha:hover { background: ${t.cor.papelQuente}; }
