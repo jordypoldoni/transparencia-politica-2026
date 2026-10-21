@@ -87,11 +87,15 @@ async function main() {
   // buscarTudo, sempre: o PostgREST corta em 1.000 linhas sem erro e sem aviso, e aqui um
   // corte silencioso apresentaria deputados JÁ CADASTRADOS como faltantes.
   const jaTem = await buscarTudo(
-    () => supabase.from('agentes_politicos').select('id_externo_api, slug, fonte_api'),
+    () => supabase.from('agentes_politicos').select('id_externo_api, slug, fonte_api, cargo_atual'),
     'faltantes.jaCadastrados',
   );
-  const daCamara = jaTem.filter((a) => /camara/i.test(a.fonte_api || ''));
-  const cadastrados = new Set(daCamara.map((a) => String(a.id_externo_api || '').trim()).filter(Boolean));
+  // 21/10/2026: a mesma regra do coletor de gastos (por cargo OU fonte, comparando só a parte numérica do id).
+  // Antes: fonte_api com "camara" e id igual por inteiro. Quem veio de outra sincronização (Carlos Gomes, RS:
+  // fonte 'Sincronização Lote 2026', id 'CAMARA-BR-178962') seria tratado como faltante e cadastrado em duplicidade.
+  // Só agentes da Câmara entram na comparação: ids numéricos do Senado e da Câmara podem coincidir.
+  const daCamara = jaTem.filter((a) => /camara/i.test(a.fonte_api || '') || /deputado.*federal/i.test(a.cargo_atual || ''));
+  const cadastrados = new Set(daCamara.map((a) => (String(a.id_externo_api || '').trim().match(/(\d+)$/) || [])[1]).filter(Boolean));
   // Os slugs de TODAS as casas, não só da Câmara: o endereço do perfil é único no site inteiro.
   const slugsUsados = new Set(jaTem.map((a) => a.slug).filter(Boolean));
   console.log(`👥 ${cadastrados.size} deputados da Câmara já cadastrados (${slugsUsados.size} perfis no total).`);
@@ -177,6 +181,13 @@ async function main() {
       console.log(`   ${l.nome_urna} (${l.partido_atual || 's/p'} · ${l.uf_sede || '??'}) · nasc. ${l.data_nascimento || 'n/d'} · id ${l.id_externo_api}`);
     }
     console.log(`\n${linhasNovas.length} cadastros (simulação, nada gravado).`);
+    // O resultado sai como anotação para poder ser lido pela API do Actions (os logs do job não são legíveis).
+    const ord = [...linhasNovas].sort((a, b) => a.nome_urna.localeCompare(b.nome_urna));
+    const nota = (t, l) => console.log(`::notice title=${t}::${l.join('%0A')}`);
+    nota('faltantes: resumo', [`${cadastrados.size} da Câmara já cadastrados`, `${faltantes.size} sem cadastro`, `${linhasNovas.length} entrariam`, `${semFicha.length} sem ficha no arquivo de deputados`, ...semFicha.slice(0, 20).map((n) => `sem ficha: ${n}`)]);
+    for (let i = 0; i < ord.length; i += 30) {
+      nota(`faltantes: quem entraria (${i + 1} a ${Math.min(i + 30, ord.length)})`, ord.slice(i, i + 30).map((l) => `${l.nome_urna} (${l.partido_atual || 's/p'}-${l.uf_sede || '??'}) id ${l.id_externo_api} nasc ${l.data_nascimento || 'n/d'} slug ${l.slug}`));
+    }
     console.log('Depois de gravar, rode o coletor de gastos para os lançamentos deles entrarem:');
     console.log(`   node coletores/coletor_gastos_arquivo.js ${ANO}`);
     return;

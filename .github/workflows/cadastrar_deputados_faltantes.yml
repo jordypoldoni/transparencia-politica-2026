@@ -1,0 +1,41 @@
+# cadastrar_deputados_faltantes.yml: cadastra em agentes_politicos quem aparece na cota da Câmara e não está no cadastro. (21/10/2026)
+# simular = true só lista quem entraria, não grava. Manual.
+name: Cadastrar deputados faltantes da Camara
+
+on:
+  workflow_dispatch:
+    inputs:
+      ano:
+        description: 'Ano da cota (ex.: 2026)'
+        required: true
+        default: '2026'
+      simular:
+        description: 'simular = true so lista, nao grava'
+        required: true
+        default: 'true'
+
+permissions:
+  contents: read
+
+jobs:
+  faltantes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --ignore-scripts
+      - name: Cadastrar faltantes
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          ANO: ${{ github.event.inputs.ano }}
+          SIMULAR: ${{ github.event.inputs.simular }}
+        run: |
+          if [ "$SIMULAR" = "true" ]; then
+            node coletores/coletor_deputados_faltantes.js "$ANO" --simular
+          else
+            node coletores/coletor_deputados_faltantes.js "$ANO"
+          fi
