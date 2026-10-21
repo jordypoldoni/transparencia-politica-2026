@@ -631,6 +631,44 @@ const ServicoAPI = {
         return data || [];
     },
 
+    // Página /gastos-parlamentares (21/10/2026): TODOS os parlamentares de um ano (Câmara, Senado e Assembleias)
+    // com a base justa (meses em exercício e fechados) já junta. Duas leituras paginadas (a radar_gastos passa de
+    // mil linhas em alguns anos) e junção por id em memória. Sem a base (view fora do ar), cai na conta antiga.
+    getRadarCompleto: async (ano = 2026) => {
+        const linhas = await buscarTudo(
+            () => supabase.from('radar_gastos')
+                .select('id, slug, nome_urna, partido_atual, uf_sede, casa, total, meses_com_gasto')
+                .eq('ano', ano).order('id'),
+            'getRadarCompleto',
+        );
+        try {
+            const base = await buscarTudo(
+                () => supabase.from('radar_gastos_base')
+                    .select('id, meses_base, total_base, total_divulgacao_base')
+                    .eq('ano', ano).order('id'),
+                'getRadarCompleto (base)',
+            );
+            const porId = new Map((base || []).map((b) => [b.id, b]));
+            for (const l of linhas) {
+                const b = porId.get(l.id);
+                if (b) { l.meses_base = b.meses_base; l.total_base = b.total_base; l.total_divulgacao_base = b.total_divulgacao_base; }
+            }
+        } catch (e) { console.error('getRadarCompleto (base):', e.message); }
+        return linhas;
+    },
+
+    // Gasto por casa, ano, mês e tipo (view gastos_agregados, ~850 linhas). Alimenta os gráficos de
+    // /gastos-parlamentares sem somar 600 mil lançamentos a cada acesso. Atualizada junto da radar_gastos
+    // pela função refresh_radar_gastos().
+    getGastosAgregados: async () => {
+        return buscarTudo(
+            () => supabase.from('gastos_agregados')
+                .select('casa, ano, mes, tipo_despesa, categoria_normalizada, total')
+                .order('casa').order('ano').order('mes').order('tipo_despesa').order('categoria_normalizada'),
+            'getGastosAgregados',
+        );
+    },
+
     // Ranking de gastos dos deputados de um estado (página /estado/[uf])
     getRadarPorEstado: async (uf, ano = 2026) => {
         const { data, error } = await supabase
