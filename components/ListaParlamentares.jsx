@@ -1,4 +1,6 @@
-// Tela das listas de parlamentares, usada por /deputados e /senadores.
+// Tela das listas de parlamentares, usada por /deputados, /deputados-estaduais e /senadores.
+// 21/10/2026 (decisão do Jordy): o ranking de gastos saiu daqui. As listas são só busca (nome, partido e estado);
+// a comparação dos gastos mora em /gastos-parlamentares.
 //
 // POR QUE ISTO NAO MORA MAIS NUM ARQUIVO DE PAGINA (12/09/2026):
 // eu tinha deixado o componente em pages/deputados.js e exportado dali tambem o carregador
@@ -23,45 +25,11 @@ import { ASSEMBLEIAS, assembleiaDe, assembleiaPorUf, verbaDe } from '../src/lib/
 import { deUf } from '../src/lib/ufs';
 import { useRouter } from 'next/router';
 import { Pino } from './icones';
-import SeloAtualizacao from './SeloAtualizacao';
-import { fonteGastosEstadual } from '../src/lib/selosFonte';
-
-// Botao sobre o painel escuro: indigo sobre indigo nao aparece, entao segue a regra das
-// Diretrizes para cartao escuro (superficie branca translucida, texto branco, pilula, sem
-// borda, sombra que cresce no hover).
-const pilulaNoEscuro = {
-  alignItems: 'center', justifyContent: 'center', flexShrink: 0, lineHeight: 1,
-  padding: '10px 16px', minHeight: '40px', fontSize: '0.84rem', fontWeight: 700, fontFamily: t.fonte.corpo,
-  borderRadius: t.raio.pill, border: 'none', cursor: 'pointer',
-  background: 'rgba(255,255,255,0.14)', color: '#fff',
-  boxShadow: t.sombra.botao, transition: 'box-shadow .15s ease, transform .15s ease',
-};
-const realceNoEscuro = (e, ligar) => {
-  e.currentTarget.style.boxShadow = ligar ? t.sombra.botaoHover : t.sombra.botao;
-  e.currentTarget.style.transform = ligar ? 'translateY(-1px)' : 'none';
-};
 
 // Foto do eleito de 2022 no próprio TSE, montada pelo id (o payload não traz o endereço).
 const fotoEleito2022 = (d) => `https://divulgacandcontas.tse.jus.br/divulga/rest/arquivo/img/2040602022/${String(d.id).replace(/^tse-/, '')}/${d.uf}`;
 
-const brl = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(v || 0);
-
-
-// Qual ano o ranking abre por padrão.
-// Não é simplesmente o mais recente: quando a fonte para de publicar no meio do caminho, o ano
-// corrente fica com um punhado de parlamentares e o ranking vira uma lista de um nome só (foi o
-// que aconteceu com a Câmara em 2026, cuja API de despesas está devolvendo vazio desde agosto).
-// Regra: se o ano mais recente tem menos de um terço dos parlamentares do ano anterior, ele é
-// tratado como incompleto e o padrão cai para o ano anterior. O ano continua escolhível, e a
-// tela diz por que o padrão não é ele.
-function anoPadrao(anos, totais) {
-  if (!anos.length) return null;
-  const [maisNovo, anterior] = anos;
-  if (anterior && (totais[maisNovo] || 0) * 3 < (totais[anterior] || 0)) return anterior;
-  return maisNovo;
-}
-
-export default function ListaParlamentares({ deputados, qInicial, ufInicial, casaInicial, radares = {}, canonical = null, falhaNaLista = false }) {
+export default function ListaParlamentares({ deputados, qInicial, ufInicial, casaInicial, canonical = null, falhaNaLista = false }) {
   const [busca, setBusca] = useState(qInicial || '');
   const [uf, setUf] = useState(ufInicial || '');
   const [casa, setCasa] = useState(casaInicial || 'Câmara');
@@ -70,18 +38,11 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
   // "Senadores" é uma página própria; "Deputados" agrupa federais + estaduais.
   const assembleia = assembleiaDe(casa); // null quando a aba é federal, Senado ou Estaduais
   // PÁGINA ÚNICA DOS ESTADUAIS (29/09/2026, decisão do Jordy): 'Estaduais' junta todas as
-  // Assembleias numa lista só, igual à dos federais. O ranking é do Brasil inteiro e o campo de
-  // estado, abaixo do ranking, filtra só a lista de parlamentares.
+  // Assembleias numa lista só, igual à dos federais. O campo de estado, no alto, filtra a lista.
   const ehEstaduais = casa === 'Estaduais';
   // `soEleito`: eleitos de 2022 nos estados sem cadastro da Assembleia (vêm do TSE, sem perfil).
   const daCasa = (d) => (ehEstaduais ? (String(d.casa || '').startsWith('Assembleia') || d.soEleito) : d.casa === casa);
-  // RANKING DO ESTADO ESCOLHIDO (30/09/2026, decisão do Jordy). Por um dia o ranking dos estaduais
-  // juntou todas as assembleias e mostrou só SP: o RS tinha 6 meses publicados contra 8 de SP, e
-  // cada assembleia tem teto de verba próprio, então o total comparava coisas diferentes. Agora o
-  // campo de estado, no alto da página, escolhe de qual assembleia é o ranking E a lista.
   const assembleiaDoUf = ehEstaduais ? assembleiaPorUf(uf) : null;
-  const casaRanking = ehEstaduais ? (assembleiaDoUf?.casa || null) : casa;
-  const assembleiaRanking = ehEstaduais ? assembleiaDoUf : assembleia;
   const router = useRouter();
   const escolherUf = (v) => {
     setUf(v || '');
@@ -90,95 +51,6 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
   };
   // A ressalva de cada assembleia: só a do estado escolhido; sem estado, todas.
   const assembleiasDaTela = ehEstaduais ? (uf ? [assembleiaDoUf].filter(Boolean) : ASSEMBLEIAS) : (assembleia ? [assembleia] : []);
-  // Ranking de gastos da casa ativa (troca junto com as abas e com a rota Senadores).
-  const radarCasa = (casaRanking && radares[casaRanking]) || { anos: [], porAno: {}, porAnoMenores: {}, totais: {} };
-  const [ano, setAno] = useState(null);
-  // 'maiores' | 'menores'. Mostrar so quem mais gastou sugere que gastar mais e a historia;
-  // as duas pontas dao ao leitor a referencia para julgar sozinho, que e a regra do site.
-  const [sentido, setSentido] = useState('maiores');
-  // Ranking recolhivel no celular (28/09/2026, pedido do Jordy): abre aberto, como sempre, e
-  // ganha "Recolher" para quem ja leu e quer chegar na lista de parlamentares sem rolar dez
-  // cartoes. No computador o botao nao aparece (CSS .radar-alternar em _app.js).
-  const [radarAberto, setRadarAberto] = useState(true);
-  const alternarRadar = (rolar) => {
-    setRadarAberto((v) => !v);
-    // Recolher pelo botao do FIM da lista: sem rolar, a pessoa fica olhando o que estava
-    // abaixo do painel e perde o lugar. Leva o topo do painel para a tela.
-    if (rolar && typeof document !== 'undefined') {
-      requestAnimationFrame(() => document.getElementById('painel-radar')?.scrollIntoView({ block: 'start', behavior: 'smooth' }));
-    }
-  };
-  // Ao trocar de aba, volta para o ano padrão daquela casa: cada fonte publica até um ponto
-  // diferente, então fixar o ano entre abas mostraria ranking vazio sem motivo aparente.
-  useEffect(() => { setAno(anoPadrao(radarCasa.anos, radarCasa.totais)); }, [casaRanking]); // eslint-disable-line react-hooks/exhaustive-deps
-  const padraoDaCasa = anoPadrao(radarCasa.anos, radarCasa.totais);
-  const anoAtivo = ano ?? padraoDaCasa;
-  const radar = anoAtivo
-    ? (sentido === 'menores' ? (radarCasa.porAnoMenores?.[anoAtivo] || []) : (radarCasa.porAno[anoAtivo] || []))
-    : [];
-  const anoMaisNovo = radarCasa.anos[0] ?? null;
-  // 🐛 CORRIGIDO EM 12/09/2026. A conta era `anoAtivo !== anoMaisNovo`, ou seja: bastava o
-  // leitor CLICAR num ano mais antigo para a tela anunciar que o ano corrente estava
-  // incompleto e que o ano clicado "e o padrao". Nas abas estaduais, onde 2026 esta mais
-  // completo que 2025, isso fazia a tela afirmar duas coisas falsas ao mesmo tempo.
-  // O aviso e sobre A FONTE estar incompleta, e quem sabe disso e o anoPadrao(): se ele
-  // recuou para tras do ano mais novo, o ano mais novo esta incompleto - independente do
-  // que o leitor escolheu depois.
-  const anoIncompleto = (padraoDaCasa && anoMaisNovo && padraoDaCasa !== anoMaisNovo) ? anoMaisNovo : null;
-
-  // ---- Expansao do ranking, de 10 em 10 -------------------------------------------------
-  // Os 10 primeiros vem no payload da pagina; o resto e buscado em /api/radar quando o
-  // leitor pede. Medido em 12/09/2026: embutir 50 por casa/ano/ponta levaria esta pagina de
-  // 248 kB para ~502 kB para todo mundo, inclusive quem nunca clica no botao.
-  // ATENCAO A ORDEM DAS DECLARACOES: tudo aqui depende de `radar`, `anoAtivo`, `sentido` e
-  // `casa`, que sao definidos acima. Usar antes e TDZ, e TDZ so quebra no build de producao
-  // (mesma armadilha ja documentada neste arquivo para `dadosAno`/`secoes`).
-  const PASSO = 10;
-  const [extras, setExtras] = useState([]);
-  const [carregandoMais, setCarregandoMais] = useState(false);
-  const [erroMais, setErroMais] = useState(false);
-  // Trocar de casa, de ano ou de ponta abre outro ranking: o que ja foi expandido nao vale.
-  useEffect(() => { setExtras([]); setErroMais(false); }, [casaRanking, anoAtivo, sentido]);
-
-  const linhas = useMemo(() => {
-    // Empate no valor pode fazer a mesma pessoa vir nas duas consultas (a do payload e a da
-    // rota). Deduplicar por id e mais barato que tentar garantir ordenacao identica nas duas.
-    const vistos = new Set();
-    return [...radar, ...extras].filter((l) => {
-      if (vistos.has(l.id)) return false;
-      vistos.add(l.id);
-      return true;
-    });
-  }, [radar, extras]);
-
-  const totalDaCasa = radarCasa.totais[anoAtivo] || 0;
-  const faltam = Math.max(0, totalDaCasa - linhas.length);
-
-  const verMais = async () => {
-    setCarregandoMais(true);
-    setErroMais(false);
-    try {
-      // O offset conta o que ja foi BUSCADO, nao o que esta visivel. Se um empate fez a rota
-      // devolver uma linha repetida, `linhas` tem menos itens que o buscado, e usar o tamanho
-      // dela como offset puliria uma pessoa do ranking.
-      const buscados = radar.length + extras.length;
-      const q = new URLSearchParams({ casa: casaRanking, ano: String(anoAtivo), sentido, offset: String(buscados), limite: String(PASSO) });
-      const r = await fetch(`/api/radar?${q.toString()}`);
-      if (!r.ok) throw new Error(`resposta ${r.status}`);
-      const dados = await r.json();
-      setExtras((atuais) => [...atuais, ...(dados.linhas || [])]);
-    } catch (e) {
-      console.error('ver mais do ranking:', e.message);
-      setErroMais(true);
-    } finally {
-      setCarregandoMais(false);
-    }
-  };
-
-  // Assembleia sem gasto coletado não mostra ranking: sairia um bloco vazio parecendo erro.
-  // O aviso da aba explica o que existe e o que não existe ali.
-  const mostraRanking = Boolean(casaRanking) && (!assembleiaRanking || assembleiaRanking.gastos) && radarCasa.anos.length > 0;
-
   const ufs = useMemo(
     () => Array.from(new Set(deputados.filter(daCasa).map((d) => d.uf).filter(Boolean))).sort(),
     [deputados, casa]
@@ -217,25 +89,6 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
   // Botao do site: indigo com texto ambar, SEM borda, com sombra. Os proprios tokens ja
   // pedem isso ("diferenciacao sem bordas coloridas"); a versao anterior deste botao usava
   // uma linha cinza de contorno e destoava do resto.
-  // SEGMENTED CONTROL do cartao escuro. As opcoes vivem dentro de um trilho (.trilho no
-  // _app.js): o trilho e a superficie recuada, e a opcao ativa e a pastilha que sobe, com
-  // sombra. E por isso que aqui a opcao inativa NAO leva sombra propria: a regra "todo botao
-  // com sombra" vale para botao solto; dentro de um trilho, sombra em tudo vira ruido e some
-  // com a nocao de qual esta escolhida.
-  const segmento = (ativo) => ({
-    padding: '8px 16px', fontSize: '0.85rem', fontWeight: 700, fontFamily: t.fonte.corpo,
-    borderRadius: t.raio.pill, cursor: 'pointer', border: 'none', lineHeight: 1,
-    background: ativo ? t.cor.ouro : 'transparent',
-    color: ativo ? t.cor.verde : 'rgba(255,255,255,0.82)',
-    boxShadow: ativo ? '0 2px 8px rgba(0,0,0,0.30)' : 'none',
-    transition: 'background .15s ease, color .15s ease, box-shadow .15s ease',
-  });
-  const realceSegmento = (e, dentro, ativo) => {
-    if (ativo) return; // a pastilha acesa nao muda no hover: ela ja e o estado atual
-    e.currentTarget.style.background = dentro ? 'rgba(255,255,255,0.12)' : 'transparent';
-    e.currentTarget.style.color = dentro ? '#fff' : 'rgba(255,255,255,0.82)';
-  };
-
   // Estas duas telas nao tinham <title> nem descricao nenhuma ate 12/09/2026: o Google
   // indexava a lista principal do site sem titulo.
   const tituloPagina = casa === 'Senado' ? 'Senadores: quanto cada um gastou e como votou | Lume'
@@ -258,7 +111,7 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
         <meta property="og:description" content={descPagina} />
       </Head>
       {/* TÍTULO E ESTADO NA MESMA FAIXA (30/09/2026, pedido do Jordy): nos estaduais o campo de
-          estado fica no alto, à direita, e manda no ranking e na lista. No celular desce para
+          estado fica no alto, à direita, e filtra a lista. No celular desce para
           baixo do título. */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px 24px', flexWrap: 'wrap', margin: '0 0 16px' }}>
       <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.8rem,4vw,2.6rem)', margin: 0 }}>
@@ -285,16 +138,14 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
       </div>
 
       {/* 29/09/2026: sem alternância no topo. Federais, estaduais e senadores são páginas
-          próprias no menu Parlamentares, e nos estaduais o estado é escolhido abaixo do ranking,
-          no mesmo campo dos federais (o campo de estado no topo durou um deploy: o Jordy preferiu
-          o ranking do país inteiro, igual ao dos federais). */}
+          próprias no menu Parlamentares. */}
 
       {/* A pagina carrega duas consultas em paralelo. Quando a da lista falha, dizer
           "0 deputados federais" e afirmar um numero falso: a verdade e que nao carregou. */}
       {falhaNaLista ? (
         <p style={{ color: t.cor.cinza, margin: '0 0 24px' }}>
-          Não foi possível carregar a lista de parlamentares agora. O ranking abaixo continua
-          valendo. Recarregue a página para tentar de novo.
+          Não foi possível carregar a lista de parlamentares agora. Recarregue a página
+          para tentar de novo.
         </p>
       ) : (
       <p style={{ color: t.cor.cinza, margin: '0 0 24px' }}>
@@ -336,209 +187,6 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
         </p>
       ))}
 
-      {/* Sem estado escolhido não há ranking: cada assembleia tem teto e calendário próprios. */}
-      {ehEstaduais && !uf && (
-        <p style={{ margin: '0 0 24px', color: t.cor.cinza, fontSize: '0.92rem' }}>
-          Escolha o estado no alto da página para ver o ranking de gastos da assembleia.
-        </p>
-      )}
-
-      {/* Ranking de gastos — quem mais usou a verba (casa ativa) */}
-      {mostraRanking && (
-      <section style={{ margin: '0 0 28px' }}>
-        <div id="painel-radar" className={radarAberto ? 'painel-radar' : 'painel-radar radar-recolhido'} style={{ background: t.cor.verde, borderRadius: t.raio.lg, padding: 'clamp(20px,3.5vw,32px)', color: '#fff', scrollMarginTop: '84px' }}>
-          {/* CABECALHO DO PAINEL: identidade a esquerda, numero do conjunto a direita.
-              O contador ("508 com gasto registrado") vivia solto ao lado das pilulas de ano,
-              competindo com elas: ele NAO e controle, e um dado sobre o conjunto, entao subiu
-              para o cabecalho, que e onde se le "o que estou vendo". */}
-          <div className="painel-topo">
-            <div style={{ minWidth: 0 }}>
-              {/* Titulo neutro: ele dizia "Quem mais usou a verba publica" e o botao aceso
-                  repetia a mesma frase 40px abaixo. Quem responde a pergunta e o controle. */}
-              <div className="radar-titulo">
-                <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.3rem,2.6vw,1.7rem)', margin: 0 }}>
-                  Uso da verba pública
-                </h2>
-                <button type="button" className="radar-alternar" aria-expanded={radarAberto} aria-controls="radar-corpo"
-                  onClick={() => alternarRadar(false)} style={pilulaNoEscuro}
-                  onMouseOver={(e) => realceNoEscuro(e, true)} onMouseOut={(e) => realceNoEscuro(e, false)}>
-                  {radarAberto ? 'Recolher' : 'Mostrar ranking'}
-                </button>
-              </div>
-              <p className="radar-descricao" style={{ color: 'rgba(255,255,255,0.78)', maxWidth: '58ch', lineHeight: 1.55, margin: 0, fontSize: '0.92rem' }}>
-                {(() => {
-                  const verbo = sentido === 'menores' ? 'menos usaram' : 'mais usaram';
-                  if (casa === 'Senado') return `Senadores que ${verbo} a cota (CEAPS) em ${anoAtivo}.`;
-                  if (assembleiaRanking) return `Deputados estaduais ${deUf(assembleiaRanking.uf)} que ${verbo} a ${verbaDe(assembleiaRanking)} em ${anoAtivo}.`;
-                  return `Deputados federais que ${verbo} a cota parlamentar em ${anoAtivo}.`;
-                })()}{' '}
-                {assembleiaRanking && !assembleiaRanking.gastoDetalhado
-                  ? 'Toque para ver em quê: o valor é o somado das categorias que a assembleia publica a cada mês, sem detalhe de nota.'
-                  : <>Toque para ver <em>em quê</em>.</>}{' '}
-                Fonte: {casa === 'Senado' ? 'Senado Federal' : assembleiaRanking ? assembleiaRanking.sigla : 'Câmara dos Deputados'}.
-              </p>
-              {(() => {
-                const sel = casa === 'Senado' ? { fonte: 'gastos_senado' } : assembleiaRanking ? fonteGastosEstadual(assembleiaRanking.uf) : { fonte: 'gastos_camara' };
-                return sel ? <SeloAtualizacao {...sel} escuro style={{ margin: '10px 0 0' }} /> : null;
-              })()}
-            </div>
-            {radarCasa.totais[anoAtivo] > 0 && (
-              <p className="painel-meta">
-                <strong>{radarCasa.totais[anoAtivo]}</strong>
-                com gasto registrado em {anoAtivo}
-              </p>
-            )}
-          </div>
-
-          <div id="radar-corpo" className="radar-corpo">
-          {/* BARRA DE CONTROLES: os dois seletores como segmented control, cada um no seu
-              trilho, lado a lado e juntos a esquerda.
-              Versao anterior (12/09/2026, rejeitada): as pilulas soltas nas duas pontas de uma
-              linha de 1080px. Empurrar para as pontas nao "aproveita o espaco", abre um buraco
-              no meio e faz dois controles irmaos parecerem coisas sem relacao. O trilho tambem
-              resolve outra coisa: pilula solta com sombra nao diz que as opcoes sao
-              excludentes; um trilho com a opcao acesa deslizando dentro, sim. */}
-          <div className="barra-controles">
-            <div className="trilho" role="group" aria-label="Sentido do ranking">
-              {[{ k: 'maiores', r: 'Quem mais usou' }, { k: 'menores', r: 'Quem menos usou' }].map(({ k, r }) => (
-                <button key={k} onClick={() => setSentido(k)} aria-pressed={sentido === k}
-                  style={segmento(sentido === k)}
-                  onMouseOver={(e) => realceSegmento(e, true, sentido === k)}
-                  onMouseOut={(e) => realceSegmento(e, false, sentido === k)}>
-                  {r}
-                </button>
-              ))}
-            </div>
-            {radarCasa.anos.length > 1 && (
-              <div className="trilho" role="group" aria-label="Ano do ranking">
-                {radarCasa.anos.map((a) => (
-                  <button key={a} onClick={() => setAno(a)} aria-pressed={a === anoAtivo}
-                    style={segmento(a === anoAtivo)}
-                    onMouseOver={(e) => realceSegmento(e, true, a === anoAtivo)}
-                    onMouseOut={(e) => realceSegmento(e, false, a === anoAtivo)}>
-                    {a}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* NOTA DO ANO: pertence ao seletor de ano, entao fica colada nele, em uma linha
-              so. Ela e a de leitura da lista estavam juntas numa grade de duas colunas: uma
-              acabava flutuando no canto direito com um vao no meio, e as duas competiam entre
-              si sendo sobre coisas diferentes. */}
-          {anoIncompleto && (
-            <p className="nota-ano">
-              <strong>{anoIncompleto} ainda está incompleto:</strong> a fonte publicou{' '}
-              {radarCasa.totais[anoIncompleto]}{' '}
-              {radarCasa.totais[anoIncompleto] === 1 ? 'parlamentar' : 'parlamentares'}, contra{' '}
-              {radarCasa.totais[padraoDaCasa]} em {padraoDaCasa}.
-              {/* So diz "por isso o padrao e X" quando o leitor esta MESMO no padrao: se ele
-                  trocou de ano na mao, a frase seria falsa. */}
-              {anoAtivo === padraoDaCasa ? ` Por isso o padrão é ${padraoDaCasa}.` : ''}
-            </p>
-          )}
-
-          {/* FAIXA DE LEITURA: nao e um aviso solto, e a instrucao de como ler as linhas que
-              vem logo abaixo. Por isso atravessa a largura inteira e fica grudada no topo da
-              lista, com superficie propria: o leitor entende que ela governa o que vem em
-              seguida, e o espaco do cartao e usado de ponta a ponta em vez de meia coluna. */}
-          {sentido === 'menores' && linhas.length > 0 && (
-            <p className="faixa-leitura">
-              <strong>Gasto baixo nem sempre quer dizer economia.</strong> Pode ser quem assumiu no
-              meio do ano, ficou licenciado, ou ainda não teve a prestação de contas publicada. Por
-              isso cada linha mostra em quantos dos 12 meses houve lançamento, e a situação de quem
-              não está em exercício.
-            </p>
-          )}
-
-          {linhas.length === 0 ? (
-            <p style={{ color: 'rgba(255,255,255,0.55)', margin: 0, fontSize: '0.95rem' }}>
-              Dados temporariamente indisponíveis. Tente recarregar a página.
-            </p>
-          ) : (
-            <ol style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: '8px' }}>
-              {linhas.map((p, i) => (
-                <li key={p.id}>
-                  {/* .radar-linha (CSS em _app.js): no celular a linha quebra e o valor desce
-                      para a linha de baixo. Sem isso o valor era empurrado para fora da tela. */}
-                  <Link href={hrefPerfil(p)} className="radar-linha" style={{ textDecoration: 'none', color: 'inherit', background: 'rgba(255,255,255,0.07)', borderRadius: '6px' }}>
-                    <span className="radar-pos" style={{ fontFamily: t.fonte.titulo, fontWeight: 600, color: t.cor.ouro, fontSize: '1.2rem' }}>{i + 1}</span>
-                    <span className="radar-foto"><Avatar nome={p.nome_urna} foto={p.foto_url} size={44} /></span>
-                    <span className="radar-nome" style={{ flex: 1, minWidth: 0 }}>
-                      <span style={{ display: 'block', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.nome_urna}</span>
-                      <span style={{ fontSize: '0.82rem', opacity: 0.75 }}>
-                        {p.partido_atual} · {p.uf_sede} · em {p.n_notas} {(assembleiaDe(p.casa) || assembleia) && !(assembleiaDe(p.casa) || assembleia).gastoDetalhado ? 'lançamentos' : 'notas'}
-                        {/* Meses com lançamento distingue quem gastou pouco de quem esteve pouco
-                            tempo em exercício. Só aparece na ponta de baixo, que é onde a dúvida
-                            existe; no topo seria ruído. */}
-                        {sentido === 'menores' && p.meses_com_gasto ? ` · ${p.meses_com_gasto} de 12 meses` : ''}
-                      </span>
-                      {/* "Situação atual" com todas as letras, de propósito: o cadastro guarda o
-                          estado de HOJE, não o daquele ano. Escrever só "Licença" faria o leitor
-                          atribuir a um ano passado uma condição que pode ser recente. */}
-                      {sentido === 'menores' && p.situacao_atual && p.situacao_atual !== 'Exercício' && (
-                        <span style={{ display: 'block', fontSize: '0.78rem', marginTop: '2px', color: t.cor.ouro }}>
-                          Situação atual: {p.situacao_atual}
-                          {p.condicao_eleitoral && p.condicao_eleitoral !== 'Titular' ? ` (${p.condicao_eleitoral})` : ''}
-                        </span>
-                      )}
-                    </span>
-                    {/* Alinhamento e quebra do valor ficam no CSS (.radar-valor): estilo escrito
-                        aqui vence o CSS, e foi assim que o valor foi parar na ponta direita do
-                        cartao no celular, em diagonal com o nome (corrigido 28/09/2026). */}
-                    <span className="radar-valor">
-                      <span className="rv-total" style={{ fontWeight: 800, fontSize: '1.05rem' }}>{brl(p.total)}</span>
-                      <span style={{ fontSize: '0.72rem', opacity: 0.7 }}>ver no quê<Seta direcao="direita" size={12} emTexto /></span>
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ol>
-          )}
-
-          {/* Expansao de 10 em 10. O numero dito aqui e sempre `linhas.length`, nunca um 10
-              fixo: a tela nao pode dizer "10" mostrando 30. */}
-          {linhas.length > 0 && (
-            <div style={{ marginTop: '14px', display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
-              {faltam > 0 && (
-                <button
-                  onClick={verMais}
-                  disabled={carregandoMais}
-                  style={{
-                    padding: '9px 20px', fontSize: '0.88rem', fontWeight: 700, fontFamily: t.fonte.corpo,
-                    borderRadius: t.raio.pill, cursor: carregandoMais ? 'default' : 'pointer',
-                    border: 'none', background: t.cor.ouro, color: t.cor.verde,
-                    opacity: carregandoMais ? 0.6 : 1,
-                    boxShadow: '0 2px 10px rgba(0,0,0,0.22)',
-                    transition: 'box-shadow .15s ease, transform .15s ease',
-                  }}
-                  onMouseOver={(e) => { if (!carregandoMais) { e.currentTarget.style.boxShadow = '0 8px 20px rgba(0,0,0,0.26)'; e.currentTarget.style.transform = 'translateY(-1px)'; } }}
-                  onMouseOut={(e) => { e.currentTarget.style.boxShadow = '0 2px 10px rgba(0,0,0,0.22)'; e.currentTarget.style.transform = 'none'; }}
-                >
-                  {carregandoMais ? 'Carregando…' : faltam <= PASSO ? `Ver os últimos ${faltam}` : `Ver mais ${PASSO}`}
-                </button>
-              )}
-              <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)' }}>
-                Mostrando {linhas.length} de {totalDaCasa}.
-              </span>
-              {erroMais && (
-                <span style={{ fontSize: '0.8rem', color: t.cor.ouro }}>
-                  Não deu para buscar agora. Tente de novo.
-                </span>
-              )}
-              <button type="button" className="radar-alternar" aria-expanded={radarAberto} aria-controls="radar-corpo"
-                onClick={() => alternarRadar(true)} style={pilulaNoEscuro}
-                onMouseOver={(e) => realceNoEscuro(e, true)} onMouseOut={(e) => realceNoEscuro(e, false)}>
-                Recolher ranking
-              </button>
-            </div>
-          )}
-          </div>
-        </div>
-      </section>
-      )}
-
       {/* Busca + estado */}
       <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '28px', position: 'sticky', top: '70px', zIndex: 10 }}>
         <div style={{ flex: 1, minWidth: '240px' }}>
@@ -566,8 +214,7 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
           {uf ? (
             <>
               <strong>Por que os cartões não abrem.</strong> O site ainda não tem o cadastro da Assembleia
-              Legislativa {deUf(uf)}, então a lista mostra quem foi eleito em 2022, segundo o TSE, e não há
-              ranking de gastos. Os cartões não abrem uma ficha porque ainda não coletamos os gastos nem os
+              Legislativa {deUf(uf)}, então a lista mostra quem foi eleito em 2022, segundo o TSE. Os cartões não abrem uma ficha porque ainda não coletamos os gastos nem os
               votos dessa Assembleia. Quem foi eleito pode não estar no cargo hoje (suplentes que assumiram
               não aparecem), e o partido mostrado é o da eleição.
             </>
