@@ -153,6 +153,11 @@ async function main() {
       partido_atual: f.partido,
       uf_sede: f.uf,
       cargo_atual: 'Deputado Federal',
+      // 21/10/2026: entram COM A TRAVA em_exercicio = false (aqui significa "exercício ainda não confirmado"), porque o
+      // arquivo da cota não diz se a pessoa está na Câmara hoje (muitos são suplentes que devolveram a cadeira ou
+      // titulares que saíram). false esconde das listas e da afinidade, mas o perfil existe e os gastos entram nos totais.
+      // Depois do coletor de exercício (histórico da Câmara), quem estiver em exercício hoje ganha em_exercicio = null.
+      em_exercicio: false,
       casa_legislativa: 'Câmara',
       // Contém "camara", que é como casaDoPerfil() decide a casa. Aqui vai a fonte de verdade,
       // e não o JSON de paginação da API que ficou gravado nos registros antigos.
