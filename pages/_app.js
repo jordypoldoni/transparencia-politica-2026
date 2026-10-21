@@ -241,10 +241,6 @@ export default function App({ Component, pageProps }) {
            Empurrar um para cada ponta da linha abria um buraco de 500px no meio e fazia dois
            controles irmaos parecerem coisas sem relacao. */
         .barra-controles { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin: 0 0 14px; }
-        .trilho { display: inline-flex; align-items: center; gap: 4px; padding: 4px; border-radius: 999px; background: rgba(255,255,255,0.09); }
-        /* No dedo, o alvo precisa ser maior que no mouse. 32px passa no minimo da WCAG 2.2
-           (24px), mas erra facil; em tela de toque a pastilha cresce. */
-        @media (pointer: coarse) { .trilho button { min-height: 40px; } }
 
         /* O que a assembleia publica e o que nao publica (/deputados/[uf]). Sem container:
            texto corrido, na mesma margem do paragrafo de cima. A margem negativa aproxima os
@@ -277,13 +273,6 @@ export default function App({ Component, pageProps }) {
         @media (min-width: 760px) { .grade-parl { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
         @media (min-width: 980px) { .grade-parl { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
         @media (min-width: 1120px) { .grade-parl { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
-        .radar-linha { display: flex; align-items: center; gap: 14px; min-width: 0; padding: 12px 16px; }
-        .radar-nome { min-width: 0; }
-        .radar-pos { flex-shrink: 0; width: 26px; }
-        .radar-foto { flex-shrink: 0; display: flex; }
-        .radar-valor { flex-shrink: 0; text-align: right; }
-        .radar-valor .rv-total { display: block; }
-        .radar-valor .rv-total + span { white-space: nowrap; }
         /* Paginacao (components/Paginacao.jsx), 21/10/2026: uma linha so. Esquerda: "Mostrando X a Y de Z"; centro: botoes em texto dourado com seta e a pagina. */
         .paginacao-linha { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; column-gap: 16px; }
         .paginacao-detalhe { margin: 0; font-size: 0.8rem; text-align: left; }
@@ -317,17 +306,6 @@ export default function App({ Component, pageProps }) {
           .pedido-fatos { grid-area: fatos; grid-template-columns: minmax(0, 1fr); align-content: start; align-self: start; position: sticky; top: 88px; margin: 0; }
         }
         @media (pointer: coarse) { .acao-texto { min-height: 40px; } }
-        .radar-titulo { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 6px; }
-        /* Recolher o ranking e so do celular: no computador o painel nao empurra a lista. */
-        .radar-alternar { display: none; }
-        @media (max-width: 760px) {
-          .radar-alternar { display: inline-flex; }
-          .radar-recolhido .radar-corpo,
-          .radar-recolhido .radar-descricao,
-          .radar-recolhido .painel-meta { display: none; }
-          .radar-recolhido .painel-topo,
-          .radar-recolhido .radar-titulo { margin-bottom: 0; }
-        }
         .etapa-linha { display: flex; align-items: center; gap: 10px; min-width: 0; }
 
         /* Linha de voto do parlamentar (aba "Como votou"). No desktop e uma linha so: voto,
@@ -362,20 +340,6 @@ export default function App({ Component, pageProps }) {
         }
 
         @media (max-width: 520px) {
-          /* Cartao do ranking no celular (28/09/2026): uma coluna de texto so, alinhada ao
-             nome: nome, partido e notas, e o valor com "ver no que" na mesma linha. Antes o
-             valor descia sozinho e ia para a ponta direita, em diagonal com o nome, e
-             "ver no que" ocupava uma linha a mais. A posicao encosta na foto. */
-          .radar-linha {
-            display: grid; grid-template-columns: auto 44px minmax(0, 1fr);
-            grid-template-areas: "pos foto nome" "pos foto valor";
-            column-gap: 12px; row-gap: 4px; align-items: center; padding: 12px 14px;
-          }
-          .radar-pos { grid-area: pos; width: auto; min-width: 2ch; text-align: right; margin-right: -4px; }
-          .radar-foto { grid-area: foto; }
-          .radar-nome { grid-area: nome; }
-          .radar-valor { grid-area: valor; text-align: left; display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px 10px; }
-          .radar-valor .rv-total { display: inline; }
           .etapa-linha { flex-wrap: wrap; gap: 6px 10px; }
           .etapa-linha .etapa-papel { min-width: 0; }
         }
