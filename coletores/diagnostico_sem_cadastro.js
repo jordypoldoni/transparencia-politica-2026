@@ -9,12 +9,18 @@ const nota = (t, l) => console.log(`::notice title=${t}::${l.join('%0A')}`);
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
 const norm = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z ]/g, ' ').replace(/\s+/g, ' ').trim();
 
-const { data: agentes, error } = await supabase.from('agentes_politicos').select('id, id_externo_api, nome_urna, nome_civil, cargo_atual, fonte_api, situacao_atual').limit(5000);
-if (error) throw error;
+const agentes = [];
+for (let de = 0; ; de += 1000) {
+  const { data, error } = await supabase.from('agentes_politicos')
+    .select('id, id_externo_api, nome_urna, nome_completo, cargo_atual, situacao, em_exercicio').order('id').range(de, de + 999);
+  if (error) throw error;
+  agentes.push(...data);
+  if (data.length < 1000) break;
+}
 const porNum = new Map(); const porNome = new Map();
 for (const a of agentes) {
   const m = String(a.id_externo_api || '').trim().match(/(\d+)$/); if (m) porNum.set(m[1], a);
-  for (const n of [a.nome_urna, a.nome_civil]) if (n) porNome.set(norm(n), a);
+  for (const n of [a.nome_urna, a.nome_completo]) if (n) porNome.set(norm(n), a);
 }
 const linhas = lerCsv(await baixarCotaAnual(ANO));
 const cab = linhas.shift().map((c) => c.trim());
@@ -38,5 +44,5 @@ nota(`sem cadastro em ${ANO}: resumo`, [
   `sem cadastro: ${g.size} pessoas, ${nSem} linhas, R$ ${totalSem.toFixed(2)} (${(100 * totalSem / total).toFixed(2)}% do valor)`,
   `linhas de liderança/órgão (sem ideCadastro, fora de escopo): ${lideranca}`,
 ]);
-const achou = (x) => { const a = porNome.get(norm(x.nome)); return a ? `EXISTE no banco como "${a.nome_urna}" id_externo=${a.id_externo_api} cargo=${a.cargo_atual}` : 'não achei por nome'; };
+const achou = (x) => { const a = porNome.get(norm(x.nome)); return a ? `EXISTE no banco como "${a.nome_urna}" id_externo=${a.id_externo_api} cargo=${a.cargo_atual} situacao=${a.situacao} em_exercicio=${a.em_exercicio}` : 'não achei por nome'; };
 nota(`sem cadastro em ${ANO}: pessoas`, lista.slice(0, 60).map(([cad, x]) => `${cad} ${x.nome} (${x.partido}-${x.uf}) ${x.n} linhas R$ ${x.v.toFixed(2)} meses ${[...x.meses].sort().join(',')} | ${achou(x)}`));
