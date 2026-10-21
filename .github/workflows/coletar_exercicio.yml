@@ -1,0 +1,53 @@
+# coletar_exercicio.yml: períodos de exercício dos parlamentares (Câmara e Senado). (21/10/2026)
+#
+# POR QUE EXISTE: o ranking de verba justo divide o gasto pelos meses em exercício de cada um.
+# O dado muda devagar (posse, licença, retorno), então roda uma vez por semana, às segundas.
+# Também roda sob demanda: informe 'dry = true' para só conferir, sem gravar.
+name: Coletar exercício parlamentar
+
+on:
+  schedule:
+    # Segunda, 07:43 Brasília (10:43 UTC). Minuto quebrado de propósito, como nos outros agendamentos.
+    - cron: '43 10 * * 1'
+  workflow_dispatch:
+    inputs:
+      casa:
+        description: 'Quem coletar: todos, camara ou senado'
+        required: true
+        default: 'todos'
+      dry:
+        description: 'dry = true so confere, nao grava'
+        required: true
+        default: 'false'
+
+permissions:
+  contents: read
+
+jobs:
+  exercicio:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Instalar dependências
+        run: npm install --ignore-scripts
+
+      - name: Rodar coletor de exercício
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          CASA: ${{ github.event.inputs.casa }}
+          DRY: ${{ github.event.inputs.dry }}
+        run: |
+          ARGS=""
+          if [ "$CASA" = "camara" ]; then ARGS="camara"; fi
+          if [ "$CASA" = "senado" ]; then ARGS="senado"; fi
+          if [ "$DRY" = "true" ]; then ARGS="$ARGS --dry-run"; fi
+          node coletores/coletor_exercicio.js $ARGS
