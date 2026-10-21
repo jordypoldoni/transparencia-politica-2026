@@ -637,7 +637,7 @@ const ServicoAPI = {
     getRadarCompleto: async (ano = 2026) => {
         const linhas = await buscarTudo(
             () => supabase.from('radar_gastos')
-                .select('id, slug, nome_urna, partido_atual, uf_sede, casa, total, meses_com_gasto')
+                .select('id, slug, nome_urna, partido_atual, uf_sede, casa, total, meses_com_gasto, situacao_atual, condicao_eleitoral')
                 .eq('ano', ano).order('id'),
             'getRadarCompleto',
         );
@@ -655,6 +655,22 @@ const ServicoAPI = {
             }
         } catch (e) { console.error('getRadarCompleto (base):', e.message); }
         return linhas;
+    },
+
+    // Anos que existem na radar_gastos, por casa (a página /gastos-parlamentares só oferece anos com dado:
+    // o RS só tem 2026, o MG tem 2025 e 2026, o SP tem 2024 a 2026). Devolve { [casa]: [anos, do novo ao antigo] }.
+    getAnosDoRadar: async () => {
+        const linhas = await buscarTudo(
+            () => supabase.from('radar_gastos').select('casa, ano').order('ano').order('id'),
+            'getAnosDoRadar',
+        );
+        const mapa = {};
+        for (const l of linhas) {
+            if (!l.casa || !l.ano) continue;
+            mapa[l.casa] = mapa[l.casa] || new Set();
+            mapa[l.casa].add(Number(l.ano));
+        }
+        return Object.fromEntries(Object.entries(mapa).map(([c, a]) => [c, [...a].sort((x, y) => y - x)]));
     },
 
     // Gasto por casa, ano, mês e tipo (view gastos_agregados, ~850 linhas). Alimenta os gráficos de

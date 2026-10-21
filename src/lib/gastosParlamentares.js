@@ -60,9 +60,10 @@ export function linhasDaCasa(radar, chave) {
 }
 
 // Comparação justa. Devolve { itens, foraDoMinimo, semMedia, precisaEstado }.
+// - ordem: 'maior' (quem mais usou primeiro) ou 'menor' (quem menos usou primeiro).
 // - minMeses: quem tem menos meses contados que isso fica fora da lista (e é contado, nunca descartado em silêncio).
 // - Assembleias exigem um estado: comparar assembleias de estados diferentes não faz sentido.
-export function comparacaoJusta(linhas, chave, { uf = '', partido = '', minMeses = MINIMO_PADRAO } = {}) {
+export function comparacaoJusta(linhas, chave, { uf = '', partido = '', minMeses = MINIMO_PADRAO, ordem = 'maior' } = {}) {
   if (chave === 'assembleias' && !uf) return { itens: [], foraDoMinimo: 0, semMedia: 0, precisaEstado: true };
   let base = linhas;
   if (uf) base = base.filter((l) => l.d.uf_sede === uf);
@@ -77,7 +78,8 @@ export function comparacaoJusta(linhas, chave, { uf = '', partido = '', minMeses
     if (x == null && y == null) return String(a.d.nome_urna).localeCompare(String(b.d.nome_urna), 'pt-BR');
     if (x == null) return 1;
     if (y == null) return -1;
-    return y - x || String(a.d.nome_urna).localeCompare(String(b.d.nome_urna), 'pt-BR');
+    const dif = ordem === 'menor' ? x - y : y - x;
+    return dif || String(a.d.nome_urna).localeCompare(String(b.d.nome_urna), 'pt-BR');
   });
   return { itens, foraDoMinimo, semMedia, precisaEstado: false };
 }

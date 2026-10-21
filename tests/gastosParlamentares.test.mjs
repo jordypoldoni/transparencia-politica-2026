@@ -37,6 +37,12 @@ test('comparacaoJusta: ordena por % do teto, corta pelo mínimo de meses e conta
   assert.deepEqual(todos.itens.map((x) => x.d.nome_urna), ['Novo', 'Alto', 'Baixo']);
 });
 
+test('comparacaoJusta: ordem "menor" põe quem menos usou primeiro, com desempate por nome', () => {
+  const linhas = linhasDaCasa([dep('Alto', 'SP', 45000, 8), dep('Meio', 'SP', 20000, 8), dep('Baixo', 'SP', 5000, 8)], 'camara');
+  assert.deepEqual(comparacaoJusta(linhas, 'camara', { ordem: 'menor' }).itens.map((x) => x.d.nome_urna), ['Baixo', 'Meio', 'Alto']);
+  assert.deepEqual(comparacaoJusta(linhas, 'camara', { ordem: 'maior' }).itens.map((x) => x.d.nome_urna), ['Alto', 'Meio', 'Baixo']);
+});
+
 test('comparacaoJusta: filtros de estado e partido', () => {
   const linhas = linhasDaCasa([dep('A', 'SP', 1000, 8), dep('B', 'RS', 1000, 8, { partido_atual: 'YY' })], 'camara');
   assert.equal(comparacaoJusta(linhas, 'camara', { uf: 'RS' }).itens.length, 1);

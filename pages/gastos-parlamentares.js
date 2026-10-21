@@ -13,13 +13,14 @@ import ReportarErro from '../components/ReportarErro';
 import SeloAtualizacao from '../components/SeloAtualizacao';
 import DadosEstruturados from '../components/DadosEstruturados';
 import { hrefPerfil } from '../src/lib/casa';
+import { fonteGastosEstadual } from '../src/lib/selosFonte';
 import { reais } from '../src/lib/bancadaEstado';
 import { COOKIE_UF } from '../src/lib/perfilUsuario';
 import { NOMES_UF, CEAP_FONTE, CEAPS_FONTE, ATO_MESA_DIVULGACAO } from '../src/lib/cotas';
 import { grafo, organizacao, site, migalhas, pagina as paginaLd } from '../src/lib/dadosEstruturados';
 import {
   CASAS, MINIMOS, MINIMO_PADRAO, linhasDaCasa, comparacaoJusta, partidosDe, ufsDe, usoPorEstado,
-  serieMensal, porTipo, ehDivulgacao, divulgacaoMensal, passagensPorAno, anosDisponiveis,
+  serieMensal, porTipo, ehDivulgacao, divulgacaoMensal, passagensPorAno, anosDisponiveis, chaveDaCasa,
 } from '../src/lib/gastosParlamentares';
 
 // PÁGINA NOVA (21/10/2026, pedido do Jordy, item 6): a análise dos gastos dos parlamentares num lugar só.
@@ -123,6 +124,15 @@ function Comparacao({ casa, linhas, filtros, setFiltro, ano }) {
         <p style={{ color: t.cor.cinza, margin: 0 }}>Escolha um estado no filtro acima para comparar as Assembleias.</p>
       ) : (
         <>
+          <div style={{ margin: '0 0 12px' }}>
+            <Segmentado aria="Sentido da lista" itens={[{ chave: 'maior', rotulo: 'Quem mais usou' }, { chave: 'menor', rotulo: 'Quem menos usou' }]
+              .map((o) => ({ ...o, ativo: (filtros.ordem || 'maior') === o.chave, aoClicar: () => { setFiltro({ ordem: o.chave }); setMostrar(POR_VEZ); } }))} />
+          </div>
+          {filtros.ordem === 'menor' && r.itens.length > 0 && (
+            <div className="gp-faixa" style={{ margin: '0 0 12px' }}>
+              <p><strong>Gasto baixo nem sempre quer dizer economia.</strong> Pode ser quem assumiu no meio do ano, ficou licenciado ou ainda não teve a prestação de contas publicada. Por isso cada linha mostra os meses contados e a situação de quem não está em exercício.</p>
+            </div>
+          )}
           <p aria-live="polite" style={{ color: t.cor.cinza, fontSize: '0.84rem', margin: '0 0 10px' }}>{frase}</p>
           <ul className="gp-lista">
             {visiveis.map((l) => {
@@ -135,12 +145,19 @@ function Comparacao({ casa, linhas, filtros, setFiltro, ano }) {
                       <span style={{ minWidth: 0 }}>
                         <span style={{ display: 'block', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.nome_urna}</span>
                         <span style={{ display: 'block', fontSize: '0.78rem', color: t.cor.cinza }}>{d.partido_atual} · {d.uf_sede}</span>
+                        {d.situacao_atual && !/^exerc/i.test(d.situacao_atual) && (
+                          // "Situação atual" com todas as letras: o cadastro guarda o estado de HOJE, não o do ano escolhido.
+                          <span style={{ display: 'block', fontSize: '0.76rem', color: t.cor.ouroTexto, fontWeight: 600 }}>
+                            Situação atual: {d.situacao_atual}{d.condicao_eleitoral && d.condicao_eleitoral !== 'Titular' ? ` (${d.condicao_eleitoral})` : ''}
+                          </span>
+                        )}
                       </span>
                     </span>
                     <Trilho pct={valorBarra} />
                     <span className="gp-num">
                       {ehAssembleia || l.pct == null ? reais(l.media) : `${l.pct}% do teto`}
                       <small>{ehAssembleia || l.pct == null ? `em ${l.meses} ${l.meses === 1 ? 'mês' : 'meses'}` : `${reais(l.media)} por mês, ${l.meses} ${l.meses === 1 ? 'mês' : 'meses'}`}</small>
+                      {d.total != null && <small>{reais(d.total)} no ano</small>}
                     </span>
                   </Link>
                 </li>
@@ -329,18 +346,15 @@ function ComoLemos({ casa }) {
   );
 }
 
-function PaginaGastos({ casaChave, ano, radar, agreg, ufInicial, canonical }) {
+function PaginaGastos({ casaChave, ano, anosDaCasa, radar, agreg, ufInicial, canonical }) {
   const router = useRouter();
   const casa = CASAS.find((c) => c.chave === casaChave) || CASAS[0];
   const linhas = useMemo(() => linhasDaCasa(radar, casa.chave), [radar, casa.chave]);
   const partidos = useMemo(() => partidosDe(linhas), [linhas]);
   const ufsComDado = useMemo(() => ufsDe(linhas), [linhas]);
-  const anos = useMemo(() => {
-    const a = casa.casaAgregada ? anosDisponiveis(agreg, casa.casaAgregada) : [2026, 2025];
-    return a.length ? a : [ano];
-  }, [agreg, casa, ano]);
+  const anos = anosDaCasa && anosDaCasa.length ? anosDaCasa : [ano];
 
-  const [filtros, setFiltros] = useState({ uf: ufInicial, partido: '', minMeses: MINIMO_PADRAO });
+  const [filtros, setFiltros] = useState({ uf: ufInicial, partido: '', minMeses: MINIMO_PADRAO, ordem: 'maior' });
   const setFiltro = (parcial) => setFiltros((f) => ({ ...f, ...parcial }));
 
   const irPara = (parcial) => {
@@ -356,7 +370,9 @@ function PaginaGastos({ casaChave, ano, radar, agreg, ufInicial, canonical }) {
     paginaLd({ nome: titulo, descricao: desc, caminho: '/gastos-parlamentares', tipo: 'CollectionPage' }),
   );
   const opcoesUf = casa.chave === 'assembleias' ? OPCOES_UF.filter((o) => ufsComDado.includes(o.valor)) : OPCOES_UF;
-  const selo = casa.chave === 'camara' ? { fonte: 'gastos_camara', nome: 'Gastos da Câmara' } : casa.chave === 'senado' ? { fonte: 'gastos_senado', nome: 'Gastos do Senado' } : null;
+  const selo = casa.chave === 'camara' ? { fonte: 'gastos_camara', nome: 'Gastos da Câmara' }
+    : casa.chave === 'senado' ? { fonte: 'gastos_senado', nome: 'Gastos do Senado' }
+    : (filtros.uf && fonteGastosEstadual(filtros.uf) ? { ...fonteGastosEstadual(filtros.uf), nome: `Gastos da Assembleia (${filtros.uf})` } : null);
 
   return (
     <>
@@ -430,13 +446,17 @@ const UF_VALIDA = /^(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN
 
 export async function getServerSideProps({ query, req }) {
   const casaChave = CASAS.some((c) => c.chave === query.casa) ? query.casa : 'camara';
+  // Só oferece anos que existem para a casa (o RS só tem 2026, o MG 2025 e 2026, o SP 2024 a 2026).
+  const anosPorCasaRadar = await ServicoAPI.getAnosDoRadar();
+  const anosDaCasa = [...new Set(Object.entries(anosPorCasaRadar).filter(([c]) => chaveDaCasa(c) === casaChave).flatMap(([, a]) => a))].sort((a, b) => b - a);
   const anoPedido = parseInt(query.ano, 10);
-  const ano = [2024, 2025, 2026].includes(anoPedido) ? anoPedido : 2026;
+  const ano = anosDaCasa.includes(anoPedido) ? anoPedido : (anosDaCasa[0] || 2026);
   const [radarTudo, agreg] = await Promise.all([ServicoAPI.getRadarCompleto(ano), ServicoAPI.getGastosAgregados()]);
   // Só a casa pedida vai para o navegador, e só os campos que a tela usa (o payload cheio passava de 190 kB; sem foto, que a lista não mostra).
   const radar = linhasDaCasa(radarTudo, casaChave).map(({ d }) => ({
     id: d.id, slug: d.slug, nome_urna: d.nome_urna, partido_atual: d.partido_atual, uf_sede: d.uf_sede,
     casa: d.casa, total: d.total, meses_com_gasto: d.meses_com_gasto, meses_base: d.meses_base ?? null, total_base: d.total_base ?? null,
+    situacao_atual: d.situacao_atual ?? null, condicao_eleitoral: d.condicao_eleitoral ?? null,
   }));
   const casaAgregada = CASAS.find((c) => c.chave === casaChave).casaAgregada;
   const agregCasa = casaAgregada ? agreg.filter((r) => r.casa === casaAgregada) : [];
@@ -446,5 +466,5 @@ export async function getServerSideProps({ query, req }) {
   const ufInicial = UF_VALIDA.test(ufUrl) ? ufUrl : (casaChave === 'assembleias' ? ufAssembleia : '');
   const proto = req.headers['x-forwarded-proto'] || 'http';
   const canonical = `${proto}://${req.headers.host}/gastos-parlamentares`;
-  return { props: { casaChave, ano, radar: JSON.parse(JSON.stringify(radar)), agreg: JSON.parse(JSON.stringify(agregCasa)), ufInicial, canonical } };
+  return { props: { casaChave, ano, anosDaCasa, radar: JSON.parse(JSON.stringify(radar)), agreg: JSON.parse(JSON.stringify(agregCasa)), ufInicial, canonical } };
 }
