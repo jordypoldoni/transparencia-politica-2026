@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   chaveDaCasa, linhasDaCasa, comparacaoJusta, usoPorEstado, mesAberto, serieMensal, porTipo,
-  divulgacaoMensal, passagensPorAno, anosDisponiveis, partidosDe, resumoRecursosSenado,
+  divulgacaoMensal, passagensPorAno, anosDisponiveis, partidosDe, resumoRecursosSenado, escalaY, somaFechados,
 } from '../src/lib/gastosParlamentares.js';
 import { TETO_CEAP } from '../src/lib/cotas.js';
 
@@ -67,6 +67,8 @@ test('usoPorEstado: mediana do % por estado, só de quem tem meses suficientes',
   assert.equal(r.length, 1);
   assert.equal(r[0].n, 3);
   assert.equal(r[0].mediana, Math.round((36000 / TETO_CEAP.SP) * 100));
+  assert.equal(r[0].medianaReais, 36000);
+  assert.equal(r[0].teto, TETO_CEAP.SP);
 });
 
 test('mesAberto: só fecha 30 dias depois do fim do mês', () => {
@@ -123,4 +125,21 @@ test('resumoRecursosSenado: soma fora da cota, conta quem usa cada benefício e 
   assert.deepEqual(r.itens.map((x) => [x.recurso, x.valor, x.usam]), [['Diárias', 20, 1], ['Correios', 15, 2]]);
   assert.equal(r.total, 35);
   assert.deepEqual(r.beneficios, [{ beneficio: 'Auxílio-Moradia', usam: 1, n: 2 }, { beneficio: 'Imóvel Funcional', usam: 1, n: 2 }]);
+});
+
+test('escalaY: topo redondo acima do maior valor, com marcas de 0 ao topo', () => {
+  const e = escalaY(21.8e6, 4);
+  assert.ok(e.topo >= 21.8e6);
+  assert.equal(e.marcas[0], 0);
+  assert.equal(e.marcas[e.marcas.length - 1], e.topo);
+  assert.deepEqual(escalaY(0).marcas[0], 0);
+  assert.equal(escalaY(10, 5).topo, 10);
+});
+
+test('somaFechados: soma só meses fechados e os mesmos meses do ano anterior', () => {
+  const at = [{ total: 10, temDado: true, aberto: false }, { total: 20, temDado: true, aberto: false }, { total: 5, temDado: true, aberto: true }, { total: 0, temDado: false, aberto: false }];
+  const an = [{ total: 7, temDado: true }, { total: 8, temDado: true }, { total: 9, temDado: true }, { total: 9, temDado: true }];
+  assert.deepEqual(somaFechados(at, an), { de: 1, ate: 2, meses: 2, atual: 30, anterior: 15 });
+  assert.equal(somaFechados(at, []).anterior, null);
+  assert.equal(somaFechados([{ total: 1, temDado: true, aberto: true }], an), null);
 });

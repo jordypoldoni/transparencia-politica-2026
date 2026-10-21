@@ -94,17 +94,41 @@ export function ufsDe(linhas) {
   return [...new Set(linhas.map((l) => l.d.uf_sede).filter(Boolean))].sort();
 }
 
-// Mediana do uso do teto por estado (só quem entra na comparação). Estado sem ninguém elegível fica de fora.
+// Mediana do uso do teto por estado (só quem entra na comparação), com a mediana da média mensal em reais e o teto
+// do estado. Estado sem ninguém elegível fica de fora.
 export function usoPorEstado(linhas, { minMeses = MINIMO_PADRAO } = {}) {
   const grupos = new Map();
   for (const l of linhas) {
     if (l.pct == null || l.meses < minMeses) continue;
-    if (!grupos.has(l.d.uf_sede)) grupos.set(l.d.uf_sede, []);
-    grupos.get(l.d.uf_sede).push(l.pct);
+    if (!grupos.has(l.d.uf_sede)) grupos.set(l.d.uf_sede, { pcts: [], medias: [], teto: l.teto });
+    const g = grupos.get(l.d.uf_sede);
+    g.pcts.push(l.pct);
+    g.medias.push(l.media);
   }
   return [...grupos.entries()]
-    .map(([uf, v]) => ({ uf, mediana: Math.round(mediana(v)), n: v.length }))
+    .map(([uf, g]) => ({ uf, mediana: Math.round(mediana(g.pcts)), medianaReais: mediana(g.medias), teto: g.teto, n: g.pcts.length }))
     .sort((a, b) => b.mediana - a.mediana || a.uf.localeCompare(b.uf));
+}
+
+// Escala do eixo Y de um gráfico de barras: topo "redondo" acima do maior valor e as marcas do eixo (de 0 ao topo).
+export function escalaY(maior, marcas = 4) {
+  const v = Number(maior) > 0 ? Number(maior) : 1;
+  const bruto = v / marcas;
+  const pot = 10 ** Math.floor(Math.log10(bruto));
+  const passo = [1, 2, 2.5, 5, 10].map((m) => m * pot).find((p) => p * marcas >= v) || 10 * pot;
+  const n = Math.ceil(v / passo - 1e-9);
+  return { topo: passo * n, passo, marcas: Array.from({ length: n + 1 }, (_, i) => i * passo) };
+}
+
+// Soma dos meses já fechados (e com dado) do ano atual e dos MESMOS meses do ano anterior, para comparar o mesmo período.
+export function somaFechados(atual, anterior) {
+  const idx = atual.map((m, i) => (m.temDado && !m.aberto ? i : -1)).filter((i) => i >= 0);
+  if (idx.length === 0) return null;
+  return {
+    de: idx[0] + 1, ate: idx[idx.length - 1] + 1, meses: idx.length,
+    atual: idx.reduce((s, i) => s + atual[i].total, 0),
+    anterior: anterior && anterior.some((m) => m.temDado) ? idx.reduce((s, i) => s + anterior[i].total, 0) : null,
+  };
 }
 
 // Um mês só entra como "fechado" 30 dias depois do fim dele (mesma regra da média justa).

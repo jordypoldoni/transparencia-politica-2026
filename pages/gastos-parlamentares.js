@@ -20,7 +20,7 @@ import { NOMES_UF, CEAP_FONTE, CEAPS_FONTE, ATO_MESA_DIVULGACAO } from '../src/l
 import { grafo, organizacao, site, migalhas, pagina as paginaLd } from '../src/lib/dadosEstruturados';
 import {
   CASAS, MINIMOS, MINIMO_PADRAO, linhasDaCasa, comparacaoJusta, partidosDe, ufsDe, usoPorEstado,
-  serieMensal, porTipo, ehDivulgacao, divulgacaoMensal, passagensPorAno, resumoRecursosSenado, anosDisponiveis, chaveDaCasa,
+  serieMensal, porTipo, ehDivulgacao, divulgacaoMensal, passagensPorAno, resumoRecursosSenado, escalaY, somaFechados, anosDisponiveis, chaveDaCasa,
 } from '../src/lib/gastosParlamentares';
 
 // PÁGINA NOVA (21/10/2026, pedido do Jordy, item 6): a análise dos gastos dos parlamentares num lugar só.
@@ -52,7 +52,7 @@ const CSS = `
   a.gp-linha:hover, button.gp-linha:hover { background: ${t.cor.papelQuente}; }
   .gp-linha:focus-visible { outline: none; box-shadow: inset 0 0 0 2.5px ${t.cor.ouro}, ${t.sombra.anelFoco}; }
   button.gp-linha { border: none; background: transparent; font: inherit; text-align: left; cursor: pointer; width: 100%; }
-  .gp-linha-uf { grid-template-columns: 120px 1fr 64px; }
+  .gp-linha-uf { grid-template-columns: 88px 1fr 132px; }
   .gp-linha-tipo { grid-template-columns: minmax(180px, 300px) 1fr 110px; }
   .gp-trilho { display: block; height: 10px; border-radius: ${t.raio.pill}; background: ${t.cor.papelQuente2}; overflow: hidden; }
   .gp-trilho > i { display: block; height: 100%; border-radius: ${t.raio.pill}; }
@@ -60,6 +60,22 @@ const CSS = `
   .gp-num small { display: block; font-weight: 500; font-size: 0.74rem; color: ${t.cor.cinza}; }
   .gp-duas { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
   .gp-duas > .gp-cartao { margin: 0; }
+  .gp-eixo-tit { font-size: 0.72rem; font-weight: 600; color: ${t.cor.cinza}; margin: 0 0 6px; }
+  .gp-graf { display: grid; grid-template-columns: 30px 1fr; column-gap: 8px; margin-top: 18px; }
+  .gp-y { position: relative; height: 200px; }
+  .gp-y span { position: absolute; right: 0; transform: translateY(50%); font-size: 0.7rem; font-weight: 600; color: ${t.cor.cinza}; }
+  .gp-plot { position: relative; height: 200px; border-left: 1.5px solid ${t.cor.papelQuente2}; border-bottom: 1.5px solid ${t.cor.papelQuente2}; }
+  .gp-gl { position: absolute; left: 0; right: 0; border-top: 1px dashed ${t.cor.papelQuente2}; }
+  .gp-cols2 { position: absolute; inset: 0; display: flex; align-items: stretch; }
+  .gp-col2 { flex: 1; min-width: 0; height: 100%; display: flex; align-items: flex-end; justify-content: center; gap: 2px; padding: 0 2px; border: none; background: transparent; cursor: pointer; border-radius: 6px 6px 0 0; font: inherit; }
+  .gp-col2:hover, .gp-col2[aria-pressed="true"] { background: ${t.cor.papelQuente}; }
+  .gp-col2:focus-visible { outline: none; box-shadow: inset 0 0 0 2.5px ${t.cor.ouro}; }
+  .gp-barra { position: relative; flex: 1; max-width: 16px; height: 100%; display: flex; align-items: flex-end; }
+  .gp-barra > i { display: block; width: 100%; min-height: 2px; border-radius: 4px 4px 0 0; }
+  .gp-val { position: absolute; left: 50%; bottom: 100%; transform: translate(-50%, -3px); margin-bottom: 0; font-size: 0.64rem; font-weight: 700; color: ${t.cor.tinta}; white-space: nowrap; pointer-events: none; }
+  .gp-barra > i { position: relative; }
+  .gp-x { display: flex; margin-top: 6px; }
+  .gp-x span { flex: 1; text-align: center; font-size: 0.7rem; font-weight: 600; color: ${t.cor.cinza}; }
   .gp-colunas { display: flex; align-items: flex-end; gap: 6px; height: 150px; }
   .gp-col { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; }
   .gp-par { display: flex; align-items: flex-end; gap: 2px; width: 100%; flex: 1; }
@@ -74,9 +90,11 @@ const CSS = `
     .gp-cartao { padding: 18px 16px; }
     .gp-linha, .gp-linha-tipo { grid-template-columns: minmax(0, 1fr) auto; row-gap: 6px; }
     .gp-linha .gp-trilho { grid-column: 1 / -1; grid-row: 2; }
-    .gp-linha-uf { grid-template-columns: 64px 1fr 52px; column-gap: 10px; }
+    .gp-linha-uf { grid-template-columns: 52px 1fr 108px; column-gap: 10px; }
     .gp-linha-uf .gp-trilho { grid-column: auto; grid-row: auto; }
     .gp-ctl, .gp-ctl-uf { flex: 1 1 100%; max-width: none; }
+    .gp-val { display: none; }
+    .gp-x span { font-size: 0.62rem; }
   }
 `;
 
@@ -185,20 +203,25 @@ function PorEstado({ linhas, minMeses, ufAtual, setFiltro, casa }) {
   const [todos, setTodos] = useState(false);
   const lista = useMemo(() => usoPorEstado(linhas, { minMeses }), [linhas, minMeses]);
   const mostrados = todos ? lista : lista.slice(0, 8);
-  const max = lista.reduce((m, x) => Math.max(m, x.mediana), 0) || 1;
+  // A barra cheia é 100% do teto. Só passa disso (e a escala cresce) quando algum estado tem mediana acima de 100%.
+  const escala = Math.max(100, lista.reduce((m, x) => Math.max(m, x.mediana), 0));
   if (lista.length === 0) return null;
   return (
     <section className="gp-cartao" aria-labelledby="gp-uf">
       <p className="gp-sobre">Por estado</p>
       <h2 className="gp-h2" id="gp-uf">Uso da cota por estado</h2>
-      <p className="gp-sub">Mediana do uso do teto entre {casa.plural} de cada estado. Toque em um estado para ver só os parlamentares dele na comparação.</p>
+      <p className="gp-sub">Mediana do uso do teto entre {casa.plural} de cada estado, com a mediana da média mensal em reais. A barra cheia é {escala > 100 ? 'o maior valor' : '100% do teto'}. Toque em um estado para ver só os parlamentares dele na comparação.</p>
       <ul className="gp-lista">
         {mostrados.map((e) => (
           <li key={e.uf}>
             <button type="button" className="gp-linha gp-linha-uf" onClick={() => setFiltro({ uf: ufAtual === e.uf ? '' : e.uf })} aria-pressed={ufAtual === e.uf}>
               <span style={{ fontWeight: ufAtual === e.uf ? 800 : 600, fontSize: '0.9rem' }}>{e.uf} <small style={{ color: t.cor.cinza, fontWeight: 500 }}>({e.n})</small></span>
-              <Trilho pct={(e.mediana / max) * 100} cor={ufAtual === e.uf ? t.cor.ouro : t.cor.verde} />
-              <span className="gp-num">{e.mediana}%</span>
+              <Trilho pct={(e.mediana / escala) * 100} cor={ufAtual === e.uf ? t.cor.ouro : t.cor.verde} />
+              <span className="gp-num">
+                {e.mediana}%
+                <small>{reais(e.medianaReais)} por mês</small>
+                {e.teto != null && <small>teto de {reais(e.teto)}</small>}
+              </span>
             </button>
           </li>
         ))}
@@ -213,34 +236,69 @@ function PorEstado({ linhas, minMeses, ufAtual, setFiltro, casa }) {
   );
 }
 
+const mesTxt = (v) => (v / 1e6).toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
 function PorMes({ agreg, casa, ano }) {
+  const [sel, setSel] = useState(null);
   const atual = useMemo(() => serieMensal(agreg, casa.casaAgregada, ano), [agreg, casa, ano]);
   const anterior = useMemo(() => serieMensal(agreg, casa.casaAgregada, ano - 1), [agreg, casa, ano]);
-  const max = Math.max(...atual.map((m) => m.total), ...anterior.map((m) => m.total), 1);
+  const maior = Math.max(...atual.map((m) => m.total), ...anterior.map((m) => m.total), 1);
+  const eixo = useMemo(() => escalaY(maior / 1e6, 4), [maior]);
+  const soma = useMemo(() => somaFechados(atual, anterior), [atual, anterior]);
   if (!atual.some((m) => m.temDado)) return null;
   const temAnterior = anterior.some((m) => m.temDado);
   const abertos = atual.filter((m) => m.temDado && m.aberto).map((m) => MESES[m.mes - 1]);
+  const topo = eixo.topo * 1e6;
+  // SIGEPA: o arquivo da Câmara de 2026 não traz essas passagens; o ano anterior traz. Sem este aviso a queda pareceria real.
+  const semSigepa = casa.chave === 'camara' && temAnterior
+    && passagensPorAno(agreg, casa.casaAgregada, [ano])[0].sigepa == null
+    && passagensPorAno(agreg, casa.casaAgregada, [ano - 1])[0].sigepa != null;
+  const detalhe = (i) => {
+    const m = atual[i];
+    const partes = [`${MESES[i]}/${ano}: ${m.temDado ? mi(m.total) : 'sem dado'}${m.aberto && m.temDado ? ' (mês aberto, valor parcial)' : ''}`];
+    if (temAnterior) partes.push(`${MESES[i]}/${ano - 1}: ${anterior[i].temDado ? mi(anterior[i].total) : 'sem dado'}`);
+    return partes.join(' · ');
+  };
   return (
     <section className="gp-cartao" aria-labelledby="gp-mes">
       <p className="gp-sobre">Por mês</p>
       <h2 className="gp-h2" id="gp-mes">Gasto {casa.rotulo === 'Câmara' ? 'da Câmara' : 'do Senado'} mês a mês</h2>
-      <p className="gp-sub">{temAnterior ? `${ano} contra ${ano - 1}.` : `${ano}.`} Meses ainda abertos, que seguem recebendo notas, aparecem mais claros.</p>
-      <div className="gp-colunas" role="img" aria-label={`Gasto por mês em ${ano}`}>
-        {atual.map((m, i) => (
-          <div className="gp-col" key={m.mes} title={m.temDado ? `${MESES[i]}/${ano}: ${reais(m.total)}` : `${MESES[i]}/${ano}: sem dado`}>
-            <span className="gp-par">
-              {temAnterior && <i style={{ height: `${(anterior[i].total / max) * 100}%`, background: t.cor.papelQuente2 }} />}
-              <i style={{ height: `${(m.total / max) * 100}%`, background: t.cor.verde, opacity: m.aberto ? 0.4 : 1 }} />
-            </span>
-            <span className="gp-rot">{MESES[i]}</span>
+      <p className="gp-sub">{temAnterior ? `${ano} contra ${ano - 1}.` : `${ano}.`} Meses ainda abertos, que seguem recebendo notas, aparecem mais claros e com valor parcial. Toque em um mês para ver os valores.</p>
+      <p className="gp-eixo-tit">R$ milhões por mês</p>
+      <div className="gp-graf">
+        <div className="gp-y" aria-hidden="true">
+          {eixo.marcas.map((v) => <span key={v} style={{ bottom: `${(v / eixo.topo) * 100}%` }}>{v.toLocaleString('pt-BR')}</span>)}
+        </div>
+        <div className="gp-plot">
+          {eixo.marcas.slice(1).map((v) => <i className="gp-gl" key={v} style={{ bottom: `${(v / eixo.topo) * 100}%` }} />)}
+          <div className="gp-cols2" role="group" aria-label={`Gasto por mês em ${ano}${temAnterior ? ` e ${ano - 1}` : ''}`}>
+            {atual.map((m, i) => (
+              <button type="button" key={m.mes} className="gp-col2" aria-pressed={sel === i} aria-label={detalhe(i)}
+                onClick={() => setSel(sel === i ? null : i)}>
+                {temAnterior && <span className="gp-barra"><i style={{ height: `${(anterior[i].total / topo) * 100}%`, background: t.cor.papelQuente2 }} /></span>}
+                <span className="gp-barra">
+                  <i style={{ height: `${(m.total / topo) * 100}%`, background: sel === i ? t.cor.ouro : t.cor.verde, opacity: m.aberto ? 0.4 : 1 }}>
+                    {m.temDado && <b className="gp-val" style={{ opacity: 1 }}>{mesTxt(m.total)}</b>}
+                  </i>
+                </span>
+              </button>
+            ))}
           </div>
-        ))}
+        </div>
+        <span />
+        <div className="gp-x" aria-hidden="true">{atual.map((m, i) => <span key={m.mes} style={sel === i ? { color: t.cor.tinta, fontWeight: 800 } : undefined}>{MESES[i]}</span>)}</div>
       </div>
       <p className="gp-legenda">
         <span><i style={{ background: t.cor.verde }} />{ano}</span>
         {temAnterior && <span><i style={{ background: t.cor.papelQuente2 }} />{ano - 1}</span>}
         {abertos.length > 0 && <span>Em aberto: {abertos.join(', ')}</span>}
       </p>
+      <div className="gp-faixa" aria-live="polite">
+        {sel != null
+          ? <p><strong>{detalhe(sel)}</strong></p>
+          : soma && <p><strong>{MESES[soma.de - 1]} a {MESES[soma.ate - 1]}, só meses fechados:</strong> {mi(soma.atual)} em {ano}{soma.anterior != null ? ` e ${mi(soma.anterior)} em ${ano - 1}` : ''}.</p>}
+        {semSigepa && <p>Em {ano} o arquivo oficial da Câmara não traz as passagens SIGEPA, que em {ano - 1} somam parte do gasto. Compare {ano} com {ano - 1} sabendo disso.</p>}
+      </div>
     </section>
   );
 }
