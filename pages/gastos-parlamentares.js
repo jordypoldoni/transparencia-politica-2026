@@ -117,7 +117,7 @@ function Comparacao({ casa, linhas, filtros, setFiltro, ano }) {
       <p className="gp-sub">
         {ehAssembleia
           ? 'Cada Assembleia tem a sua verba e publica no seu ritmo, então a comparação é só dentro do mesmo estado, em reais por mês.'
-          : `Média mensal de ${ano} dividida pelo teto mensal da cota do estado de cada um. Passagens aéreas e divulgação aparecem nas seções abaixo.`}
+          : `Média mensal de ${ano} dividida pelo teto mensal da cota do estado de cada um. A conta inclui todos os tipos de despesa, também divulgação e passagens (que têm seções próprias abaixo).`}
       </p>
 
       {r.precisaEstado ? (
@@ -315,7 +315,7 @@ function Passagens({ agreg, casa, anoAtual }) {
       </div>
       {faltando.length > 0 && (
         <div className="gp-faixa">
-          <p><strong>{faltando.map((d) => d.ano).join(' e ')}:</strong> o arquivo oficial da Câmara não traz as passagens aéreas emitidas pelo sistema SIGEPA nesse ano. Por isso a comparação justa acima não inclui passagens de ninguém. Se a Câmara voltar a publicar, elas entram aqui.</p>
+          <p><strong>{faltando.map((d) => d.ano).join(' e ')}:</strong> o arquivo oficial da Câmara não traz as passagens aéreas emitidas pelo sistema SIGEPA nesse ano. Só essa parte falta: as demais passagens (reembolso, RPA, missão oficial) e a divulgação entram na comparação acima. Como o SIGEPA pesa cerca de 15% do gasto da Câmara em 2024 e 2025, quem mais viaja de avião tende a aparecer com uso menor em 2026 do que realmente teve. Se a Câmara voltar a publicar, elas entram aqui.</p>
         </div>
       )}
     </section>
@@ -335,6 +335,7 @@ function ComoLemos({ casa }) {
       {aberto && (
         <div>
           <p style={p}><strong>Média por mês:</strong> soma das notas dos meses em que a pessoa esteve em exercício por 15 dias ou mais e que já fecharam (30 dias depois do fim do mês, quando quase todas as notas já foram emitidas), dividida por esses meses. Mês em exercício sem gasto entra na conta.</p>
+          <p style={p}><strong>O que entra:</strong> todos os tipos de despesa, inclusive divulgação e passagens. Única ausência conhecida: as passagens SIGEPA da Câmara em 2026, que o arquivo oficial não traz.</p>
           {casa.chave !== 'assembleias' && <p style={p}><strong>Uso do teto:</strong> a média por mês dividida pelo teto mensal da {casa.chave === 'senado' ? 'cota do Senado' : 'cota da Câmara'} para o estado de cada um (<a href={casa.chave === 'senado' ? CEAPS_FONTE : CEAP_FONTE} target="_blank" rel="noopener noreferrer" style={link}>tabela oficial</a>). Acima de 100% quer dizer que a média ficou acima do valor dessa tabela; confira na fonte.</p>}
           {casa.chave === 'senado' && <p style={p}>Os senadores são poucos por estado, então a lista mostra os valores sem número de posição.</p>}
           {casa.chave === 'assembleias' && <p style={p}>O Lume só tem o teto da verba de gabinete da Assembleia de SP. Nas outras, a comparação é em reais por mês, dentro do mesmo estado.</p>}
