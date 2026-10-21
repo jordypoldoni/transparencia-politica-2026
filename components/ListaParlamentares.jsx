@@ -80,9 +80,11 @@ export default function ListaParlamentares({ deputados, qInicial, ufInicial, cas
   const daPagina = filtrados.slice((paginaAtual - 1) * POR_PAGINA, paginaAtual * POR_PAGINA);
   const irPara = (n) => {
     setPagina(Math.min(Math.max(1, n), totalPaginas));
-    // Sem isto o leitor troca de pagina e continua olhando o rodape da anterior.
+    // Só rola se o começo da lista ficou para cima da tela (o leitor desceu até o rodapé da página anterior).
+    // Com a lista já à vista, a tela não se mexe (21/10/2026: a rolagem automática incomodava).
     if (typeof document !== 'undefined') {
-      document.getElementById('grade-parlamentares')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const grade = document.getElementById('grade-parlamentares');
+      if (grade && grade.getBoundingClientRect().top < 96) grade.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
   };
 
