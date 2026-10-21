@@ -1,0 +1,29 @@
+# diagnostico_perfil_colunas.yml: perfil de cada coluna do arquivo anual da cota da Câmara. (21/10/2026)
+# SÓ LEITURA, não usa banco. O resultado sai como anotações da execução. Manual.
+name: Diagnóstico: perfil das colunas da cota (Câmara)
+
+on:
+  workflow_dispatch:
+    inputs:
+      ano:
+        description: 'Ano (ex.: 2026)'
+        required: true
+        default: '2026'
+
+permissions:
+  contents: read
+
+jobs:
+  diagnostico:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --ignore-scripts
+      - name: Ler o arquivo anual
+        env:
+          ANO: ${{ github.event.inputs.ano }}
+        run: node coletores/diagnostico_perfil_colunas.js "$ANO"
