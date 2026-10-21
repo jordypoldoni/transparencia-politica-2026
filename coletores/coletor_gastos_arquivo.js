@@ -84,7 +84,8 @@ async function main() {
   const iCad = col('ideCadastro'), iAno = col('numAno'), iMes = col('numMes'),
     iDesc = col('txtDescricao'), iForn = col('txtFornecedor'), iCnpj = col('txtCNPJCPF'),
     iVlr = col('vlrLiquido'), iData = col('datEmissao'), iDoc = col('ideDocumento'),
-    iUrl = col('urlDocumento'), iNome = col('txNomeParlamentar');
+    iUrl = col('urlDocumento'), iNome = col('txNomeParlamentar'),
+    iGlosa = col('vlrGlosa'), iRest = col('vlrRestituicao'), iDataRest = col('datPagamentoRestituicao');
 
   const porAgente = new Map();
   let semCadastro = 0, foraDoAno = 0, semAgente = 0;
@@ -98,6 +99,11 @@ async function main() {
     const agente = porIdExterno.get(cad);
     if (!agente) { semAgente++; nomesSemAgente.add(`${(l[iNome] || '?').trim()} (${cad})`); continue; }
     if (!porAgente.has(agente.id)) porAgente.set(agente.id, []);
+    // Restituição e glosa só são gravadas quando maiores que zero (21/10/2026): o arquivo traz 0 em quase
+    // todas as linhas e gravar o zero não informa nada. Vazio = não houve.
+    const restituido = paraNumero(l[iRest]);
+    const glosa = paraNumero(l[iGlosa]);
+    const dataRest = (l[iDataRest] || '').trim().slice(0, 10);
     porAgente.get(agente.id).push({
       agente_id: agente.id,
       ano: ANO,
@@ -111,6 +117,9 @@ async function main() {
       id_externo_documento: (l[iDoc] || '').trim() || null,
       url_documento: (l[iUrl] || '').trim() || null,
       casa_legislativa: 'Câmara',
+      valor_restituido: restituido > 0 ? restituido : null,
+      data_restituicao: restituido > 0 && dataRest ? dataRest : null,
+      valor_glosa: glosa > 0 ? glosa : null,
     });
   }
 
