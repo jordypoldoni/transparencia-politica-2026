@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { t } from '../src/estilo/tokens';
 import Avatar from './Avatar';
-import { pctDoTeto, CATEGORIA_FORA_DO_TOTAL, CEAPS_FONTE } from '../src/lib/cotas';
+import { pctDoTeto, CATEGORIA_FORA_DO_TOTAL, CEAPS_FONTE, ATO_MESA_DIVULGACAO } from '../src/lib/cotas';
 import { nomeTipoProposicao, legendaDosTipos } from '../src/lib/proposicoes';
 import { explicarTipo, agruparPorMateria, papelVotacao, situacaoCidada } from '../src/lib/votacao';
 import { casaDoPerfil, hrefPerfil } from '../src/lib/casa';
@@ -423,6 +423,10 @@ export default function PerfilPolitico({ dados }) {
   // Média do ano (21/10/2026): pela base justa (meses em exercício e já fechados) quando a view a traz;
   // senão a conta antiga, total ÷ meses com gasto. null = ainda nenhum mês contou.
   const temBase = !!dadosAno && dadosAno.meses_base != null;
+  // Divulgação da atividade parlamentar (categoria 'Publicidade e Marketing') nos meses contados: linha separada
+  // e nota sobre a trava eleitoral (21/10/2026, proposta aprovada pelo Jordy). Só com base justa e valor acima de zero.
+  const temDivulgacao = temBase && Number(dadosAno.total_divulgacao_base) > 0 && Number(dadosAno.total_base) > 0;
+  const pctDivulgacao = temDivulgacao ? Math.round((Number(dadosAno.total_divulgacao_base) / Number(dadosAno.total_base)) * 100) : 0;
   const mediaAno = !dadosAno ? 0
     : temBase ? (Number(dadosAno.meses_base) > 0 ? Number(dadosAno.total_base) / Number(dadosAno.meses_base) : null)
     : (dadosAno.meses_com_gasto > 0 ? dadosAno.total / dadosAno.meses_com_gasto : 0);
@@ -889,11 +893,23 @@ export default function PerfilPolitico({ dados }) {
                   ? `${dadosAno.meses_base} ${Number(dadosAno.meses_base) === 1 ? 'mês' : 'meses'} em exercício e fechados`
                   : `${dadosAno.meses_com_gasto} ${dadosAno.meses_com_gasto === 1 ? 'mês' : 'meses'} com gasto`}</span>
               </div>
+              {temDivulgacao && (
+                <div style={{ fontSize: '0.9rem', marginBottom: '8px' }}>
+                  <strong>Divulgação da atividade parlamentar:</strong> {brl(dadosAno.total_divulgacao_base)} ({pctDivulgacao}% do gasto contado)
+                </div>
+              )}
               <p style={{ margin: 0, fontSize: '0.82rem', color: t.cor.cinza, lineHeight: 1.5 }}>
                 <strong style={{ color: t.cor.tinta }}>Como a média é calculada:</strong> {temBase
-                  ? <>somamos {temNotaFiscal ? 'as notas' : 'as despesas publicadas'} dos meses de {anoSel} em que {perfil.nome_urna} esteve em exercício por 15 dias ou mais e que já fecharam (30 dias depois do fim do mês, quando quase todas as notas já foram emitidas), e dividimos por esses meses ({dadosAno.meses_base}). Mês em exercício sem gasto entra na conta. O total de {anoSel} acima inclui todos os meses com gasto.</>
+                  ? <>somamos {temNotaFiscal ? 'as notas' : 'as despesas publicadas'} dos meses de {anoSel} em que {perfil.nome_urna} esteve em exercício por 15 dias ou mais e que já fecharam (30 dias depois do fim do mês, quando quase todas as notas já foram emitidas), e dividimos por esses meses ({dadosAno.meses_base}). Mês em exercício sem gasto entra na conta. {temDivulgacao ? 'A divulgação já está incluída na média. ' : ''}O total de {anoSel} acima inclui todos os meses com gasto.</>
                   : <>somamos {temNotaFiscal ? 'todas as notas' : 'todas as despesas publicadas'} de {anoSel} e dividimos pelo número de meses com gasto registrado ({dadosAno.meses_com_gasto}). Meses sem {temNotaFiscal ? 'nota' : 'despesa'} não entram na conta, por isso a média pode ficar acima do gasto de um mês isolado.</>} Fonte: {fonteNome}.
               </p>
+              {temDivulgacao && !ehSenado && (
+                <p style={{ margin: '8px 0 0', fontSize: '0.82rem', color: t.cor.cinza, lineHeight: 1.5 }}>
+                  <strong style={{ color: t.cor.tinta }}>Sobre a divulgação em 2026:</strong> nos 120 dias antes da eleição (a partir de 6 de junho), o{' '}
+                  <a href={ATO_MESA_DIVULGACAO} target="_blank" rel="noopener noreferrer" style={{ color: t.cor.ouroTexto, fontWeight: 600 }}>Ato da Mesa nº 108/2013, art. 11</a>{' '}
+                  veda a impressão e a distribuição de produtos gráficos de divulgação da atuação parlamentar por deputado candidato, salvo se ele não for candidato. Por isso o gasto dessa categoria pode variar entre quem concorre e quem não concorre.
+                </p>
+              )}
             </div>
             {nNotasAno > 0 && totalAno > 0 && (
               <div style={{ marginTop: '18px' }}>

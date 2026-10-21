@@ -58,3 +58,8 @@ export function pctDoTeto({ fonteApi, casa, uf }, mediaMensal) {
 // o total oficial das cotas (CEAPS) publicado pelo Senado nao os inclui. O valor tambem esta
 // escrito em coletores/coletor_gastos_senado.js e na migracao radar_gastos_sem_outras_despesas.
 export const CATEGORIA_FORA_DO_TOTAL = 'Outras despesas';
+
+// Norma citada na nota sobre divulgação da atividade parlamentar (21/10/2026): Ato da Mesa nº 108/2013, art. 11.
+// Veda a impressão e a distribuição de produtos gráficos de divulgação nos 120 dias antes da eleição, salvo se o
+// deputado não for candidato. Li um resumo do ato: conferir o texto integral antes de ampliar o que a nota afirma.
+export const ATO_MESA_DIVULGACAO = 'https://www2.camara.leg.br/legin/int/atomes/2013/atodamesa-108-11-setembro-2013-777043-publicacaooriginal-141111-cd-mesa.html';

@@ -18,7 +18,7 @@ import SeloAtualizacao from '../../components/SeloAtualizacao';
 import { fonteGastosEstadual, fonteVotosDoPerfil } from '../../src/lib/selosFonte';
 import { agruparPorCasa, montarLinhas, ordenar, ordensDisponiveis, filtrar, resumoDoGrupo, fraseResumo, reais } from '../../src/lib/bancadaEstado';
 import { grafo, organizacao, site, migalhas, pagina as paginaLd } from '../../src/lib/dadosEstruturados';
-import { CEAP_FONTE, CEAPS_FONTE } from '../../src/lib/cotas';
+import { CEAP_FONTE, CEAPS_FONTE, ATO_MESA_DIVULGACAO } from '../../src/lib/cotas';
 
 const NOMES = { AC:'Acre', AL:'Alagoas', AP:'Amapá', AM:'Amazonas', BA:'Bahia', CE:'Ceará', DF:'Distrito Federal', ES:'Espírito Santo', GO:'Goiás', MA:'Maranhão', MT:'Mato Grosso', MS:'Mato Grosso do Sul', MG:'Minas Gerais', PA:'Pará', PB:'Paraíba', PR:'Paraná', PE:'Pernambuco', PI:'Piauí', RJ:'Rio de Janeiro', RN:'Rio Grande do Norte', RS:'Rio Grande do Sul', RO:'Rondônia', RR:'Roraima', SC:'Santa Catarina', SP:'São Paulo', SE:'Sergipe', TO:'Tocantins' };
 const OPCOES_UF = Object.entries(NOMES).map(([uf, nome]) => ({ valor: uf, rotulo: `${uf} · ${nome}`, busca: `${uf} ${nome}` }));
@@ -167,6 +167,7 @@ function ComoLer({ grupo, nome, temTeto, temVotos, totalVotos, ehRS }) {
           <p style={p(0)}><strong>Gasto por mês:</strong> {grupo.chave === 'estadual'
             ? 'total do ano dividido pelos meses com gasto no ano. É a mesma conta do perfil.'
             : 'gasto dos meses em que a pessoa esteve em exercício (15 dias ou mais), dividido por esses meses. Só entram meses já fechados, 30 dias depois do fim do mês, quando quase todas as notas já foram emitidas. Mês em exercício sem gasto entra na conta. É a mesma conta do perfil.'}</p>
+          {grupo.chave === 'federal' && <p style={p(1)}><strong>Divulgação da atividade parlamentar:</strong> no perfil de cada deputado essa categoria aparece em linha separada, já incluída na média. Nos 120 dias antes da eleição (a partir de 6 de junho de 2026), o <a href={ATO_MESA_DIVULGACAO} target="_blank" rel="noopener noreferrer" style={link}>Ato da Mesa nº 108/2013, art. 11</a> veda a impressão e a distribuição de produtos gráficos de divulgação por deputado candidato, salvo se ele não for candidato. Por isso o gasto dessa categoria pode variar entre quem concorre e quem não concorre.</p>}
           {temTeto && <p style={p(1)}><strong>Uso do teto:</strong> gasto por mês dividido pelo teto mensal da {grupo.chave === 'senado' ? 'cota do Senado' : 'cota da Câmara'} para o estado{fonteTeto && <> (<a href={fonteTeto} target="_blank" rel="noopener noreferrer" style={link}>tabela oficial</a>)</>}. Acima de 100% quer dizer que a média ficou acima do valor dessa tabela; confira na fonte.</p>}
           {temVotos && <p style={p(1)}><strong>Votos registrados:</strong> votações nominais em que a pessoa votou Sim, Não, Abstenção ou Obstrução, entre as {totalVotos} que o Lume tem desta casa.</p>}
           {ehRS && grupo.chave === 'estadual' && <p style={p(1)}>A Assembleia do RS publica só o total mensal por categoria, sem as notas.</p>}
