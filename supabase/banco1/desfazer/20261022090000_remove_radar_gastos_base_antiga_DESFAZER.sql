@@ -1,0 +1,7 @@
+-- Recriar a radar_gastos_base_antiga NAO e recomendado: ela tem o bug dos meses em exercicio
+-- (mes sem periodo contava como inteiro; ver D-069). So recriar para comparar numeros.
+-- Como recriar: rodar a definicao da view de 20261021130000_radar_gastos_meses_base.sql
+-- trocando o nome para radar_gastos_base_antiga, depois:
+--   create unique index idx_radar_gastos_base_antiga_id_ano on public.radar_gastos_base_antiga (id, ano);
+--   grant select on public.radar_gastos_base_antiga to anon, authenticated, service_role;
+-- Os dados voltam com o refresh: refresh materialized view public.radar_gastos_base_antiga;
