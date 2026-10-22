@@ -114,3 +114,12 @@ export function votosNoMinuto(votos, minuto, uf = null) {
     .map((c) => ({ n: c.n, nome: c.nome, partido: c.partido, votos: soma[c.n] || 0, pct: validos > 0 ? ((soma[c.n] || 0) / validos) * 100 : 0 }));
   return { linhas, validos, brancos, nulos, total: validos + brancos + nulos };
 }
+
+// Percentual de urnas recebidas para a tela, a partir da fração (0 a 1). NUNCA mostra 100,0% se ainda falta alguma urna: arredonda para baixo
+// e trava em 99,9%. Só mostra 100,0% quando a fração é exatamente 1. Devolve texto com vírgula, ex.: "61,1".
+export function pctUrnas(fracao) {
+  const p = (Number(fracao) || 0) * 100;
+  if (p >= 100) return '100,0';
+  const v = Math.min(99.9, Math.floor(p * 10) / 10);
+  return v.toFixed(1).replace('.', ',');
+}

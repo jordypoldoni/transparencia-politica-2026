@@ -1,27 +1,30 @@
 import { t } from '../src/estilo/tokens';
 import Segmentado from './Segmentado';
-import { MINUTOS_TOTAIS, VELOCIDADES, horaDoMinuto, listaE } from '../src/lib/replayApuracao';
+import { MINUTOS_TOTAIS, VELOCIDADES, horaDoMinuto, listaE, pctUrnas } from '../src/lib/replayApuracao';
 
 // LINHA DO TEMPO DO REPLAY (22/10/2026, D-074): hora grande, botão de reproduzir (pílula índigo com texto âmbar, com sombra, sem contorno),
 // barra de tempo e escolha de velocidade (segmented control, opções excludentes). Só desenha; o relógio mora na página.
 export default function ReplayLinhaDoTempo({ minuto, tocando, fim, velocidade, resumo, recebendo, estimadas = [], aoAlternar, aoMudarMinuto, aoMudarVelocidade }) {
   const m = Math.floor(minuto);
+  // "00:59 (dia seguinte)" vira "00:59" grande e a data certa (5 de outubro) na linha de baixo: a faixa não quebra depois da meia-noite.
+  const horaCurta = horaDoMinuto(m).replace(/ \(.*\)$/, '');
+  const diaSeguinte = horaCurta !== horaDoMinuto(m);
   const num = (x) => Number(x || 0).toLocaleString('pt-BR');
   return (
     <div className="rt">
       <div className="rt-info">
         <div className="rt-bloco rt-principal">
           <div className="rt-grande">
-            <strong className="rt-hora" aria-live="off">{horaDoMinuto(m)}</strong>
+            <strong className="rt-hora" aria-live="off">{horaCurta}</strong>
             {resumo && resumo.total > 0 && (
               <>
                 <span className="rt-sep" aria-hidden="true">·</span>
-                <strong className="rt-pct">{resumo.pct.toFixed(1).replace('.', ',')}%</strong>
+                <strong className="rt-pct">{pctUrnas(resumo.recebidas / resumo.total)}%</strong>
                 <span className="rt-rot">das urnas recebidas <span className="rt-qtd">({num(resumo.recebidas)} de {num(resumo.total)} urnas)</span></span>
               </>
             )}
           </div>
-          <span className="rt-sub">horário de Brasília, 4 de outubro de 2026{estimadas.length > 0 ? ` · ${listaE(estimadas)} com horário estimado` : ''}</span>
+          <span className="rt-sub">horário de Brasília, {diaSeguinte ? '5' : '4'} de outubro de 2026{estimadas.length > 0 ? ` · ${listaE(estimadas)} com horário estimado` : ''}</span>
         </div>
         {recebendo && resumo && resumo.total > 0 && (
           <p className="rt-bloco rt-recebendo">

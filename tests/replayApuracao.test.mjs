@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { horaDoMinuto, limitarMinuto, avancar, MINUTOS_TOTAIS, UFS_ESTIMADAS, listaE, VELOCIDADES, VELOCIDADE_PADRAO } from '../src/lib/replayApuracao.js';
+import { horaDoMinuto, limitarMinuto, avancar, MINUTOS_TOTAIS, UFS_ESTIMADAS, listaE, pctUrnas, VELOCIDADES, VELOCIDADE_PADRAO } from '../src/lib/replayApuracao.js';
 
 test('hora do minuto: base 17:00, passa da meia-noite', () => {
   assert.equal(horaDoMinuto(0), '17:00');
@@ -125,4 +125,12 @@ test('lista com "e" no fim', () => {
   assert.equal(listaE(['MS', 'RN']), 'MS e RN');
   assert.equal(listaE(['MS']), 'MS');
   assert.equal(listaE([]), '');
+});
+
+test('percentual de urnas nunca arredonda para 100,0% enquanto falta urna', () => {
+  assert.equal(pctUrnas(498120 / 498127), '99,9');
+  assert.equal(pctUrnas(1), '100,0');
+  assert.equal(pctUrnas(0), '0,0');
+  assert.equal(pctUrnas(0.6119), '61,1'); // arredonda para baixo, nunca para cima
+  assert.equal(pctUrnas(0.6199), '61,9');
 });

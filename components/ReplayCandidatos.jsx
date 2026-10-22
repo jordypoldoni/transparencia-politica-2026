@@ -1,5 +1,6 @@
 import { t } from '../src/estilo/tokens';
 import { MAPA_BRASIL } from '../src/lib/mapaBrasilGeo';
+import { pctUrnas } from '../src/lib/replayApuracao';
 
 // VOTOS DOS CANDIDATOS NO REPLAY (22/10/2026, D-074, regras de neutralidade aprovadas pelo Jordy). Só desenha; os números vêm de votosNoMinuto.
 // Regras: (1) ordem FIXA por número de urna, nunca reordena; (2) todas as barras iguais, sem cor de partido nem destaque de quem lidera;
@@ -20,7 +21,7 @@ export default function ReplayCandidatos({ parcial, final, uf = null, fracaoUf =
       <div className="rc-escopo">
         {uf ? (
           <>
-            <span><b>{nomeUf}</b>{fracaoUf != null ? ` · ${pct1(fracaoUf * 100)}% das urnas do estado recebidas${estimada ? ' (horário estimado)' : ''}` : ''}</span>
+            <span><b>{nomeUf}</b>{fracaoUf != null ? ` · ${pctUrnas(fracaoUf)}% das urnas do estado recebidas${estimada ? ' (horário estimado)' : ''}` : ''}</span>
             <button type="button" className="rc-volta" onClick={aoVoltar}>Ver total</button>
           </>
         ) : <span>Total do Brasil, com o exterior · clique em um estado do mapa para ver só ele</span>}
