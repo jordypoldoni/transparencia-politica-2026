@@ -17,17 +17,17 @@ import { VELOCIDADES, VELOCIDADE_PADRAO, MINUTOS_TOTAIS, limitarMinuto, avancar,
 
 const CSS = `
   .rp { max-width: 1480px; margin: 0 auto; padding: 14px 20px 32px; display: flex; flex-direction: column; gap: 12px; }
-  .rp-cab { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; }
+  .rp-cab { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 16px; }
   .rp h1 { margin: 0; font: 700 clamp(1.3rem, 3vw, 1.7rem) ${t.fonte.titulo}; color: ${t.cor.verde}; }
-  .rp-previa { margin: 0; padding: 4px 12px; border-radius: ${t.raio.pill}; background: ${t.cor.alertaBg}; color: ${t.cor.alertaTexto}; font-size: 0.75rem; font-weight: 700; }
-  .rp-intro { flex-basis: 100%; margin: 0; color: ${t.cor.cinza}; font-size: 0.9rem; line-height: 1.4; }
-  .rp-cartao { background: ${t.cor.papelCartao}; border-radius: ${t.raio.md}; box-shadow: ${t.sombra.media}; padding: 18px 20px; display: grid; grid-template-columns: 1fr; gap: 18px; }
+    .rp-intro { margin: 0; color: ${t.cor.cinza}; font-size: 0.9rem; line-height: 1.4; }
+  .rp-cartao { background: ${t.cor.papelCartao}; border-radius: ${t.raio.md}; box-shadow: ${t.sombra.media}; padding: 16px 20px 18px; display: grid; grid-template-columns: 1fr; gap: 16px; }
+  .rp-faixa { grid-column: 1 / -1; }
   .rp-lado { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
   .rp-votos { margin: 0; flex: 1; min-height: 56px; padding: 12px 16px; background: ${t.cor.papelQuente}; border-radius: ${t.raio.sm}; color: ${t.cor.cinza}; font-size: 0.92rem; line-height: 1.5; }
   .rp-votos strong { display: block; margin-bottom: 2px; color: ${t.cor.tinta}; font-size: 1rem; }
   .rp-erro { margin: 0; font-size: 0.9rem; color: ${t.cor.alertaTexto}; }
   @media (min-width: 900px) {
-    .rp-cartao { grid-template-columns: minmax(0, 1.5fr) minmax(380px, 1fr); gap: 28px; align-items: stretch; }
+    .rp-cartao { grid-template-columns: minmax(0, 1.5fr) minmax(380px, 1fr); gap: 16px 28px; align-items: stretch; }
   }
 `;
 
@@ -98,14 +98,15 @@ export default function ApuracaoReplay() {
       <main className="rp">
         <header className="rp-cab">
           <h1>Replay da apuração do 1º turno de 2026</h1>
-          <p className="rp-previa">Prévia em construção: fora do site público</p>
           <p className="rp-intro">Veja em que ordem as urnas chegaram ao TSE na noite de 4 de outubro, estado por estado.</p>
         </header>
         <section className="rp-cartao" aria-label="Replay">
-          <ReplayMapa fracao={fracao} recebendo={recebendo} />
-          <div className="rp-lado">
+          <div className="rp-faixa">
             <ReplayLinhaDoTempo minuto={minuto} tocando={tocando} fim={fim} velocidade={velocidade} resumo={dados ? resumo : null} recebendo={dados ? recebendo : null}
               aoAlternar={alternar} aoMudarMinuto={irPara} aoMudarVelocidade={setVelocidade} />
+          </div>
+          <ReplayMapa fracao={fracao} recebendo={recebendo} />
+          <div className="rp-lado">
             {erroDados && <p className="rp-erro" role="status">Não foi possível carregar os dados do replay. Tente recarregar a página.</p>}
             <ReplayCandidatos parcial={votos ? votosAgora : null} final={votos ? votosFinal : null} />
             <ReplayAviso />

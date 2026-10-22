@@ -57,7 +57,7 @@ export default function ReplayMapa({ fracao = {}, recebendo = [] }) {
         <span className="rm-item"><i className="rm-hach" />Sem horário: {UFS_SEM_DETALHE.join(', ')}</span>
       </figcaption>
       <style jsx global>{`
-        .rm { --rm-h: clamp(300px, calc(100vh - 215px), 700px); margin: 0; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+        .rm { --rm-h: clamp(300px, calc(100vh - 305px), 700px); margin: 0; display: flex; flex-direction: column; align-items: center; gap: 12px; }
         .rm-svg { display: block; flex: 0 1 auto; width: min(100%, calc(var(--rm-h) * ${PROPORCAO.toFixed(4)})); aspect-ratio: ${MAPA_BRASIL.largura} / ${MAPA_BRASIL.altura}; height: auto; }
         .rm-uf { stroke: ${t.cor.papelCartao}; stroke-width: 1; }
         .rm-vivo { stroke: ${t.cor.tinta}; stroke-width: 2.2; animation: rm-pulso 1.6s ease-in-out infinite; }
