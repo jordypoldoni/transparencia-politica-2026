@@ -122,7 +122,8 @@ export default function MapaGradeApuracao({ turno = 1 }) {
   const escolherRegiao = (k) => {
     setSel(null);
     setRegiao((r) => (r === k ? null : k));
-    rolarAoPainel();
+    // Ao DESMARCAR (22/10/2026) não rola: o painel vira o aviso vazio e rolar até ele jogava a tela para baixo, longe da grade.
+    if (regiao !== k) rolarAoPainel();
   };
   const rolarAoPainel = () => {
     setTimeout(() => {
