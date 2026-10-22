@@ -5,8 +5,15 @@
 export const HORA_BASE = 17;          // 17:00
 export const MINUTOS_TOTAIS = 600;    // até 03:00 (a última urna do 1º turno chegou às 02:58)
 
-// Arquivos do TSE publicados incompletos na origem (hash não confere): sem linha do tempo para estes estados.
-export const UFS_SEM_DETALHE = ['MS', 'RN', 'SE', 'TO'];
+// Boletins de urna do TSE publicados incompletos na origem (hash não confere): estes estados têm votos finais OFICIAIS, mas ritmo de chegada ESTIMADO
+// (src/lib/replayEstimativa.js). A lista que vale para a tela vem do arquivo de dados (`estimadas`); esta é a conferida em 22/10/2026.
+export const UFS_ESTIMADAS = ['MS', 'RN', 'SE', 'TO'];
+
+// "MS, RN, SE e TO"
+export function listaE(itens) {
+  const l = [...(itens || [])];
+  return l.length < 2 ? l.join('') : `${l.slice(0, -1).join(', ')} e ${l[l.length - 1]}`;
+}
 
 // Minutos de apuração que passam por segundo real. Rótulo = o que a pessoa lê.
 export const VELOCIDADES = [

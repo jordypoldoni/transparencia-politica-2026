@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { horaDoMinuto, limitarMinuto, avancar, MINUTOS_TOTAIS, UFS_SEM_DETALHE, VELOCIDADES, VELOCIDADE_PADRAO } from '../src/lib/replayApuracao.js';
+import { horaDoMinuto, limitarMinuto, avancar, MINUTOS_TOTAIS, UFS_ESTIMADAS, listaE, VELOCIDADES, VELOCIDADE_PADRAO } from '../src/lib/replayApuracao.js';
 
 test('hora do minuto: base 17:00, passa da meia-noite', () => {
   assert.equal(horaDoMinuto(0), '17:00');
@@ -31,7 +31,7 @@ test('avançar: tempo real vira minutos de apuração e para no fim', () => {
 });
 
 test('estados sem detalhe e velocidades', () => {
-  assert.deepEqual(UFS_SEM_DETALHE, ['MS', 'RN', 'SE', 'TO']);
+  assert.deepEqual(UFS_ESTIMADAS, ['MS', 'RN', 'SE', 'TO']);
   assert.ok(VELOCIDADES.some((v) => v.chave === VELOCIDADE_PADRAO));
   for (const v of VELOCIDADES) assert.ok(v.minPorSeg > 0 && v.rotulo.length > 0);
 });
@@ -103,4 +103,26 @@ test('votos no minuto: detalhe de um estado soma só ele; estado sem dado devolv
   assert.equal(votosNoMinuto(VOTOS, 2, 'AA').validos, 20);
   assert.equal(votosNoMinuto(VOTOS, 2, 'MS').validos, 0);
   assert.equal(votosNoMinuto(VOTOS, 2, 'MS').linhas[0].pct, 0);
+});
+
+import { curvaMedia, estimarUrnas, distribuir } from '../src/lib/replayEstimativa.js';
+
+test('estimativa: curva média das referências, termina em 1', () => {
+  const c = curvaMedia([{ total: 10, acum: [0, 5, 10] }, { total: 4, acum: [0, 1, 3] }]);
+  assert.deepEqual(c.map((x) => Number(x.toFixed(4))), [0, 0.375, 1]);
+});
+test('estimativa: urnas pelo eleitorado e a razão das referências', () => {
+  assert.equal(estimarUrnas(1000, [{ te: 600, total: 2 }, { te: 400, total: 2 }]), 4); // razão 4/1000
+});
+test('estimativa: distribuir fecha exatamente no valor final e nunca decresce', () => {
+  const d = distribuir(101, [0, 0.333, 0.5, 0.999, 1]);
+  assert.equal(d[d.length - 1], 101);
+  for (let i = 1; i < d.length; i++) assert.ok(d[i] >= d[i - 1]);
+});
+
+test('lista com "e" no fim', () => {
+  assert.equal(listaE(['MS', 'RN', 'SE', 'TO']), 'MS, RN, SE e TO');
+  assert.equal(listaE(['MS', 'RN']), 'MS e RN');
+  assert.equal(listaE(['MS']), 'MS');
+  assert.equal(listaE([]), '');
 });

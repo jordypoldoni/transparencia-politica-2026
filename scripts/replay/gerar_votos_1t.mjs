@@ -9,20 +9,27 @@ const [, , origem, destino = 'public/replay/1t-2026-votos.json'] = process.argv;
 if (!origem) { console.error('uso: node scripts/replay/gerar_votos_1t.mjs <pasta_dos_agregados> [saida]'); process.exit(1); }
 
 const MINUTOS = 601;
+// Votos ANULADOS: o nº 28 (candidatura indeferida) aparece nos boletins, mas o TSE conta esses votos como NULOS no resultado oficial
+// (conferido: nulos oficiais = nulos do boletim + votos do 28, em todos os 24 estados). Aqui eles entram em Nulos e o 28 sai da lista.
+const ANULADOS = new Set(['28']);
 const cands = new Map();
 const ufs = {};
 for (const f of fs.readdirSync(origem).filter((x) => /^[A-Z]{2}\.json$/.test(x)).sort()) {
   const d = JSON.parse(fs.readFileSync(path.join(origem, f), 'utf8'));
-  const porCand = {};
+  const porMinuto = {}; // chegadas por minuto de cada opção (anulados somados em Nulos)
   let somaVotos = 0;
-  for (const [n, arr] of Object.entries(d.votos)) {
+  for (const [n0, arr] of Object.entries(d.votos)) {
+    const n = ANULADOS.has(n0) ? '96' : n0;
     if (!cands.has(n)) cands.set(n, { n: Number(n), nome: d.candidatos[n].nome, partido: d.candidatos[n].partido, tipo: d.candidatos[n].tipo });
-    const acum = new Array(MINUTOS).fill(0);
+    if (arr.length > MINUTOS && arr.slice(MINUTOS).some((x) => x)) throw new Error(`${d.uf} ${n0}: votos fora da janela de ${MINUTOS} minutos`);
+    const dest = (porMinuto[n] = porMinuto[n] || new Array(MINUTOS).fill(0));
+    for (let i = 0; i < MINUTOS; i++) dest[i] += arr[i] || 0;
+    somaVotos += arr.reduce((x, y) => x + y, 0);
+  }
+  const porCand = {};
+  for (const [n, chegadas] of Object.entries(porMinuto)) {
     let soma = 0;
-    for (let i = 0; i < MINUTOS; i++) { soma += arr[i] || 0; acum[i] = soma; }
-    if (soma !== arr.reduce((a, b) => a + b, 0)) throw new Error(`${d.uf} ${n}: votos fora da janela de ${MINUTOS} minutos`);
-    porCand[n] = acum;
-    somaVotos += soma;
+    porCand[n] = chegadas.map((v) => (soma += v));
   }
   const comp = d.comparecimento.reduce((a, b) => a + b, 0);
   if (somaVotos !== comp) throw new Error(`${d.uf}: soma dos votos ${somaVotos} difere do comparecimento ${comp}`);

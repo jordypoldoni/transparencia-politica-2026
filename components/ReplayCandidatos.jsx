@@ -9,7 +9,7 @@ const ESCALA = 60;
 const pct1 = (v) => v.toFixed(1).replace('.', ',');
 const num = (v) => Number(v).toLocaleString('pt-BR');
 
-export default function ReplayCandidatos({ parcial, final, uf = null, fracaoUf = null, semHorario = false, aoVoltar }) {
+export default function ReplayCandidatos({ parcial, final, uf = null, fracaoUf = null, estimada = false, aoVoltar }) {
   const nomeUf = uf ? (MAPA_BRASIL.estados.find((g) => g.uf === uf) || {}).nome || uf : null;
   const linhas = parcial && parcial.linhas.length ? parcial.linhas : null;
   const refPor = {};
@@ -20,12 +20,12 @@ export default function ReplayCandidatos({ parcial, final, uf = null, fracaoUf =
       <div className="rc-escopo">
         {uf ? (
           <>
-            <span><b>{nomeUf}</b>{!semHorario && fracaoUf != null ? ` · ${pct1(fracaoUf * 100)}% das urnas do estado recebidas` : ''}</span>
+            <span><b>{nomeUf}</b>{fracaoUf != null ? ` · ${pct1(fracaoUf * 100)}% das urnas do estado recebidas${estimada ? ' (horário estimado)' : ''}` : ''}</span>
             <button type="button" className="rc-volta" onClick={aoVoltar}>Ver total</button>
           </>
-        ) : <span>Total do replay · clique em um estado do mapa para ver só ele</span>}
+        ) : <span>Total do Brasil, com o exterior · clique em um estado do mapa para ver só ele</span>}
       </div>
-      {semHorario ? <p className="rc-vazio">{nomeUf} não tem dados no replay: o TSE publicou o arquivo de boletins desse estado incompleto.</p> : !linhas ? <p className="rc-vazio">Carregando os votos…</p> : (
+      {!linhas ? <p className="rc-vazio">Carregando os votos…</p> : (
         <ul className="rc-lista">
           {linhas.map((l) => (
             <li key={l.n} className="rc-linha">
@@ -40,7 +40,7 @@ export default function ReplayCandidatos({ parcial, final, uf = null, fracaoUf =
           ))}
         </ul>
       )}
-      {linhas && !semHorario && <p className="rc-pe"><b>Como ler:</b> percentual parcial: muda conforme as urnas chegam, pois cada região entra em um horário diferente. Não indica o resultado final. O traço laranja é o valor ao fim do replay. Brancos e nulos ficam fora.</p>}
+      {linhas && <p className="rc-pe"><b>Como ler:</b> percentual parcial: muda conforme as urnas chegam, pois cada região entra em um horário diferente. Não indica o resultado final. O traço laranja é o valor ao fim do replay. Brancos e nulos (inclui os votos do nº 28, anulados) ficam fora.</p>}
       <style jsx global>{`
         .rc { padding: 12px 16px 12px; background: ${t.cor.papelQuente}; border-radius: ${t.raio.sm}; }
         .rc-tit { margin: 0 0 6px; font: 700 1rem ${t.fonte.corpo}; color: ${t.cor.tinta}; }

@@ -1,10 +1,10 @@
 import { t } from '../src/estilo/tokens';
 import Segmentado from './Segmentado';
-import { MINUTOS_TOTAIS, VELOCIDADES, horaDoMinuto } from '../src/lib/replayApuracao';
+import { MINUTOS_TOTAIS, VELOCIDADES, horaDoMinuto, listaE } from '../src/lib/replayApuracao';
 
 // LINHA DO TEMPO DO REPLAY (22/10/2026, D-074): hora grande, botão de reproduzir (pílula índigo com texto âmbar, com sombra, sem contorno),
 // barra de tempo e escolha de velocidade (segmented control, opções excludentes). Só desenha; o relógio mora na página.
-export default function ReplayLinhaDoTempo({ minuto, tocando, fim, velocidade, resumo, recebendo, aoAlternar, aoMudarMinuto, aoMudarVelocidade }) {
+export default function ReplayLinhaDoTempo({ minuto, tocando, fim, velocidade, resumo, recebendo, estimadas = [], aoAlternar, aoMudarMinuto, aoMudarVelocidade }) {
   const m = Math.floor(minuto);
   const num = (x) => Number(x || 0).toLocaleString('pt-BR');
   return (
@@ -21,11 +21,15 @@ export default function ReplayLinhaDoTempo({ minuto, tocando, fim, velocidade, r
               </>
             )}
           </div>
-          <span className="rt-sub">horário de Brasília, 4 de outubro de 2026</span>
+          <span className="rt-sub">horário de Brasília, 4 de outubro de 2026{estimadas.length > 0 ? ` · ${listaE(estimadas)} com horário estimado` : ''}</span>
         </div>
         {recebendo && resumo && resumo.total > 0 && (
           <p className="rt-bloco rt-recebendo">
-            {recebendo.length === 0 ? 'Nenhum estado recebendo urnas nos últimos 5 minutos.' : <>Recebendo agora (últimos 5 min): <b>{recebendo.length} {recebendo.length === 1 ? 'estado' : 'estados'}:</b><span>{recebendo.join(', ')}</span></>}
+            {recebendo.length === 0 ? 'Nenhum estado recebendo urnas nos últimos 5 minutos.' : (() => {
+              const ufs = recebendo.filter((u) => u !== 'ZZ'); // ZZ = urnas do exterior (não é estado)
+              const lista = recebendo.includes('ZZ') ? [...ufs, 'Exterior'] : ufs;
+              return <>Recebendo agora (últimos 5 min): <b>{ufs.length} {ufs.length === 1 ? 'estado' : 'estados'}{recebendo.includes('ZZ') ? ' e o exterior' : ''}:</b><span>{lista.join(', ')}</span></>;
+            })()}
           </p>
         )}
       </div>

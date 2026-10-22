@@ -5,7 +5,7 @@ import ReplayMapa from '../components/ReplayMapa';
 import ReplayCandidatos from '../components/ReplayCandidatos';
 import ReplayLinhaDoTempo from '../components/ReplayLinhaDoTempo';
 import ReplayAviso from '../components/ReplayAviso';
-import { VELOCIDADES, VELOCIDADE_PADRAO, MINUTOS_TOTAIS, limitarMinuto, avancar, fracoes, urnasRecebidas, recebendoAgora, votosNoMinuto, UFS_SEM_DETALHE } from '../src/lib/replayApuracao';
+import { VELOCIDADES, VELOCIDADE_PADRAO, MINUTOS_TOTAIS, limitarMinuto, avancar, fracoes, urnasRecebidas, recebendoAgora, votosNoMinuto } from '../src/lib/replayApuracao';
 
 // PÁGINA DE PRÉVIA (22/10/2026, D-073 e D-074): replay animado da apuração do 1º turno de 2026. Já pinta o mapa com as seções recebidas
 // por estado a cada minuto (public/replay/1t-2026-secoes.json); a contagem de votos entra no passo seguinte. Fica fora do menu e do sitemap
@@ -58,6 +58,7 @@ export default function ApuracaoReplay() {
     return () => ctl.abort();
   }, []);
 
+  const estimadas = (dados && dados.estimadas) || []; // estados sem boletins completos: votos finais oficiais, horário estimado
   const mi = Math.floor(minuto);
   const fracao = useMemo(() => fracoes(dados, mi), [dados, mi]);
   const resumo = useMemo(() => urnasRecebidas(dados, mi), [dados, mi]);
@@ -104,14 +105,14 @@ export default function ApuracaoReplay() {
         </header>
         <section className="rp-cartao" aria-label="Replay">
           <div className="rp-faixa">
-            <ReplayLinhaDoTempo minuto={minuto} tocando={tocando} fim={fim} velocidade={velocidade} resumo={dados ? resumo : null} recebendo={dados ? recebendo : null}
+            <ReplayLinhaDoTempo minuto={minuto} tocando={tocando} fim={fim} velocidade={velocidade} resumo={dados ? resumo : null} recebendo={dados ? recebendo : null} estimadas={estimadas}
               aoAlternar={alternar} aoMudarMinuto={irPara} aoMudarVelocidade={setVelocidade} />
           </div>
-          <ReplayMapa fracao={fracao} recebendo={recebendo} selecionada={ufSel} aoEscolher={escolher} />
+          <ReplayMapa fracao={fracao} recebendo={recebendo} estimadas={estimadas} selecionada={ufSel} aoEscolher={escolher} />
           <div className="rp-lado">
             {erroDados && <p className="rp-erro" role="status">Não foi possível carregar os dados do replay. Tente recarregar a página.</p>}
-            <ReplayCandidatos parcial={votos ? votosAgora : null} final={votos ? votosFinal : null} uf={ufSel} fracaoUf={ufSel ? fracao[ufSel] : null} semHorario={ufSel ? UFS_SEM_DETALHE.includes(ufSel) : false} aoVoltar={() => setUfSel(null)} />
-            <ReplayAviso />
+            <ReplayCandidatos parcial={votos ? votosAgora : null} final={votos ? votosFinal : null} uf={ufSel} fracaoUf={ufSel ? fracao[ufSel] : null} estimada={ufSel ? estimadas.includes(ufSel) : false} aoVoltar={() => setUfSel(null)} />
+            <ReplayAviso estimadas={estimadas} />
           </div>
         </section>
       </main>
