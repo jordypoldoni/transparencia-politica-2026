@@ -254,12 +254,15 @@ function ListaDeputadoFederal({ dadosIniciais, resumo, filtrosIniciais, paginaIn
 // ALTERNADOR "Candidatos | Apuração" (02/10/2026): as duas visões moram na mesma página de
 // Eleições 2026. A apuração é a mesma rota com ?visao=apuracao, para não criar menu nem página nova.
 function AlternarVisao({ visao, cargo, turno = 1 }) {
+  // Celular (22/10/2026): campo de escolha, como o de cargo, em vez de pastilhas lado a lado.
   const sufixo = turno === 2 ? '&turno=2' : '';
   return (
-    <div role="group" aria-label="Visão da página" style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
-      <Link href={`/candidatos-2026?cargo=${cargo}${sufixo}`} style={abaEstilo(visao === 'candidatos')}>Candidatos</Link>
-      <Link href={`/candidatos-2026?visao=apuracao&cargo=${cargo}${sufixo}`} style={abaEstilo(visao === 'apuracao')}>Apuração</Link>
-      <Link href="/candidatos-2026?visao=replay" style={abaEstilo(visao === 'replay')}>Replay</Link>
+    <div style={{ marginBottom: '10px' }}>
+      <EscolhaCompacta rotulo="Visão da página" valor={visao} opcoes={[
+        { valor: 'candidatos', rotulo: 'Candidatos', href: `/candidatos-2026?cargo=${cargo}${sufixo}` },
+        { valor: 'apuracao', rotulo: 'Apuração', href: `/candidatos-2026?visao=apuracao&cargo=${cargo}${sufixo}` },
+        { valor: 'replay', rotulo: 'Replay', href: '/candidatos-2026?visao=replay' },
+      ]} />
     </div>
   );
 }
@@ -284,11 +287,11 @@ const CARGOS_APURACAO = [
 function SeletorTurno({ turno, cargo, visao = 'apuracao', turno2Travado = false }) {
   const base = visao === 'replay' ? '/candidatos-2026?visao=replay' : `/candidatos-2026?${visao === 'apuracao' ? 'visao=apuracao&' : ''}cargo=${cargo}`;
   return (
-    <div role="group" aria-label="Turno" style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
-      <Link href={base} style={abaEstilo(turno === 1)}>1º turno</Link>
-      {turno2Travado
-        ? <span aria-disabled="true" style={{ ...abaEstilo(false), color: t.cor.cinza, opacity: 0.65, cursor: 'not-allowed' }}>2º turno</span>
-        : <Link href={`${base}&turno=2`} style={abaEstilo(turno === 2)}>2º turno</Link>}
+    <div style={{ marginBottom: '16px' }}>
+      <EscolhaCompacta rotulo="Turno" valor={turno} opcoes={[
+        { valor: 1, rotulo: '1º turno', href: base },
+        { valor: 2, rotulo: '2º turno', href: `${base}&turno=2`, desabilitado: turno2Travado },
+      ]} />
     </div>
   );
 }
@@ -337,7 +340,6 @@ function PaginaReplay({ turno, liberado2t }) {
       <Head>
         <title>Replay da apuração de 2026: veja as urnas chegarem, estado por estado | Lume</title>
         <meta name="description" content="Reveja a apuração do 1º turno de 2026 minuto a minuto: em que ordem as urnas chegaram ao TSE e como os votos foram sendo contados, estado por estado." />
-        <meta name="robots" content="noindex, follow" />
         <link rel="canonical" href="https://www.lumecidadao.com.br/candidatos-2026?visao=replay" />
       </Head>
       <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.8rem,4vw,2.6rem)', margin: '0 0 10px' }}>
