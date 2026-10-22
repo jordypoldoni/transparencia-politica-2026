@@ -10,6 +10,7 @@ import { Seta } from './icones';
 // opções não há o que buscar, e um campo de texto abriria o teclado do celular à toa.
 // `opcoes`: [{ valor, rotulo, href? }]. Com href, cada item é um link (navegação entre páginas);
 // sem href, chama aoEscolher(valor) (troca de aba na mesma página).
+// Uma opção com `desabilitado: true` aparece apagada, sem link nem clique (ex.: replay do 2º turno antes da hora).
 // `prefixo`: texto fixo antes da opção atual, em cinza (ex.: "Ordenar por"), para o campo dizer o que escolhe.
 export default function EscolhaCompacta({ opcoes, valor, aoEscolher, rotulo, prefixo }) {
   const [aberto, setAberto] = useState(false);
@@ -46,6 +47,7 @@ export default function EscolhaCompacta({ opcoes, valor, aoEscolher, rotulo, pre
         <div style={{ position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0, zIndex: 70, background: '#fff', borderRadius: t.raio.md, boxShadow: t.sombra.media, overflow: 'hidden' }}>
           {opcoes.map((o) => {
             const ativo = o.valor === atual?.valor;
+            if (o.desabilitado) return <span key={o.valor} aria-disabled="true" style={{ ...item(false), color: t.cor.cinza, opacity: 0.65, cursor: 'not-allowed' }}><span>{o.rotulo}</span></span>;
             const conteudo = <><span>{o.rotulo}</span>{ativo && <span aria-hidden style={{ color: t.cor.ouro }}>✓</span>}</>;
             return o.href ? (
               <Link key={o.valor} href={o.href} aria-current={ativo ? 'page' : undefined} onClick={() => setAberto(false)} style={item(ativo)}>{conteudo}</Link>
