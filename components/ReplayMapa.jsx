@@ -7,8 +7,11 @@ import { UFS_SEM_DETALHE } from '../src/lib/replayApuracao';
 // no horário escolhido). A cor marca a REGIÃO (D-026, nunca partido); a intensidade marca quanto já chegou. Estado sem urna recebida
 // fica cinza. MS, RN, SE e TO não têm linha do tempo (arquivo do TSE incompleto) e ficam hachurados.
 // Usa só a geometria de src/lib/mapaBrasilGeo.js; não depende do mapa da apuração real.
+// TAMANHO: a altura da janela decide (--rm-h) e a largura livre limita; a caixa do SVG tem sempre a proporção do desenho, então o mapa
+// cresce de verdade com o espaço (sem sobra em cima e embaixo). No computador a legenda fica ao lado, em coluna, e não rouba altura.
 const SEM_DADOS = '#D9D6CE';
 const PEQUENOS = new Set(['RN', 'PB', 'AL', 'SE', 'ES', 'RJ', 'DF']); // pequenos demais para a sigla dentro
+const PROPORCAO = MAPA_BRASIL.largura / MAPA_BRASIL.altura;
 
 export default function ReplayMapa({ fracao = {} }) {
   return (
@@ -38,26 +41,24 @@ export default function ReplayMapa({ fracao = {} }) {
           <span key={k} className="rm-item"><i style={{ background: REGIOES[k].cor }} />{REGIOES[k].nome}</span>
         ))}
         <span className="rm-item"><i style={{ background: SEM_DADOS }} />Nenhuma urna recebida</span>
-        <span className="rm-item"><i className="rm-grad" />Cor mais forte: mais urnas já recebidas</span>
-        <span className="rm-item"><i className="rm-hach" />Sem horário de chegada: {UFS_SEM_DETALHE.join(', ')}</span>
+        <span className="rm-item"><i className="rm-grad" />Mais forte: mais urnas recebidas</span>
+        <span className="rm-item"><i className="rm-hach" />Sem horário: {UFS_SEM_DETALHE.join(', ')}</span>
       </figcaption>
       <style jsx global>{`
-        .rm { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 10px; }
-        .rm-svg { display: block; width: auto; max-width: 100%; aspect-ratio: ${MAPA_BRASIL.largura} / ${MAPA_BRASIL.altura}; height: clamp(300px, calc(100vh - 200px), 680px); }
+        .rm { --rm-h: clamp(300px, calc(100vh - 215px), 700px); margin: 0; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+        .rm-svg { display: block; flex: 0 1 auto; width: min(100%, calc(var(--rm-h) * ${PROPORCAO.toFixed(4)})); aspect-ratio: ${MAPA_BRASIL.largura} / ${MAPA_BRASIL.altura}; height: auto; }
         .rm-uf { stroke: ${t.cor.papelCartao}; stroke-width: 1; transition: fill-opacity 0.25s linear, fill 0.25s linear; }
         .rm-sigla { font: 700 11px ${t.fonte.corpo}; fill: ${t.cor.tinta}; pointer-events: none; paint-order: stroke; stroke: rgba(255,255,255,0.75); stroke-width: 2.5px; }
         .rm-leg { display: flex; flex-wrap: wrap; gap: 6px 16px; justify-content: center; font-size: 0.85rem; color: ${t.cor.cinza}; }
-        .rm-item { display: inline-flex; align-items: center; gap: 6px; }
+        .rm-item { display: inline-flex; align-items: center; gap: 8px; }
         .rm-item i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; flex: none; }
         .rm-hach { background: repeating-linear-gradient(45deg, #ECE9E2 0 3px, #C9C5BA 3px 5px); }
-        .rm-grad { background: linear-gradient(90deg, rgba(91,111,168,0.28), rgba(91,111,168,1)); width: 28px !important; }
-        /* Computador: a legenda sai de baixo e vai para o lado do mapa, em coluna. Libera altura para o mapa crescer. */
+        .rm-grad { background: linear-gradient(90deg, rgba(91,111,168,0.28), rgba(91,111,168,1)); width: 22px !important; }
+        /* Computador: a legenda vai para o lado do mapa, em coluna. O grupo (legenda + mapa) fica centralizado na coluna. */
         @media (min-width: 900px) {
           .rm { flex-direction: row; align-items: flex-end; justify-content: center; gap: 22px; }
-          .rm-svg { order: 2; }
-          .rm-leg { order: 1; flex-direction: column; flex-wrap: nowrap; align-items: flex-start; justify-content: flex-end; gap: 9px; width: 168px; flex: none; padding-bottom: 8px; line-height: 1.3; }
-          .rm-item { align-items: flex-start; }
-          .rm-item i { margin-top: 3px; }
+          .rm-svg { order: 2; width: min(calc(100% - 232px), calc(var(--rm-h) * ${PROPORCAO.toFixed(4)})); }
+          .rm-leg { order: 1; flex: none; width: 210px; flex-direction: column; flex-wrap: nowrap; align-items: flex-start; justify-content: flex-end; gap: 8px; padding-bottom: 6px; line-height: 1.3; }
         }
         @media (prefers-reduced-motion: reduce) { .rm-uf { transition: none; } }
       `}</style>
