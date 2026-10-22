@@ -40,3 +40,36 @@ export function avancar(minuto, dtMs, minPorSeg) {
   if (novo >= MINUTOS_TOTAIS) return { minuto: MINUTOS_TOTAIS, fim: true };
   return { minuto: novo, fim: false };
 }
+
+// DADOS (22/10/2026): public/replay/1t-2026-secoes.json = { minutos, ufs: { UF: { total, acum: [seções recebidas até o fim de cada minuto] } } }.
+// Gerado por scripts/replay/gerar_secoes_1t.mjs a partir dos boletins de urna do TSE. O minuto N inclui todas as urnas recebidas até N:59.
+function acumAte(uf, minuto) {
+  const a = uf && uf.acum;
+  if (!Array.isArray(a) || a.length === 0) return 0;
+  return a[Math.min(a.length - 1, limitarMinuto(minuto))] || 0;
+}
+
+// { UF: parte (0 a 1) das seções do estado já recebidas no minuto }. UF sem dado ou sem seções fica de fora (o mapa pinta de cinza).
+export function fracoes(dados, minuto) {
+  const out = {};
+  if (!dados || !dados.ufs) return out;
+  for (const [uf, d] of Object.entries(dados.ufs)) {
+    if (!d || !(d.total > 0)) continue;
+    out[uf] = Math.min(1, acumAte(d, minuto) / d.total);
+  }
+  return out;
+}
+
+// Quantas urnas já chegaram no minuto, somando todas as UFs com dado (inclui o exterior). Cobertura que acompanha qualquer número na tela.
+export function urnasRecebidas(dados, minuto) {
+  let recebidas = 0;
+  let total = 0;
+  if (dados && dados.ufs) {
+    for (const d of Object.values(dados.ufs)) {
+      if (!d || !(d.total > 0)) continue;
+      recebidas += acumAte(d, minuto);
+      total += d.total;
+    }
+  }
+  return { recebidas, total, pct: total > 0 ? (recebidas / total) * 100 : 0 };
+}

@@ -38,17 +38,27 @@ export default function ReplayMapa({ fracao = {} }) {
           <span key={k} className="rm-item"><i style={{ background: REGIOES[k].cor }} />{REGIOES[k].nome}</span>
         ))}
         <span className="rm-item"><i style={{ background: SEM_DADOS }} />Nenhuma urna recebida</span>
+        <span className="rm-item"><i className="rm-grad" />Cor mais forte: mais urnas já recebidas</span>
         <span className="rm-item"><i className="rm-hach" />Sem horário de chegada: {UFS_SEM_DETALHE.join(', ')}</span>
       </figcaption>
       <style jsx global>{`
-        .rm { margin: 0; }
-        .rm-svg { display: block; width: 100%; height: auto; max-height: clamp(280px, calc(100vh - 300px), 560px); margin: 0 auto; }
+        .rm { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .rm-svg { display: block; width: auto; max-width: 100%; aspect-ratio: ${MAPA_BRASIL.largura} / ${MAPA_BRASIL.altura}; height: clamp(300px, calc(100vh - 200px), 680px); }
         .rm-uf { stroke: ${t.cor.papelCartao}; stroke-width: 1; transition: fill-opacity 0.25s linear, fill 0.25s linear; }
         .rm-sigla { font: 700 11px ${t.fonte.corpo}; fill: ${t.cor.tinta}; pointer-events: none; paint-order: stroke; stroke: rgba(255,255,255,0.75); stroke-width: 2.5px; }
-        .rm-leg { display: flex; flex-wrap: wrap; gap: 4px 14px; justify-content: center; margin-top: 8px; font-size: 0.78rem; color: ${t.cor.cinza}; }
+        .rm-leg { display: flex; flex-wrap: wrap; gap: 6px 16px; justify-content: center; font-size: 0.85rem; color: ${t.cor.cinza}; }
         .rm-item { display: inline-flex; align-items: center; gap: 6px; }
         .rm-item i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; flex: none; }
         .rm-hach { background: repeating-linear-gradient(45deg, #ECE9E2 0 3px, #C9C5BA 3px 5px); }
+        .rm-grad { background: linear-gradient(90deg, rgba(91,111,168,0.28), rgba(91,111,168,1)); width: 28px !important; }
+        /* Computador: a legenda sai de baixo e vai para o lado do mapa, em coluna. Libera altura para o mapa crescer. */
+        @media (min-width: 900px) {
+          .rm { flex-direction: row; align-items: flex-end; justify-content: center; gap: 22px; }
+          .rm-svg { order: 2; }
+          .rm-leg { order: 1; flex-direction: column; flex-wrap: nowrap; align-items: flex-start; justify-content: flex-end; gap: 9px; width: 168px; flex: none; padding-bottom: 8px; line-height: 1.3; }
+          .rm-item { align-items: flex-start; }
+          .rm-item i { margin-top: 3px; }
+        }
         @media (prefers-reduced-motion: reduce) { .rm-uf { transition: none; } }
       `}</style>
     </figure>

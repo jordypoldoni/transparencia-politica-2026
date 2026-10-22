@@ -35,3 +35,36 @@ test('estados sem detalhe e velocidades', () => {
   assert.ok(VELOCIDADES.some((v) => v.chave === VELOCIDADE_PADRAO));
   for (const v of VELOCIDADES) assert.ok(v.minPorSeg > 0 && v.rotulo.length > 0);
 });
+
+import { fracoes, urnasRecebidas } from '../src/lib/replayApuracao.js';
+
+const DADOS = {
+  minutos: 601,
+  ufs: {
+    AA: { total: 10, acum: [0, 2, 5, 10] },
+    BB: { total: 4, acum: [0, 0, 1, 4] },
+    CC: { total: 0, acum: [0] },
+  },
+};
+
+test('frações por estado no minuto: acumulado dividido pelo total, limitado a 1', () => {
+  assert.deepEqual(fracoes(DADOS, 0), { AA: 0, BB: 0 });
+  assert.deepEqual(fracoes(DADOS, 1), { AA: 0.2, BB: 0 });
+  assert.deepEqual(fracoes(DADOS, 2), { AA: 0.5, BB: 0.25 });
+  assert.deepEqual(fracoes(DADOS, 3), { AA: 1, BB: 1 });
+  assert.deepEqual(fracoes(DADOS, 500), { AA: 1, BB: 1 }); // depois do último minuto do arquivo, fica no total
+});
+
+test('frações: sem dados ou estado sem seções não quebra nem entra', () => {
+  assert.deepEqual(fracoes(null, 5), {});
+  assert.deepEqual(fracoes({}, 5), {});
+  assert.ok(!('CC' in fracoes(DADOS, 1)));
+});
+
+test('urnas recebidas: soma de todos os estados com dado e percentual', () => {
+  const r = urnasRecebidas(DADOS, 2);
+  assert.equal(r.recebidas, 6);
+  assert.equal(r.total, 14);
+  assert.ok(Math.abs(r.pct - (6 / 14) * 100) < 1e-9);
+  assert.deepEqual(urnasRecebidas(null, 2), { recebidas: 0, total: 0, pct: 0 });
+});
