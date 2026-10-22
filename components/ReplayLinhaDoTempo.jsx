@@ -17,11 +17,11 @@ export default function ReplayLinhaDoTempo({ minuto, tocando, fim, velocidade, r
               <>
                 <span className="rt-sep" aria-hidden="true">·</span>
                 <strong className="rt-pct">{resumo.pct.toFixed(1).replace('.', ',')}%</strong>
-                <span className="rt-rot">das urnas recebidas</span>
+                <span className="rt-rot">das urnas recebidas <span className="rt-qtd">({num(resumo.recebidas)} de {num(resumo.total)} urnas)</span></span>
               </>
             )}
           </div>
-          <span className="rt-sub">horário de Brasília, 4 de outubro de 2026{resumo && resumo.total > 0 ? ` · ${num(resumo.recebidas)} de ${num(resumo.total)} urnas` : ''}</span>
+          <span className="rt-sub">horário de Brasília, 4 de outubro de 2026</span>
         </div>
         {recebendo && resumo && resumo.total > 0 && (
           <p className="rt-bloco rt-recebendo">
@@ -47,6 +47,7 @@ export default function ReplayLinhaDoTempo({ minuto, tocando, fim, velocidade, r
         .rt-grande { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 12px; }
         .rt-sep { font: 700 2.2rem/1.1 ${t.fonte.titulo}; color: ${t.cor.cinza}; }
         .rt-rot { font-size: 0.95rem; color: ${t.cor.tinta}; }
+        .rt-qtd { color: ${t.cor.cinza}; white-space: nowrap; }
         .rt-sub { font-size: 0.82rem; color: ${t.cor.cinza}; }
         .rt-recebendo span { font-size: 0.85rem; color: ${t.cor.cinza}; }
         .rt-recebendo { order: 3; flex: 1 1 100%; flex-direction: row; flex-wrap: wrap; gap: 0 6px; font-size: 0.85rem; line-height: 1.4; color: ${t.cor.cinza}; }

@@ -30,7 +30,7 @@ export default function ReplayCandidatos({ parcial, final }) {
           ))}
         </ul>
       )}
-      {linhas && <p className="rc-pe"><b>Como ler:</b> o percentual parcial muda conforme as urnas chegam, pois cada região entra em um horário diferente. Ele não indica o resultado final. O traço laranja em cada barra é o valor ao fim do replay, só dos estados com horário. Brancos e nulos ficam fora da conta ({num(parcial.brancos + parcial.nulos)} agora).</p>}
+      {linhas && <p className="rc-pe"><b>Como ler:</b> percentual parcial: muda conforme as urnas chegam, pois cada região entra em um horário diferente. Não indica o resultado final. O traço laranja é o valor ao fim do replay. Brancos e nulos ficam fora.</p>}
       <style jsx global>{`
         .rc { padding: 12px 16px 12px; background: ${t.cor.papelQuente}; border-radius: ${t.raio.sm}; }
         .rc-tit { margin: 0 0 6px; font: 700 1rem ${t.fonte.corpo}; color: ${t.cor.tinta}; }
