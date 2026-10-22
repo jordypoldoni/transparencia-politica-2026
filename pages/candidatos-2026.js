@@ -20,6 +20,8 @@ import ApuracaoEleicao from '../components/ApuracaoEleicao';
 import ConferenciaUrnas from '../components/ConferenciaUrnas';
 import BarraControleEleicoes from '../components/BarraControleEleicoes';
 import { turnoValido, disponivelNoTurno, SEGUNDO_TURNO } from '../src/lib/turnos';
+import ReplayApuracao from '../components/ReplayApuracao';
+import { replayLiberado, TEXTO_LIBERA_2T } from '../src/lib/replayLiberacao';
 import { carregarSegundoTurno } from '../src/lib/candidatosSegundoTurno';
 import { listarCandidatosEstaduais, UFS_ESTADUAL } from '../src/lib/candidatosEstaduais';
 import SeloAtualizacao from '../components/SeloAtualizacao';
@@ -255,14 +257,18 @@ function AlternarVisao({ visao, cargo, turno = 1 }) {
   const sufixo = turno === 2 ? '&turno=2' : '';
   return (
     <div role="group" aria-label="Visão da página" style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
-      <Link href={`/candidatos-2026?cargo=${cargo}${sufixo}`} style={abaEstilo(visao !== 'apuracao')}>Candidatos</Link>
+      <Link href={`/candidatos-2026?cargo=${cargo}${sufixo}`} style={abaEstilo(visao === 'candidatos')}>Candidatos</Link>
       <Link href={`/candidatos-2026?visao=apuracao&cargo=${cargo}${sufixo}`} style={abaEstilo(visao === 'apuracao')}>Apuração</Link>
+      <Link href="/candidatos-2026?visao=replay" style={abaEstilo(visao === 'replay')}>Replay</Link>
     </div>
   );
 }
 
 // Endereços da barra de controle (computador). O 1º turno é o padrão e não leva `turno` no endereço.
-const hrefEleicoes = (visao, cargo, turno) => `/candidatos-2026?${visao === 'apuracao' ? 'visao=apuracao&' : ''}cargo=${cargo}${turno === 2 ? '&turno=2' : ''}`;
+// O Replay não tem cargo e, ao entrar nele por outra visão, abre sempre no 1º turno (o 2º só abre pelo seletor de turno, depois da hora).
+const hrefEleicoes = (visao, cargo, turno) => visao === 'replay'
+  ? `/candidatos-2026?visao=replay${turno === 2 ? '&turno=2' : ''}`
+  : `/candidatos-2026?${visao === 'apuracao' ? 'visao=apuracao&' : ''}cargo=${cargo}${turno === 2 ? '&turno=2' : ''}`;
 
 const CARGOS_APURACAO = [
   { valor: 'presidente', rotulo: 'Presidente' },
@@ -275,12 +281,14 @@ const CARGOS_APURACAO = [
 // SELETOR DE TURNO (11/10/2026): mesmo padrão das abas da página (abaEstilo). O 1º turno é o padrão e
 // não leva `turno` no endereço, então os links antigos continuam iguais. O 2º turno só tem presidente
 // e governador (src/lib/turnos.js); se o cargo não existir nele, a página abre em presidente.
-function SeletorTurno({ turno, cargo, visao = 'apuracao' }) {
-  const base = `/candidatos-2026?${visao === 'apuracao' ? 'visao=apuracao&' : ''}cargo=${cargo}`;
+function SeletorTurno({ turno, cargo, visao = 'apuracao', turno2Travado = false }) {
+  const base = visao === 'replay' ? '/candidatos-2026?visao=replay' : `/candidatos-2026?${visao === 'apuracao' ? 'visao=apuracao&' : ''}cargo=${cargo}`;
   return (
     <div role="group" aria-label="Turno" style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap' }}>
       <Link href={base} style={abaEstilo(turno === 1)}>1º turno</Link>
-      <Link href={`${base}&turno=2`} style={abaEstilo(turno === 2)}>2º turno</Link>
+      {turno2Travado
+        ? <span aria-disabled="true" style={{ ...abaEstilo(false), color: t.cor.cinza, opacity: 0.65, cursor: 'not-allowed' }}>2º turno</span>
+        : <Link href={`${base}&turno=2`} style={abaEstilo(turno === 2)}>2º turno</Link>}
     </div>
   );
 }
@@ -318,7 +326,45 @@ function PaginaApuracao({ cargo, ufInicial, turno }) {
   );
 }
 
+// REPLAY (22/10/2026, D-077): terceira visão de Eleições 2026 (?visao=replay). O 1º turno está aberto; o 2º turno aparece
+// no seletor, mas só fica clicável a partir das 17h de 25/10/2026 (src/lib/replayLiberacao.js, checado no servidor).
+// O replay do 2º turno em si só existe depois dos boletins de urna do 2º turno (D-073), então, mesmo liberado, a visão
+// do 2º turno mostra um aviso e leva para a apuração ao vivo.
+function PaginaReplay({ turno, liberado2t }) {
+  const travado = !liberado2t;
+  return (
+    <div className="pagina">
+      <Head>
+        <title>Replay da apuração de 2026: veja as urnas chegarem, estado por estado | Lume</title>
+        <meta name="description" content="Reveja a apuração do 1º turno de 2026 minuto a minuto: em que ordem as urnas chegaram ao TSE e como os votos foram sendo contados, estado por estado." />
+        <meta name="robots" content="noindex, follow" />
+        <link rel="canonical" href="https://www.lumecidadao.com.br/candidatos-2026?visao=replay" />
+      </Head>
+      <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.8rem,4vw,2.6rem)', margin: '0 0 10px' }}>
+        Replay da apuração {turno === 2 ? 'do 2º turno' : 'do 1º turno'} de 2026
+      </h1>
+      <div className="so-celular">
+        <AlternarVisao visao="replay" cargo="presidente" />
+        <SeletorTurno visao="replay" turno={turno} cargo="presidente" turno2Travado={travado} />
+      </div>
+      <BarraControleEleicoes visao="replay" turno={turno} cargo="presidente"
+        hrefVisao={(v) => hrefEleicoes(v, 'presidente', 1)} hrefTurno={(n) => hrefEleicoes('replay', 'presidente', n)}
+        turno2={{ desabilitado: travado, dica: TEXTO_LIBERA_2T }} />
+      {travado && <p style={{ margin: '0 0 14px', color: t.cor.cinza, fontSize: '0.88rem' }}>{TEXTO_LIBERA_2T}</p>}
+      {turno === 2
+        ? (
+          <section style={{ background: t.cor.papelCartao, borderRadius: t.raio.md, boxShadow: t.sombra.media, padding: '20px', color: t.cor.cinza, lineHeight: 1.5 }}>
+            <p style={{ margin: '0 0 10px' }}>O replay do 2º turno é montado depois que o TSE publica os boletins de urna, alguns dias após a votação.</p>
+            <Link href="/candidatos-2026?visao=apuracao&turno=2" style={abaEstilo(true)}>Ver a apuração do 2º turno</Link>
+          </section>
+        )
+        : <ReplayApuracao />}
+    </div>
+  );
+}
+
 export default function Candidatos2026(props) {
+  if (props.visao === 'replay') return <PaginaReplay turno={props.turno} liberado2t={props.liberado2t} />;
   if (props.visao === 'apuracao') return <PaginaApuracao cargo={props.cargo} ufInicial={props.ufInicial} turno={props.turno} />;
   if (props.turno === 2) return <PaginaCandidatosSegundoTurno {...props} />;
   return <PaginaCandidatos {...props} />;
@@ -476,6 +522,12 @@ export async function getServerSideProps({ query, req }) {
   const cargo = ['deputado-federal', 'senador', 'governador', 'deputado-estadual'].includes(query.cargo) ? query.cargo : 'presidente';
   // APURAÇÃO (02/10/2026): não lê o banco. O resultado vem de /api/apuracao no navegador. O estado
   // abre pelo endereço, senão pela região aproximada de quem visita (cabeçalho da Vercel), senão SP.
+  // REPLAY (22/10/2026, D-077): não lê o banco nem o TSE. Turno 2 antes da hora volta para o 1º turno.
+  if (query.visao === 'replay') {
+    const liberado2t = replayLiberado(2);
+    const turno = turnoValido(query.turno) === 2 && liberado2t ? 2 : 1;
+    return { props: { visao: 'replay', turno, liberado2t } };
+  }
   if (query.visao === 'apuracao') {
     const pedida = String(query.uf || '').toUpperCase();
     const regiao = String(req.headers['x-vercel-ip-country-region'] || '').toUpperCase();

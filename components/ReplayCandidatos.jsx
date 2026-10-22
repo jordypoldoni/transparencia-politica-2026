@@ -65,6 +65,14 @@ export default function ReplayCandidatos({ parcial, final, uf = null, fracaoUf =
         .rc-pct small { font-weight: 400; color: ${t.cor.cinza}; font-size: 0.72rem; }
         .rc-vazio { margin: 0; font-size: 0.9rem; color: ${t.cor.cinza}; }
         .rc-pe { margin: 7px 0 0; font-size: 0.78rem; line-height: 1.35; color: ${t.cor.cinza}; }
+        /* Celular: sem o partido ao lado do nome; os votos contados passam para baixo do percentual. */
+        @media (max-width: 600px) {
+          .rc { padding: 12px 12px; }
+          .rc-linha { grid-template-columns: 22px minmax(0, 1fr) minmax(56px, 0.8fr) 78px; gap: 6px; }
+          .rc-nome small { display: none; }
+          .rc-pct small { display: block; font-size: 0.68rem; }
+          .rc-escopo { flex-wrap: wrap; }
+        }
         @media (prefers-reduced-motion: reduce) { .rc-barra { transition: none; } }
       `}</style>
     </section>

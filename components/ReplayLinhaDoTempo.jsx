@@ -59,12 +59,21 @@ export default function ReplayLinhaDoTempo({ minuto, tocando, fim, velocidade, r
         .rt-recebendo span { font-size: 0.85rem; color: ${t.cor.cinza}; }
         .rt-recebendo { order: 3; flex: 1 1 100%; flex-direction: row; flex-wrap: wrap; gap: 0 6px; font-size: 0.85rem; line-height: 1.4; color: ${t.cor.cinza}; }
         .rt-recebendo b { color: ${t.cor.tinta}; }
-        .rt-ctl { order: 2; display: flex; align-items: center; gap: 14px; flex: 1 1 520px; min-width: 0; max-width: 700px; margin-left: auto; }
+        .rt-ctl { order: 2; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; flex: 1 1 520px; min-width: 0; max-width: 700px; margin-left: auto; }
         .rt-play { flex: none; min-height: 40px; padding: 10px 22px; border: none; border-radius: ${t.raio.pill}; background: ${t.cor.verde}; color: ${t.cor.ouro}; font: 700 0.95rem ${t.fonte.corpo}; cursor: pointer; box-shadow: ${t.sombra.botao}; transition: box-shadow 0.15s; }
         .rt-play:hover { box-shadow: ${t.sombra.botaoHover}; }
         .rt-play:focus-visible { outline: none; box-shadow: ${t.sombra.botao}, ${t.sombra.anelFoco}; }
-        .rt-barra { flex: 1; min-width: 120px; height: 28px; accent-color: ${t.cor.verde}; cursor: pointer; }
+        .rt-barra { flex: 1 1 120px; min-width: 120px; height: 28px; accent-color: ${t.cor.verde}; cursor: pointer; }
         .rt-barra:focus-visible { outline: none; box-shadow: ${t.sombra.anelFoco}; border-radius: ${t.raio.pill}; }
+        /* Celular: botão e barra na primeira linha; a velocidade ocupa a linha de baixo, em largura total. */
+        @media (max-width: 600px) {
+          .rt { gap: 6px; }
+          .rt-ctl { flex: 1 1 100%; max-width: none; margin-left: 0; }
+          .rt-ctl .segmentado { flex: 1 1 100%; display: flex; flex-wrap: nowrap; }
+          .rt-ctl .seg-op { flex: 1; text-align: center; padding: 8px 4px; }
+          .rt-hora, .rt-pct, .rt-sep { font-size: 1.9rem; }
+          .rt-grande { gap: 0 8px; }
+        }
         @media (pointer: coarse) { .rt-play { min-height: 44px; } .rt-barra { height: 40px; } }
       `}</style>
     </div>
