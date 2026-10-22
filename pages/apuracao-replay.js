@@ -63,8 +63,8 @@ export default function ApuracaoReplay() {
   const fracao = useMemo(() => fracoes(dados, mi), [dados, mi]);
   const resumo = useMemo(() => urnasRecebidas(dados, mi), [dados, mi]);
   const recebendo = useMemo(() => recebendoAgora(dados, mi), [dados, mi]);
-  const votosAgora = useMemo(() => votosNoMinuto(votos, mi, ufSel), [votos, mi, ufSel]);
-  const votosFinal = useMemo(() => votosNoMinuto(votos, MINUTOS_TOTAIS, ufSel), [votos, ufSel]);
+  const votosAgora = useMemo(() => votosNoMinuto(votos, mi, ufSel, true), [votos, mi, ufSel]);
+  const votosFinal = useMemo(() => votosNoMinuto(votos, MINUTOS_TOTAIS, ufSel, true), [votos, ufSel]);
   const escolher = (uf) => setUfSel((atual) => (atual === uf ? null : uf));
 
   // Relógio do replay: avança só enquanto está tocando, por requestAnimationFrame, e para sozinho no fim.

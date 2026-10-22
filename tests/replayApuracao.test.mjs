@@ -134,3 +134,13 @@ test('percentual de urnas nunca arredonda para 100,0% enquanto falta urna', () =
   assert.equal(pctUrnas(0.6119), '61,1'); // arredonda para baixo, nunca para cima
   assert.equal(pctUrnas(0.6199), '61,9');
 });
+
+test('votos sobre o total final: percentual cresce de zero até o resultado final (base fixa)', () => {
+  const r = votosNoMinuto(VOTOS, 1, null, true);
+  assert.equal(r.baseValidos, 30);                 // válidos ao fim do replay
+  assert.equal(r.validos, 8);                      // já apurados
+  assert.ok(Math.abs(r.linhas[0].pct - 20) < 1e-9); // 6 de 30, e não 6 de 8
+  const f = votosNoMinuto(VOTOS, 2, null, true);   // ao fim: igual ao percentual sobre o apurado
+  assert.equal(f.linhas[0].pct, 50);
+  assert.equal(votosNoMinuto(VOTOS, 0, null, true).linhas[0].pct, 0);
+});

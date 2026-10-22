@@ -97,7 +97,7 @@ export function recebendoAgora(dados, minuto, janela = JANELA_RECEBENDO) {
 // VOTOS (D-074). DADOS DE VOTOS: public/replay/1t-2026-votos.json = { candidatos: [{n, nome, partido, tipo}], ufs: { UF: { [n]: acum[minuto] } } }.
 // Percentual = sobre VOTOS VÁLIDOS (só candidatos; Branco e Nulo ficam fora), como o TSE divulga. Ordem das linhas = a do arquivo (número de urna, FIXA).
 // Soma só os estados presentes no arquivo (24 de 28 com horário: sem MS, RN, SE e TO), então NÃO é o parcial oficial do país.
-export function votosNoMinuto(votos, minuto, uf = null) {
+export function votosNoMinuto(votos, minuto, uf = null, baseFinal = false) {
   const vazio = { linhas: [], validos: 0, brancos: 0, nulos: 0, total: 0 };
   if (!votos || !Array.isArray(votos.candidatos) || !votos.ufs) return vazio;
   const soma = {};
@@ -110,9 +110,12 @@ export function votosNoMinuto(votos, minuto, uf = null) {
     const v = soma[c.n] || 0;
     if (c.tipo === 'Branco') brancos = v; else if (c.tipo === 'Nulo') nulos = v; else validos += v;
   }
+  // baseFinal: o percentual é sobre o TOTAL de votos válidos da eleição (fixo, ao fim do replay), e não sobre o que já foi apurado (D-076).
+  // Assim a barra cresce de zero até o resultado final e não aparece "45%" quando só 0,5% das urnas chegou.
+  const baseValidos = baseFinal && minuto < MINUTOS_TOTAIS ? votosNoMinuto(votos, MINUTOS_TOTAIS, uf).validos : validos;
   const linhas = votos.candidatos.filter((c) => c.tipo !== 'Branco' && c.tipo !== 'Nulo')
-    .map((c) => ({ n: c.n, nome: c.nome, partido: c.partido, votos: soma[c.n] || 0, pct: validos > 0 ? ((soma[c.n] || 0) / validos) * 100 : 0 }));
-  return { linhas, validos, brancos, nulos, total: validos + brancos + nulos };
+    .map((c) => ({ n: c.n, nome: c.nome, partido: c.partido, votos: soma[c.n] || 0, pct: baseValidos > 0 ? ((soma[c.n] || 0) / baseValidos) * 100 : 0 }));
+  return { linhas, validos, baseValidos, brancos, nulos, total: validos + brancos + nulos };
 }
 
 // Percentual de urnas recebidas para a tela, a partir da fração (0 a 1). NUNCA mostra 100,0% se ainda falta alguma urna: arredonda para baixo

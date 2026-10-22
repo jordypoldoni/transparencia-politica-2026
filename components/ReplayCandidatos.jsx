@@ -4,7 +4,7 @@ import { pctUrnas } from '../src/lib/replayApuracao';
 
 // VOTOS DOS CANDIDATOS NO REPLAY (22/10/2026, D-074, regras de neutralidade aprovadas pelo Jordy). Só desenha; os números vêm de votosNoMinuto.
 // Regras: (1) ordem FIXA por número de urna, nunca reordena; (2) todas as barras iguais, sem cor de partido nem destaque de quem lidera;
-// (3) escala fixa de 0 a 60% (não muda com o minuto); (4) o traço fino em cada barra marca o valor ao FIM do replay, igual para todos;
+// (3) escala fixa de 0 a 60% (não muda com o minuto) e percentual sobre o TOTAL de votos válidos (D-076), não sobre o já apurado; (4) o traço fino em cada barra marca o valor ao FIM do replay, igual para todos;
 // (5) a cobertura (urnas recebidas) fica sempre visível na tela, e o rodapé (aviso "Como ler", regra 2) diz que o percentual é parcial e não indica o resultado final.
 const ESCALA = 60;
 const pct1 = (v) => v.toFixed(1).replace('.', ',');
@@ -17,7 +17,7 @@ export default function ReplayCandidatos({ parcial, final, uf = null, fracaoUf =
   if (final) for (const l of final.linhas) refPor[l.n] = l.pct;
   return (
     <section className="rc" aria-label="Votos dos candidatos a presidente neste horário">
-      <h2 className="rc-tit">Votos dos candidatos <span>presidente, % dos votos válidos</span></h2>
+      <h2 className="rc-tit">Votos dos candidatos <span>presidente, % do total de votos válidos</span></h2>
       <div className="rc-escopo">
         {uf ? (
           <>
@@ -26,6 +26,7 @@ export default function ReplayCandidatos({ parcial, final, uf = null, fracaoUf =
           </>
         ) : <span>Total do Brasil, com o exterior · clique em um estado do mapa para ver só ele</span>}
       </div>
+      {linhas && <p className="rc-cont">{num(parcial.validos)} de {num(parcial.baseValidos)} votos válidos contados</p>}
       {!linhas ? <p className="rc-vazio">Carregando os votos…</p> : (
         <ul className="rc-lista">
           {linhas.map((l) => (
@@ -41,7 +42,7 @@ export default function ReplayCandidatos({ parcial, final, uf = null, fracaoUf =
           ))}
         </ul>
       )}
-      {linhas && <p className="rc-pe"><b>Como ler:</b> percentual parcial: muda conforme as urnas chegam, pois cada região entra em um horário diferente. Não indica o resultado final. O traço laranja é o valor ao fim do replay. Brancos e nulos (inclui os votos do nº 28, anulados) ficam fora.</p>}
+      {linhas && <p className="rc-pe"><b>Como ler:</b> cada barra mostra quanto da votação válida já foi contada para o candidato. O traço laranja é o resultado final: quando a barra o alcança, todos os votos dele já foram contados. Brancos e nulos (inclui os votos do nº 28, anulados) ficam fora.</p>}
       <style jsx global>{`
         .rc { padding: 12px 16px 12px; background: ${t.cor.papelQuente}; border-radius: ${t.raio.sm}; }
         .rc-tit { margin: 0 0 6px; font: 700 1rem ${t.fonte.corpo}; color: ${t.cor.tinta}; }
@@ -51,6 +52,7 @@ export default function ReplayCandidatos({ parcial, final, uf = null, fracaoUf =
         .rc-volta { flex: none; padding: 4px 12px; border: none; border-radius: ${t.raio.pill}; background: ${t.cor.papelQuente2}; color: ${t.cor.tinta}; font: 600 0.78rem ${t.fonte.corpo}; cursor: pointer; }
         .rc-volta:hover { background: #EDE2D2; }
         .rc-volta:focus-visible { outline: none; box-shadow: ${t.sombra.anelFoco}; }
+        .rc-cont { margin: 0 0 6px; font-size: 0.78rem; color: ${t.cor.cinza}; font-variant-numeric: tabular-nums; }
         .rc-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; }
         .rc-linha { display: grid; grid-template-columns: 24px minmax(0, 1.25fr) minmax(70px, 1fr) 132px; align-items: center; gap: 8px; font-size: 0.82rem; line-height: 1.25; color: ${t.cor.tinta}; font-variant-numeric: tabular-nums; }
         .rc-num { font-weight: 700; color: ${t.cor.cinza}; }
