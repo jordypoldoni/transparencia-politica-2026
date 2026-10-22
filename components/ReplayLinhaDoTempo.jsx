@@ -4,7 +4,7 @@ import { MINUTOS_TOTAIS, VELOCIDADES, horaDoMinuto } from '../src/lib/replayApur
 
 // LINHA DO TEMPO DO REPLAY (22/10/2026, D-074): hora grande, botão de reproduzir (pílula índigo com texto âmbar, com sombra, sem contorno),
 // barra de tempo e escolha de velocidade (segmented control, opções excludentes). Só desenha; o relógio mora na página.
-export default function ReplayLinhaDoTempo({ minuto, tocando, fim, velocidade, resumo, aoAlternar, aoMudarMinuto, aoMudarVelocidade }) {
+export default function ReplayLinhaDoTempo({ minuto, tocando, fim, velocidade, resumo, recebendo, aoAlternar, aoMudarMinuto, aoMudarVelocidade }) {
   const m = Math.floor(minuto);
   const num = (x) => Number(x || 0).toLocaleString('pt-BR');
   return (
@@ -15,6 +15,11 @@ export default function ReplayLinhaDoTempo({ minuto, tocando, fim, velocidade, r
       </div>
       {resumo && resumo.total > 0 && (
         <p className="rt-urnas">Urnas recebidas: <b>{resumo.pct.toFixed(1).replace('.', ',')}%</b> ({num(resumo.recebidas)} de {num(resumo.total)})</p>
+      )}
+      {recebendo && resumo && resumo.total > 0 && (
+        <p className="rt-recebendo">
+          {recebendo.length === 0 ? 'Nenhum estado recebendo urnas nos últimos 5 minutos.' : <>Recebendo agora (últimos 5 min): <b>{recebendo.length} {recebendo.length === 1 ? 'estado' : 'estados'}</b>: {recebendo.join(', ')}</>}
+        </p>
       )}
       <div className="rt-linha">
         <button type="button" className="rt-play" onClick={aoAlternar}>{tocando ? 'Pausar' : fim ? 'Rever do início' : 'Reproduzir'}</button>
@@ -32,6 +37,7 @@ export default function ReplayLinhaDoTempo({ minuto, tocando, fim, velocidade, r
         .rt-topo { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
         .rt-hora { font: 700 2.2rem ${t.fonte.titulo}; color: ${t.cor.verde}; font-variant-numeric: tabular-nums; }
         .rt-sub { font-size: 0.88rem; color: ${t.cor.cinza}; }
+        .rt-recebendo { margin: -4px 0 0; font-size: 0.85rem; line-height: 1.4; color: ${t.cor.cinza}; }
         .rt-urnas { margin: -2px 0 0; font-size: 0.95rem; color: ${t.cor.tinta}; font-variant-numeric: tabular-nums; }
         .rt-linha { display: flex; align-items: center; gap: 14px; }
         .rt-play { flex: none; min-height: 40px; padding: 10px 22px; border: none; border-radius: ${t.raio.pill}; background: ${t.cor.verde}; color: ${t.cor.ouro}; font: 700 0.95rem ${t.fonte.corpo}; cursor: pointer; box-shadow: ${t.sombra.botao}; transition: box-shadow 0.15s; }

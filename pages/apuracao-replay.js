@@ -4,7 +4,7 @@ import { t } from '../src/estilo/tokens';
 import ReplayMapa from '../components/ReplayMapa';
 import ReplayLinhaDoTempo from '../components/ReplayLinhaDoTempo';
 import ReplayAviso from '../components/ReplayAviso';
-import { VELOCIDADES, VELOCIDADE_PADRAO, MINUTOS_TOTAIS, limitarMinuto, avancar, fracoes, urnasRecebidas } from '../src/lib/replayApuracao';
+import { VELOCIDADES, VELOCIDADE_PADRAO, MINUTOS_TOTAIS, limitarMinuto, avancar, fracoes, urnasRecebidas, recebendoAgora } from '../src/lib/replayApuracao';
 
 // PÁGINA DE PRÉVIA (22/10/2026, D-073 e D-074): replay animado da apuração do 1º turno de 2026. Já pinta o mapa com as seções recebidas
 // por estado a cada minuto (public/replay/1t-2026-secoes.json); a contagem de votos entra no passo seguinte. Fica fora do menu e do sitemap
@@ -53,6 +53,7 @@ export default function ApuracaoReplay() {
   const mi = Math.floor(minuto);
   const fracao = useMemo(() => fracoes(dados, mi), [dados, mi]);
   const resumo = useMemo(() => urnasRecebidas(dados, mi), [dados, mi]);
+  const recebendo = useMemo(() => recebendoAgora(dados, mi), [dados, mi]);
 
   // Relógio do replay: avança só enquanto está tocando, por requestAnimationFrame, e para sozinho no fim.
   useEffect(() => {
@@ -92,9 +93,9 @@ export default function ApuracaoReplay() {
           <p className="rp-intro">Veja em que ordem as urnas chegaram ao TSE na noite de 4 de outubro, estado por estado.</p>
         </header>
         <section className="rp-cartao" aria-label="Replay">
-          <ReplayMapa fracao={fracao} />
+          <ReplayMapa fracao={fracao} recebendo={recebendo} />
           <div className="rp-lado">
-            <ReplayLinhaDoTempo minuto={minuto} tocando={tocando} fim={fim} velocidade={velocidade} resumo={dados ? resumo : null}
+            <ReplayLinhaDoTempo minuto={minuto} tocando={tocando} fim={fim} velocidade={velocidade} resumo={dados ? resumo : null} recebendo={dados ? recebendo : null}
               aoAlternar={alternar} aoMudarMinuto={irPara} aoMudarVelocidade={setVelocidade} />
             {erroDados && <p className="rp-erro" role="status">Não foi possível carregar os dados do replay. Tente recarregar a página.</p>}
             <p className="rp-votos"><strong>Votos dos candidatos</strong>Entram no próximo passo, em ordem fixa por número de urna.</p>

@@ -36,7 +36,7 @@ test('estados sem detalhe e velocidades', () => {
   for (const v of VELOCIDADES) assert.ok(v.minPorSeg > 0 && v.rotulo.length > 0);
 });
 
-import { fracoes, urnasRecebidas } from '../src/lib/replayApuracao.js';
+import { fracoes, urnasRecebidas, recebendoAgora } from '../src/lib/replayApuracao.js';
 
 const DADOS = {
   minutos: 601,
@@ -67,4 +67,13 @@ test('urnas recebidas: soma de todos os estados com dado e percentual', () => {
   assert.equal(r.total, 14);
   assert.ok(Math.abs(r.pct - (6 / 14) * 100) < 1e-9);
   assert.deepEqual(urnasRecebidas(null, 2), { recebidas: 0, total: 0, pct: 0 });
+});
+
+test('recebendo agora: estados que ganharam urnas na janela e ainda não fecharam, em ordem alfabética', () => {
+  assert.deepEqual(recebendoAgora(DADOS, 1, 1), ['AA']);          // BB ainda não recebeu nada
+  assert.deepEqual(recebendoAgora(DADOS, 2, 1), ['AA', 'BB']);
+  assert.deepEqual(recebendoAgora(DADOS, 3, 1), []);              // fecharam
+  assert.deepEqual(recebendoAgora(DADOS, 3, 2), []);              // fechado não conta, mesmo com chegada na janela
+  assert.deepEqual(recebendoAgora(DADOS, 2, 5), ['AA', 'BB']);    // janela maior que o início não quebra
+  assert.deepEqual(recebendoAgora(null, 2), []);
 });

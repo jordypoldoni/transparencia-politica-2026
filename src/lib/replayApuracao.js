@@ -73,3 +73,16 @@ export function urnasRecebidas(dados, minuto) {
   }
   return { recebidas, total, pct: total > 0 ? (recebidas / total) * 100 : 0 };
 }
+
+// Estados que receberam urnas na janela (padrão 5 min) terminada no minuto e ainda não fecharam. Ordem alfabética (neutra, D-074). Sem dado fica de fora.
+export const JANELA_RECEBENDO = 5;
+export function recebendoAgora(dados, minuto, janela = JANELA_RECEBENDO) {
+  const out = [];
+  if (!dados || !dados.ufs) return out;
+  for (const [uf, d] of Object.entries(dados.ufs)) {
+    if (!d || !(d.total > 0)) continue;
+    const agora = acumAte(d, minuto);
+    if (agora < d.total && agora > acumAte(d, minuto - janela)) out.push(uf);
+  }
+  return out.sort();
+}
