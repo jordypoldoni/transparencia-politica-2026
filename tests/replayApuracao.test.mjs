@@ -36,7 +36,7 @@ test('estados sem detalhe e velocidades', () => {
   for (const v of VELOCIDADES) assert.ok(v.minPorSeg > 0 && v.rotulo.length > 0);
 });
 
-import { fracoes, urnasRecebidas, recebendoAgora } from '../src/lib/replayApuracao.js';
+import { fracoes, urnasRecebidas, recebendoAgora, votosNoMinuto } from '../src/lib/replayApuracao.js';
 
 const DADOS = {
   minutos: 601,
@@ -76,4 +76,23 @@ test('recebendo agora: estados que ganharam urnas na janela e ainda não fechara
   assert.deepEqual(recebendoAgora(DADOS, 3, 2), []);              // fechado não conta, mesmo com chegada na janela
   assert.deepEqual(recebendoAgora(DADOS, 2, 5), ['AA', 'BB']);    // janela maior que o início não quebra
   assert.deepEqual(recebendoAgora(null, 2), []);
+});
+
+const VOTOS = {
+  candidatos: [{ n: 13, nome: 'A', partido: 'X', tipo: 'Nominal' }, { n: 22, nome: 'B', partido: 'Y', tipo: 'Nominal' }, { n: 95, nome: 'Branco', partido: '#NULO#', tipo: 'Branco' }, { n: 96, nome: 'Nulo', partido: '#NULO#', tipo: 'Nulo' }],
+  ufs: {
+    AA: { 13: [0, 6, 10], 22: [0, 2, 10], 95: [0, 1, 1], 96: [0, 1, 1] },
+    BB: { 13: [0, 0, 5], 22: [0, 0, 5], 95: [0, 0, 0], 96: [0, 0, 0] },
+  },
+};
+
+test('votos no minuto: soma dos estados, percentual sobre válidos, ordem fixa do arquivo', () => {
+  const r = votosNoMinuto(VOTOS, 1);
+  assert.deepEqual(r.linhas.map((l) => l.n), [13, 22]);
+  assert.equal(r.validos, 8); assert.equal(r.brancos, 1); assert.equal(r.nulos, 1); assert.equal(r.total, 10);
+  assert.equal(r.linhas[0].pct, 75);
+  const f = votosNoMinuto(VOTOS, 2);
+  assert.equal(f.validos, 30); assert.equal(f.linhas[0].votos, 15); assert.equal(f.linhas[0].pct, 50);
+  assert.deepEqual(votosNoMinuto(null, 1).linhas, []);
+  assert.equal(votosNoMinuto(VOTOS, 0).linhas[0].pct, 0); // sem votos: 0, sem divisão por zero
 });

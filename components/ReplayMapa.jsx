@@ -72,9 +72,9 @@ export default function ReplayMapa({ fracao = {}, recebendo = [] }) {
         .rm-nivel { background: linear-gradient(0deg, #6B7280 55%, ${'#D9D6CE'} 55%); }
         /* Computador: a legenda vai para o lado do mapa, em coluna. O grupo (legenda + mapa) fica centralizado na coluna. */
         @media (min-width: 900px) {
-          .rm { flex-direction: row; align-items: flex-end; justify-content: center; gap: 22px; }
+          .rm { flex-direction: row; align-items: center; justify-content: center; gap: 22px; }
           .rm-svg { order: 2; width: min(calc(100% - 232px), calc(var(--rm-h) * ${PROPORCAO.toFixed(4)})); }
-          .rm-leg { order: 1; flex: none; width: 210px; flex-direction: column; flex-wrap: nowrap; align-items: flex-start; justify-content: flex-end; gap: 8px; padding-bottom: 6px; line-height: 1.3; }
+          .rm-leg { order: 1; flex: none; width: 210px; flex-direction: column; flex-wrap: nowrap; align-items: flex-start; justify-content: center; gap: 8px; line-height: 1.3; }
         }
       `}</style>
     </figure>

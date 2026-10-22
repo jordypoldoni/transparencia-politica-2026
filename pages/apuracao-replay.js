@@ -2,9 +2,10 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import Head from 'next/head';
 import { t } from '../src/estilo/tokens';
 import ReplayMapa from '../components/ReplayMapa';
+import ReplayCandidatos from '../components/ReplayCandidatos';
 import ReplayLinhaDoTempo from '../components/ReplayLinhaDoTempo';
 import ReplayAviso from '../components/ReplayAviso';
-import { VELOCIDADES, VELOCIDADE_PADRAO, MINUTOS_TOTAIS, limitarMinuto, avancar, fracoes, urnasRecebidas, recebendoAgora } from '../src/lib/replayApuracao';
+import { VELOCIDADES, VELOCIDADE_PADRAO, MINUTOS_TOTAIS, limitarMinuto, avancar, fracoes, urnasRecebidas, recebendoAgora, votosNoMinuto } from '../src/lib/replayApuracao';
 
 // PÁGINA DE PRÉVIA (22/10/2026, D-073 e D-074): replay animado da apuração do 1º turno de 2026. Já pinta o mapa com as seções recebidas
 // por estado a cada minuto (public/replay/1t-2026-secoes.json); a contagem de votos entra no passo seguinte. Fica fora do menu e do sitemap
@@ -35,6 +36,7 @@ export default function ApuracaoReplay() {
   const [tocando, setTocando] = useState(false);
   const [velocidade, setVelocidade] = useState(VELOCIDADE_PADRAO);
   const [dados, setDados] = useState(null);
+  const [votos, setVotos] = useState(null);
   const [erroDados, setErroDados] = useState(false);
   const ultimo = useRef(null);
   const relogio = useRef(0); // minuto atual, lido pelo laço de animação sem depender do ciclo do React
@@ -47,6 +49,11 @@ export default function ApuracaoReplay() {
       .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
       .then(setDados)
       .catch((e) => { if (e.name !== 'AbortError') setErroDados(true); });
+    // Votos por candidato (arquivo estático, ~1,1 MB, ~170 KB comprimido): carregado à parte; se falhar, só o painel de votos fica sem dados.
+    fetch('/replay/1t-2026-votos.json', { signal: ctl.signal })
+      .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
+      .then(setVotos)
+      .catch((e) => { if (e.name !== 'AbortError') setErroDados(true); });
     return () => ctl.abort();
   }, []);
 
@@ -54,6 +61,8 @@ export default function ApuracaoReplay() {
   const fracao = useMemo(() => fracoes(dados, mi), [dados, mi]);
   const resumo = useMemo(() => urnasRecebidas(dados, mi), [dados, mi]);
   const recebendo = useMemo(() => recebendoAgora(dados, mi), [dados, mi]);
+  const votosAgora = useMemo(() => votosNoMinuto(votos, mi), [votos, mi]);
+  const votosFinal = useMemo(() => votosNoMinuto(votos, MINUTOS_TOTAIS), [votos]);
 
   // Relógio do replay: avança só enquanto está tocando, por requestAnimationFrame, e para sozinho no fim.
   useEffect(() => {
@@ -98,7 +107,7 @@ export default function ApuracaoReplay() {
             <ReplayLinhaDoTempo minuto={minuto} tocando={tocando} fim={fim} velocidade={velocidade} resumo={dados ? resumo : null} recebendo={dados ? recebendo : null}
               aoAlternar={alternar} aoMudarMinuto={irPara} aoMudarVelocidade={setVelocidade} />
             {erroDados && <p className="rp-erro" role="status">Não foi possível carregar os dados do replay. Tente recarregar a página.</p>}
-            <p className="rp-votos"><strong>Votos dos candidatos</strong>Entram no próximo passo, em ordem fixa por número de urna.</p>
+            <ReplayCandidatos parcial={votos ? votosAgora : null} final={votos ? votosFinal : null} />
             <ReplayAviso />
           </div>
         </section>

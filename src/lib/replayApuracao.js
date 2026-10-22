@@ -86,3 +86,23 @@ export function recebendoAgora(dados, minuto, janela = JANELA_RECEBENDO) {
   }
   return out.sort();
 }
+
+// VOTOS (D-074). DADOS DE VOTOS: public/replay/1t-2026-votos.json = { candidatos: [{n, nome, partido, tipo}], ufs: { UF: { [n]: acum[minuto] } } }.
+// Percentual = sobre VOTOS VÁLIDOS (só candidatos; Branco e Nulo ficam fora), como o TSE divulga. Ordem das linhas = a do arquivo (número de urna, FIXA).
+// Soma só os estados presentes no arquivo (24 de 28 com horário: sem MS, RN, SE e TO), então NÃO é o parcial oficial do país.
+export function votosNoMinuto(votos, minuto) {
+  const vazio = { linhas: [], validos: 0, brancos: 0, nulos: 0, total: 0 };
+  if (!votos || !Array.isArray(votos.candidatos) || !votos.ufs) return vazio;
+  const soma = {};
+  for (const c of Object.values(votos.ufs)) {
+    for (const [n, arr] of Object.entries(c || {})) soma[n] = (soma[n] || 0) + acumAte({ acum: arr }, minuto);
+  }
+  let validos = 0, brancos = 0, nulos = 0;
+  for (const c of votos.candidatos) {
+    const v = soma[c.n] || 0;
+    if (c.tipo === 'Branco') brancos = v; else if (c.tipo === 'Nulo') nulos = v; else validos += v;
+  }
+  const linhas = votos.candidatos.filter((c) => c.tipo !== 'Branco' && c.tipo !== 'Nulo')
+    .map((c) => ({ n: c.n, nome: c.nome, partido: c.partido, votos: soma[c.n] || 0, pct: validos > 0 ? ((soma[c.n] || 0) / validos) * 100 : 0 }));
+  return { linhas, validos, brancos, nulos, total: validos + brancos + nulos };
+}
