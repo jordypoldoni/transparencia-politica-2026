@@ -15,7 +15,10 @@ export default function ReplayLinhaDoTempo({ minuto, tocando, fim, velocidade, r
           <span className="rt-sub">horário de Brasília, 4 de outubro de 2026</span>
         </div>
         {resumo && resumo.total > 0 && (
-          <p className="rt-bloco rt-urnas"><span className="rt-urnas-l">Urnas recebidas: <b>{resumo.pct.toFixed(1).replace('.', ',')}%</b></span><span>({num(resumo.recebidas)} de {num(resumo.total)})</span></p>
+          <div className="rt-bloco rt-urnas">
+            <strong className="rt-pct">{resumo.pct.toFixed(1).replace('.', ',')}%</strong>
+            <span className="rt-sub">das urnas recebidas ({num(resumo.recebidas)} de {num(resumo.total)})</span>
+          </div>
         )}
         {recebendo && resumo && resumo.total > 0 && (
           <p className="rt-bloco rt-recebendo">
@@ -37,10 +40,9 @@ export default function ReplayLinhaDoTempo({ minuto, tocando, fim, velocidade, r
         .rt-info { display: contents; }
         .rt-bloco { margin: 0; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
         .rt-hora { font: 700 2.2rem/1.1 ${t.fonte.titulo}; color: ${t.cor.verde}; font-variant-numeric: tabular-nums; }
+        .rt-pct { font: 700 2.2rem/1.1 ${t.fonte.titulo}; color: ${t.cor.tinta}; font-variant-numeric: tabular-nums; }
         .rt-sub { font-size: 0.82rem; color: ${t.cor.cinza}; }
-        .rt-urnas { font-size: 0.95rem; color: ${t.cor.tinta}; font-variant-numeric: tabular-nums; }
-        .rt-urnas .rt-urnas-l { font-size: 0.95rem; color: ${t.cor.tinta}; white-space: nowrap; }
-        .rt-urnas span, .rt-recebendo span { font-size: 0.85rem; color: ${t.cor.cinza}; }
+        .rt-recebendo span { font-size: 0.85rem; color: ${t.cor.cinza}; }
         .rt-recebendo { order: 3; flex: 1 1 100%; flex-direction: row; flex-wrap: wrap; gap: 0 6px; font-size: 0.85rem; line-height: 1.4; color: ${t.cor.cinza}; }
         .rt-recebendo b { color: ${t.cor.tinta}; }
         .rt-ctl { order: 2; display: flex; align-items: center; gap: 14px; flex: 1 1 520px; min-width: 0; max-width: 700px; margin-left: auto; }
