@@ -10,16 +10,19 @@ export default function ReplayLinhaDoTempo({ minuto, tocando, fim, velocidade, r
   return (
     <div className="rt">
       <div className="rt-info">
-        <div className="rt-bloco">
-          <strong className="rt-hora" aria-live="off">{horaDoMinuto(m)}</strong>
-          <span className="rt-sub">horário de Brasília, 4 de outubro de 2026</span>
-        </div>
-        {resumo && resumo.total > 0 && (
-          <div className="rt-bloco rt-urnas">
-            <strong className="rt-pct">{resumo.pct.toFixed(1).replace('.', ',')}%</strong>
-            <span className="rt-sub">das urnas recebidas ({num(resumo.recebidas)} de {num(resumo.total)})</span>
+        <div className="rt-bloco rt-principal">
+          <div className="rt-grande">
+            <strong className="rt-hora" aria-live="off">{horaDoMinuto(m)}</strong>
+            {resumo && resumo.total > 0 && (
+              <>
+                <span className="rt-sep" aria-hidden="true">·</span>
+                <strong className="rt-pct">{resumo.pct.toFixed(1).replace('.', ',')}%</strong>
+                <span className="rt-rot">das urnas recebidas</span>
+              </>
+            )}
           </div>
-        )}
+          <span className="rt-sub">horário de Brasília, 4 de outubro de 2026{resumo && resumo.total > 0 ? ` · ${num(resumo.recebidas)} de ${num(resumo.total)} urnas` : ''}</span>
+        </div>
         {recebendo && resumo && resumo.total > 0 && (
           <p className="rt-bloco rt-recebendo">
             {recebendo.length === 0 ? 'Nenhum estado recebendo urnas nos últimos 5 minutos.' : <>Recebendo agora (últimos 5 min): <b>{recebendo.length} {recebendo.length === 1 ? 'estado' : 'estados'}:</b><span>{recebendo.join(', ')}</span></>}
@@ -41,6 +44,9 @@ export default function ReplayLinhaDoTempo({ minuto, tocando, fim, velocidade, r
         .rt-bloco { margin: 0; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
         .rt-hora { font: 700 2.2rem/1.1 ${t.fonte.titulo}; color: ${t.cor.verde}; font-variant-numeric: tabular-nums; }
         .rt-pct { font: 700 2.2rem/1.1 ${t.fonte.titulo}; color: ${t.cor.tinta}; font-variant-numeric: tabular-nums; }
+        .rt-grande { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 12px; }
+        .rt-sep { font: 700 2.2rem/1.1 ${t.fonte.titulo}; color: ${t.cor.cinza}; }
+        .rt-rot { font-size: 0.95rem; color: ${t.cor.tinta}; }
         .rt-sub { font-size: 0.82rem; color: ${t.cor.cinza}; }
         .rt-recebendo span { font-size: 0.85rem; color: ${t.cor.cinza}; }
         .rt-recebendo { order: 3; flex: 1 1 100%; flex-direction: row; flex-wrap: wrap; gap: 0 6px; font-size: 0.85rem; line-height: 1.4; color: ${t.cor.cinza}; }
