@@ -1,5 +1,4 @@
 import { t } from '../src/estilo/tokens';
-import { NOMES_UF } from '../src/lib/cotas';
 import { MAPA_BRASIL } from '../src/lib/mapaBrasilGeo';
 import { REGIOES, ORDEM_REGIOES } from '../src/lib/mapaRegioes';
 import { UFS_SEM_DETALHE } from '../src/lib/replayApuracao';
@@ -39,14 +38,14 @@ export default function ReplayMapa({ fracao = {} }) {
           <span key={k} className="rm-item"><i style={{ background: REGIOES[k].cor }} />{REGIOES[k].nome}</span>
         ))}
         <span className="rm-item"><i style={{ background: SEM_DADOS }} />Nenhuma urna recebida</span>
-        <span className="rm-item"><i className="rm-hach" />Sem horário de chegada ({UFS_SEM_DETALHE.map((u) => NOMES_UF[u] || u).join(', ')})</span>
+        <span className="rm-item"><i className="rm-hach" />Sem horário de chegada: {UFS_SEM_DETALHE.join(', ')}</span>
       </figcaption>
       <style jsx global>{`
         .rm { margin: 0; }
-        .rm-svg { display: block; width: 100%; max-width: 560px; height: auto; margin: 0 auto; }
+        .rm-svg { display: block; width: 100%; height: auto; max-height: clamp(280px, calc(100vh - 300px), 560px); margin: 0 auto; }
         .rm-uf { stroke: ${t.cor.papelCartao}; stroke-width: 1; transition: fill-opacity 0.25s linear, fill 0.25s linear; }
         .rm-sigla { font: 700 11px ${t.fonte.corpo}; fill: ${t.cor.tinta}; pointer-events: none; paint-order: stroke; stroke: rgba(255,255,255,0.75); stroke-width: 2.5px; }
-        .rm-leg { display: flex; flex-wrap: wrap; gap: 6px 16px; justify-content: center; margin-top: 12px; font-size: 0.82rem; color: ${t.cor.cinza}; }
+        .rm-leg { display: flex; flex-wrap: wrap; gap: 4px 14px; justify-content: center; margin-top: 8px; font-size: 0.78rem; color: ${t.cor.cinza}; }
         .rm-item { display: inline-flex; align-items: center; gap: 6px; }
         .rm-item i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; flex: none; }
         .rm-hach { background: repeating-linear-gradient(45deg, #ECE9E2 0 3px, #C9C5BA 3px 5px); }

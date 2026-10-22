@@ -9,14 +9,22 @@ import { VELOCIDADES, VELOCIDADE_PADRAO, MINUTOS_TOTAIS, limitarMinuto, avancar 
 // PÁGINA DE PRÉVIA (22/10/2026, D-073 e D-074): replay animado da apuração do 1º turno de 2026. ESQUELETO: ainda sem dados (mapa neutro,
 // relógio e controles funcionando). Fica fora do menu e do sitemap e leva noindex. Só vive na ramificação previa/apuracao-animada.
 // Não altera nenhuma página nem a API da apuração real.
+// LAYOUT (22/10, pedido do Jordy): tudo que importa cabe na primeira tela do computador, sem rolar. Mapa à esquerda; à direita o relógio,
+// os controles, o espaço dos candidatos e os avisos. No celular as partes empilham na mesma ordem.
 
 const CSS = `
-  .rp { max-width: ${t.larguraMax}; margin: 0 auto; padding: 24px 16px 56px; display: flex; flex-direction: column; gap: 20px; }
-  .rp h1 { margin: 0; font: 700 clamp(1.5rem, 4vw, 2.1rem) ${t.fonte.titulo}; color: ${t.cor.verde}; }
-  .rp-intro { margin: 0; color: ${t.cor.cinza}; line-height: 1.55; max-width: 62ch; }
-  .rp-previa { align-self: flex-start; margin: 0; padding: 6px 14px; border-radius: ${t.raio.pill}; background: ${t.cor.alertaBg}; color: ${t.cor.alertaTexto}; font-size: 0.82rem; font-weight: 700; }
-  .rp-cartao { background: ${t.cor.papelCartao}; border-radius: ${t.raio.md}; box-shadow: ${t.sombra.media}; padding: 20px; display: flex; flex-direction: column; gap: 18px; }
-  .rp-votos { margin: 0; padding: 14px 16px; background: ${t.cor.papelQuente}; border-radius: ${t.raio.sm}; color: ${t.cor.cinza}; font-size: 0.9rem; line-height: 1.5; }
+  .rp { max-width: 1240px; margin: 0 auto; padding: 14px 20px 32px; display: flex; flex-direction: column; gap: 12px; }
+  .rp-cab { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; }
+  .rp h1 { margin: 0; font: 700 clamp(1.3rem, 3vw, 1.7rem) ${t.fonte.titulo}; color: ${t.cor.verde}; }
+  .rp-previa { margin: 0; padding: 4px 12px; border-radius: ${t.raio.pill}; background: ${t.cor.alertaBg}; color: ${t.cor.alertaTexto}; font-size: 0.75rem; font-weight: 700; }
+  .rp-intro { flex-basis: 100%; margin: 0; color: ${t.cor.cinza}; font-size: 0.9rem; line-height: 1.4; }
+  .rp-cartao { background: ${t.cor.papelCartao}; border-radius: ${t.raio.md}; box-shadow: ${t.sombra.media}; padding: 16px 18px; display: grid; grid-template-columns: 1fr; gap: 16px; }
+  .rp-lado { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  .rp-votos { margin: 0; flex: 1; padding: 12px 14px; background: ${t.cor.papelQuente}; border-radius: ${t.raio.sm}; color: ${t.cor.cinza}; font-size: 0.85rem; line-height: 1.45; }
+  .rp-votos strong { display: block; margin-bottom: 2px; color: ${t.cor.tinta}; font-size: 0.9rem; }
+  @media (min-width: 900px) {
+    .rp-cartao { grid-template-columns: minmax(0, 1.1fr) minmax(340px, 1fr); gap: 24px; align-items: start; }
+  }
 `;
 
 export default function ApuracaoReplay() {
@@ -59,16 +67,20 @@ export default function ApuracaoReplay() {
         <meta name="robots" content="noindex, nofollow" />
       </Head>
       <main className="rp">
-        <p className="rp-previa">Prévia em construção: esta página não faz parte do site público</p>
-        <h1>Replay da apuração do 1º turno de 2026</h1>
-        <p className="rp-intro">Veja em que ordem as urnas chegaram ao TSE na noite de 4 de outubro, estado por estado.</p>
+        <header className="rp-cab">
+          <h1>Replay da apuração do 1º turno de 2026</h1>
+          <p className="rp-previa">Prévia em construção: fora do site público</p>
+          <p className="rp-intro">Veja em que ordem as urnas chegaram ao TSE na noite de 4 de outubro, estado por estado.</p>
+        </header>
         <section className="rp-cartao" aria-label="Replay">
           <ReplayMapa fracao={{}} />
-          <ReplayLinhaDoTempo minuto={minuto} tocando={tocando} fim={fim} velocidade={velocidade}
-            aoAlternar={alternar} aoMudarMinuto={irPara} aoMudarVelocidade={setVelocidade} />
+          <div className="rp-lado">
+            <ReplayLinhaDoTempo minuto={minuto} tocando={tocando} fim={fim} velocidade={velocidade}
+              aoAlternar={alternar} aoMudarMinuto={irPara} aoMudarVelocidade={setVelocidade} />
+            <p className="rp-votos"><strong>Votos dos candidatos</strong>Entram no próximo passo, em ordem fixa por número de urna.</p>
+            <ReplayAviso />
+          </div>
         </section>
-        <p className="rp-votos">A contagem de votos dos candidatos, em ordem fixa por número de urna, entra no próximo passo.</p>
-        <ReplayAviso />
       </main>
       <style jsx global>{CSS}</style>
     </>

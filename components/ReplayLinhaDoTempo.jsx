@@ -24,10 +24,10 @@ export default function ReplayLinhaDoTempo({ minuto, tocando, fim, velocidade, a
           itens={VELOCIDADES.map((v) => ({ chave: v.chave, rotulo: v.rotulo, ativo: v.chave === velocidade, aoClicar: () => aoMudarVelocidade(v.chave) }))} />
       </div>
       <style jsx global>{`
-        .rt { display: flex; flex-direction: column; gap: 12px; }
+        .rt { display: flex; flex-direction: column; gap: 10px; }
         .rt-topo { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
-        .rt-hora { font: 700 2rem ${t.fonte.titulo}; color: ${t.cor.verde}; font-variant-numeric: tabular-nums; }
-        .rt-sub { font-size: 0.85rem; color: ${t.cor.cinza}; }
+        .rt-hora { font: 700 1.8rem ${t.fonte.titulo}; color: ${t.cor.verde}; font-variant-numeric: tabular-nums; }
+        .rt-sub { font-size: 0.8rem; color: ${t.cor.cinza}; }
         .rt-linha { display: flex; align-items: center; gap: 14px; }
         .rt-play { flex: none; min-height: 40px; padding: 10px 22px; border: none; border-radius: ${t.raio.pill}; background: ${t.cor.verde}; color: ${t.cor.ouro}; font: 700 0.95rem ${t.fonte.corpo}; cursor: pointer; box-shadow: ${t.sombra.botao}; transition: box-shadow 0.15s; }
         .rt-play:hover { box-shadow: ${t.sombra.botaoHover}; }
