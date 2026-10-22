@@ -90,11 +90,12 @@ export function recebendoAgora(dados, minuto, janela = JANELA_RECEBENDO) {
 // VOTOS (D-074). DADOS DE VOTOS: public/replay/1t-2026-votos.json = { candidatos: [{n, nome, partido, tipo}], ufs: { UF: { [n]: acum[minuto] } } }.
 // Percentual = sobre VOTOS VÁLIDOS (só candidatos; Branco e Nulo ficam fora), como o TSE divulga. Ordem das linhas = a do arquivo (número de urna, FIXA).
 // Soma só os estados presentes no arquivo (24 de 28 com horário: sem MS, RN, SE e TO), então NÃO é o parcial oficial do país.
-export function votosNoMinuto(votos, minuto) {
+export function votosNoMinuto(votos, minuto, uf = null) {
   const vazio = { linhas: [], validos: 0, brancos: 0, nulos: 0, total: 0 };
   if (!votos || !Array.isArray(votos.candidatos) || !votos.ufs) return vazio;
   const soma = {};
-  for (const c of Object.values(votos.ufs)) {
+  const grupos = uf ? [votos.ufs[uf]] : Object.values(votos.ufs); // uf = só aquele estado (detalhe); sem uf = soma dos estados com horário e o exterior
+  for (const c of grupos) {
     for (const [n, arr] of Object.entries(c || {})) soma[n] = (soma[n] || 0) + acumAte({ acum: arr }, minuto);
   }
   let validos = 0, brancos = 0, nulos = 0;

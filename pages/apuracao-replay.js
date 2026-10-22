@@ -5,7 +5,7 @@ import ReplayMapa from '../components/ReplayMapa';
 import ReplayCandidatos from '../components/ReplayCandidatos';
 import ReplayLinhaDoTempo from '../components/ReplayLinhaDoTempo';
 import ReplayAviso from '../components/ReplayAviso';
-import { VELOCIDADES, VELOCIDADE_PADRAO, MINUTOS_TOTAIS, limitarMinuto, avancar, fracoes, urnasRecebidas, recebendoAgora, votosNoMinuto } from '../src/lib/replayApuracao';
+import { VELOCIDADES, VELOCIDADE_PADRAO, MINUTOS_TOTAIS, limitarMinuto, avancar, fracoes, urnasRecebidas, recebendoAgora, votosNoMinuto, UFS_SEM_DETALHE } from '../src/lib/replayApuracao';
 
 // PÁGINA DE PRÉVIA (22/10/2026, D-073 e D-074): replay animado da apuração do 1º turno de 2026. Já pinta o mapa com as seções recebidas
 // por estado a cada minuto (public/replay/1t-2026-secoes.json); a contagem de votos entra no passo seguinte. Fica fora do menu e do sitemap
@@ -37,6 +37,7 @@ export default function ApuracaoReplay() {
   const [velocidade, setVelocidade] = useState(VELOCIDADE_PADRAO);
   const [dados, setDados] = useState(null);
   const [votos, setVotos] = useState(null);
+  const [ufSel, setUfSel] = useState(null); // estado escolhido no mapa (detalhe dos votos); null = total do replay
   const [erroDados, setErroDados] = useState(false);
   const ultimo = useRef(null);
   const relogio = useRef(0); // minuto atual, lido pelo laço de animação sem depender do ciclo do React
@@ -61,8 +62,9 @@ export default function ApuracaoReplay() {
   const fracao = useMemo(() => fracoes(dados, mi), [dados, mi]);
   const resumo = useMemo(() => urnasRecebidas(dados, mi), [dados, mi]);
   const recebendo = useMemo(() => recebendoAgora(dados, mi), [dados, mi]);
-  const votosAgora = useMemo(() => votosNoMinuto(votos, mi), [votos, mi]);
-  const votosFinal = useMemo(() => votosNoMinuto(votos, MINUTOS_TOTAIS), [votos]);
+  const votosAgora = useMemo(() => votosNoMinuto(votos, mi, ufSel), [votos, mi, ufSel]);
+  const votosFinal = useMemo(() => votosNoMinuto(votos, MINUTOS_TOTAIS, ufSel), [votos, ufSel]);
+  const escolher = (uf) => setUfSel((atual) => (atual === uf ? null : uf));
 
   // Relógio do replay: avança só enquanto está tocando, por requestAnimationFrame, e para sozinho no fim.
   useEffect(() => {
@@ -105,10 +107,10 @@ export default function ApuracaoReplay() {
             <ReplayLinhaDoTempo minuto={minuto} tocando={tocando} fim={fim} velocidade={velocidade} resumo={dados ? resumo : null} recebendo={dados ? recebendo : null}
               aoAlternar={alternar} aoMudarMinuto={irPara} aoMudarVelocidade={setVelocidade} />
           </div>
-          <ReplayMapa fracao={fracao} recebendo={recebendo} />
+          <ReplayMapa fracao={fracao} recebendo={recebendo} selecionada={ufSel} aoEscolher={escolher} />
           <div className="rp-lado">
             {erroDados && <p className="rp-erro" role="status">Não foi possível carregar os dados do replay. Tente recarregar a página.</p>}
-            <ReplayCandidatos parcial={votos ? votosAgora : null} final={votos ? votosFinal : null} />
+            <ReplayCandidatos parcial={votos ? votosAgora : null} final={votos ? votosFinal : null} uf={ufSel} fracaoUf={ufSel ? fracao[ufSel] : null} semHorario={ufSel ? UFS_SEM_DETALHE.includes(ufSel) : false} aoVoltar={() => setUfSel(null)} />
             <ReplayAviso />
           </div>
         </section>

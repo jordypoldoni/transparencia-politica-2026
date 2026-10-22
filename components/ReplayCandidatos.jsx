@@ -1,4 +1,5 @@
 import { t } from '../src/estilo/tokens';
+import { MAPA_BRASIL } from '../src/lib/mapaBrasilGeo';
 
 // VOTOS DOS CANDIDATOS NO REPLAY (22/10/2026, D-074, regras de neutralidade aprovadas pelo Jordy). Só desenha; os números vêm de votosNoMinuto.
 // Regras: (1) ordem FIXA por número de urna, nunca reordena; (2) todas as barras iguais, sem cor de partido nem destaque de quem lidera;
@@ -8,14 +9,23 @@ const ESCALA = 60;
 const pct1 = (v) => v.toFixed(1).replace('.', ',');
 const num = (v) => Number(v).toLocaleString('pt-BR');
 
-export default function ReplayCandidatos({ parcial, final }) {
+export default function ReplayCandidatos({ parcial, final, uf = null, fracaoUf = null, semHorario = false, aoVoltar }) {
+  const nomeUf = uf ? (MAPA_BRASIL.estados.find((g) => g.uf === uf) || {}).nome || uf : null;
   const linhas = parcial && parcial.linhas.length ? parcial.linhas : null;
   const refPor = {};
   if (final) for (const l of final.linhas) refPor[l.n] = l.pct;
   return (
     <section className="rc" aria-label="Votos dos candidatos a presidente neste horário">
       <h2 className="rc-tit">Votos dos candidatos <span>presidente, % dos votos válidos</span></h2>
-      {!linhas ? <p className="rc-vazio">Carregando os votos…</p> : (
+      <div className="rc-escopo">
+        {uf ? (
+          <>
+            <span><b>{nomeUf}</b>{!semHorario && fracaoUf != null ? ` · ${pct1(fracaoUf * 100)}% das urnas do estado recebidas` : ''}</span>
+            <button type="button" className="rc-volta" onClick={aoVoltar}>Ver total</button>
+          </>
+        ) : <span>Total do replay · clique em um estado do mapa para ver só ele</span>}
+      </div>
+      {semHorario ? <p className="rc-vazio">{nomeUf} não tem dados no replay: o TSE publicou o arquivo de boletins desse estado incompleto.</p> : !linhas ? <p className="rc-vazio">Carregando os votos…</p> : (
         <ul className="rc-lista">
           {linhas.map((l) => (
             <li key={l.n} className="rc-linha">
@@ -30,11 +40,16 @@ export default function ReplayCandidatos({ parcial, final }) {
           ))}
         </ul>
       )}
-      {linhas && <p className="rc-pe"><b>Como ler:</b> percentual parcial: muda conforme as urnas chegam, pois cada região entra em um horário diferente. Não indica o resultado final. O traço laranja é o valor ao fim do replay. Brancos e nulos ficam fora.</p>}
+      {linhas && !semHorario && <p className="rc-pe"><b>Como ler:</b> percentual parcial: muda conforme as urnas chegam, pois cada região entra em um horário diferente. Não indica o resultado final. O traço laranja é o valor ao fim do replay. Brancos e nulos ficam fora.</p>}
       <style jsx global>{`
         .rc { padding: 12px 16px 12px; background: ${t.cor.papelQuente}; border-radius: ${t.raio.sm}; }
         .rc-tit { margin: 0 0 6px; font: 700 1rem ${t.fonte.corpo}; color: ${t.cor.tinta}; }
         .rc-tit span { font-weight: 400; font-size: 0.8rem; color: ${t.cor.cinza}; margin-left: 6px; }
+        .rc-escopo { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 28px; margin: 0 0 6px; font-size: 0.82rem; color: ${t.cor.cinza}; }
+        .rc-escopo b { color: ${t.cor.tinta}; }
+        .rc-volta { flex: none; padding: 4px 12px; border: none; border-radius: ${t.raio.pill}; background: ${t.cor.papelQuente2}; color: ${t.cor.tinta}; font: 600 0.78rem ${t.fonte.corpo}; cursor: pointer; }
+        .rc-volta:hover { background: #EDE2D2; }
+        .rc-volta:focus-visible { outline: none; box-shadow: ${t.sombra.anelFoco}; }
         .rc-lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; }
         .rc-linha { display: grid; grid-template-columns: 24px minmax(0, 1.25fr) minmax(70px, 1fr) 132px; align-items: center; gap: 8px; font-size: 0.82rem; line-height: 1.25; color: ${t.cor.tinta}; font-variant-numeric: tabular-nums; }
         .rc-num { font-weight: 700; color: ${t.cor.cinza}; }

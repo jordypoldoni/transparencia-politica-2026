@@ -15,7 +15,10 @@ const COR = { N: REGIOES.N.cor, NE: REGIOES.NE.cor, CO: REGIOES.CO.cor, SE: REGI
 const PEQUENOS = new Set(['RN', 'PB', 'AL', 'SE', 'ES', 'RJ', 'DF']); // pequenos demais para a sigla dentro
 const PROPORCAO = MAPA_BRASIL.largura / MAPA_BRASIL.altura;
 
-export default function ReplayMapa({ fracao = {}, recebendo = [] }) {
+export default function ReplayMapa({ fracao = {}, recebendo = [], selecionada = null, aoEscolher }) {
+  // Ordem de desenho: o estado escolhido por último (contorno inteiro à vista), antes dele os que estão recebendo urnas.
+  const peso = (uf) => (uf === selecionada ? 2 : recebendo.includes(uf) ? 1 : 0);
+  const tecla = (uf) => (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); aoEscolher && aoEscolher(uf); } };
   return (
     <figure className="rm">
       <div className="rm-box">
@@ -38,11 +41,13 @@ export default function ReplayMapa({ fracao = {}, recebendo = [] }) {
             );
           })}
         </defs>
-        {[...MAPA_BRASIL.estados].sort((a, b) => (recebendo.includes(a.uf) ? 1 : 0) - (recebendo.includes(b.uf) ? 1 : 0)).map((geo) => {
+        {[...MAPA_BRASIL.estados].sort((a, b) => peso(a.uf) - peso(b.uf)).map((geo) => {
           const semDetalhe = UFS_SEM_DETALHE.includes(geo.uf);
           const f = Math.min(1, Math.max(0, Number(fracao[geo.uf]) || 0));
           const fill = semDetalhe ? 'url(#rm-hachura)' : f > 0 ? `url(#rm-g-${geo.uf})` : SEM_DADOS;
-          return <path key={geo.uf} d={geo.d} className={recebendo.includes(geo.uf) ? 'rm-uf rm-vivo' : 'rm-uf'} style={{ fill }} />;
+          return <path key={geo.uf} d={geo.d} className={`rm-uf${recebendo.includes(geo.uf) ? ' rm-vivo' : ''}${geo.uf === selecionada ? ' rm-sel' : ''}`} style={{ fill }}
+            role="button" tabIndex={0} aria-pressed={geo.uf === selecionada} aria-label={`${geo.nome}: ver os votos deste estado`}
+            onClick={() => aoEscolher && aoEscolher(geo.uf)} onKeyDown={tecla(geo.uf)} />;
         })}
         {MAPA_BRASIL.estados.filter((g) => !PEQUENOS.has(g.uf)).map((geo) => (
           <text key={geo.uf} x={geo.cx} y={geo.cy} className="rm-sigla" textAnchor="middle" dominantBaseline="central">{geo.uf}</text>
@@ -63,6 +68,10 @@ export default function ReplayMapa({ fracao = {}, recebendo = [] }) {
         .rm-box { flex: 0 1 auto; width: min(100%, calc(var(--rm-h) * ${PROPORCAO.toFixed(4)})); aspect-ratio: ${MAPA_BRASIL.largura} / ${MAPA_BRASIL.altura}; }
         .rm-svg { display: block; width: 100%; height: 100%; }
         .rm-uf { stroke: ${t.cor.papelCartao}; stroke-width: 1; }
+        .rm-uf { cursor: pointer; outline: none; }
+        .rm-uf:hover { stroke: ${t.cor.tinta}; stroke-width: 1.8; }
+        .rm-uf:focus-visible { outline: none; stroke: ${t.cor.tinta}; stroke-width: 2.6; }
+        .rm-uf.rm-sel, .rm-uf.rm-sel:hover { stroke: ${t.cor.tinta}; stroke-width: 3; animation: none; stroke-opacity: 1; }
         .rm-vivo { stroke: ${t.cor.tinta}; stroke-width: 2.2; animation: rm-pulso 1.6s ease-in-out infinite; }
         @keyframes rm-pulso { 0%, 100% { stroke-opacity: 0.25; } 50% { stroke-opacity: 1; } }
         @media (prefers-reduced-motion: reduce) { .rm-vivo { animation: none; stroke-opacity: 0.8; } }

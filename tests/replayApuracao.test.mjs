@@ -96,3 +96,11 @@ test('votos no minuto: soma dos estados, percentual sobre válidos, ordem fixa d
   assert.deepEqual(votosNoMinuto(null, 1).linhas, []);
   assert.equal(votosNoMinuto(VOTOS, 0).linhas[0].pct, 0); // sem votos: 0, sem divisão por zero
 });
+
+test('votos no minuto: detalhe de um estado soma só ele; estado sem dado devolve vazio', () => {
+  const r = votosNoMinuto(VOTOS, 2, 'BB');
+  assert.equal(r.validos, 10); assert.equal(r.linhas[0].votos, 5); assert.equal(r.linhas[0].pct, 50);
+  assert.equal(votosNoMinuto(VOTOS, 2, 'AA').validos, 20);
+  assert.equal(votosNoMinuto(VOTOS, 2, 'MS').validos, 0);
+  assert.equal(votosNoMinuto(VOTOS, 2, 'MS').linhas[0].pct, 0);
+});
