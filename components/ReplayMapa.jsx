@@ -18,6 +18,7 @@ const PROPORCAO = MAPA_BRASIL.largura / MAPA_BRASIL.altura;
 export default function ReplayMapa({ fracao = {}, recebendo = [] }) {
   return (
     <figure className="rm">
+      <div className="rm-box">
       <svg viewBox={MAPA_BRASIL.viewBox} className="rm-svg" role="img"
         aria-label="Mapa do Brasil com os 27 estados. O preenchimento de cada estado mostra quanto das urnas já chegou ao TSE no horário escolhido.">
         <defs>
@@ -47,6 +48,7 @@ export default function ReplayMapa({ fracao = {}, recebendo = [] }) {
           <text key={geo.uf} x={geo.cx} y={geo.cy} className="rm-sigla" textAnchor="middle" dominantBaseline="central">{geo.uf}</text>
         ))}
       </svg>
+      </div>
       <figcaption className="rm-leg">
         {ORDEM_REGIOES.map((k) => (
           <span key={k} className="rm-item"><i style={{ background: COR[k] }} />{REGIOES[k].nome}</span>
@@ -58,7 +60,8 @@ export default function ReplayMapa({ fracao = {}, recebendo = [] }) {
       </figcaption>
       <style jsx global>{`
         .rm { --rm-h: clamp(300px, calc(100vh - 305px), 700px); margin: 0; display: flex; flex-direction: column; align-items: center; gap: 12px; }
-        .rm-svg { display: block; flex: 0 1 auto; width: min(100%, calc(var(--rm-h) * ${PROPORCAO.toFixed(4)})); aspect-ratio: ${MAPA_BRASIL.largura} / ${MAPA_BRASIL.altura}; height: auto; }
+        .rm-box { flex: 0 1 auto; width: min(100%, calc(var(--rm-h) * ${PROPORCAO.toFixed(4)})); aspect-ratio: ${MAPA_BRASIL.largura} / ${MAPA_BRASIL.altura}; }
+        .rm-svg { display: block; width: 100%; height: 100%; }
         .rm-uf { stroke: ${t.cor.papelCartao}; stroke-width: 1; }
         .rm-vivo { stroke: ${t.cor.tinta}; stroke-width: 2.2; animation: rm-pulso 1.6s ease-in-out infinite; }
         @keyframes rm-pulso { 0%, 100% { stroke-opacity: 0.25; } 50% { stroke-opacity: 1; } }
@@ -71,9 +74,12 @@ export default function ReplayMapa({ fracao = {}, recebendo = [] }) {
         .rm-hach { background: repeating-linear-gradient(45deg, #ECE9E2 0 3px, #C9C5BA 3px 5px); }
         .rm-nivel { background: linear-gradient(0deg, #6B7280 55%, ${'#D9D6CE'} 55%); }
         /* Computador: a legenda vai para o lado do mapa, em coluna. O grupo (legenda + mapa) fica centralizado na coluna. */
+        /* Computador: a altura da linha é a da coluna da direita (votos); o mapa ocupa TODO o espaço da célula (largura e altura) e o desenho
+           se ajusta a ele sem deformar. A legenda fica em coluna ao lado, centralizada na altura. */
         @media (min-width: 900px) {
-          .rm { flex-direction: row; align-items: center; justify-content: center; gap: 22px; }
-          .rm-svg { order: 2; width: min(calc(100% - 232px), calc(var(--rm-h) * ${PROPORCAO.toFixed(4)})); }
+          .rm { flex-direction: row; align-items: stretch; justify-content: center; gap: 22px; }
+          .rm-box { order: 2; flex: 1 1 0; min-width: 0; width: auto; aspect-ratio: auto; position: relative; min-height: 380px; }
+          .rm-svg { position: absolute; inset: 0; }
           .rm-leg { order: 1; flex: none; width: 210px; flex-direction: column; flex-wrap: nowrap; align-items: flex-start; justify-content: center; gap: 8px; line-height: 1.3; }
         }
       `}</style>
