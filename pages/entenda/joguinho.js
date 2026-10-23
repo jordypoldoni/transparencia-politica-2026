@@ -4,14 +4,14 @@ import Link from 'next/link';
 import { t } from '../../src/estilo/tokens';
 import { Seta } from '../../components/icones';
 import PlanoDoisEixos from '../../components/PlanoDoisEixos';
-import { FRASES, OPCOES, FAIXAS, resultado, posicao } from '../../src/lib/joguinhoIdeologia';
+import CompartilharJoguinho from '../../components/CompartilharJoguinho';
+import { FRASES, OPCOES, FAIXAS, CORES, resultado, posicao } from '../../src/lib/joguinhoIdeologia';
 
 // Joguinho (23/10/2026). Uma frase por vez, 5 respostas, resultado em dois eixos (economia e
 // costumes) mais a visão geral. Resultado salvo SÓ neste aparelho (localStorage, com try/catch):
 // opinião política é dado sensível (LGPD), nada é enviado ao servidor. Salvar no perfil será
 // uma etapa própria, com consentimento. Brincadeira educativa: não é pesquisa nem diagnóstico.
 const CHAVE = 'lume_joguinho_v1';
-const CORES = ['#2C4A82', '#4F6FA5', '#6E6B66', '#B4553A', '#7A1F1F']; // mesma ordem de FAIXAS (esquerda -> direita)
 
 const cartao = { background: t.cor.papelCartao, borderRadius: t.raio.md, padding: '22px', boxShadow: t.sombra.sutil, margin: '0 auto 16px', maxWidth: '880px' };
 const botao = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px 18px', fontSize: '0.9rem', fontWeight: 700, fontFamily: t.fonte.corpo, borderRadius: t.raio.pill, textDecoration: 'none', border: 'none', cursor: 'pointer', background: '#fff', color: t.cor.tinta, boxShadow: t.sombra.botao };
@@ -141,6 +141,7 @@ export default function Joguinho() {
                 Como foi calculado: cada resposta vai de -2 a +2, com o sinal invertido nas frases de esquerda. Cada eixo é a média das suas 6 respostas, e a visão geral é a média dos dois eixos. É uma brincadeira educativa: 12 frases não substituem uma pesquisa, e a posição de cada um pode mudar com o tema e com a época.
               </p>
             </div>
+            <CompartilharJoguinho r={r} cartao={cartao} botao={botao} botaoPrimario={botaoPrimario} />
             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '16px' }}>
               <button type="button" onClick={recomecar} style={botaoPrimario}>Jogar de novo</button>
               <Link href="/entenda/esquerda-e-direita" style={botao}>Ver os dados dos brasileiros<Seta direcao="direita" size={14} emTexto /></Link>
