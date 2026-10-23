@@ -4,7 +4,7 @@ import { t } from '../src/estilo/tokens';
 import { grafo, organizacao, site, migalhas, pagina, jsonSeguro } from '../src/lib/dadosEstruturados';
 
 const principios = [
-  { tit: 'Linguagem de gente', txt: 'Traduzimos o "politiquês" e o "juridiquês" para o português do dia a dia. Se a sua avó não entende, a gente reescreve.' },
+  { tit: 'Linguagem simples e clara', txt: 'Traduzimos o "politiquês" e o "juridiquês" para o português do dia a dia. Se a sua avó não entende, a gente reescreve.' },
   { tit: 'Sem lado', txt: 'Não torcemos por partido nenhum. Mostramos o fato (quem votou o quê, quem gastou quanto) e deixamos você decidir.' },
   { tit: 'Tudo com fonte', txt: 'Cada número tem o link do documento oficial. Você não precisa confiar na gente: pode conferir na fonte.' },
   { tit: 'Dados públicos', txt: 'Usamos apenas dados abertos e oficiais do governo. Nada de bastidor, nada de boato.' },
