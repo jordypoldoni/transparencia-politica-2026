@@ -3,6 +3,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { t } from '../../src/estilo/tokens';
 import { Seta } from '../../components/icones';
+import PlanoDoisEixos from '../../components/PlanoDoisEixos';
 import { FRASES, OPCOES, FAIXAS, resultado, posicao } from '../../src/lib/joguinhoIdeologia';
 
 // Joguinho (23/10/2026). Uma frase por vez, 5 respostas, resultado em dois eixos (economia e
@@ -129,6 +130,8 @@ export default function Joguinho() {
               <Regua titulo="Visão geral" nota={FAIXAS[r.faixaGeral]} media={r.geral} />
               <Regua titulo="Economia" nota={FAIXAS[r.faixaEconomia]} media={r.economia} />
               <Regua titulo="Costumes" nota={FAIXAS[r.faixaCostumes]} media={r.costumes} />
+              <h3 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.1rem', margin: '4px 0 8px' }}>Seu ponto no plano</h3>
+              <PlanoDoisEixos economia={r.economia} costumes={r.costumes} legenda="O ponto cruza suas respostas de economia (horizontal) e de costumes (vertical)." />
               {r.faixaEconomia !== r.faixaCostumes && (
                 <p style={{ ...p, background: t.cor.alertaBg, borderRadius: t.raio.sm, padding: '12px 14px' }}>
                   Nos seus resultados, economia e costumes caíram em faixas diferentes ({FAIXAS[r.faixaEconomia].toLowerCase()} e {FAIXAS[r.faixaCostumes].toLowerCase()}). Uma linha única de esquerda a direita não mostra isso, e é um dos motivos de existirem modelos com dois eixos.
