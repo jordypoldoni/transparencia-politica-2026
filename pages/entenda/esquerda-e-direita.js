@@ -3,6 +3,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { t } from '../../src/estilo/tokens';
 import { Seta } from '../../components/icones';
+import PlanoDoisEixos from '../../components/PlanoDoisEixos';
 
 // Tema "Esquerda e direita" (23/10/2026). Estrutura em 3 camadas aprovada pelo Jordy.
 // Cada número vem com instituto, data de campo, amostra e margem, conferidos nas fontes
@@ -95,6 +96,7 @@ export default function EsquerdaEDireita() {
           </Camada>
           <Camada titulo="Dois eixos: economia e costumes">
             <p style={p}>Uma linha única de esquerda a direita mistura assuntos diferentes. Por isso há modelos com dois eixos. No gráfico de Nolan (criado por David Nolan em 1969), um eixo mede liberdade econômica e o outro, liberdade pessoal. O Political Compass (desde 2001) usa economia e uma escala de autoritário a libertário. Os dois modelos não são iguais, e o de Nolan tem críticas: há quem diga que os eixos se sobrepõem.</p>
+            <PlanoDoisEixos legenda="Desenho do Lume para ilustrar a ideia dos dois eixos; não é o gráfico de Nolan nem o do Political Compass. Na horizontal, a economia; na vertical, os costumes." />
             <p style={p}>O Datafolha, nas pesquisas citadas nesta página, também separa duas escalas: 10 perguntas de comportamento e 6 de economia.</p>
             <Fonte href="https://en.wikipedia.org/wiki/Nolan_chart">Nolan chart (Wikipédia)</Fonte>{' · '}
             <Fonte href="https://politicalcompass.org/analysis2">Political Compass</Fonte>
