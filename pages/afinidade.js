@@ -307,7 +307,7 @@ function ResultadoParlamentares({ r, casa, setCasa, busca, setBusca }) {
   );
   return (
     <div>
-      <p style={{ color: t.cor.cinza, fontSize: '0.88rem', lineHeight: 1.5, margin: '0 0 14px', maxWidth: '75ch' }}>
+      <p style={{ color: t.cor.cinza, fontSize: '0.88rem', lineHeight: 1.5, margin: '0 0 14px' }}>
         Quem hoje tem mandato pelo {r.uf}, comparado pelo <strong style={{ color: t.cor.tinta }}>voto registrado</strong> em cada votação.
         Cada cartão tem uma casa por pergunta que você respondeu. <strong style={{ color: t.cor.tinta }}>Sem voto</strong> quer dizer que a
         proposta não passou pela casa onde a pessoa estava, ou que ela faltou, se absteve ou ainda não tinha mandato. Isso não conta
@@ -331,7 +331,7 @@ function ResultadoParlamentares({ r, casa, setCasa, busca, setBusca }) {
         })}
       </div>
       {grupo.semDados ? (
-        <p style={{ ...caixa, background: t.cor.papelQuente, boxShadow: 'none', color: t.cor.tinta, fontSize: '0.9rem', lineHeight: 1.6, maxWidth: '75ch' }}>
+        <p style={{ ...caixa, background: t.cor.papelQuente, boxShadow: 'none', color: t.cor.tinta, fontSize: '0.9rem', lineHeight: 1.6 }}>
           A Assembleia Legislativa do {r.uf} não publica como cada deputado estadual votou, ou o site ainda não coleta esses votos.
           Sem o voto registrado não há como comparar. Hoje o site tem os votos da Assembleia do RS.
         </p>
@@ -353,7 +353,7 @@ function ResultadoParlamentares({ r, casa, setCasa, busca, setBusca }) {
               {poucos.length > 0 && (
                 <>
                   <h3 style={{ fontFamily: t.fonte.corpo, fontSize: '1rem', fontWeight: 800, margin: '26px 0 4px', color: t.cor.tinta }}>Votaram poucas dessas propostas</h3>
-                  <p style={{ color: t.cor.cinza, fontSize: '0.84rem', lineHeight: 1.5, margin: '0 0 12px', maxWidth: '75ch' }}>
+                  <p style={{ color: t.cor.cinza, fontSize: '0.84rem', lineHeight: 1.5, margin: '0 0 12px' }}>
                     Menos de {MIN_COMPARAVEIS} das suas respostas têm voto dessas pessoas. Com tão poucos votos, a comparação diz pouco sobre elas.
                   </p>
                   <div style={grade}>{poucos.map(cartao)}</div>
@@ -481,11 +481,11 @@ function ResultadoCandidatos({ r, cargo, setCargo, busca, setBusca, aoVerVotoRea
   const nCandidatos = visiveis.reduce((s, g) => s + g.candidatos.length, 0);
   const cartao = (g) => <CartaoPartido key={g.sigla} g={g} p={est(g)} cargoRotulo={rotuloCargo} filtrado={!!g.filtrado} aoVerVotoReal={aoVerVotoReal} />;
   const subtitulo = { fontFamily: t.fonte.corpo, fontSize: '1rem', fontWeight: 800, margin: '26px 0 4px', color: t.cor.tinta };
-  const explica = { color: t.cor.cinza, fontSize: '0.84rem', lineHeight: 1.5, margin: '0 0 12px', maxWidth: '75ch' };
+  const explica = { color: t.cor.cinza, fontSize: '0.84rem', lineHeight: 1.5, margin: '0 0 12px' };
 
   return (
     <div>
-      <p style={{ color: t.cor.cinza, fontSize: '0.88rem', lineHeight: 1.5, margin: '0 0 14px', maxWidth: '75ch' }}>
+      <p style={{ color: t.cor.cinza, fontSize: '0.88rem', lineHeight: 1.5, margin: '0 0 14px' }}>
         Quase nenhum candidato votou essas propostas, então aqui a comparação é com o <strong style={{ color: t.cor.tinta }}>partido</strong>:
         como votaram os parlamentares que hoje estão nele. É uma <strong style={{ color: t.cor.tinta }}>estimativa</strong>, e cada candidato
         pode pensar diferente do partido. A frase embaixo do placar diz o quanto ela vale: num partido que vota unido, vale mais do que num
@@ -694,7 +694,7 @@ export default function Afinidade({ ufInicial }) {
         <meta name="description" content="Responda votações que já aconteceram no Congresso e compare com o voto registrado dos parlamentares do seu estado e com os candidatos de 2026. Sem cadastro." />
       </Head>
       <NavPraVoce />
-      <div style={{ maxWidth: '860px' }}>
+      <div>
         <span style={{ fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: t.cor.ouroTexto }}>Pra você</span>
         <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.9rem,5vw,2.6rem)', lineHeight: 1.1, margin: '10px 0 12px' }}>Quem vota como você</h1>
         <div style={{ margin: '0 0 16px' }}>

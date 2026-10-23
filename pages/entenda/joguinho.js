@@ -13,7 +13,7 @@ import { FRASES, OPCOES, FAIXAS, resultado, posicao } from '../../src/lib/joguin
 const CHAVE = 'lume_joguinho_v1';
 const CORES = ['#2C4A82', '#4F6FA5', '#6E6B66', '#B4553A', '#7A1F1F']; // mesma ordem de FAIXAS (esquerda -> direita)
 
-const cartao = { background: t.cor.papelCartao, borderRadius: t.raio.md, padding: '22px', boxShadow: t.sombra.sutil, marginBottom: '16px' };
+const cartao = { background: t.cor.papelCartao, borderRadius: t.raio.md, padding: '22px', boxShadow: t.sombra.sutil, margin: '0 auto 16px', maxWidth: '880px' };
 const botao = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px', padding: '10px 18px', fontSize: '0.9rem', fontWeight: 700, fontFamily: t.fonte.corpo, borderRadius: t.raio.pill, textDecoration: 'none', border: 'none', cursor: 'pointer', background: '#fff', color: t.cor.tinta, boxShadow: t.sombra.botao };
 const botaoPrimario = { ...botao, background: t.cor.verde, color: t.cor.ouro };
 const p = { margin: '0 0 10px', fontSize: '0.97rem', lineHeight: 1.6 };
@@ -86,7 +86,7 @@ export default function Joguinho() {
         <link rel="canonical" href="https://www.lumecidadao.com.br/entenda/joguinho" />
       </Head>
 
-      <div className="pagina" style={{ maxWidth: '720px' }}>
+      <div className="pagina" style={{ textAlign: 'center' }}>
         <nav aria-label="Você está em" style={{ fontSize: '0.85rem', marginBottom: '12px' }}>
           <Link href="/entenda" style={{ color: t.cor.ouroTexto, fontWeight: 700, textDecoration: 'none' }}>Entenda</Link>
           <span style={{ color: t.cor.cinza }}> / Joguinho</span>
@@ -105,7 +105,7 @@ export default function Joguinho() {
           </>
         ) : ativa ? (
           <>
-            <div role="progressbar" aria-valuemin={0} aria-valuemax={FRASES.length} aria-valuenow={indice} aria-label="Progresso" style={{ height: '8px', background: t.cor.papelQuente2, borderRadius: '8px', overflow: 'hidden', marginBottom: '8px' }}>
+            <div role="progressbar" aria-valuemin={0} aria-valuemax={FRASES.length} aria-valuenow={indice} aria-label="Progresso" style={{ height: '8px', background: t.cor.papelQuente2, borderRadius: '8px', overflow: 'hidden', margin: '0 auto 8px', maxWidth: '880px' }}>
               <div style={{ width: `${(indice / FRASES.length) * 100}%`, height: '100%', background: t.cor.ouro, transition: 'width .2s ease' }} />
             </div>
             <p style={{ fontSize: '0.85rem', color: t.cor.cinza, margin: '0 0 18px' }}>Frase {indice + 1} de {FRASES.length}</p>
@@ -114,7 +114,7 @@ export default function Joguinho() {
               <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.25rem,3.6vw,1.6rem)', lineHeight: 1.35, margin: '0 0 20px' }}>{ativa.texto}</h2>
               <div style={{ display: 'grid', gap: '10px' }}>
                 {OPCOES.map((o) => (
-                  <button key={o.valor} type="button" onClick={() => responder(o.valor)} style={{ ...botao, width: '100%', justifyContent: 'flex-start', padding: '12px 18px', background: respostas[ativa.id] === o.valor ? t.cor.papelQuente2 : '#fff' }}>{o.rotulo}</button>
+                  <button key={o.valor} type="button" onClick={() => responder(o.valor)} style={{ ...botao, width: '100%', justifyContent: 'center', padding: '12px 18px', background: respostas[ativa.id] === o.valor ? t.cor.papelQuente2 : '#fff' }}>{o.rotulo}</button>
                 ))}
               </div>
             </div>
@@ -141,7 +141,7 @@ export default function Joguinho() {
                 Como foi calculado: cada resposta vai de -2 a +2, com o sinal invertido nas frases de esquerda. Cada eixo é a média das suas 6 respostas, e a visão geral é a média dos dois eixos. É uma brincadeira educativa: 12 frases não substituem uma pesquisa, e a posição de cada um pode mudar com o tema e com a época.
               </p>
             </div>
-            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '16px' }}>
               <button type="button" onClick={recomecar} style={botaoPrimario}>Jogar de novo</button>
               <Link href="/entenda/esquerda-e-direita" style={botao}>Ver os dados dos brasileiros<Seta direcao="direita" size={14} emTexto /></Link>
               <button type="button" onClick={apagarResultado} style={botao}>Apagar meu resultado deste aparelho</button>

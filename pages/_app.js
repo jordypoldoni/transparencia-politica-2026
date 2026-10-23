@@ -44,7 +44,7 @@ export default function App({ Component, pageProps }) {
         }
 
         .pagina { width: 100%; padding: 24px; }
-        .leitura { max-width: 72ch; }
+        .leitura { width: 100%; }
 
         /* flex-wrap: nowrap + flex-shrink: 0 desde 18/09/2026.
            O menu estava EMPILHANDO os nomes uns sobre os outros ao diminuir a tela. Causa: o
@@ -245,13 +245,13 @@ export default function App({ Component, pageProps }) {
         /* O que a assembleia publica e o que nao publica (/deputados/[uf]). Sem container:
            texto corrido, na mesma margem do paragrafo de cima. A margem negativa aproxima os
            dois, porque sao a mesma ideia continuada. */
-        .nota-casa { margin: -16px 0 24px; max-width: 88ch; font-size: 0.88rem; line-height: 1.55; color: #666E7B; }
+        .nota-casa { margin: -16px 0 24px; font-size: 0.88rem; line-height: 1.55; color: #666E7B; }
         .nota-casa strong { color: #191C20; font-weight: 700; }
 
         /* Nota do seletor de ano: uma linha, colada na barra de controles, porque e sobre o
            CONTROLE. Antes dividia uma grade de duas colunas com a ressalva de leitura da
            lista: coisas de donos diferentes, e uma acabava flutuando no canto direito. */
-        .nota-ano { margin: -4px 0 16px; font-size: 0.82rem; line-height: 1.5; color: rgba(255,255,255,0.62); max-width: 72ch; }
+        .nota-ano { margin: -4px 0 16px; font-size: 0.82rem; line-height: 1.5; color: rgba(255,255,255,0.62); }
         .nota-ano strong { color: rgba(255,255,255,0.88); font-weight: 700; }
 
         /* Faixa de leitura: governa as linhas que vem abaixo, entao ocupa a largura inteira e

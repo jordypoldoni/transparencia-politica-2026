@@ -106,7 +106,7 @@ export default function PaginaPedido({ pedido, movs, tramitacaoOk, lidoEm }) {
           <div className="pedido-grade">
           <div className="pedido-ementa">
           <span style={rotulo}>Ementa oficial</span>
-          <p style={{ margin: '0 0 16px', fontSize: '0.98rem', lineHeight: 1.6, color: t.cor.tinta, maxWidth: '75ch' }}>{pedido.ementa || 'A fonte não informa a ementa.'}</p>
+          <p style={{ margin: '0 0 16px', fontSize: '0.98rem', lineHeight: 1.6, color: t.cor.tinta }}>{pedido.ementa || 'A fonte não informa a ementa.'}</p>
           </div>
 
           <div className="pedido-fatos">

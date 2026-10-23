@@ -145,7 +145,7 @@ function ResumoV2({ painel, ano, ateMes, nome, uniao, mostrarOrigem, setMostrarO
   const { origem, divida } = painel;
   return (
     <>
-      <p style={{ ...tit, fontSize: 'clamp(1.2rem, 2.6vw, 1.5rem)', lineHeight: 1.4, margin: '6px 2px 14px', maxWidth: '900px' }}>
+      <p style={{ ...tit, fontSize: 'clamp(1.2rem, 2.6vw, 1.5rem)', lineHeight: 1.4, margin: '6px 2px 14px' }}>
         {ate}, {quem} arrecadou <strong style={{ color: t.cor.sim }}>{brlCompacto(painel.arrecadou)}</strong> e gastou <strong style={{ color: t.cor.ouroTexto }}>{brlCompacto(painel.gastou)}</strong> com o funcionamento do país.
         {painel.deficit
           ? <> Só de juros da dívida foram mais <strong style={{ color: t.cor.nao }}>{brlPreciso(painel.juros)}</strong>, e o déficit de <strong>{brlPreciso(Math.abs(painel.nominal))}</strong> foi coberto com mais dívida.</>

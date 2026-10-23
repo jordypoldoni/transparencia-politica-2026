@@ -595,7 +595,7 @@ export default function PerfilPolitico({ dados }) {
         .cab-cargo{margin:4px 0 0;opacity:.85;line-height:1.35}
         .cab-cargo span{display:block}
         .cab-cargo .cab-sep{display:none}
-        .resumo-par{max-width:62ch}
+        .resumo-par{max-width:none}
         @media (min-width:880px){
           .cab-perfil{display:grid;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"foto texto acoes" "ano ano ano";gap:14px 18px;align-items:center}
           .cab-perfil>:first-child{grid-area:foto}

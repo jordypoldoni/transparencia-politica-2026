@@ -165,11 +165,11 @@ export default function PaginaCpis({ senado, camara }) {
         <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.6rem,4vw,2.2rem)', margin: '0 0 8px' }}>
           CPIs e pedidos de CPI
         </h1>
-        <p style={{ color: t.cor.cinza, margin: '0 0 8px', maxWidth: '720px', lineHeight: 1.55 }}>
+        <p style={{ color: t.cor.cinza, margin: '0 0 8px', lineHeight: 1.55 }}>
           Uma CPI (Comissão Parlamentar de Inquérito) investiga um fato determinado, por prazo certo.
           A Constituição manda criá-la a pedido de um terço dos membros da casa: 171 deputados ou 27 senadores.
         </p>
-        <p style={{ color: t.cor.cinza, margin: '0 0 26px', maxWidth: '720px', lineHeight: 1.55, fontSize: '0.9rem' }}>
+        <p style={{ color: t.cor.cinza, margin: '0 0 26px', lineHeight: 1.55, fontSize: '0.9rem' }}>
           Aqui entram só fatos e links oficiais. <strong style={{ color: t.cor.tinta }}>Um pedido de CPI não é uma acusação, e participar de uma CPI não significa ser investigado.</strong>
         </p>
 

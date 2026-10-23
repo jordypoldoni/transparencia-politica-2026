@@ -76,7 +76,7 @@ export default function GastosPublicos({ uniao, estados = [], gastosFuncao = [] 
       </Head>
 
       <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.8rem,4vw,2.6rem)', margin: '0 0 8px' }}>Gastos públicos</h1>
-      <p style={{ color: t.cor.cinza, fontSize: '0.96rem', margin: '0 0 24px', lineHeight: 1.55, maxWidth: '72ch' }}>
+      <p style={{ color: t.cor.cinza, fontSize: '0.96rem', margin: '0 0 24px', lineHeight: 1.55 }}>
         Quanto a União, os estados, o DF e os municípios <strong>arrecadam e gastam</strong>, e em quais áreas, direto da fonte oficial (<a href="https://siconfi.tesouro.gov.br/" target="_blank" rel="noopener noreferrer" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>SICONFI/Tesouro</a>). São dados <strong>agregados</strong> (quanto e em quais áreas), não contratos individuais. Acumulado de {uniao?.resumo?.ano || '2026'}.
       </p>
       <SeloAtualizacao fonte="fiscal_siconfi" escopo="tudo" tipo="coleta" style={{ margin: '-12px 0 22px' }} />
@@ -144,7 +144,7 @@ export default function GastosPublicos({ uniao, estados = [], gastosFuncao = [] 
         </div>
 
         {sentido === 'menores' && (
-          <p style={{ color: t.cor.cinza, fontSize: '0.84rem', margin: '0 0 16px', lineHeight: 1.5, maxWidth: '64ch' }}>
+          <p style={{ color: t.cor.cinza, fontSize: '0.84rem', margin: '0 0 16px', lineHeight: 1.5 }}>
             Gastar menos por habitante não significa, sozinho, gastar melhor ou pior: pode refletir
             prioridade orçamentária diferente, população maior diluindo o valor, ou despesa
             registrada em outra função. Tire suas próprias conclusões com base nos dados.

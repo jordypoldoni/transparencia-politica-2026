@@ -25,6 +25,7 @@ export default function Sobre() {
         )) }} />
       </Head>
       <div className="leitura">
+      <div style={{ textAlign: 'center' }}>
       <span style={{ fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: t.cor.verde }}>Sobre o projeto</span>
       <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(2rem,5vw,3rem)', lineHeight: 1.1, margin: '12px 0 20px' }}>
         Política não precisa ser confusa.
@@ -34,6 +35,7 @@ export default function Sobre() {
         <strong style={{ color: t.cor.tinta }}> o político que eu elegi está me representando?</strong> Reunimos dados oficiais
         espalhados e confusos, e entregamos mastigado, para você acompanhar e cobrar com base em fato, não em achismo.
       </p>
+      </div>
 
       <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.5rem', margin: '0 0 16px' }}>Nossos princípios</h2>
       <div style={{ display: 'grid', gap: '12px', marginBottom: '44px' }}>

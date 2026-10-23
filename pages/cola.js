@@ -36,7 +36,7 @@ export default function Cola({ uf, escolhas, pedidos, url }) {
         <meta property="og:description" content={resumo || 'Eleição de 4 de outubro de 2026.'} />
         <meta name="robots" content="noindex" />
       </Head>
-      <div style={{ maxWidth: '760px' }}>
+      <div>
         <span style={{ fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: t.cor.ouroTexto }}>Eleição de 4 de outubro de 2026 · {nomeUf}</span>
         <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.9rem,5vw,2.6rem)', lineHeight: 1.1, margin: '10px 0 12px' }}>Cola para a urna</h1>
         <p style={{ color: t.cor.tinta, fontSize: '1rem', lineHeight: 1.6, margin: '0 0 22px' }}>
