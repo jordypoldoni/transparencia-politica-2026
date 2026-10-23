@@ -9,7 +9,7 @@ import { t } from '../src/estilo/tokens';
 const TEMAS = [
   { id: 'cargos', trilha: 'escolher', titulo: 'O que faz cada cargo', desc: 'Vereador, deputado estadual, deputado federal e senador, sem juridiquês.', href: '#cargos' },
   { id: 'senado', trilha: 'escolher', titulo: 'Como o Senado se compõe', desc: 'Oito anos de mandato, renovação alternada e os dois votos de 2026.', href: '#senado' },
-  { id: 'esq-dir', trilha: 'escolher', titulo: 'Esquerda e direita', desc: 'De onde vêm os termos e o que os dados mostram sobre os brasileiros.', href: null },
+  { id: 'esq-dir', trilha: 'escolher', titulo: 'Esquerda e direita', desc: 'De onde vêm os termos e o que os dados mostram sobre os brasileiros.', href: '/entenda/esquerda-e-direita' },
   { id: 'cota', trilha: 'cobrar', titulo: 'Cota parlamentar', desc: 'Quanto eles podem gastar, os tetos por tipo de gasto e a fonte oficial.', href: '#cotas' },
   { id: 'dados', trilha: 'cobrar', titulo: 'Como atualizamos os dados', desc: 'De onde vem cada informação do site e com que frequência ela é conferida.', href: '/entenda/atualizacao' },
 ];
