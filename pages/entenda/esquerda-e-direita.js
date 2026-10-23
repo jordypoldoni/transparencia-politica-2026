@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { t } from '../../src/estilo/tokens';
@@ -20,12 +21,26 @@ const selo = { display: 'inline-block', fontSize: '0.72rem', fontWeight: 700, co
 
 const Fonte = ({ href, children }) => <a href={href} target="_blank" rel="noopener noreferrer" style={fonteLink}>{children} ↗</a>;
 
-function Camada({ titulo, children, aberta }) {
+// Mesmo padrão de abrir/fechar do site (DocumentosERedes): botão com aria-expanded, "Ver" ou
+// "Recolher" em âmbar escuro e a Seta dourada oficial. Nada de triângulo nativo do navegador.
+function Camada({ titulo, children, aberta: inicial = false }) {
+  const [aberta, setAberta] = useState(inicial);
   return (
-    <details open={aberta} style={{ background: t.cor.papelQuente, borderRadius: t.raio.sm, padding: '12px 16px', marginBottom: '10px' }}>
-      <summary style={{ cursor: 'pointer', fontWeight: 700, fontSize: '0.98rem', listStylePosition: 'inside' }}>{titulo}</summary>
-      <div style={{ marginTop: '12px' }}>{children}</div>
-    </details>
+    <div style={{ background: t.cor.papelQuente, borderRadius: t.raio.sm, padding: '14px 16px', marginBottom: '10px' }}>
+      <button
+        type="button"
+        onClick={() => setAberta((v) => !v)}
+        aria-expanded={aberta}
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', width: '100%', background: 'none', border: 'none', padding: 0, margin: 0, textAlign: 'left', cursor: 'pointer', color: 'inherit', font: 'inherit' }}
+      >
+        <span style={{ minWidth: 0, fontWeight: 700, fontSize: '0.98rem' }}>{titulo}</span>
+        <span style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', fontWeight: 700, color: t.cor.ouroTexto }}>
+          {aberta ? 'Recolher' : 'Ver'}
+          <Seta aberta={aberta} size={14} />
+        </span>
+      </button>
+      {aberta && <div style={{ marginTop: '12px' }}>{children}</div>}
+    </div>
   );
 }
 
