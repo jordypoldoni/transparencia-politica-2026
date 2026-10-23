@@ -87,14 +87,14 @@ export default function Joguinho() {
       </Head>
 
       <div className="pagina" style={{ textAlign: 'center' }}>
-        <nav aria-label="Você está em" style={{ fontSize: '0.85rem', marginBottom: '12px' }}>
+        <nav aria-label="Você está em" style={{ fontSize: '0.85rem', marginBottom: '12px', textAlign: 'left' }}>
           <Link href="/entenda" style={{ color: t.cor.ouroTexto, fontWeight: 700, textDecoration: 'none' }}>Entenda</Link>
           <span style={{ color: t.cor.cinza }}> / Joguinho</span>
         </nav>
 
         {!pronto ? null : indice === -1 ? (
           <>
-            <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.8rem,4.5vw,2.6rem)', lineHeight: 1.15, margin: '0 0 12px' }}>Para onde suas respostas apontam?</h1>
+            <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.8rem,4.5vw,2.6rem)', lineHeight: 1.15, margin: '0 0 12px', textWrap: 'balance' }}>Jogo do mapa político: suas respostas te levam da esquerda à direita.</h1>
             <p style={{ color: t.cor.cinza, fontSize: '1.05rem', margin: '0 0 18px' }}>Doze frases, uma de cada vez. Você diz o quanto concorda e vê o resultado em dois eixos: economia e costumes.</p>
             <div style={cartao}>
               <p style={p}><strong>Antes de começar:</strong></p>
