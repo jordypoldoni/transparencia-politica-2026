@@ -2,6 +2,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { t } from '../src/estilo/tokens';
 import { Seta } from '../components/icones';
+import EntendaTopo from '../components/EntendaTopo';
 import { CEAP_LISTA } from '../src/lib/cotas';
 
 const fmtBRL = (v) => v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -51,10 +52,7 @@ export default function Entenda() {
       </Head>
 
       <div className="pagina">
-        <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.8rem,4.5vw,2.6rem)', lineHeight: 1.15, margin: '0 0 10px' }}>Entenda quem é quem</h1>
-        <p style={{ color: t.cor.cinza, fontSize: '1.05rem', maxWidth: '680px', margin: '0 0 12px' }}>
-          Antes de cobrar, é bom saber o que cada um faz. Aqui explicamos cada cargo sem juridiquês, e mostramos quanto dinheiro público eles podem gastar.
-        </p>
+        <EntendaTopo />
 
         {/* Legislativo x Executivo */}
         <div style={{ ...cartao, background: t.cor.alertaBg, border: 'none', margin: '8px 0 32px' }}>
@@ -64,7 +62,7 @@ export default function Entenda() {
         </div>
 
         {/* O QUE FAZ CADA UM */}
-        <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.6rem', margin: '0 0 16px' }}>O que faz cada um?</h2>
+        <h2 id="cargos" style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.6rem', margin: '0 0 16px', scrollMarginTop: '90px' }}>O que faz cada um?</h2>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px, 100%), 1fr))', gap: '14px', marginBottom: '20px' }}>
           {CARGOS.map((c) => (
             <div key={c.nome} style={cartao}>
