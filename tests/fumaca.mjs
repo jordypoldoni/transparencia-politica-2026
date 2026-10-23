@@ -24,7 +24,7 @@ function pedir(caminho, { metodo = 'GET', host } = {}) {
   return new Promise((resolve, reject) => {
     const u = new URL(base + caminho);
     const lib = u.protocol === 'https:' ? https : http;
-    const req = lib.request(u, { method: metodo, headers: host ? { Host: host } : {}, timeout: 30000 }, (res) => {
+    const req = lib.request(u, { method: metodo, headers: host ? { Host: host } : {}, timeout: 60000 }, (res) => {
       const partes = [];
       res.on('data', (d) => partes.push(d));
       res.on('end', () => resolve({ status: res.statusCode, headers: res.headers, corpo: Buffer.concat(partes).toString('utf8') }));
