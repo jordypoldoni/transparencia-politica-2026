@@ -330,7 +330,7 @@ function PaginaApuracao({ cargo, ufInicial, turno }) {
 }
 
 // REPLAY (22/10/2026, D-077): terceira visão de Eleições 2026 (?visao=replay). O 1º turno está aberto; o 2º turno aparece
-// no seletor, mas só fica clicável a partir das 17h de 25/10/2026 (src/lib/replayLiberacao.js, checado no servidor).
+// no seletor, mas só fica clicável a partir das 12h de 26/10/2026 (src/lib/replayLiberacao.js, checado no servidor).
 // O replay do 2º turno em si só existe depois dos boletins de urna do 2º turno (D-073), então, mesmo liberado, a visão
 // do 2º turno mostra um aviso e leva para a apuração ao vivo.
 function PaginaReplay({ turno, liberado2t }) {
