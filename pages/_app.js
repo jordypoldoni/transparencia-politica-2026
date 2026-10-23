@@ -273,6 +273,16 @@ export default function App({ Component, pageProps }) {
         @media (min-width: 760px) { .grade-parl { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
         @media (min-width: 980px) { .grade-parl { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
         @media (min-width: 1120px) { .grade-parl { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+        /* Hover dos botoes capsulares (23/10/2026, pedido do Jordy). Regra unica para todo botao/link com cantos de pilula
+           (border-radius 999px = t.raio.pill): sombra cresce e o botao sobe 1px, o mesmo padrao do Anterior/Proxima e do Favoritar.
+           Os estilos sao inline, por isso o !important. Fora: desativados, fundo transparente (nao e capsula "cheia") e toque (sem hover). */
+        :is(button, a, summary, [role="button"], label)[style*="border-radius:999px"], :is(button, a, summary, [role="button"], label)[style*="border-radius: 999px"] { transition: box-shadow .15s ease, transform .15s ease; }
+        @media (hover: hover) {
+          :is(button, a, summary, [role="button"], label):is([style*="border-radius:999px"], [style*="border-radius: 999px"]):not(:disabled):not([aria-disabled="true"]):not([style*="background:transparent"]):not([style*="background: transparent"]):not([style*="background:none"]):not([style*="background: none"]):hover { box-shadow: 0 4px 8px rgba(36,30,82,0.22), 0 16px 34px rgba(36,30,82,0.34) !important; transform: translateY(-1px); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          :is(button, a, summary, [role="button"], label):is([style*="border-radius:999px"], [style*="border-radius: 999px"]):hover { transform: none !important; }
+        }
         /* Paginacao (components/Paginacao.jsx), 21/10/2026: uma linha so. Esquerda: "Mostrando X a Y de Z"; centro: botoes em texto dourado com seta e a pagina. */
         .paginacao-linha { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; column-gap: 16px; }
         .paginacao-detalhe { margin: 0; font-size: 0.8rem; text-align: left; }
