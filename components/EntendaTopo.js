@@ -60,6 +60,16 @@ export default function EntendaTopo() {
         </div>
       )}
 
+      {!termo && (
+        <Link href="/entenda/joguinho" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '14px', flexWrap: 'wrap', background: t.cor.verde, color: '#fff', borderRadius: t.raio.md, padding: '18px 22px', margin: '0 0 22px', textDecoration: 'none' }}>
+          <span>
+            <span style={{ display: 'block', fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.15rem' }}>Joguinho: para onde suas respostas apontam?</span>
+            <span style={{ display: 'block', fontSize: '0.88rem', opacity: 0.88, marginTop: '2px' }}>12 frases, dois eixos, resultado só seu. Leva uns 3 minutos.</span>
+          </span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 16px', fontSize: '0.85rem', fontWeight: 700, borderRadius: t.raio.pill, background: t.cor.ouro, color: t.cor.verdeEscuro, boxShadow: t.sombra.botao }}>Jogar</span>
+        </Link>
+      )}
+
       <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.3rem', margin: '0 0 12px' }}>{termo ? 'Resultados' : 'Todos os temas'}</h2>
       {lista.length === 0 ? (
         <p style={{ color: t.cor.cinza, margin: 0 }}>Nenhum tema encontrado para essa busca.</p>
