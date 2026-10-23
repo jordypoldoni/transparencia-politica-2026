@@ -41,7 +41,7 @@ const CSS = `
   .gp-cartao { background: ${t.cor.papelCartao}; border-radius: ${t.raio.md}; box-shadow: ${t.sombra.sutil}; padding: 22px 24px; margin: 0 0 20px; }
   .gp-sobre { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: ${t.cor.ouroTexto}; margin: 0 0 4px; }
   .gp-h2 { font-family: ${t.fonte.titulo}; font-weight: 600; font-size: clamp(1.25rem, 3vw, 1.5rem); line-height: 1.2; margin: 0 0 6px; }
-  .gp-sub { color: ${t.cor.cinza}; font-size: 0.9rem; line-height: 1.5; margin: 0 0 16px; max-width: 70ch; }
+  .gp-sub { color: ${t.cor.cinza}; font-size: 0.9rem; line-height: 1.5; margin: 0 0 16px; }
   .gp-controles { display: flex; flex-wrap: wrap; gap: 10px 12px; align-items: center; margin: 0 0 20px; }
   .gp-ctl { flex: 1 1 180px; min-width: 180px; max-width: 240px; }
   .gp-ctl-uf { flex: 1.3 1 215px; min-width: 205px; max-width: 300px; }
@@ -482,7 +482,7 @@ function PaginaGastos({ casaChave, ano, anosDaCasa, radar, agreg, recursos, ufIn
       <div className="pagina">
         <Trilha itens={[{ nome: 'Início', href: '/' }, { nome: 'Gastos', href: '/gastos-publicos' }, { nome: 'Gastos parlamentares' }]} />
         <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.9rem,5vw,2.8rem)', margin: '0 0 8px', lineHeight: 1.1 }}>Gastos parlamentares</h1>
-        <p style={{ color: t.cor.cinza, margin: '0 0 20px', maxWidth: '70ch', lineHeight: 1.5 }}>
+        <p style={{ color: t.cor.cinza, margin: '0 0 20px', lineHeight: 1.5 }}>
           Quanto cada parlamentar usou da verba a que tem direito, comparado de forma justa: pela cota do estado de cada um e só pelos meses em que estava em exercício.
         </p>
 

@@ -30,7 +30,7 @@ export default function EntendaTopo() {
   return (
     <section aria-labelledby="entenda-titulo" style={{ marginBottom: '40px' }}>
       <h1 id="entenda-titulo" style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.8rem,4.5vw,2.6rem)', lineHeight: 1.15, margin: '0 0 10px' }}>Entenda para escolher e fiscalizar</h1>
-      <p style={{ color: t.cor.cinza, fontSize: '1.05rem', maxWidth: '680px', margin: '0 0 18px' }}>
+      <p style={{ color: t.cor.cinza, fontSize: '1.05rem', margin: '0 0 18px' }}>
         Explicações curtas, em linguagem simples, com a fonte oficial sempre à mão.
       </p>
 

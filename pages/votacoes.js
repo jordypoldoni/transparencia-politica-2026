@@ -66,7 +66,7 @@ export default function PainelVotacoes({ resumo }) {
         <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.6rem,4vw,2.2rem)', margin: '0 0 8px' }}>
           Votações em plenário
         </h1>
-        <p style={{ color: t.cor.cinza, margin: '0 0 26px', maxWidth: '700px', lineHeight: 1.55 }}>
+        <p style={{ color: t.cor.cinza, margin: '0 0 26px', lineHeight: 1.55 }}>
           Cada casa legislativa decide sobre coisas diferentes, e elas não se misturam. Abaixo,
           o que se decide em cada uma e o que isso alcança do seu dia a dia. Entre numa delas
           para ver a lista completa e quem votou o quê.
@@ -171,7 +171,7 @@ export default function PainelVotacoes({ resumo }) {
           })}
         </div>
 
-        <p style={{ marginTop: '26px', fontSize: '0.82rem', lineHeight: 1.55, color: t.cor.cinza, maxWidth: '700px' }}>
+        <p style={{ marginTop: '26px', fontSize: '0.82rem', lineHeight: 1.55, color: t.cor.cinza }}>
           As explicações acima descrevem o que cada tipo de decisão é capaz de alcançar, não o
           efeito de uma votação específica. E a cobertura é desigual entre as casas porque cada
           uma publica o seu histórico de um jeito: o período ao lado de cada número diz até onde

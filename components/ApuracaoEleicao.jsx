@@ -288,7 +288,7 @@ export default function ApuracaoEleicao({ cargo, ufInicial, turno = 1 }) {
             </>
           )}
 
-          <p style={{ margin: '24px 0 0', fontSize: '0.82rem', color: t.cor.cinza, lineHeight: 1.55, maxWidth: '75ch' }}>
+          <p style={{ margin: '24px 0 0', fontSize: '0.82rem', color: t.cor.cinza, lineHeight: 1.55 }}>
             Fonte: resultado oficial do{' '}
             <a href="https://resultados.tse.jus.br/" target="_blank" rel="noopener noreferrer" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>TSE</a>,
             lido a cada 10 a 30 segundos (10 enquanto a apuração está em andamento), sem edição. Números parciais mudam conforme as seções são apuradas. O Boletim de Urna de cada seção, impresso e divulgado pelo TSE, pode ser conferido no portal de resultados.

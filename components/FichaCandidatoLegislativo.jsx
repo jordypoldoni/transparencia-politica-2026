@@ -245,7 +245,7 @@ export default function FichaCandidatoLegislativo({ candidato, canonical, cargo 
           <p style={{ margin: 0, color: t.cor.cinza, fontSize: '0.95rem' }}>{c.partido_sigla}{c.nr_candidato ? ` · nº ${c.nr_candidato}` : ''}{c.coligacao_nome ? ` · ${/^partido isolado$/i.test(c.coligacao_nome) ? 'Partido isolado' : c.coligacao_nome}` : ''}</p>
           {/* Quais partidos formam a coligação ou federação (texto oficial do TSE). Partido isolado não tem o que mostrar. */}
           {c.coligacao_composicao && c.coligacao_nome && !/^partido isolado$/i.test(c.coligacao_nome) && String(c.coligacao_composicao).trim() !== String(c.coligacao_nome).trim() && (
-            <p style={{ margin: '4px 0 0', color: t.cor.cinza, fontSize: '0.84rem', lineHeight: 1.45, maxWidth: '62ch' }}>
+            <p style={{ margin: '4px 0 0', color: t.cor.cinza, fontSize: '0.84rem', lineHeight: 1.45 }}>
               <strong style={{ color: t.cor.tinta, fontWeight: 700 }}>Partidos:</strong> {c.coligacao_composicao}
             </p>
           )}

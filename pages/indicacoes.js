@@ -118,7 +118,7 @@ export default function Indicacoes({ indicacoes }) {
       <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.8rem,4.4vw,2.6rem)', margin: '0 0 12px', lineHeight: 1.15 }}>
         Indicações do presidente
       </h1>
-      <p style={{ margin: '0 0 24px', fontSize: '1rem', lineHeight: 1.6, color: t.cor.tinta, maxWidth: '62ch' }}>
+      <p style={{ margin: '0 0 24px', fontSize: '1rem', lineHeight: 1.6, color: t.cor.tinta }}>
         Alguns cargos do Estado brasileiro só são preenchidos com o aval do Senado. O presidente
         envia o nome, a comissão sabatina o indicado e o plenário decide. Vale para ministro do
         Supremo e dos tribunais superiores, presidente e diretores do Banco Central e das
@@ -136,7 +136,7 @@ export default function Indicacoes({ indicacoes }) {
       {/* A ressalva vem ANTES da lista, não no rodapé: quem abrir esta página vai procurar
           "como meu senador votou", e precisa descobrir que esse dado não existe antes de
           percorrer 183 linhas atrás dele. */}
-      <p style={{ margin: '0 0 24px', fontSize: '0.88rem', lineHeight: 1.6, color: t.cor.tinta, background: t.cor.papelQuente, borderRadius: t.raio.sm, padding: '14px 18px', maxWidth: '68ch' }}>
+      <p style={{ margin: '0 0 24px', fontSize: '0.88rem', lineHeight: 1.6, color: t.cor.tinta, background: t.cor.papelQuente, borderRadius: t.raio.sm, padding: '14px 18px' }}>
         <strong style={{ fontWeight: 700 }}>O voto de cada senador é secreto nestas votações</strong>, por
         determinação constitucional. O Senado publica o placar e a lista de quem esteve na
         sessão, mas não como cada um votou — e isso não é omissão da fonte nem deste site.

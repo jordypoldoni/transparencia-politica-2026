@@ -94,7 +94,7 @@ export default function Entenda() {
             REGRA DO JORDY (18/09/2026): nada de travessão no texto do site. Usar vírgula,
             dois-pontos, parênteses ou ponto final. */}
         <h2 id="senado" style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.6rem', margin: '0 0 8px', scrollMarginTop: '90px' }}>Como o Senado se compõe</h2>
-        <p style={{ color: t.cor.cinza, fontSize: '1rem', maxWidth: '720px', margin: '0 0 18px', lineHeight: 1.6 }}>
+        <p style={{ color: t.cor.cinza, fontSize: '1rem', margin: '0 0 18px', lineHeight: 1.6 }}>
           O Senado tem <strong style={{ color: t.cor.tinta }}>81 cadeiras</strong>, e esse número não muda:
           três para cada um dos 26 estados e três para o Distrito Federal. Roraima, com menos de
           700 mil habitantes, tem os mesmos três senadores que São Paulo, com mais de 44 milhões.
@@ -144,10 +144,10 @@ export default function Entenda() {
 
         {/* COTAS */}
         <h2 id="cotas" style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.6rem', margin: '0 0 8px', scrollMarginTop: '90px' }}>Quanto eles podem gastar? A cota parlamentar</h2>
-        <p style={{ color: t.cor.cinza, fontSize: '1rem', maxWidth: '720px', margin: '0 0 8px', lineHeight: 1.6 }}>
+        <p style={{ color: t.cor.cinza, fontSize: '1rem', margin: '0 0 8px', lineHeight: 1.6 }}>
           Além do salário, cada parlamentar tem uma <strong>verba mensal</strong> para custear o mandato (passagens, aluguel de escritório, combustível, divulgação etc.). Não é dinheiro no bolso: é <strong>reembolso</strong> mediante nota fiscal, e tudo fica público.
         </p>
-        <p style={{ color: t.cor.cinza, fontSize: '0.95rem', maxWidth: '720px', margin: '0 0 22px', lineHeight: 1.6 }}>
+        <p style={{ color: t.cor.cinza, fontSize: '0.95rem', margin: '0 0 22px', lineHeight: 1.6 }}>
           O <strong>teto muda de estado para estado</strong> porque a maior parte é gasto com passagens aéreas até Brasília: quanto mais longe, maior a cota.
         </p>
 

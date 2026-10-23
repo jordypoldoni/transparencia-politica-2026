@@ -209,7 +209,7 @@ function ListaDeputadoFederal({ dadosIniciais, resumo, filtrosIniciais, paginaIn
 
       {semEstado ? (
         // Sem estado escolhido não há o que listar: a fonte só responde por UF. Dizer por quê.
-        <p style={{ color: t.cor.cinza, fontSize: '0.92rem', lineHeight: 1.5, margin: '0 0 14px', maxWidth: '70ch' }}>
+        <p style={{ color: t.cor.cinza, fontSize: '0.92rem', lineHeight: 1.5, margin: '0 0 14px' }}>
           Escolha um estado para ver quem concorre à Assembleia Legislativa. No Distrito Federal o cargo
           equivalente é o de deputado distrital, que ainda não está no site.
         </p>
@@ -442,7 +442,7 @@ function PaginaCandidatosSegundoTurno({ cargo, chapas, governadores, semCadastro
         </section>
       ))}
 
-      <p style={{ ...nota, marginTop: '20px', maxWidth: '75ch' }}>
+      <p style={{ ...nota, marginTop: '20px' }}>
         A lista de quem disputa o 2º turno é conferida no TSE a cada hora, então uma substituição de candidato aparece aqui sozinha. O resultado da votação está na aba Apuração.
       </p>
     </div>

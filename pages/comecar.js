@@ -34,7 +34,7 @@ function BlocoCargo({ ordem, cargo, nota, children }) {
         <span style={{ fontFamily: t.fonte.titulo, fontWeight: 700, fontSize: '1.05rem', color: t.cor.ouroTexto }}>{ordem}º</span>
         <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.45rem', margin: 0 }}>{cargo}</h2>
       </div>
-      {nota && <p style={{ color: t.cor.cinza, fontSize: '0.88rem', margin: '0 0 14px', lineHeight: 1.5, maxWidth: '70ch' }}>{nota}</p>}
+      {nota && <p style={{ color: t.cor.cinza, fontSize: '0.88rem', margin: '0 0 14px', lineHeight: 1.5 }}>{nota}</p>}
       {children}
     </section>
   );
@@ -216,7 +216,7 @@ export default function Comecar({ modo, ufSel, ufConexao, cedula, trocando = fal
           </div>
         </div>
 
-        <p style={{ color: t.cor.cinza, margin: '0 0 24px', maxWidth: '70ch', lineHeight: 1.5 }}>
+        <p style={{ color: t.cor.cinza, margin: '0 0 24px', lineHeight: 1.5 }}>
           Quem vota {emUf(ufSel)} escolhe cinco cargos, nesta ordem na urna.
         </p>
 
@@ -253,7 +253,7 @@ export default function Comecar({ modo, ufSel, ufConexao, cedula, trocando = fal
       </Head>
 
       <NavPraVoce />
-      <div style={{ maxWidth: '760px' }}>
+      <div>
         <span style={{ fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: t.cor.ouroTexto }}>Eleição de 4 de outubro de 2026</span>
         <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.9rem,5vw,2.8rem)', lineHeight: 1.1, margin: '10px 0 10px' }}>
           {trocando ? 'Trocar de estado' : <>Sua cédula, <span style={{ color: t.cor.ouroTexto }}>cargo por cargo</span>.</>}

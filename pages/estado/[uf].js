@@ -250,7 +250,7 @@ function Estado({ uf, nome, deputados, presenca, inicial, canonical }) {
               aoSelecionar={(u) => { if (u !== uf) router.push(`/estado/${u}`); }} />
           </div>
         </div>
-        <p style={{ color: t.cor.cinza, margin: '0 0 20px', maxWidth: '70ch', lineHeight: 1.5 }}>
+        <p style={{ color: t.cor.cinza, margin: '0 0 20px', lineHeight: 1.5 }}>
           Quanto cada um usou da verba pública em 2026 e quantas votações registrou. Toque em um nome para ver o perfil e a fonte de cada número.
         </p>
 
@@ -274,7 +274,7 @@ function Estado({ uf, nome, deputados, presenca, inicial, canonical }) {
         {grupo && (
           <section aria-label={grupo.titulo}>
             {frase && (
-              <p style={{ fontFamily: t.fonte.titulo, fontWeight: 500, fontSize: 'clamp(1.1rem,2.6vw,1.35rem)', lineHeight: 1.4, margin: '0 0 10px', maxWidth: '62ch' }}>{frase}</p>
+              <p style={{ fontFamily: t.fonte.titulo, fontWeight: 500, fontSize: 'clamp(1.1rem,2.6vw,1.35rem)', lineHeight: 1.4, margin: '0 0 10px' }}>{frase}</p>
             )}
             <div style={{ margin: '0 0 16px' }}>
               {selosGastos && <SeloAtualizacao {...selosGastos} semLink={!!selosVotos} style={{ margin: '0 0 2px' }} />}

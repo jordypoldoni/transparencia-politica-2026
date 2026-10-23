@@ -146,7 +146,7 @@ export default function VotacoesDaCasa({ casa, votacoes, temas = [], temaInicial
         <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.5rem,4vw,2.1rem)', margin: '8px 0 6px' }}>
           Votações {casa.chave === 'senado' ? 'do' : 'da'} {casa.nome}
         </h1>
-        <p style={{ color: t.cor.cinza, margin: '0 0 20px', maxWidth: '680px', lineHeight: 1.5 }}>
+        <p style={{ color: t.cor.cinza, margin: '0 0 20px', lineHeight: 1.5 }}>
           Cada matéria reúne <strong>todas as votações do seu processo</strong> (urgência, destaques,
           texto, redação final) em ordem. Busque por assunto, pela proposta (ex.: "PEC 6") ou por
           quem propôs.

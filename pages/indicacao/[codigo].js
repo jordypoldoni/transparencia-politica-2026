@@ -99,7 +99,7 @@ export default function FichaIndicacao({ i }) {
       <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.7rem,4vw,2.4rem)', margin: '0 0 8px', lineHeight: 1.15 }}>
         {i.nome_indicado || i.identificacao}
       </h1>
-      <p style={{ margin: '0 0 24px', fontSize: '1.02rem', lineHeight: 1.5, color: t.cor.tinta, maxWidth: '60ch' }}>
+      <p style={{ margin: '0 0 24px', fontSize: '1.02rem', lineHeight: 1.5, color: t.cor.tinta }}>
         {i.cargo}
       </p>
       <SeloAtualizacao fonte="indicacoes_executivo" tipo="coleta" style={{ margin: '-14px 0 22px' }} />
@@ -124,7 +124,7 @@ export default function FichaIndicacao({ i }) {
       {i.votacao_secreta && (
         <section style={{ ...secao, background: t.cor.papelQuente, boxShadow: 'none' }}>
           <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.05rem', margin: '0 0 8px' }}>Por que não mostramos o voto de cada senador</h2>
-          <p style={{ margin: 0, fontSize: '0.9rem', lineHeight: 1.6, color: t.cor.tinta, maxWidth: '66ch' }}>
+          <p style={{ margin: 0, fontSize: '0.9rem', lineHeight: 1.6, color: t.cor.tinta }}>
             Esta votação é secreta por determinação constitucional. O Senado publica o placar e
             a lista de quem esteve na sessão, mas não registra publicamente como cada senador
             votou. O dado abaixo é <strong style={{ fontWeight: 700 }}>presença</strong>, não
@@ -177,7 +177,7 @@ export default function FichaIndicacao({ i }) {
 
       <section style={secao}>
         <p style={rotulo}>Ementa oficial</p>
-        <p style={{ margin: '8px 0 0', fontSize: '0.92rem', lineHeight: 1.65, color: t.cor.tinta, maxWidth: '72ch' }}>{i.ementa}</p>
+        <p style={{ margin: '8px 0 0', fontSize: '0.92rem', lineHeight: 1.65, color: t.cor.tinta }}>{i.ementa}</p>
         <p style={{ margin: '14px 0 0', fontSize: '0.8rem', color: t.cor.cinza }}>
           Enviada por {i.autor || 'Presidência da República'} em {dataBR(i.data_mensagem)}
           {i.orgao ? ` · ${i.orgao}` : ''}

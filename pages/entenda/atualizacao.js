@@ -25,7 +25,7 @@ export default function Atualizacao({ grupos }) {
 
       <div className="pagina">
         <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.8rem,4.5vw,2.6rem)', lineHeight: 1.15, margin: '0 0 10px' }}>Como atualizamos os dados</h1>
-        <p style={{ color: t.cor.cinza, fontSize: '1.05rem', maxWidth: '680px', margin: '0 0 24px', lineHeight: 1.6 }}>
+        <p style={{ color: t.cor.cinza, fontSize: '1.05rem', margin: '0 0 24px', lineHeight: 1.6 }}>
           Cada fonte oficial publica no seu ritmo. Aqui você vê quando fomos buscar e até quando o dado vai.
         </p>
 

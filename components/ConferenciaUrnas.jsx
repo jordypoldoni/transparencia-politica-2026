@@ -45,7 +45,7 @@ export default function ConferenciaUrnas() {
         Como conferir as urnas: zerésima, teste de integridade e Boletim de Urna
       </summary>
       <div style={{ padding: '0 18px 18px' }}>
-        <p style={{ margin: '0 0 14px', fontSize: '0.88rem', color: t.cor.cinza, lineHeight: 1.55, maxWidth: '75ch' }}>
+        <p style={{ margin: '0 0 14px', fontSize: '0.88rem', color: t.cor.cinza, lineHeight: 1.55 }}>
           O que a Justiça Eleitoral faz antes, durante e depois da votação, e onde cada etapa pode ser conferida. O Lume não guarda os boletins de cada seção: leva você à fonte oficial.
         </p>
         <ol style={{ margin: 0, padding: 0, display: 'grid', gap: '12px' }}>

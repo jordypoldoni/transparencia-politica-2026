@@ -123,7 +123,7 @@ export default function EsquerdaEDireita() {
         </div>
 
         {/* 3. VOCE PODE NAO SER... */}
-        <h2 id="voce-pode" style={h2}>Como me vejo x o que minhas respostas indicam</h2>
+        <h2 id="voce-pode" style={h2}>Como me vejo <span style={{ color: t.cor.ouroTexto, fontFamily: t.fonte.corpo, fontWeight: 800, fontSize: '1.25em', letterSpacing: '0.04em', margin: '0 2px' }}>VS</span> o que minhas respostas indicam</h2>
         <p style={sub}>Dois jeitos diferentes de medir. Os números abaixo não se somam nem se comparam como se fossem a mesma coisa.</p>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(300px, 100%), 1fr))', gap: '14px', marginBottom: '16px' }}>
           <div style={{ ...cartao, marginBottom: 0 }}>
