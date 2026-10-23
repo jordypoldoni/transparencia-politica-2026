@@ -1,5 +1,7 @@
-import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
+import CampoSelect from './CampoSelect';
+import { Lupa } from './icones';
 import { t } from '../src/estilo/tokens';
 
 // Topo do Entenda (23/10/2026, estrutura aprovada pelo Jordy): busca, duas trilhas de peso
@@ -19,13 +21,23 @@ const TRILHAS = [
   { chave: 'cobrar', num: '2', titulo: 'Acompanhar e cobrar', texto: 'Depois do voto: quanto eles podem gastar, como votam e de onde vêm os dados.', fundo: t.cor.verdeEscuro, ancora: '#cotas' },
 ];
 
-const semAcento = (s) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+// Opções do campo de busca: mesmo CampoSelect da home (digita, a lista filtra, escolhe e vai).
+const OPCOES = TEMAS.map((x) => ({ valor: x.href, rotulo: x.titulo, busca: `${x.titulo} ${x.desc}` }));
 
 export default function EntendaTopo() {
-  const [q, setQ] = useState('');
-  const termo = semAcento(q.trim());
-  const lista = termo ? TEMAS.filter((x) => semAcento(`${x.titulo} ${x.desc}`).includes(termo)) : TEMAS;
+  const router = useRouter();
   const selo = (tr) => (tr === 'escolher' ? 'Escolher' : 'Cobrar');
+  // Tema na própria página (âncora) rola até ele; tema em outra página abre a página.
+  const irPara = (destino) => {
+    if (destino.startsWith('#')) {
+      const alvo = document.getElementById(destino.slice(1));
+      const reduz = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (alvo) alvo.scrollIntoView({ behavior: reduz ? 'auto' : 'smooth', block: 'start' });
+      window.history.replaceState(null, '', destino);
+    } else {
+      router.push(destino);
+    }
+  };
 
   return (
     <section aria-labelledby="entenda-titulo" style={{ marginBottom: '40px' }}>
@@ -34,19 +46,11 @@ export default function EntendaTopo() {
         Explicações curtas, em linguagem simples, com a fonte oficial sempre à mão.
       </p>
 
-      <label htmlFor="entenda-busca" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>Buscar um tema</label>
-      <input
-        id="entenda-busca"
-        type="search"
-        value={q}
-        onChange={(e) => setQ(e.target.value)}
-        placeholder="Buscar um tema"
-        style={{ width: '100%', maxWidth: '560px', boxSizing: 'border-box', padding: '12px 20px', fontSize: '1rem', fontFamily: t.fonte.corpo, color: t.cor.tinta, background: t.cor.papelCartao, border: 'none', borderRadius: t.raio.pill, boxShadow: t.sombra.clicavel, outline: 'none' }}
-        onFocus={(e) => { e.target.style.boxShadow = t.sombra.anelFoco; }}
-        onBlur={(e) => { e.target.style.boxShadow = t.sombra.clicavel; }}
-      />
+      <div style={{ maxWidth: '560px' }}>
+        <CampoSelect opcoes={OPCOES} placeholder="Buscar um tema…" aoLabel="Buscar um tema" icone={<Lupa />} aoSelecionar={irPara} />
+      </div>
 
-      {!termo && (
+      <>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(300px, 100%), 1fr))', gap: '14px', margin: '22px 0' }}>
           {TRILHAS.map((tr) => (
             <div key={tr.chave} style={{ background: tr.fundo, color: '#fff', borderRadius: t.raio.md, padding: '20px 22px' }}>
@@ -58,9 +62,7 @@ export default function EntendaTopo() {
             </div>
           ))}
         </div>
-      )}
 
-      {!termo && (
         <Link href="/entenda/joguinho" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '14px', flexWrap: 'wrap', background: t.cor.verde, color: '#fff', borderRadius: t.raio.md, padding: '18px 22px', margin: '0 0 22px', textDecoration: 'none' }}>
           <span>
             <span style={{ display: 'block', fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.15rem' }}>Joguinho: para onde suas respostas apontam?</span>
@@ -68,14 +70,10 @@ export default function EntendaTopo() {
           </span>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 16px', fontSize: '0.85rem', fontWeight: 700, borderRadius: t.raio.pill, background: t.cor.ouro, color: t.cor.verdeEscuro, boxShadow: t.sombra.botao }}>Jogar</span>
         </Link>
-      )}
 
-      <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.3rem', margin: '0 0 12px' }}>{termo ? 'Resultados' : 'Todos os temas'}</h2>
-      {lista.length === 0 ? (
-        <p style={{ color: t.cor.cinza, margin: 0 }}>Nenhum tema encontrado para essa busca.</p>
-      ) : (
+      <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.3rem', margin: '0 0 12px' }}>Todos os temas</h2>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(260px, 100%), 1fr))', gap: '12px' }}>
-          {lista.map((x) => {
+          {TEMAS.map((x) => {
             const corpo = (
               <>
                 <span style={{ display: 'inline-block', fontSize: '0.72rem', fontWeight: 700, color: t.cor.alertaTexto, background: t.cor.alertaBg, borderRadius: t.raio.pill, padding: '2px 10px', marginBottom: '8px' }}>{selo(x.trilha)}{x.href ? '' : ' · em breve'}</span>
@@ -90,7 +88,7 @@ export default function EntendaTopo() {
               : <Link key={x.id} href={x.href} style={estilo}>{corpo}</Link>;
           })}
         </div>
-      )}
+      </>
     </section>
   );
 }
