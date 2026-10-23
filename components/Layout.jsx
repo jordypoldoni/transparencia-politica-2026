@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import { t } from '../src/estilo/tokens';
 import BotaoConta from './BotaoConta';
 import { PAGINAS_PRA_VOCE } from './NavPraVoce';
+import { Seta as SetaPadrao } from './icones'; // seta dourada padrão do site (a Seta local daqui é a do menu do computador)
 import { sincronizarTudo } from '../src/lib/sincronizacao';
 import { casaDoPerfil } from '../src/lib/casa';
 import { aoMudarSessao, validarSessao, ufLocal, guardarUfCookie, COOKIE_UF } from '../src/lib/perfilUsuario';
@@ -85,6 +86,13 @@ const navItens = [
       { href: '/entenda/atualizacao', rotulo: 'Como atualizamos os dados', curto: 'Como atualizamos', nota: 'de onde vêm e quando coletamos' },
     ],
   },
+];
+
+// Atalhos do topo do menu do celular (ideia 3). Cada um é um link direto, com a Seta padrão.
+const ATALHOS_MOVEL = [
+  { href: '/', rotulo: 'Início', nota: 'página inicial' },
+  { href: '/candidatos-2026', rotulo: 'Eleições 2026', nota: 'apuração e candidatos' },
+  { href: '/entenda', rotulo: 'Entenda', nota: 'cargos, dados e joguinho', largo: true },
 ];
 
 function ehAtivo(href, pathname) {
@@ -169,10 +177,13 @@ export default function Layout({ children, pageProps }) {
     ? '/deputados-estaduais' : pathname;
   const [menu, setMenu] = useState(false);       // hambúrguer
   const [aberto, setAberto] = useState(null);    // rótulo do grupo aberto, ou null
+  const [grupoMovel, setGrupoMovel] = useState(null); // grupo aberto na sanfona do menu do celular
   const navRef = useRef(null);
   const relogio = useRef(null);
 
   useEffect(() => { setMenu(false); setAberto(null); }, [asPath]); // fecha ao navegar
+  // Ao abrir o menu do celular, a sanfona já mostra o grupo da página atual (se houver).
+  useEffect(() => { if (menu) setGrupoMovel(navItens.find((n) => n.filhos && n.rotulo !== 'Entenda' && grupoAtivo(n, rotaMenu))?.rotulo ?? null); }, [menu]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Respostas e favoritos entre aparelhos (src/lib/sincronizacao.js): ao abrir o site, ao entrar
   // na conta e ao voltar para a aba. Sem sessão ou sem autorização, não faz nada.
@@ -378,37 +389,49 @@ export default function Layout({ children, pageProps }) {
         {menu && (
           <nav className="menu-mobile" aria-label="Navegação principal"
             style={{ position: 'absolute', top: '100%', left: 0, right: 0, maxHeight: `calc(100dvh - ${alturaTopo}px)`, overflowY: 'auto', overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch', background: t.cor.papel, padding: '8px 12px 14px', boxShadow: t.sombra.media }}>
-            {navItens.map((n) => {
-              if (!n.filhos) {
-                const ativo = ehAtivo(n.href, rotaMenu);
+            {/* 23/10/2026 (ideia 3, aprovada pelo Jordy): atalhos grandes no topo (Início, Eleições 2026 e
+                Entenda, cada um com a Seta padrão do site) e os demais grupos em SANFONA, um aberto por
+                vez. O grupo da página atual já abre sozinho. Só o menu do celular muda: o do
+                computador segue com os menus suspensos. */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', margin: '6px 0 10px' }}>
+              {ATALHOS_MOVEL.map((a) => {
+                const ativo = a.href === '/entenda' ? rotaMenu.startsWith('/entenda') : ehAtivo(a.href, rotaMenu);
                 return (
-                  <Link key={n.rotulo} href={n.href} aria-current={ativo ? 'page' : undefined}
+                  <Link key={a.href} href={a.href} aria-current={ativo ? 'page' : undefined}
                     style={{
-                      display: 'block', textDecoration: 'none', padding: '14px 12px',
-                      color: ativo ? ATIVO_TEXTO : t.cor.cinza, fontWeight: ativo ? 800 : 600,
-                      fontSize: '1.05rem', borderRadius: t.raio.sm,
-                      background: ativo ? ATIVO_FUNDO : 'transparent',
+                      gridColumn: a.largo ? '1 / -1' : 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px',
+                      textDecoration: 'none', background: t.cor.verde, color: '#fff', borderRadius: t.raio.md, padding: '14px 16px',
+                      boxShadow: ativo ? t.sombra.anelFoco : t.sombra.clicavel, outline: ativo ? `2px solid ${t.cor.ouro}` : 'none',
                     }}>
-                    {n.rotulo}
+                    <span>
+                      <span style={{ display: 'block', fontWeight: 700, fontSize: '1rem' }}>{a.rotulo}</span>
+                      <span style={{ display: 'block', fontSize: '0.76rem', opacity: 0.8, marginTop: '1px' }}>{a.nota}</span>
+                    </span>
+                    <SetaPadrao direcao="direita" size={16} />
                   </Link>
                 );
-              }
+              })}
+            </div>
+            {navItens.filter((n) => n.filhos && n.rotulo !== 'Entenda').map((n) => {
+              const aberta = grupoMovel === n.rotulo;
+              const ativo = grupoAtivo(n, rotaMenu);
               return (
-                <div key={n.rotulo} style={{ marginTop: '6px' }}>
-                  <p style={{ margin: '10px 12px 2px', fontSize: '0.72rem', fontWeight: 800, letterSpacing: '0.05em', textTransform: 'uppercase', color: t.cor.cinza }}>
-                    {n.rotulo}
-                  </p>
-                  {n.filhos.map((f) => {
+                <div key={n.rotulo} style={{ background: t.cor.papelCartao, borderRadius: t.raio.md, boxShadow: t.sombra.sutil, marginBottom: '10px', overflow: 'hidden' }}>
+                  <button type="button" onClick={() => setGrupoMovel(aberta ? null : n.rotulo)} aria-expanded={aberta}
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', width: '100%', background: 'none', border: 'none', margin: 0, padding: '14px 16px', textAlign: 'left', cursor: 'pointer', color: 'inherit', font: 'inherit' }}>
+                    <span style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.1rem', color: ativo ? t.cor.ouroTexto : t.cor.tinta }}>{n.rotulo}</span>
+                    <span style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', fontWeight: 700, color: t.cor.ouroTexto }}>
+                      {aberta ? 'Recolher' : 'Ver'}
+                      <SetaPadrao aberta={aberta} size={14} />
+                    </span>
+                  </button>
+                  {aberta && n.filhos.map((f) => {
                     const fAtivo = ehAtivo(f.href, rotaMenu);
                     return (
                       <Link key={f.href} href={f.href} aria-current={fAtivo ? 'page' : undefined}
-                        style={{
-                          display: 'block', textDecoration: 'none', padding: '14px 12px',
-                          color: fAtivo ? ATIVO_TEXTO : t.cor.cinza, fontWeight: fAtivo ? 800 : 600,
-                          fontSize: '1.05rem', borderRadius: t.raio.sm,
-                          background: fAtivo ? ATIVO_FUNDO : 'transparent',
-                        }}>
-                        {f.rotulo}
+                        style={{ display: 'block', textDecoration: 'none', padding: '11px 16px', borderTop: `1px solid ${t.cor.papelQuente2}`, background: fAtivo ? ATIVO_FUNDO : 'transparent', color: fAtivo ? ATIVO_TEXTO : t.cor.tinta }}>
+                        <span style={{ display: 'block', fontWeight: fAtivo ? 800 : 700, fontSize: '1rem' }}>{f.rotulo}</span>
+                        {f.nota && <span style={{ display: 'block', fontSize: '0.78rem', color: fAtivo ? ATIVO_TEXTO : t.cor.cinza, marginTop: '1px' }}>{f.nota}</span>}
                       </Link>
                     );
                   })}
