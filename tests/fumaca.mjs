@@ -42,7 +42,7 @@ async function confere(nome, fn) {
 console.log(`Fumaça em ${base}${producao ? ' (produção)' : ''}`);
 
 // 1. Páginas que não dependem de dado do banco para abrir.
-for (const p of ['/', '/entenda', '/sobre', '/entrar', '/privacidade', '/entenda/atualizacao', '/entenda/esquerda-e-direita', '/entenda/joguinho']) {
+for (const p of ['/', '/entenda', '/sobre', '/entrar', '/privacidade', '/entenda/atualizacao', '/entenda/esquerda-e-direita', '/entenda/jogo-do-mapa-politico']) {
   await confere(p, async () => {
     const r = await pedir(p);
     if (r.status !== 200) return falha(`${p} respondeu ${r.status}, esperado 200`);

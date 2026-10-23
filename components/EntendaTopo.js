@@ -63,7 +63,7 @@ export default function EntendaTopo() {
           ))}
         </div>
 
-        <Link href="/entenda/joguinho" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '14px', flexWrap: 'wrap', background: t.cor.verde, color: '#fff', borderRadius: t.raio.md, padding: '18px 22px', margin: '0 0 22px', textDecoration: 'none' }}>
+        <Link href="/entenda/jogo-do-mapa-politico" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '14px', flexWrap: 'wrap', background: t.cor.verde, color: '#fff', borderRadius: t.raio.md, padding: '18px 22px', margin: '0 0 22px', textDecoration: 'none' }}>
           <span>
             <span style={{ display: 'block', fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.15rem' }}>Jogo do mapa político: suas respostas te levam da esquerda à direita.</span>
             <span style={{ display: 'block', fontSize: '0.88rem', opacity: 0.88, marginTop: '2px' }}>12 frases, 3 minutos. Veja em que ponto você chega, entre os extremos e os centros.</span>
