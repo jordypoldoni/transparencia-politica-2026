@@ -81,8 +81,8 @@ export default function Joguinho() {
   return (
     <>
       <Head>
-        <title>Joguinho: para onde suas respostas apontam? | Lume</title>
-        <meta name="description" content="Doze frases, dois eixos (economia e costumes) e um resultado só seu. Uma brincadeira para descobrir para onde suas respostas apontam, sem rótulo de partido." />
+        <title>Jogo do mapa político: da esquerda à direita | Lume</title>
+        <meta name="description" content="Jogo de 12 frases e dois eixos (economia e costumes): suas respostas te levam da esquerda à direita, entre os extremos e os centros. Resultado só seu, sem rótulo de partido." />
         <link rel="canonical" href="https://www.lumecidadao.com.br/entenda/joguinho" />
       </Head>
 
