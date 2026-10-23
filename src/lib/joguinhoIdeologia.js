@@ -31,6 +31,7 @@ export const OPCOES = [
   { valor: 2, rotulo: 'Concordo muito' },
 ];
 
+export const CORES = ['#2C4A82', '#4F6FA5', '#6E6B66', '#B4553A', '#7A1F1F']; // mesma ordem de FAIXAS (esquerda -> direita)
 export const FAIXAS = ['Esquerda', 'Centro-esquerda', 'Centro', 'Centro-direita', 'Direita'];
 
 // Média de um eixo (-2 = esquerda, +2 = direita). Concordar com frase "de esquerda" vale negativo.
