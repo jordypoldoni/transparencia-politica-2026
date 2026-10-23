@@ -76,7 +76,7 @@ export default function DocumentosERedes({ ficha }) {
               <p style={rotulo}>Entregues ao TSE no registro</p>
               <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: '6px', marginTop: '8px', ...listaRolavel }}>
                 {docs.map((doc, i) => (
-                  <a key={i} href={doc.url} target="_blank" rel="noopener noreferrer"
+                  <a key={i} href={doc.url} target="_blank" rel="noopener noreferrer" className="linha-clicavel"
                     style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', minWidth: 0, background: t.cor.papelQuente, borderRadius: t.raio.sm, padding: '10px 14px', textDecoration: 'none', color: t.cor.tinta, fontSize: '0.88rem', lineHeight: 1.4 }}>
                     <span aria-hidden="true" style={{ flexShrink: 0, paddingTop: '2px', fontSize: '0.72rem', fontWeight: 800, color: t.cor.ouroTexto, textTransform: 'uppercase' }}>{doc.tipo || 'doc'}</span>
                     <span style={{ minWidth: 0, overflowWrap: 'anywhere' }}>{doc.nome}</span>

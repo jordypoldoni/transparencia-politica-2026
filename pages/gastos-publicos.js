@@ -83,7 +83,7 @@ export default function GastosPublicos({ uniao, estados = [], gastosFuncao = [] 
 
       {/* União em destaque */}
       {uniao?.resumo && (
-        <Link href="/ente/1" style={{ textDecoration: 'none', color: '#fff', display: 'block', background: t.cor.verde, borderRadius: t.raio.lg, padding: 'clamp(20px,3vw,32px)', marginBottom: '16px' }}>
+        <Link href="/ente/1" className="card-clicavel" style={{ textDecoration: 'none', color: '#fff', display: 'block', background: t.cor.verde, borderRadius: t.raio.lg, padding: 'clamp(20px,3vw,32px)', marginBottom: '16px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '10px', flexWrap: 'wrap', marginBottom: '16px' }}>
             <span style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.4rem' }}>União · Governo Federal</span>
             <span style={{ color: t.cor.ouro, fontWeight: 700, fontSize: '0.85rem' }}>ver detalhe<Seta direcao="direita" size={14} emTexto /></span>
@@ -159,7 +159,7 @@ export default function GastosPublicos({ uniao, estados = [], gastosFuncao = [] 
           <ol style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: '7px' }}>
             {ranking.map((e, i) => (
               <li key={e.cod_ibge}>
-                <Link href={`/ente/${e.cod_ibge}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block', background: t.cor.papelQuente, borderRadius: t.raio.md, padding: '11px 14px' }}>
+                <Link href={`/ente/${e.cod_ibge}`} className="linha-clicavel" style={{ textDecoration: 'none', color: 'inherit', display: 'block', background: t.cor.papelQuente, borderRadius: t.raio.md, padding: '11px 14px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px' }}>
                     <span style={{ width: '22px', flexShrink: 0, fontFamily: t.fonte.titulo, fontWeight: 600, color: t.cor.ouroTexto }}>{i + 1}</span>
                     <span style={{ flex: 1, minWidth: 0, fontWeight: 600, fontSize: '0.92rem' }}>{e.ente}</span>

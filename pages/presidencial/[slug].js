@@ -83,7 +83,7 @@ export default function PerfilPresidenciavel({ candidato, colega, canonical }) {
         </p>
       )}
       {colega && colega.slug && (
-        <Link href={`/presidencial/${colega.slug}`} style={{ display: 'block', textDecoration: 'none', color: 'inherit', background: t.cor.papelQuente, borderRadius: t.raio.sm, padding: '12px 16px', marginBottom: '24px', fontSize: '0.88rem' }}>
+        <Link href={`/presidencial/${colega.slug}`} className="linha-clicavel" style={{ display: 'block', textDecoration: 'none', color: 'inherit', background: t.cor.papelQuente, borderRadius: t.raio.sm, padding: '12px 16px', marginBottom: '24px', fontSize: '0.88rem' }}>
           {colega.cargo === 'Vice-Presidente' ? 'Vice na chapa' : 'Cabeça de chapa'}: <strong>{colega.nome_urna}</strong><Seta direcao="direita" size={14} emTexto />
         </Link>
       )}
