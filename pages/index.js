@@ -189,7 +189,7 @@ export default function Home({ votacoes, parlamentares = [], uniao = null, estad
           <p style={{ color: t.cor.cinza, fontSize: '0.92rem', margin: '0 0 16px' }}>Abaixo, quem disputa a Presidência. Na página completa estão também governador, senador, deputado federal e deputado estadual de cada estado, com o partido e a situação da candidatura, direto da fonte oficial (TSE) e sem opinião.</p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(220px, 100%), 1fr))', gap: '12px' }}>
             {chapas.slice(0, 8).map((c) => (
-              <Link key={c.nr_candidato || c.presidente.slug} href={`/presidencial/${c.presidente.slug}`}
+              <Link key={c.nr_candidato || c.presidente.slug} href={`/presidencial/${c.presidente.slug}`} className="card-clicavel"
                 style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '12px', background: t.cor.papelCartao, borderRadius: t.raio.md, padding: '14px', boxShadow: t.sombra.clicavel }}>
                 {/* FOTO VAZANDO NO IPHONE (27/09/2026): a foto era um <img> com altura de 100% dentro de
                     um círculo em grid, sem overflow hidden. No Safari do iPhone o 100% não resolvia e a
@@ -217,7 +217,7 @@ export default function Home({ votacoes, parlamentares = [], uniao = null, estad
         <SeloAtualizacao fonte="fiscal_siconfi" escopo="tudo" tipo="coleta" style={{ margin: '-10px 0 18px' }} />
 
         {uniao?.resumo && (
-          <Link href="/ente/1" style={{ textDecoration: 'none', color: '#fff', display: 'block', background: t.cor.verde, borderRadius: t.raio.lg, padding: 'clamp(20px,3vw,32px)', marginBottom: '14px' }}>
+          <Link href="/ente/1" className="card-clicavel" style={{ textDecoration: 'none', color: '#fff', display: 'block', background: t.cor.verde, borderRadius: t.raio.lg, padding: 'clamp(20px,3vw,32px)', marginBottom: '14px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '10px', flexWrap: 'wrap', marginBottom: '16px' }}>
               <span style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.4rem' }}>União · Governo Federal</span>
               <span style={{ color: t.cor.ouro, fontWeight: 700, fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>ver detalhe <Seta direcao="direita" size={14} /></span>

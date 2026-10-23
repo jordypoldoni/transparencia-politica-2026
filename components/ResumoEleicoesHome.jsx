@@ -31,7 +31,7 @@ function Finalista({ c, chapa, larg }) {
   );
   const estilo = { textDecoration: 'none', color: 'inherit', display: 'block', background: t.cor.papelCartao, borderRadius: t.raio.lg, padding: '20px', boxShadow: t.sombra.clicavel };
   return chapa?.presidente?.slug
-    ? <Link href={`/presidencial/${chapa.presidente.slug}`} style={estilo}>{conteudo}</Link>
+    ? <Link href={`/presidencial/${chapa.presidente.slug}`} className="card-clicavel" style={estilo}>{conteudo}</Link>
     : <div style={estilo}>{conteudo}</div>;
 }
 

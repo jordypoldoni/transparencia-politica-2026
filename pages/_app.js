@@ -283,6 +283,14 @@ export default function App({ Component, pageProps }) {
         @media (prefers-reduced-motion: reduce) {
           :is(button, a, summary, [role="button"], label):is([style*="border-radius:999px"], [style*="border-radius: 999px"]):hover { transform: none !important; }
         }
+        /* Hover dos cards clicaveis (23/10/2026, pedido do Jordy): mesmo padrao dos cards de /deputados e /candidatos-2026
+           (sombra .hover e sobe 2px). .linha-clicavel e a versao leve para linhas e faixas (sobe 1px). Inline pede !important. */
+        .card-clicavel, .linha-clicavel { transition: box-shadow .15s ease, transform .15s ease; }
+        @media (hover: hover) {
+          .card-clicavel:hover { box-shadow: 0 12px 30px rgba(74,52,30,0.16) !important; transform: translateY(-2px); }
+          .linha-clicavel:hover { box-shadow: 0 12px 30px rgba(74,52,30,0.16) !important; transform: translateY(-1px); }
+        }
+        @media (prefers-reduced-motion: reduce) { .card-clicavel:hover, .linha-clicavel:hover { transform: none !important; } }
         /* Paginacao (components/Paginacao.jsx), 21/10/2026: uma linha so. Esquerda: "Mostrando X a Y de Z"; centro: botoes em texto dourado com seta e a pagina. */
         .paginacao-linha { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; column-gap: 16px; }
         .paginacao-detalhe { margin: 0; font-size: 0.8rem; text-align: left; }
