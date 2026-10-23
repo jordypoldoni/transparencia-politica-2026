@@ -83,13 +83,13 @@ export default function Joguinho() {
       <Head>
         <title>Jogo do mapa político: da esquerda à direita | Lume</title>
         <meta name="description" content="Jogo de 12 frases e dois eixos (economia e costumes): suas respostas te levam da esquerda à direita, entre os extremos e os centros. Resultado só seu, sem rótulo de partido." />
-        <link rel="canonical" href="https://www.lumecidadao.com.br/entenda/joguinho" />
+        <link rel="canonical" href="https://www.lumecidadao.com.br/entenda/jogo-do-mapa-politico" />
       </Head>
 
       <div className="pagina" style={{ textAlign: 'center' }}>
         <nav aria-label="Você está em" style={{ fontSize: '0.85rem', marginBottom: '12px', textAlign: 'left' }}>
           <Link href="/entenda" style={{ color: t.cor.ouroTexto, fontWeight: 700, textDecoration: 'none' }}>Entenda</Link>
-          <span style={{ color: t.cor.cinza }}> / Joguinho</span>
+          <span style={{ color: t.cor.cinza }}> / Jogo do mapa político</span>
         </nav>
 
         {!pronto ? null : indice === -1 ? (

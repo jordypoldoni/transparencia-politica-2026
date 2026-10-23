@@ -5,7 +5,7 @@
 import { FAIXAS, CORES, posicao } from './joguinhoIdeologia';
 
 export const FORMATOS = { post: { w: 1080, h: 1350, rotulo: 'Post' }, story: { w: 1080, h: 1920, rotulo: 'Story' } };
-export const URL_JOGO = 'lumecidadao.com.br/entenda/joguinho';
+export const URL_JOGO = 'lumecidadao.com.br/entenda/jogo-do-mapa-politico';
 
 const TEMAS = {
   escuro: { bg: '#241E52', fg: '#FFFFFF', sub: '#C9C6E0', acc: '#FF8A00', card: '#2F2866', plano: '#3A3278', plano2: '#443C86', linha: '#8B87B8', borda: '#241E52', logo: '/marca-lume-branca.svg' },

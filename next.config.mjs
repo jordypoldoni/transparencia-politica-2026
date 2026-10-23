@@ -46,6 +46,8 @@ const nextConfig = {
   },
   async redirects() {
     return [
+      // 23/10/2026: o joguinho passou a se chamar "jogo do mapa político"; o endereço antigo continua valendo.
+      { source: '/entenda/joguinho', destination: '/entenda/jogo-do-mapa-politico', permanent: true },
       {
         source: '/:caminho*',
         has: [{ type: 'host', value: 'hub-politico.vercel.app' }],
