@@ -25,6 +25,19 @@ const INTERVALO_APURANDO_MS = 10000;
 // ainda não começou ou já chegou a 100%.
 const intervaloDe = (d) => (d && d.secoes && d.secoes.totalizadas > 0 && d.secoes.totalizadas < d.secoes.total ? INTERVALO_APURANDO_MS : INTERVALO_MS);
 
+// Aviso de 25/10/2026 (2º turno): o STF (ministro Zanin) estendeu a votação até as 19h de Brasília e o TSE pausou a divulgação.
+// Some sozinho: depois das 19h, assim que as seções passam do que já havia sido apurado na pausa (1.225), ou ao fim do dia.
+const PAUSA_FIM_MS = Date.parse('2026-10-25T22:00:00Z');
+const PAUSA_SECOES = 1225;
+const DIA_FIM_MS = Date.parse('2026-10-26T03:00:00Z');
+const avisoVotacaoProrrogada = (turno, d) => {
+  if (turno !== 2) return false;
+  const agora = Date.now();
+  if (agora >= DIA_FIM_MS) return false;
+  if (agora < PAUSA_FIM_MS) return true;
+  return !(d && d.secoes && d.secoes.totalizadas > PAUSA_SECOES);
+};
+
 const fmt = (x) => Number(x || 0).toLocaleString('pt-BR');
 const numPct = (s) => { const v = Number(String(s ?? '0').replace(/\./g, '').replace(',', '.')); return Number.isFinite(v) ? Math.max(0, Math.min(100, v)) : 0; };
 
@@ -203,6 +216,7 @@ export default function ApuracaoEleicao({ cargo, ufInicial, turno = 1 }) {
               <div aria-hidden="true" style={{ height: '10px', borderRadius: t.raio.pill, background: t.cor.papelQuente2, overflow: 'hidden' }}>
                 <div style={{ width: `${numPct(d.secoes.pct_totalizadas)}%`, height: '100%', background: t.cor.verde, borderRadius: t.raio.pill }} />
               </div>
+              {avisoVotacaoProrrogada(turno, d) && <p role="status" style={{ margin: '8px 0 0', fontSize: '0.84rem', fontWeight: 700, color: t.cor.tinta, lineHeight: 1.45 }}>Votação prorrogada até as 19h (horário de Brasília) por decisão do ministro Zanin, do STF. A divulgação da apuração está pausada pelo TSE e os números voltam a mudar quando ela for retomada.</p>}
               {d.gerado_em && <p style={{ margin: '8px 0 0', fontSize: '0.76rem', color: t.cor.cinza }}>{d.origem === 'soma_dos_estados' ? `Soma dos 27 estados e do exterior, o arquivo nacional do TSE ainda não atualizou. Arquivos dos estados gerados até ${d.gerado_em}` : `Arquivo do TSE gerado em ${d.gerado_em}`}{erro ? ' · a última atualização falhou, mostrando o dado anterior' : ''}.</p>}
             </div>
             {!porEstados && (
@@ -227,6 +241,7 @@ export default function ApuracaoEleicao({ cargo, ufInicial, turno = 1 }) {
                 <div aria-hidden="true" style={{ height: '8px', borderRadius: t.raio.pill, background: t.cor.papelQuente2, overflow: 'hidden' }}>
                   <div style={{ width: `${numPct(d.secoes.pct_totalizadas)}%`, height: '100%', background: t.cor.verde, borderRadius: t.raio.pill }} />
                 </div>
+                {avisoVotacaoProrrogada(turno, d) && <p role="status" style={{ margin: '8px 0 0', fontSize: '0.84rem', fontWeight: 700, color: t.cor.tinta, lineHeight: 1.45 }}>Votação prorrogada até as 19h (horário de Brasília) por decisão do ministro Zanin, do STF. A divulgação da apuração está pausada pelo TSE e os números voltam a mudar quando ela for retomada.</p>}
                 {d.gerado_em && <p style={{ margin: '8px 0 0', fontSize: '0.76rem', color: t.cor.cinza }}>{d.origem === 'soma_dos_estados' ? `Soma dos 27 estados e do exterior, o arquivo nacional do TSE ainda não atualizou. Arquivos dos estados gerados até ${d.gerado_em}` : `Arquivo do TSE gerado em ${d.gerado_em}`}{erro ? ' · a última atualização falhou, mostrando o dado anterior' : ''}.</p>}
               </div>
               {podeMapa && (
