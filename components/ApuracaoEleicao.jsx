@@ -87,7 +87,7 @@ function LinhaCandidato({ c, posicao, mostrarBarra }) {
   return (
     <li style={{ ...cartao, padding: '12px 14px', listStyle: 'none' }}>
       <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', flexWrap: 'wrap' }}>
-        <span style={{ fontWeight: 800, color: t.cor.cinza, minWidth: '1.6em' }}>{posicao}º</span>
+        {Number(c.votos) > 0 && <span style={{ fontWeight: 800, color: t.cor.cinza, minWidth: '1.6em' }}>{posicao}º</span>}
         <span style={{ fontWeight: 700, color: t.cor.tinta, flex: '1 1 160px', minWidth: 0 }}>{c.nome}
           <span style={{ fontWeight: 500, color: t.cor.cinza, fontSize: '0.84rem' }}> · {c.partido} {c.numero}</span>
         </span>
