@@ -15,7 +15,7 @@ const COR = { N: REGIOES.N.cor, NE: REGIOES.NE.cor, CO: REGIOES.CO.cor, SE: REGI
 const PEQUENOS = new Set(['RN', 'PB', 'AL', 'SE', 'ES', 'RJ', 'DF']); // pequenos demais para a sigla dentro
 const PROPORCAO = MAPA_BRASIL.largura / MAPA_BRASIL.altura;
 
-export default function ReplayMapa({ fracao = {}, recebendo = [], estimadas = [], selecionada = null, aoEscolher }) {
+export default function ReplayMapa({ fracao = {}, recebendo = [], estimadas = [], selecionada = null, aoEscolher, ariaLabel }) {
   // Ordem de desenho: o estado escolhido por último (contorno inteiro à vista), antes dele os que estão recebendo urnas.
   const peso = (uf) => (uf === selecionada ? 2 : recebendo.includes(uf) ? 1 : 0);
   const tecla = (uf) => (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); aoEscolher && aoEscolher(uf); } };
@@ -23,7 +23,7 @@ export default function ReplayMapa({ fracao = {}, recebendo = [], estimadas = []
     <figure className="rm">
       <div className="rm-box">
       <svg viewBox={MAPA_BRASIL.viewBox} className="rm-svg" role="img"
-        aria-label="Mapa do Brasil com os 27 estados. O preenchimento de cada estado mostra quanto das urnas já chegou ao TSE no horário escolhido.">
+        aria-label={ariaLabel || 'Mapa do Brasil com os 27 estados. O preenchimento de cada estado mostra quanto das urnas já chegou ao TSE no horário escolhido.'}>
         <defs>
           {/* Hachura por cima dos estados com horário ESTIMADO (votos finais oficiais, ritmo de chegada estimado). */}
           <pattern id="rm-estimado" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
