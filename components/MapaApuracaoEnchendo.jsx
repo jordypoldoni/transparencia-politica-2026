@@ -22,10 +22,10 @@ const CSS = `
   .mae-linha { background: ${t.cor.papelQuente}; border-radius: ${t.raio.sm}; padding: 10px 14px; }
   .mae-topo { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
   .mae-num { font-weight: 800; color: ${t.cor.cinza}; min-width: 2.2em; }
-  .mae-nome { flex: 1 1 140px; min-width: 0; font-weight: 700; color: ${t.cor.tinta}; }
+  .mae-nome { flex: 1 1 120px; min-width: 0; font-weight: 700; color: ${t.cor.tinta}; }
   .mae-nome small { font-weight: 500; color: ${t.cor.cinza}; }
-  .mae-pct { font-weight: 800; color: ${t.cor.tinta}; white-space: nowrap; }
-  .mae-pct small { font-weight: 600; color: ${t.cor.cinza}; }
+  .mae-pct { font-weight: 800; color: ${t.cor.tinta}; margin-left: auto; text-align: right; }
+  .mae-pct small { font-weight: 600; color: ${t.cor.cinza}; white-space: nowrap; }
   .mae-trilho { display: block; height: 8px; border-radius: 999px; background: ${t.cor.papelQuente2}; margin-top: 8px; overflow: hidden; }
   .mae-barra { display: block; height: 100%; background: ${t.cor.ouro}; border-radius: 999px; }
   .mae-aviso { margin: 0; font-size: 0.82rem; line-height: 1.5; color: ${t.cor.cinza}; }
@@ -91,7 +91,7 @@ export default function MapaApuracaoEnchendo({ turno = 2, nacional = null }) {
           </p>
           {!ufSel && <p className="mae-aviso">Clique em um estado do mapa para ver só ele.</p>}
           {falhou && dados && <p className="mae-erro" role="status">A última atualização falhou, mostrando o dado anterior.</p>}
-          {linhas.length > 0 && (
+          {ufSel && linhas.length > 0 && (
             <ul className="mae-lista" aria-label={`Votos dos candidatos a presidente: ${nomeEscopo}`}>
               {linhas.map((c) => (
                 <li key={`${c.numero}-${c.nome}`} className="mae-linha">
@@ -105,7 +105,7 @@ export default function MapaApuracaoEnchendo({ turno = 2, nacional = null }) {
               ))}
             </ul>
           )}
-          <p className="mae-aviso">Candidatos em ordem de número de urna, sempre a mesma. O percentual parcial depende da ordem em que os estados e as seções são apurados e não indica o resultado final. Os números são do TSE, por estado, nunca por município.</p>
+          {ufSel && <p className="mae-aviso">Candidatos em ordem de número de urna, sempre a mesma. O percentual parcial depende da ordem em que os estados e as seções são apurados e não indica o resultado final. Os números são do TSE, por estado, nunca por município.</p>}
         </div>
       </section>
       <style jsx global>{CSS}</style>
