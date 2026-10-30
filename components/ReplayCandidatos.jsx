@@ -10,7 +10,7 @@ const ESCALA = 60;
 const pct1 = (v) => v.toFixed(1).replace('.', ',');
 const num = (v) => Number(v).toLocaleString('pt-BR');
 
-export default function ReplayCandidatos({ parcial, final, uf = null, fracaoUf = null, estimada = false, aoVoltar }) {
+export default function ReplayCandidatos({ turno = 1, parcial, final, uf = null, fracaoUf = null, estimada = false, aoVoltar }) {
   const nomeUf = uf ? (MAPA_BRASIL.estados.find((g) => g.uf === uf) || {}).nome || uf : null;
   const linhas = parcial && parcial.linhas.length ? parcial.linhas : null;
   const refPor = {};
@@ -42,7 +42,7 @@ export default function ReplayCandidatos({ parcial, final, uf = null, fracaoUf =
           ))}
         </ul>
       )}
-      {linhas && <p className="rc-pe"><b>Como ler:</b> cada barra mostra quanto da votação válida já foi contada para o candidato. O traço laranja é o resultado final: quando a barra o alcança, todos os votos dele já foram contados. Brancos e nulos (inclui os votos do nº 28, anulados) ficam fora.</p>}
+      {linhas && <p className="rc-pe"><b>Como ler:</b> cada barra mostra quanto da votação válida já foi contada para o candidato. O traço laranja é o resultado final: quando a barra o alcança, todos os votos dele já foram contados. Brancos e nulos{turno === 1 ? ' (inclui os votos do nº 28, anulados)' : ''} ficam fora.</p>}
       <style jsx global>{`
         .rc { padding: 12px 16px 12px; background: ${t.cor.papelQuente}; border-radius: ${t.raio.sm}; }
         .rc-tit { margin: 0 0 6px; font: 700 1rem ${t.fonte.corpo}; color: ${t.cor.tinta}; }

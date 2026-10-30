@@ -338,9 +338,9 @@ function PaginaReplay({ turno, liberado2t }) {
   return (
     <div className="pagina">
       <Head>
-        <title>Replay da apuração de 2026: veja as urnas chegarem, estado por estado | Lume</title>
-        <meta name="description" content="Reveja a apuração do 1º turno de 2026 minuto a minuto: em que ordem as urnas chegaram ao TSE e como os votos foram sendo contados, estado por estado." />
-        <link rel="canonical" href="https://www.lumecidadao.com.br/candidatos-2026?visao=replay" />
+        <title>{`Replay da apuração ${turno === 2 ? 'do 2º turno ' : ''}de 2026: veja as urnas chegarem, estado por estado | Lume`}</title>
+        <meta name="description" content={`Reveja a apuração do ${turno === 2 ? '2º' : '1º'} turno de 2026 minuto a minuto: em que ordem as urnas chegaram ao TSE e como os votos foram sendo contados, estado por estado.`} />
+        <link rel="canonical" href={`https://www.lumecidadao.com.br/candidatos-2026?visao=replay${turno === 2 ? '&turno=2' : ''}`} />
       </Head>
       <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.8rem,4vw,2.6rem)', margin: '0 0 10px' }}>
         Replay da apuração {turno === 2 ? 'do 2º turno' : 'do 1º turno'} de 2026
@@ -353,14 +353,7 @@ function PaginaReplay({ turno, liberado2t }) {
         hrefVisao={(v) => hrefEleicoes(v, 'presidente', 1)} hrefTurno={(n) => hrefEleicoes('replay', 'presidente', n)}
         turno2={{ desabilitado: travado, dica: TEXTO_LIBERA_2T }} />
       {travado && <p style={{ margin: '0 0 14px', color: t.cor.cinza, fontSize: '0.88rem' }}>{TEXTO_LIBERA_2T}</p>}
-      {turno === 2
-        ? (
-          <section style={{ background: t.cor.papelCartao, borderRadius: t.raio.md, boxShadow: t.sombra.media, padding: '20px', color: t.cor.cinza, lineHeight: 1.5 }}>
-            <p style={{ margin: '0 0 10px' }}>O replay do 2º turno é montado depois que o TSE publica os boletins de urna, alguns dias após a votação.</p>
-            <Link href="/candidatos-2026?visao=apuracao&turno=2" style={abaEstilo(true)}>Ver a apuração do 2º turno</Link>
-          </section>
-        )
-        : <ReplayApuracao />}
+      <ReplayApuracao key={turno} turno={turno} />
     </div>
   );
 }
