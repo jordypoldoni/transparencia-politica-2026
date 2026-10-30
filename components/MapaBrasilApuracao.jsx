@@ -6,6 +6,7 @@ import { MAPA_BRASIL } from '../src/lib/mapaBrasilGeo';
 import { REGIOES, ORDEM_REGIOES } from '../src/lib/mapaRegioes';
 import Segmentado from './Segmentado';
 import { somarRegiao } from '../src/lib/somaRegiao';
+import { CHAMADAS } from '../src/lib/mapaChamadas';
 
 // MAPA DO BRASIL NA APURAÇÃO (12/10/2026, D-026). Presidente por estado, lido de /api/apuracao-estados.
 // Só é montado quando o usuário abre a opção "por estados": o que ele carrega (27 arquivos do TSE, em cache) não
@@ -15,8 +16,7 @@ import { somarRegiao } from '../src/lib/somaRegiao';
 const SEM_DADOS = '#D9D6CE';
 const FOCO_CLARO = '#E4E8EE';
 const FOCO_ESCURO = '#334155';
-// Estados pequenos: a sigla vai para fora, no oceano, ligada por uma linha fina (padrão de mapas). DF fica dentro de GO, então a linha dele aponta para a área vizinha.
-const CHAMADAS = { RN: [652, 176], PB: [652, 199], AL: [650, 243], SE: [640, 266], ES: [586, 406], RJ: [570, 456], DF: [458, 326] };
+// Estados pequenos: a sigla vai para fora, no oceano, ligada por uma linha fina (src/lib/mapaChamadas.js, também usado pelo replay).
 const AREA_MINIMA_ROTULO = 1500; // estados menores não levam a sigla dentro; ganham alvo de mouse maior
 const VB = MAPA_BRASIL.viewBox.split(' ').map(Number);
 

@@ -2,6 +2,7 @@ import { t } from '../src/estilo/tokens';
 import { MAPA_BRASIL } from '../src/lib/mapaBrasilGeo';
 import { REGIOES, ORDEM_REGIOES } from '../src/lib/mapaRegioes';
 import { listaE } from '../src/lib/replayApuracao';
+import { CHAMADAS } from '../src/lib/mapaChamadas';
 
 // MAPA DO REPLAY (22/10/2026, D-074). Só desenha: recebe `fracao` ({ UF: 0 a 1 } = parte das seções do estado que já chegaram ao TSE
 // no horário escolhido). A cor marca a REGIÃO (D-026, nunca partido); o estado enche de baixo para cima conforme as urnas chegam. Estado sem urna recebida
@@ -56,6 +57,19 @@ export default function ReplayMapa({ fracao = {}, recebendo = [], estimadas = []
         {MAPA_BRASIL.estados.filter((g) => !PEQUENOS.has(g.uf)).map((geo) => (
           <text key={geo.uf} x={geo.cx} y={geo.cy} className="rm-sigla" textAnchor="middle" dominantBaseline="central">{geo.uf}</text>
         ))}
+        {/* Estados pequenos: sigla fora do mapa, ligada por uma linha fina (mesmas chamadas do mapa da apuração). */}
+        <g style={{ pointerEvents: 'none' }} aria-hidden="true">
+          {MAPA_BRASIL.estados.filter((g) => CHAMADAS[g.uf]).map((geo) => {
+            const [lx, ly] = CHAMADAS[geo.uf];
+            return (
+              <g key={geo.uf}>
+                <line x1={geo.cx} y1={geo.cy} x2={lx - 3} y2={ly} className="rm-chamada-linha" />
+                <circle cx={geo.cx} cy={geo.cy} r={1.6} className="rm-chamada-ponto" />
+                <text x={lx} y={ly} className="rm-sigla-fora">{geo.uf}</text>
+              </g>
+            );
+          })}
+        </g>
       </svg>
       </div>
       <figcaption className="rm-leg">
@@ -70,7 +84,10 @@ export default function ReplayMapa({ fracao = {}, recebendo = [], estimadas = []
       <style jsx global>{`
         .rm { --rm-h: clamp(300px, calc(100vh - 305px), 700px); margin: 0; display: flex; flex-direction: column; align-items: center; gap: 12px; }
         .rm-box { flex: 0 1 auto; width: min(100%, calc(var(--rm-h) * ${PROPORCAO.toFixed(4)})); aspect-ratio: ${MAPA_BRASIL.largura} / ${MAPA_BRASIL.altura}; }
-        .rm-svg { display: block; width: 100%; height: 100%; }
+        .rm-svg { display: block; width: 100%; height: 100%; overflow: visible; }
+        .rm-chamada-linha { stroke: ${t.cor.cinza}; stroke-width: .8px; }
+        .rm-chamada-ponto { fill: ${t.cor.cinza}; }
+        .rm-sigla-fora { font: 700 9.5px ${t.fonte.corpo}; fill: ${t.cor.tinta}; text-anchor: start; dominant-baseline: middle; paint-order: stroke; stroke: #fff; stroke-width: 3px; stroke-linejoin: round; }
         .rm-uf { stroke: ${t.cor.papelCartao}; stroke-width: 1; }
         .rm-uf { cursor: pointer; outline: none; }
         .rm-uf:hover { stroke: ${t.cor.tinta}; stroke-width: 1.8; }
