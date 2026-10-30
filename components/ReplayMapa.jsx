@@ -87,11 +87,11 @@ export default function ReplayMapa({ fracao = {}, recebendo = [], estimadas = []
         .rm-hach { background: repeating-linear-gradient(45deg, #8B8F98 0 2px, #D9D6CE 2px 5px); }
         .rm-nivel { background: linear-gradient(0deg, #6B7280 55%, ${'#D9D6CE'} 55%); }
         /* Computador: a legenda vai para o lado do mapa, em coluna. O grupo (legenda + mapa) fica centralizado na coluna. */
-        /* Computador: a altura da linha é a da coluna da direita (votos); o mapa ocupa TODO o espaço da célula (largura e altura) e o desenho
-           se ajusta a ele sem deformar. A legenda fica em coluna ao lado, centralizada na altura. */
+        /* Computador: a altura do mapa depende só da altura da janela (cabe com o cartão na primeira tela) e mantém a proporção do desenho, então tem o mesmo tamanho com 2 ou com 14 candidatos
+           ao lado (30/10/2026: no 2º turno a coluna dos votos é curta e o mapa encolhia). A legenda fica em coluna ao lado, centralizada na altura. */
         @media (min-width: 900px) {
           .rm { flex-direction: row; align-items: stretch; justify-content: center; gap: 22px; }
-          .rm-box { order: 2; flex: 1 1 0; min-width: 0; width: auto; aspect-ratio: auto; position: relative; min-height: 380px; }
+          .rm-box { order: 2; flex: 0 1 auto; min-width: 0; max-width: 100%; height: clamp(380px, calc(100vh - 380px), 700px); width: auto; aspect-ratio: ${MAPA_BRASIL.largura} / ${MAPA_BRASIL.altura}; position: relative; }
           .rm-svg { position: absolute; inset: 0; }
           .rm-leg { order: 1; flex: none; width: 210px; flex-direction: column; flex-wrap: nowrap; align-items: flex-start; justify-content: center; gap: 8px; line-height: 1.3; }
         }
