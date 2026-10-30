@@ -4,7 +4,7 @@ import { MINUTOS_TOTAIS, VELOCIDADES, horaDoMinuto, listaE, pctUrnas } from '../
 
 // LINHA DO TEMPO DO REPLAY (22/10/2026, D-074): hora grande, botão de reproduzir (pílula índigo com texto âmbar, com sombra, sem contorno),
 // barra de tempo e escolha de velocidade (segmented control, opções excludentes). Só desenha; o relógio mora na página.
-export default function ReplayLinhaDoTempo({ minuto, tocando, fim, velocidade, resumo, recebendo, estimadas = [], aoAlternar, aoMudarMinuto, aoMudarVelocidade }) {
+export default function ReplayLinhaDoTempo({ turno = 1, minuto, tocando, fim, velocidade, resumo, recebendo, estimadas = [], aoAlternar, aoMudarMinuto, aoMudarVelocidade }) {
   const m = Math.floor(minuto);
   // "00:59 (dia seguinte)" vira "00:59" grande e a data certa (5 de outubro) na linha de baixo: a faixa não quebra depois da meia-noite.
   const horaCurta = horaDoMinuto(m).replace(/ \(.*\)$/, '');
@@ -24,7 +24,7 @@ export default function ReplayLinhaDoTempo({ minuto, tocando, fim, velocidade, r
               </>
             )}
           </div>
-          <span className="rt-sub">horário de Brasília, {diaSeguinte ? '5' : '4'} de outubro de 2026{estimadas.length > 0 ? ` · ${listaE(estimadas)} com horário estimado` : ''}</span>
+          <span className="rt-sub">horário de Brasília, {turno === 2 ? (diaSeguinte ? '26' : '25') : (diaSeguinte ? '5' : '4')} de outubro de 2026{estimadas.length > 0 ? ` · ${listaE(estimadas)} com horário estimado` : ''}</span>
         </div>
         {recebendo && resumo && resumo.total > 0 && (
           <p className="rt-bloco rt-recebendo">

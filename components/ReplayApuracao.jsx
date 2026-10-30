@@ -31,7 +31,7 @@ const CSS = `
   }
 `;
 
-export default function ReplayApuracao() {
+export default function ReplayApuracao({ turno = 1 }) {
   const [minuto, setMinuto] = useState(0);
   const [tocando, setTocando] = useState(false);
   const [velocidade, setVelocidade] = useState(VELOCIDADE_PADRAO);
@@ -43,20 +43,20 @@ export default function ReplayApuracao() {
   const relogio = useRef(0); // minuto atual, lido pelo laço de animação sem depender do ciclo do React
   const fim = minuto >= MINUTOS_TOTAIS;
 
-  // Dados do 1º turno (arquivo estático, ~78 KB): carregados uma vez; sem eles o mapa fica neutro e a página avisa.
+  // Dados do turno escolhido, 1º ou 2º (arquivo estático, ~78 KB): carregados uma vez; sem eles o mapa fica neutro e a página avisa.
   useEffect(() => {
     const ctl = new AbortController();
-    fetch('/replay/1t-2026-secoes.json', { signal: ctl.signal })
+    fetch(`/replay/${turno}t-2026-secoes.json`, { signal: ctl.signal })
       .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
       .then(setDados)
       .catch((e) => { if (e.name !== 'AbortError') setErroDados(true); });
     // Votos por candidato (arquivo estático, ~1,1 MB, ~170 KB comprimido): carregado à parte; se falhar, só o painel de votos fica sem dados.
-    fetch('/replay/1t-2026-votos.json', { signal: ctl.signal })
+    fetch(`/replay/${turno}t-2026-votos.json`, { signal: ctl.signal })
       .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json(); })
       .then(setVotos)
       .catch((e) => { if (e.name !== 'AbortError') setErroDados(true); });
     return () => ctl.abort();
-  }, []);
+  }, [turno]);
 
   const estimadas = (dados && dados.estimadas) || []; // estados sem boletins completos: votos finais oficiais, horário estimado
   const mi = Math.floor(minuto);
@@ -95,17 +95,17 @@ export default function ReplayApuracao() {
   return (
     <>
       <div className="rp">
-        <p className="rp-intro">Veja em que ordem as urnas chegaram ao TSE na noite de 4 de outubro, estado por estado.</p>
+        <p className="rp-intro">Veja em que ordem as urnas chegaram ao TSE na noite de {turno === 2 ? '25' : '4'} de outubro, estado por estado.</p>
         <section className="rp-cartao" aria-label="Replay">
           <div className="rp-faixa">
-            <ReplayLinhaDoTempo minuto={minuto} tocando={tocando} fim={fim} velocidade={velocidade} resumo={dados ? resumo : null} recebendo={dados ? recebendo : null} estimadas={estimadas}
+            <ReplayLinhaDoTempo turno={turno} minuto={minuto} tocando={tocando} fim={fim} velocidade={velocidade} resumo={dados ? resumo : null} recebendo={dados ? recebendo : null} estimadas={estimadas}
               aoAlternar={alternar} aoMudarMinuto={irPara} aoMudarVelocidade={setVelocidade} />
           </div>
           <ReplayMapa fracao={fracao} recebendo={recebendo} estimadas={estimadas} selecionada={ufSel} aoEscolher={escolher} />
           <div className="rp-lado">
             {erroDados && <p className="rp-erro" role="status">Não foi possível carregar os dados do replay. Tente recarregar a página.</p>}
-            <ReplayCandidatos parcial={votos ? votosAgora : null} final={votos ? votosFinal : null} uf={ufSel} fracaoUf={ufSel ? fracao[ufSel] : null} estimada={ufSel ? estimadas.includes(ufSel) : false} aoVoltar={() => setUfSel(null)} />
-            <ReplayAviso estimadas={estimadas} />
+            <ReplayCandidatos turno={turno} parcial={votos ? votosAgora : null} final={votos ? votosFinal : null} uf={ufSel} fracaoUf={ufSel ? fracao[ufSel] : null} estimada={ufSel ? estimadas.includes(ufSel) : false} aoVoltar={() => setUfSel(null)} />
+            <ReplayAviso turno={turno} estimadas={estimadas} />
           </div>
         </section>
       </div>
