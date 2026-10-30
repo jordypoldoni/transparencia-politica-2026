@@ -10,8 +10,6 @@ import { t } from '../src/estilo/tokens';
 // Mapa por estados (D-026): só carrega quando o usuário escolhe essa visão.
 const MapaBrasilApuracao = dynamic(() => import('./MapaBrasilApuracao'), { ssr: false, loading: () => <p style={{ color: t.cor.cinza }}>Carregando o mapa…</p> });
 // Celular (D-032): o mapa de verdade depende de hover e tem estados minúsculos; no celular entra a grade de quadrados.
-// Mapa que enche conforme as seções chegam (25/10/2026, 2º turno): mesma animação do replay, com dados ao vivo.
-const MapaApuracaoEnchendo = dynamic(() => import('./MapaApuracaoEnchendo'), { ssr: false, loading: () => <p style={{ color: t.cor.cinza }}>Carregando o mapa…</p> });
 const MapaGradeApuracao = dynamic(() => import('./MapaGradeApuracao'), { ssr: false, loading: () => <p style={{ color: t.cor.cinza }}>Carregando o resultado por estado…</p> });
 
 // APURAÇÃO dentro de "Eleições 2026" (02/10/2026). Mostra o resultado oficial do TSE lido por
@@ -151,9 +149,9 @@ export default function ApuracaoEleicao({ cargo, ufInicial, turno = 1 }) {
     { rotulo: 'Brancos', valor: fmt(d.votos.brancos), sub: pctDe(d.votos.pct_brancos) },
     { rotulo: 'Nulos', valor: fmt(d.votos.nulos), sub: pctDe(d.votos.pct_nulos) },
   ] : [];
-  // Visão por estados: só presidente, 1º turno (a rota /api/apuracao-estados serve os dois turnos; o 2º entra depois).
+  // Visão por estados: só presidente, nos dois turnos (30/10/2026: o 2º turno segue o padrão do 1º, pedido do Jordy).
   const [visao, setVisao] = useState('lista');
-  const podeMapa = cargo === 'presidente' && turno === 1;
+  const podeMapa = cargo === 'presidente';
   const porEstados = podeMapa && visao === 'estados';
 
   const listaCandidatos = d && !proporcional ? (
@@ -263,9 +261,6 @@ export default function ApuracaoEleicao({ cargo, ufInicial, turno = 1 }) {
             </div>
           </section>
 
-          {cargo === 'presidente' && turno === 2 && (
-            <div style={{ ...cartao, marginTop: '16px', padding: '16px 14px 18px' }}><MapaApuracaoEnchendo turno={turno} nacional={d} /></div>
-          )}
           {!proporcional && porEstados && (
             <>
               <div className="so-computador" style={{ marginTop: '26px' }}><MapaBrasilApuracao turno={turno} /></div>
