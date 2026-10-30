@@ -28,6 +28,7 @@ import { createClient } from '@supabase/supabase-js';
 import { categoria } from './categoria_gastos.js';
 import { lerCsv, paraNumero, baixarCotaAnual } from './cota_arquivo.js';
 import { refreshRadar } from './refresh_radar.js';
+import { registrarStatus, ultimaEmissao } from './_status.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -228,6 +229,14 @@ async function main() {
     if (++feitos % 50 === 0) console.log(`  …${feitos}/${porAgente.size} deputados (${gravadas} lançamentos)`);
   }
   console.log(`\n✅ ${feitos} deputados regravados (${gravadas} lançamentos) · ${iguais} sem mudança, não tocados.`);
+
+  // Carimbo de coleta (30/10/2026): este era o unico coletor sem registrarStatus, entao o site nao mostrava
+  // "atualizado em" para os gastos da Camara e o Vigia nao via se a coleta parava (o passo roda com
+  // continue-on-error). So no ano corrente e fora do modo so-novos: rodadas de anos antigos nao podem
+  // sobrescrever a data da coleta diaria. Chega aqui apenas depois de passar as travas e de gravar.
+  if (!SO_NOVOS && ANO === new Date().getUTCFullYear()) {
+    await registrarStatus(supabase, { fonte: 'gastos_camara', dadosAte: await ultimaEmissao(supabase, 'Câmara', ANO), linhas: aproveitaveis });
+  }
 }
 
 main().then(() => (DRY ? null : refreshRadar())).catch((e) => { console.error('💥 Erro:', e.message); process.exit(1); });
