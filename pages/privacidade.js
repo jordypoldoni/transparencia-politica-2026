@@ -10,7 +10,7 @@ import { CONTATO } from '../src/lib/contato';
 //
 // Regra da página: descrever o que o CÓDIGO faz, sem promessa que o código não cumpre. Mudou o
 // código (novo dado guardado, novo serviço externo), muda esta página e a data de ATUALIZADA.
-const ATUALIZADA = '26 de setembro de 2026';
+const ATUALIZADA = '31 de outubro de 2026';
 // CONTATO (e-mail público para pedidos sobre dados pessoais, escolhido pelo Jordy em 26/09) mora em src/lib/contato.js.
 
 const h2 = { fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.4rem', margin: '36px 0 12px' };
@@ -42,6 +42,7 @@ export default function Privacidade() {
           <li style={li}><strong style={forte}>No seu próprio navegador</strong> ficam o estado e os temas que você escolheu, as respostas do questionário da página "Pra você", os políticos e partidos que você marcou com o coração (favoritos), os candidatos que você escolheu como seu voto na cédula e o último filtro das listas. Isso não sai do seu aparelho e some se você limpar os dados do navegador.</li>
           <li style={li}><strong style={forte}>Estado aproximado pela conexão:</strong> na lista de candidatos a deputado estadual, o site usa a região aproximada que a hospedagem informa a partir do seu endereço de internet para abrir já no seu estado. Essa informação é usada naquele momento e não é guardada.</li>
           <li style={li}><strong style={forte}>Registros técnicos da hospedagem</strong> (Vercel), como em qualquer site: endereço de internet e página acessada, mantidos pela própria hospedagem por prazo curto, para segurança e funcionamento.</li>
+          <li style={li}><strong style={forte}>Medição de acesso</strong> (Vercel Web Analytics): contamos visitas e páginas mais vistas, sem cookies e sem identificar você. A ferramenta cria um código anônimo temporário a partir de dados técnicos do navegador, descartado em até 24 horas. Nas páginas de comparação (<code>/cola</code>), os candidatos escolhidos no endereço são removidos antes do envio. Não usamos esses dados para publicidade nem para traçar perfil político.</li>
         </ul>
 
         <h2 style={h2}>Se você entrar com uma conta</h2>
