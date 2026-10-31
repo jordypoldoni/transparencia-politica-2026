@@ -8,7 +8,7 @@ import { Seta, Pino } from './icones';
 import { NOMES_UF } from '../src/lib/cotas';
 import { ufLocal, EVENTO_UF } from '../src/lib/perfilUsuario';
 import { SEGUNDO_TURNO } from '../src/lib/turnos';
-import { nomeBonito as bonito, pctNum as num, cadeirasPorPartido, governoNoPrimeiroTurno } from '../src/lib/eleicoesHome';
+import { nomeBonito as bonito, pctNum as num, cadeirasPorPartido, cadeirasDeContagem, governoNoPrimeiroTurno } from '../src/lib/eleicoesHome';
 
 // ELEIÇÕES NA HOME (12/10/2026, pedido do Jordy; refeito em 31/10/2026, D-101 e D-102).
 // Etapa 1 (31/10/2026): fundo quente que une o bloco e cartão do Presidente com as abas "1º turno | 2º turno".
@@ -19,10 +19,10 @@ import { nomeBonito as bonito, pctNum as num, cadeirasPorPartido, governoNoPrime
 // pela sincronização) ou o salvo neste navegador (`ufLocal`). Trocar no seletor vale SÓ para esta visita: não grava no
 // perfil nem nas outras telas (decisão do Jordy); só o perfil muda o estado do site. Com estado: governador, senadores e
 // cadeiras por partido da Câmara e da Assembleia; na aba 2º turno, o governador do 2º turno (se o estado teve) e uma faixa
-// dizendo que não houve 2º turno para os demais cargos (sem popup). "Todo o Brasil" = sem estado (a visão do visitante é a etapa 3).
+// dizendo que não houve 2º turno para os demais cargos (sem popup). "Todo o Brasil" = sem estado (a visão do visitante é a etapa 3, feita em 31/10/2026: cadeiras por partido da Câmara e do Senado no país + os 27 governadores; na aba 2º turno, os governos que foram ao 2º turno; cada estado é um botão que mostra o estado só nesta visita).
 // Os números vêm de /api/apuracao (cache de borda, nada no banco). Sem resultado do TSE, mostra `children`
 // (a lista de candidatos de antes).
-// Etapas seguintes (pendentes, cada uma com OK): visão do visitante (resumo do país), busca de candidatos.
+// Etapa seguinte (pendente, com OK): busca de candidatos.
 const fmt = (x) => Number(x || 0).toLocaleString('pt-BR');
 const mesmo = (c, ch) => String(ch.nr_candidato) === String(c.numero);
 const INDIGO = t.cor.verde; // índigo
@@ -92,8 +92,8 @@ function Bloco({ titulo, contagem, children, estilo }) {
 }
 
 // Cadeiras por partido: barras de cantos retos (não são clicáveis), as maiores primeiro e "Outros partidos" no fim.
-function Cadeiras({ eleitos }) {
-  const c = cadeirasPorPartido(eleitos, 6);
+function Cadeiras({ eleitos, contagem }) {
+  const c = contagem ? cadeirasDeContagem(contagem, 6) : cadeirasPorPartido(eleitos, 6);
   const linha = (nome, qtd, suave) => (
     <div key={nome} style={{ display: 'grid', gridTemplateColumns: 'minmax(70px, 120px) 1fr 34px', gap: 10, alignItems: 'center', fontSize: '.84rem', padding: '3px 0' }}>
       <span style={{ fontWeight: suave ? 400 : 600, color: suave ? t.cor.cinza : t.cor.tinta, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nome}</span>
@@ -153,6 +153,68 @@ function EleitosDoEstado({ uf, d }) {
   );
 }
 
+// Visão do país (etapa 3): quem não tem estado vê o resumo do Brasil. Cadeiras por partido (Câmara e Senado) e os 27
+// governadores; cada estado é um botão que mostra aquele estado só nesta visita.
+function GovernadoresDoPais({ lista, aoEscolher }) {
+  return (
+    <Bloco titulo="Governadores" contagem="27 estados" estilo={{ marginTop: 12 }}>
+      <div className="elh-gp" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '2px 18px' }}>
+        {lista.map((g) => {
+          const f = g.eleito;
+          const detalhe = f ? `${bonito(f.nome)} · ${f.partido}` : (g.finalistas.length ? '2º turno' : 'apuração em andamento');
+          return (
+            <button key={g.uf} type="button" className="elh-gov" onClick={() => aoEscolher(g.uf)} aria-label={`Ver ${NOMES_UF[g.uf] || g.uf}`}
+              style={{ display: 'flex', alignItems: 'baseline', gap: 10, textAlign: 'left', border: 'none', background: 'none', padding: '6px 4px', borderRadius: 6, cursor: 'pointer', font: 'inherit', color: 'inherit', minWidth: 0 }}>
+              <b style={{ width: 26, flexShrink: 0, fontSize: '.8rem' }}>{g.uf}</b>
+              <span style={{ fontSize: '.84rem', color: f ? t.cor.tinta : t.cor.ouroTexto, fontWeight: f ? 400 : 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{detalhe}</span>
+            </button>
+          );
+        })}
+      </div>
+    </Bloco>
+  );
+}
+
+function PaisPrimeiroTurno({ p, aoEscolher }) {
+  return (
+    <>
+      <div style={{ margin: '22px 2px 10px' }}><h3 style={rotuloCaixa}>Brasil · eleitos no 1º turno</h3></div>
+      <div className="elh-g2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <Bloco titulo="Câmara dos Deputados" contagem={`${p.camara.total} eleitos`}><Cadeiras contagem={p.camara.contagem} /></Bloco>
+        <Bloco titulo="Senado" contagem={`${p.senado.total} eleitos`}><Cadeiras contagem={p.senado.contagem} /></Bloco>
+      </div>
+      <GovernadoresDoPais lista={p.governadores} aoEscolher={aoEscolher} />
+    </>
+  );
+}
+
+function PaisSegundoTurno({ p, aoEscolher }) {
+  const lista = p.governadores.filter((g) => g.segundo);
+  if (!lista.length) return null;
+  return (
+    <>
+      <div style={{ margin: '22px 2px 10px', display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+        <h3 style={rotuloCaixa}>Governadores no 2º turno</h3>
+        <span style={{ ...rotuloCaixa, fontWeight: 400 }}>{lista.length} estados</span>
+      </div>
+      <div className="elh-g3b" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+        {lista.map((g) => (
+          <button key={g.uf} type="button" className="elh-gov" onClick={() => aoEscolher(g.uf)} aria-label={`Ver ${NOMES_UF[g.uf] || g.uf}`}
+            style={{ textAlign: 'left', border: 'none', cursor: 'pointer', font: 'inherit', color: 'inherit', background: t.cor.papelCartao, borderRadius: t.raio.md, padding: '14px 16px', boxShadow: t.sombra.sutil, minWidth: 0 }}>
+            <b style={{ ...rotuloCaixa, display: 'block', marginBottom: 6 }}>{NOMES_UF[g.uf] || g.uf}</b>
+            {g.segundo.candidatos.map((c) => (
+              <span key={c.nome} style={{ display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: '.88rem', padding: '2px 0', fontWeight: c.eleito ? 800 : 400, color: c.eleito ? t.cor.sim : t.cor.tinta }}>
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.eleito ? '✓ ' : ''}{bonito(c.nome)} · {c.partido}</span>
+                <span>{c.pct}%</span>
+              </span>
+            ))}
+          </button>
+        ))}
+      </div>
+    </>
+  );
+}
+
 function GovernoSegundoTurno({ uf, g2 }) {
   const nome = NOMES_UF[uf] || uf;
   const [a, b] = [...g2.candidatos].sort((x, y) => y.votos - x.votos).slice(0, 2);
@@ -187,6 +249,8 @@ export default function ResumoEleicoesHome({ chapas = [], children }) {
   const [d2, setD2] = useState(undefined);
   const [aba, setAba] = useState(null);
   const [ufSalva, setUfSalva] = useState('');
+  const [ufLida, setUfLida] = useState(false);
+  const [pais, setPais] = useState(undefined); // undefined = não pedido/carregando, null = falhou
   const [ufVisita, setUfVisita] = useState(null); // null = não escolheu nesta visita; '' = "Todo o Brasil"
   const cache = useRef({});
   const [, redesenhar] = useState(0);
@@ -202,12 +266,22 @@ export default function ResumoEleicoesHome({ chapas = [], children }) {
 
   // Estado salvo (perfil ou navegador). Quando o perfil desce para o navegador, o evento avisa.
   useEffect(() => {
-    const ler = () => setUfSalva(ufLocal());
+    const ler = () => { setUfSalva(ufLocal()); setUfLida(true); };
     ler();
     window.addEventListener(EVENTO_UF, ler);
     return () => window.removeEventListener(EVENTO_UF, ler);
   }, []);
   const uf = ufVisita !== null ? ufVisita : ufSalva;
+
+  // Resumo do país: só é pedido quando não há estado (visitante ou "Todo o Brasil").
+  useEffect(() => {
+    if (!ufLida || uf || pais !== undefined) return undefined;
+    const ctrl = new AbortController();
+    fetch('/api/eleitos-brasil', { signal: ctrl.signal }).then((r) => (r.ok ? r.json() : null))
+      .then((j) => setPais(j && (j.governadores || []).length ? j : null))
+      .catch((e) => { if (e.name !== 'AbortError') setPais(null); });
+    return () => ctrl.abort();
+  }, [ufLida, uf, pais]);
 
   // Eleitos do estado: 4 cargos no 1º turno e, nos 6 estados com 2º turno, o governador do 2º turno.
   useEffect(() => {
@@ -309,6 +383,9 @@ export default function ResumoEleicoesHome({ chapas = [], children }) {
           </div>
         </div>
 
+        {!uf && ufLida && pais === undefined && <div aria-busy="true" style={{ minHeight: 260 }} />}
+        {!uf && pais && turno === 1 && <PaisPrimeiroTurno p={pais} aoEscolher={setUfVisita} />}
+        {!uf && pais && turno === 2 && <PaisSegundoTurno p={pais} aoEscolher={setUfVisita} />}
         {uf && !estado && <div aria-busy="true" style={{ minHeight: 260 }} />}
         {uf && estado?.falhou && <p style={{ margin: '18px 2px 0', color: t.cor.cinza, fontSize: '.9rem' }}>Não foi possível carregar os eleitos de {nomeUf} agora. Tente de novo em instantes.</p>}
         {uf && estado && !estado.falhou && turno === 1 && <EleitosDoEstado uf={uf} d={estado} />}
@@ -329,13 +406,16 @@ export default function ResumoEleicoesHome({ chapas = [], children }) {
       <style jsx global>{`
         .elh-lado:hover .elh-nome { text-decoration: underline; }
         .elh-nc { display: none; }
+        .elh-gov:hover { background: rgba(36,30,82,.07) !important; }
+        .elh-gov:focus-visible { outline: 2px solid #241E52; outline-offset: 1px; }
         @media (max-width: 640px) {
           .elh-nl { display: none; }
           .elh-nc { display: inline; }
           .elh-fundo { padding: 16px !important; }
           .elh-duelo { grid-template-columns: 1fr !important; gap: 14px !important; }
           .elh-duelo > * { flex-direction: row !important; text-align: left !important; }
-          .elh-g3, .elh-g2, .elh-sen { grid-template-columns: 1fr !important; }
+          .elh-g3, .elh-g2, .elh-sen, .elh-g3b { grid-template-columns: 1fr !important; }
+          .elh-gp { grid-template-columns: 1fr !important; }
         }
       `}</style>
     </section>

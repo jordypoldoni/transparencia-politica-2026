@@ -14,13 +14,17 @@ export const pctNum = (p) => Number(String(p == null ? '' : p).replace(/\./g, ''
 // Cadeiras por partido: conta os eleitos de cada partido e devolve os `n` maiores (empate: ordem alfabética)
 // e o total dos demais em `outros`. Barra sempre por QUANTIDADE de eleitos.
 export function cadeirasPorPartido(eleitos, n = 6) {
-  const cont = new Map();
+  const cont = {};
   for (const e of eleitos || []) {
     const p = String(e?.partido || '').trim();
-    if (!p) continue;
-    cont.set(p, (cont.get(p) || 0) + 1);
+    if (p) cont[p] = (cont[p] || 0) + 1;
   }
-  const todos = [...cont.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'pt-BR'));
+  return cadeirasDeContagem(cont, n);
+}
+
+// O mesmo, a partir de uma contagem pronta { PARTIDO: qtd } (o resumo do país já chega somado do servidor).
+export function cadeirasDeContagem(contagem, n = 6) {
+  const todos = Object.entries(contagem || {}).filter(([, q]) => q > 0).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'pt-BR'));
   const topo = todos.slice(0, n).map(([partido, qtd]) => ({ partido, qtd }));
   const outros = todos.slice(n).reduce((s, [, q]) => s + q, 0);
   const total = todos.reduce((s, [, q]) => s + q, 0);
