@@ -1,52 +1,195 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { t } from '../src/estilo/tokens';
 import Avatar from './Avatar';
 import Segmentado from './Segmentado';
-import { Seta } from './icones';
+import CampoSelect from './CampoSelect';
+import { Seta, Pino } from './icones';
+import { NOMES_UF } from '../src/lib/cotas';
+import { ufLocal, EVENTO_UF } from '../src/lib/perfilUsuario';
+import { SEGUNDO_TURNO } from '../src/lib/turnos';
+import { nomeBonito as bonito, pctNum as num, cadeirasPorPartido, governoNoPrimeiroTurno } from '../src/lib/eleicoesHome';
 
-// ELEIÇÕES NA HOME (12/10/2026, pedido do Jordy; refeito em 31/10/2026, D-101 e seguintes).
+// ELEIÇÕES NA HOME (12/10/2026, pedido do Jordy; refeito em 31/10/2026, D-101 e D-102).
 // Etapa 1 (31/10/2026): fundo quente que une o bloco e cartão do Presidente com as abas "1º turno | 2º turno".
 // Desenho aprovado pelo Jordy: duelo em uma barra (cantos retos, pois não é clicável; só pílula é clicável), cada
 // candidato com a mesma cor nas duas abas (1º colocado do 1º turno = âmbar, 2º = índigo), nome dentro da barra,
 // manchete como título do cartão. Só fato e fonte: ordem por votos, sem rótulo de favorito.
+// Etapa 2 (31/10/2026): seletor de estado e visão do estado. O estado inicial é o do perfil (que desce para o navegador
+// pela sincronização) ou o salvo neste navegador (`ufLocal`). Trocar no seletor vale SÓ para esta visita: não grava no
+// perfil nem nas outras telas (decisão do Jordy); só o perfil muda o estado do site. Com estado: governador, senadores e
+// cadeiras por partido da Câmara e da Assembleia; na aba 2º turno, o governador do 2º turno (se o estado teve) e uma faixa
+// dizendo que não houve 2º turno para os demais cargos (sem popup). "Todo o Brasil" = sem estado (a visão do visitante é a etapa 3).
 // Os números vêm de /api/apuracao (cache de borda, nada no banco). Sem resultado do TSE, mostra `children`
 // (a lista de candidatos de antes).
-// Etapas seguintes (pendentes, cada uma com OK): seletor de estado e visão do estado, visão do visitante, busca de candidatos.
+// Etapas seguintes (pendentes, cada uma com OK): visão do visitante (resumo do país), busca de candidatos.
 const fmt = (x) => Number(x || 0).toLocaleString('pt-BR');
-const num = (p) => Number(String(p).replace(/\./g, '').replace(',', '.')) || 0;
 const mesmo = (c, ch) => String(ch.nr_candidato) === String(c.numero);
-const MINUSCULAS = new Set(['da', 'de', 'do', 'das', 'dos', 'e']);
-const bonito = (n) => String(n || '').toLowerCase().split(' ').map((p, i) => (i > 0 && MINUSCULAS.has(p) ? p : p.charAt(0).toUpperCase() + p.slice(1))).join(' ');
 const INDIGO = t.cor.verde; // índigo
 const AMBAR = t.cor.ouro;
 const pronto = (j) => (j && j.secoes && j.secoes.totalizadas > 0 && (j.candidatos || []).length >= 2 ? j : null);
+const UFS = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
+const OPCOES_UF = [{ valor: '', rotulo: 'Todo o Brasil', busca: 'todo brasil' }].concat(UFS.map((uf) => ({ valor: uf, rotulo: `${uf} · ${NOMES_UF[uf] || uf}`, busca: `${uf} ${NOMES_UF[uf] || ''}` })));
+const rotuloCaixa = { margin: 0, fontSize: '.78rem', letterSpacing: '.06em', textTransform: 'uppercase', color: t.cor.cinza, fontFamily: t.fonte.corpo, fontWeight: 700 };
+const linkOuro = { fontSize: '0.85rem', fontWeight: 700, color: t.cor.ouroTexto, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '5px' };
 
-function Lado({ c, chapa, cor, direita, pct, rodape }) {
-  const slug = chapa?.presidente?.slug;
+function Lado({ nome, partido, numero, foto, href, cor, direita, pct, rodape }) {
   const miolo = (
     <>
       <div style={{ borderRadius: '50%', boxShadow: `0 0 0 4px ${cor}`, flexShrink: 0, margin: 4 }}>
-        <Avatar nome={c.nome} foto={chapa?.presidente?.foto_url} size={72} />
+        <Avatar nome={nome} foto={foto} size={72} />
       </div>
       <div style={{ minWidth: 0 }}>
-        <b className="elh-nome" style={{ display: 'block', fontSize: '1.05rem', color: t.cor.tinta }}>{c.nome}</b>
-        <small style={{ display: 'block', color: t.cor.cinza, fontSize: '.82rem', marginTop: 2 }}>{c.partido} · {c.numero}</small>
+        <b className="elh-nome" style={{ display: 'block', fontSize: '1.05rem', color: t.cor.tinta }}>{nome}</b>
+        <small style={{ display: 'block', color: t.cor.cinza, fontSize: '.82rem', marginTop: 2 }}>{partido}{numero ? ` · ${numero}` : ''}</small>
         <span style={{ display: 'block', fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '2.6rem', lineHeight: 1, marginTop: 6, color: t.cor.tinta }}>{pct}%</span>
         <span style={{ display: 'block', color: t.cor.cinza, fontSize: '.8rem', marginTop: 4 }}>{rodape}</span>
       </div>
     </>
   );
   const estilo = { display: 'flex', alignItems: 'center', gap: 16, textDecoration: 'none', color: 'inherit', flexDirection: direita ? 'row-reverse' : 'row', textAlign: direita ? 'right' : 'left', minWidth: 0 };
-  return slug
-    ? <Link href={`/presidencial/${slug}`} className="elh-lado" style={estilo}>{miolo}</Link>
+  return href
+    ? <Link href={href} className="elh-lado" style={estilo}>{miolo}</Link>
     : <div style={estilo}>{miolo}</div>;
+}
+
+// Faixa do duelo: cada lado com a cor do candidato; texto escuro ou claro conforme o contraste da cor.
+function Faixa({ a, b, corA, corB, larga, marca }) {
+  const lado = (c, cor, larg, direita) => (
+    <div style={{ width: `${larg}%`, background: cor, color: cor === AMBAR ? t.cor.tinta : '#fff', display: 'flex', alignItems: 'center', justifyContent: direita ? 'flex-end' : 'flex-start', padding: '0 14px', fontWeight: 800, fontSize: '.82rem', whiteSpace: 'nowrap', overflow: 'hidden' }}>
+      <span className="elh-nl">{c.nome}</span><span className="elh-nc">{String(c.nome).split(' ')[0]}</span>
+    </div>
+  );
+  return (
+    <div role="img" aria-label={`${a.nome} ${a.pct}%, ${b.nome} ${b.pct}%`} style={{ display: 'flex', height: 30, borderRadius: 7, overflow: 'hidden', margin: '18px 0 6px', position: 'relative' }}>
+      {lado(a, corA, larga, false)}
+      {lado(b, corB, 100 - larga, true)}
+      {marca && <span aria-hidden="true" style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: 2, background: t.cor.tinta }} />}
+    </div>
+  );
+}
+
+function Pessoa({ nome, partido, cargo, pct }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '6px 0', minWidth: 0 }}>
+      <Avatar nome={nome} size={46} />
+      <div style={{ minWidth: 0, flex: 1 }}>
+        <b style={{ display: 'block', fontSize: '.95rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{bonito(nome)}</b>
+        <small style={{ color: t.cor.cinza, fontSize: '.8rem' }}>{partido} · {cargo}</small>
+      </div>
+      {pct != null && <b style={{ fontSize: '1rem', flexShrink: 0 }}>{pct}%</b>}
+    </div>
+  );
+}
+
+function Bloco({ titulo, contagem, children, estilo }) {
+  return (
+    <div style={{ background: t.cor.papelCartao, borderRadius: t.raio.md, padding: '16px 18px', boxShadow: t.sombra.sutil, minWidth: 0, ...estilo }}>
+      <h3 style={{ ...rotuloCaixa, marginBottom: 10, display: 'flex', justifyContent: 'space-between', gap: 8 }}><span>{titulo}</span><span>{contagem}</span></h3>
+      {children}
+    </div>
+  );
+}
+
+// Cadeiras por partido: barras de cantos retos (não são clicáveis), as maiores primeiro e "Outros partidos" no fim.
+function Cadeiras({ eleitos }) {
+  const c = cadeirasPorPartido(eleitos, 6);
+  const linha = (nome, qtd, suave) => (
+    <div key={nome} style={{ display: 'grid', gridTemplateColumns: 'minmax(70px, 120px) 1fr 34px', gap: 10, alignItems: 'center', fontSize: '.84rem', padding: '3px 0' }}>
+      <span style={{ fontWeight: suave ? 400 : 600, color: suave ? t.cor.cinza : t.cor.tinta, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{nome}</span>
+      <span style={{ height: 8, background: t.cor.papelQuente2, borderRadius: 2, display: 'block' }}>
+        <span style={{ display: 'block', height: 8, borderRadius: 2, width: `${(qtd / c.maior) * 100}%`, background: suave ? '#B9B3D6' : INDIGO }} />
+      </span>
+      <b style={{ textAlign: 'right' }}>{qtd}</b>
+    </div>
+  );
+  return (
+    <div>
+      {c.linhas.map((l) => linha(l.partido, l.qtd, false))}
+      {c.outros > 0 && linha('Outros partidos', c.outros, true)}
+    </div>
+  );
+}
+
+function Governo({ gov }) {
+  const g = governoNoPrimeiroTurno(gov.candidatos);
+  if (g.eleito) {
+    return <Bloco titulo="Governador" contagem="1 eleito"><Pessoa nome={g.eleito.nome} partido={g.eleito.partido} cargo="Governador" pct={g.eleito.pct} /></Bloco>;
+  }
+  if (g.finalistas.length) {
+    return (
+      <Bloco titulo="Governador" contagem="2º turno">
+        {g.finalistas.map((c) => <Pessoa key={`${c.numero}|${c.nome}`} nome={c.nome} partido={c.partido} cargo="foi ao 2º turno" pct={c.pct} />)}
+      </Bloco>
+    );
+  }
+  return null;
+}
+
+function EleitosDoEstado({ uf, d }) {
+  const nome = NOMES_UF[uf] || uf;
+  const sen = d.sen?.eleitos || [];
+  return (
+    <>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, flexWrap: 'wrap', margin: '22px 2px 10px' }}>
+        <h3 style={rotuloCaixa}>{nome} · eleitos no 1º turno</h3>
+        <Link href={`/estado/${uf}`} style={linkOuro}>Ver tudo de {nome} <Seta direcao="direita" size={14} /></Link>
+      </div>
+      <div className="elh-g3" style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 12 }}>
+        {d.gov && <Governo gov={d.gov} />}
+        {sen.length > 0 && (
+          <Bloco titulo="Senado" contagem={`${sen.length} ${sen.length === 1 ? 'eleito' : 'eleitos'}`}>
+            <div className="elh-sen" style={{ display: 'grid', gridTemplateColumns: sen.length > 1 ? '1fr 1fr' : '1fr', gap: 18 }}>
+              {sen.map((c) => <Pessoa key={`${c.numero}|${c.nome}`} nome={c.nome} partido={c.partido} cargo="Senador" pct={c.pct} />)}
+            </div>
+          </Bloco>
+        )}
+      </div>
+      <div className="elh-g2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 12 }}>
+        {d.df?.eleitos?.length > 0 && <Bloco titulo="Câmara dos Deputados" contagem={`${d.df.eleitos.length} eleitos`}><Cadeiras eleitos={d.df.eleitos} /></Bloco>}
+        {d.de?.eleitos?.length > 0 && <Bloco titulo="Assembleia Legislativa" contagem={`${d.de.eleitos.length} eleitos`}><Cadeiras eleitos={d.de.eleitos} /></Bloco>}
+      </div>
+    </>
+  );
+}
+
+function GovernoSegundoTurno({ uf, g2 }) {
+  const nome = NOMES_UF[uf] || uf;
+  const [a, b] = [...g2.candidatos].sort((x, y) => y.votos - x.votos).slice(0, 2);
+  const pa = num(a.pct); const pb = num(b.pct);
+  const larga = (pa / ((pa + pb) || 1)) * 100;
+  const eleito = [a, b].find((c) => c.eleito);
+  const titulo = eleito ? `${bonito(eleito.nome)} é eleito governador` : (Number(g2.secoes.totalizadas) >= Number(g2.secoes.total) ? 'Resultado do 2º turno' : 'Apuração do 2º turno em andamento');
+  return (
+    <>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, flexWrap: 'wrap', margin: '22px 2px 10px' }}>
+        <h3 style={rotuloCaixa}>{nome} · governador no 2º turno</h3>
+        <Link href={`/eleicoes?visao=apuracao&cargo=governador&uf=${uf}&turno=2`} style={linkOuro}>Ver apuração de {nome} <Seta direcao="direita" size={14} /></Link>
+      </div>
+      <div style={{ background: t.cor.papelCartao, borderRadius: t.raio.lg, padding: '20px 24px', boxShadow: t.sombra.sutil }}>
+        <p style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.5rem', margin: '0 0 18px' }}>{titulo}</p>
+        <div className="elh-duelo" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+          <Lado nome={a.nome} partido={a.partido} cor={INDIGO} pct={a.pct} rodape={`${fmt(a.votos)} votos`} />
+          <Lado nome={b.nome} partido={b.partido} cor={AMBAR} pct={b.pct} rodape={`${fmt(b.votos)} votos`} direita />
+        </div>
+        <Faixa a={a} b={b} corA={INDIGO} corB={AMBAR} larga={larga} marca />
+        <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', fontSize: '.8rem', color: t.cor.cinza }}>
+          <span style={{ color: eleito ? t.cor.sim : undefined, fontWeight: eleito ? 800 : 400 }}>{eleito ? `✓ Eleito: ${bonito(eleito.nome)}` : ''}</span>
+          <span>2º turno · 25 de outubro · Fonte: <a href="https://resultados.tse.jus.br/" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit' }}>TSE</a></span>
+        </div>
+      </div>
+    </>
+  );
 }
 
 export default function ResumoEleicoesHome({ chapas = [], children }) {
   const [d1, setD1] = useState(undefined); // undefined = carregando, null = sem resultado
   const [d2, setD2] = useState(undefined);
   const [aba, setAba] = useState(null);
+  const [ufSalva, setUfSalva] = useState('');
+  const [ufVisita, setUfVisita] = useState(null); // null = não escolheu nesta visita; '' = "Todo o Brasil"
+  const cache = useRef({});
+  const [, redesenhar] = useState(0);
 
   useEffect(() => {
     const ctrl = new AbortController();
@@ -56,6 +199,31 @@ export default function ResumoEleicoesHome({ chapas = [], children }) {
       .catch((e) => { if (e.name !== 'AbortError') { setD1(null); setD2(null); } });
     return () => ctrl.abort();
   }, []);
+
+  // Estado salvo (perfil ou navegador). Quando o perfil desce para o navegador, o evento avisa.
+  useEffect(() => {
+    const ler = () => setUfSalva(ufLocal());
+    ler();
+    window.addEventListener(EVENTO_UF, ler);
+    return () => window.removeEventListener(EVENTO_UF, ler);
+  }, []);
+  const uf = ufVisita !== null ? ufVisita : ufSalva;
+
+  // Eleitos do estado: 4 cargos no 1º turno e, nos 6 estados com 2º turno, o governador do 2º turno.
+  useEffect(() => {
+    if (!uf || cache.current[uf]) return undefined;
+    const ctrl = new AbortController();
+    const get = (q) => fetch(`/api/apuracao?${q}`, { signal: ctrl.signal }).then((r) => (r.ok ? r.json() : null)).catch((e) => { if (e.name === 'AbortError') throw e; return null; });
+    const tem2 = SEGUNDO_TURNO.ufs.includes(uf);
+    Promise.all([
+      get(`cargo=governador&uf=${uf}`), get(`cargo=senador&uf=${uf}`), get(`cargo=deputado-federal&uf=${uf}`), get(`cargo=deputado-estadual&uf=${uf}`),
+      tem2 ? get(`cargo=governador&uf=${uf}&turno=2`) : Promise.resolve(null),
+    ]).then(([gov, sen, df, de, g2]) => {
+      cache.current[uf] = { gov, sen, df, de, g2: g2 && (g2.candidatos || []).length >= 2 && g2.secoes?.totalizadas > 0 ? g2 : null };
+      redesenhar((n) => n + 1);
+    }).catch((e) => { if (e.name !== 'AbortError') { cache.current[uf] = { falhou: true }; redesenhar((n) => n + 1); } });
+    return () => ctrl.abort();
+  }, [uf]);
 
   if (d1 === undefined || d2 === undefined || (d1 && aba === null)) return <section style={{ padding: '8px 24px 16px', minHeight: 520 }} aria-busy="true" />;
   if (d1 === null) return children || null;
@@ -70,17 +238,11 @@ export default function ResumoEleicoesHome({ chapas = [], children }) {
   const corDe = (c) => (chave(c) === chave(dois1[0]) ? AMBAR : INDIGO);
   const pct1De = (c) => (d1.candidatos.find((x) => chave(x) === chave(c)) || {}).pct;
 
-  let dois;
-  if (turno === 2) {
-    dois = [...d2.candidatos].sort((a, b) => b.votos - a.votos).slice(0, 2);
-  } else {
-    dois = dois1;
-  }
+  const dois = turno === 2 ? [...d2.candidatos].sort((a, b) => b.votos - a.votos).slice(0, 2) : dois1;
   const [a, b] = dois;
   const pa = num(a.pct);
   const pb = num(b.pct);
-  const soma = pa + pb || 1;
-  const larga = (pa / soma) * 100;
+  const larga = (pa / ((pa + pb) || 1)) * 100;
   const eleito = turno === 2 ? dois.find((c) => c.eleito) : null;
   const completo = Number(dados.secoes.totalizadas) >= Number(dados.secoes.total);
   const haSegundoTurno = finalistas1.length >= 2;
@@ -89,32 +251,43 @@ export default function ResumoEleicoesHome({ chapas = [], children }) {
   if (turno === 2) titulo = eleito ? `${bonito(eleito.nome)} é eleito presidente` : (completo ? 'Resultado do 2º turno' : 'Apuração do 2º turno em andamento');
   else titulo = haSegundoTurno ? 'Dois candidatos foram ao 2º turno' : (completo ? 'Resultado do 1º turno' : 'Resultado parcial do 1º turno');
   const sem50 = turno === 1 && haSegundoTurno && Math.max(pa, pb) < 50;
-  const esq = turno === 1 ? '' : (eleito ? `✓ Eleito: ${bonito(eleito.nome)}` : '');
-  const nota = turno === 1 && sem50 ? 'Nenhum candidato passou de 50%' : esq;
+  const nota = turno === 1 ? (sem50 ? 'Nenhum candidato passou de 50%' : '') : (eleito ? `✓ Eleito: ${bonito(eleito.nome)}` : '');
   const dataTurno = turno === 2 ? '25 de outubro' : '4 de outubro';
   const chapaDe = (c) => chapas.find((ch) => mesmo(c, ch));
   const rodapeDe = (c) => (turno === 2 ? `${fmt(c.votos)} votos · 1º turno: ${pct1De(c)}%` : `${fmt(c.votos)} votos válidos`);
-  // Barra: cada lado tem a cor do candidato; o texto escuro/claro segue o contraste da cor.
-  const lado = (c, larg, direita) => {
-    const cor = corDe(c);
-    return <div style={{ width: `${larg}%`, background: cor, color: cor === AMBAR ? t.cor.tinta : '#fff', display: 'flex', alignItems: 'center', justifyContent: direita ? 'flex-end' : 'flex-start', padding: '0 14px', fontWeight: 800, fontSize: '.82rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}><span className="elh-nl">{c.nome}</span><span className="elh-nc">{String(c.nome).split(' ')[0]}</span></div>;
+  const ladoDe = (c, direita) => {
+    const ch = chapaDe(c);
+    return <Lado nome={c.nome} partido={c.partido} numero={c.numero} foto={ch?.presidente?.foto_url} href={ch?.presidente?.slug ? `/presidencial/${ch.presidente.slug}` : null} cor={corDe(c)} pct={c.pct} rodape={rodapeDe(c)} direita={direita} />;
   };
+
+  const nomeUf = NOMES_UF[uf] || uf;
+  const estado = uf ? cache.current[uf] : null;
+  const tem2 = !!uf && SEGUNDO_TURNO.ufs.includes(uf);
 
   return (
     <section style={{ padding: '8px 24px 16px' }}>
       <div className="elh-fundo" style={{ background: t.cor.papelQuente2, borderRadius: t.raio.lg, padding: '22px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
           <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.7rem', margin: '0 0 4px' }}>Eleições</h2>
-          <Link href={`/eleicoes?visao=apuracao${turno === 2 ? '&turno=2' : ''}`} style={{ fontSize: '0.85rem', fontWeight: 700, color: t.cor.ouroTexto, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>Ver apuração completa <Seta direcao="direita" size={14} /></Link>
+          <Link href={`/eleicoes?visao=apuracao${turno === 2 ? '&turno=2' : ''}`} style={linkOuro}>Ver apuração completa <Seta direcao="direita" size={14} /></Link>
         </div>
         <p style={{ color: t.cor.cinza, fontSize: '0.92rem', margin: '0 0 16px' }}>
           {d2 ? 'Resumo do 1º turno (4 de outubro) e do 2º turno (25 de outubro)' : 'Resultado do 1º turno (4 de outubro)'}, com {dados.secoes.pct_totalizadas}% das seções apuradas.
         </p>
 
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 6 }}>
+          <div style={{ width: 340, maxWidth: '100%' }}>
+            <CampoSelect opcoes={OPCOES_UF} valor={uf} placeholder="Escolha seu estado" aoLabel="Escolha o estado dos eleitos" icone={<Pino />} aoSelecionar={(v) => setUfVisita(v)} />
+          </div>
+        </div>
+        <p style={{ margin: '0 4px 12px', textAlign: 'right', fontSize: '.78rem', color: t.cor.cinza, minHeight: '1.2em' }}>
+          {uf ? <>Trocar aqui vale só para esta visita. Para mudar o estado do site, use o <Link href="/perfil" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>perfil</Link>.</> : ''}
+        </p>
+
         <div style={{ background: t.cor.papelCartao, borderRadius: t.raio.lg, padding: '20px 24px', boxShadow: t.sombra.sutil }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap', marginBottom: 18 }}>
             <div>
-              <h3 style={{ margin: 0, fontSize: '.78rem', letterSpacing: '.06em', textTransform: 'uppercase', color: t.cor.cinza, fontFamily: t.fonte.corpo, fontWeight: 700 }}>Presidente · {turno}º turno</h3>
+              <h3 style={rotuloCaixa}>Presidente · {turno}º turno</h3>
               <p style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.5rem', margin: '4px 0 0' }}>{titulo}</p>
             </div>
             {d2 && (
@@ -126,23 +299,31 @@ export default function ResumoEleicoesHome({ chapas = [], children }) {
           </div>
 
           <div className="elh-duelo" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-            <Lado c={a} chapa={chapaDe(a)} cor={corDe(a)} pct={a.pct} rodape={rodapeDe(a)} />
-            <Lado c={b} chapa={chapaDe(b)} cor={corDe(b)} pct={b.pct} rodape={rodapeDe(b)} direita />
+            {ladoDe(a, false)}
+            {ladoDe(b, true)}
           </div>
-
-          <div role="img" aria-label={`${a.nome} ${a.pct}%, ${b.nome} ${b.pct}%`} style={{ display: 'flex', height: 30, borderRadius: 7, overflow: 'hidden', margin: '18px 0 6px', position: 'relative' }}>
-            {lado(a, larga, false)}
-            {lado(b, 100 - larga, true)}
-            {turno === 2 && <span aria-hidden="true" style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: 2, background: t.cor.tinta }} />}
-          </div>
+          <Faixa a={a} b={b} corA={corDe(a)} corB={corDe(b)} larga={larga} marca={turno === 2} />
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', fontSize: '.8rem', color: t.cor.cinza }}>
             <span style={{ color: nota.startsWith('✓') ? t.cor.sim : undefined, fontWeight: nota.startsWith('✓') ? 800 : 400 }}>{nota}</span>
             <span>{turno}º turno · {dataTurno} · Fonte: <a href="https://resultados.tse.jus.br/" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit' }}>TSE</a></span>
           </div>
         </div>
 
+        {uf && !estado && <div aria-busy="true" style={{ minHeight: 260 }} />}
+        {uf && estado?.falhou && <p style={{ margin: '18px 2px 0', color: t.cor.cinza, fontSize: '.9rem' }}>Não foi possível carregar os eleitos de {nomeUf} agora. Tente de novo em instantes.</p>}
+        {uf && estado && !estado.falhou && turno === 1 && <EleitosDoEstado uf={uf} d={estado} />}
+        {uf && estado && !estado.falhou && turno === 2 && (
+          <>
+            {tem2 && estado.g2 && <GovernoSegundoTurno uf={uf} g2={estado.g2} />}
+            <div role="note" style={{ background: t.cor.papelQuente, borderRadius: t.raio.md, padding: '14px 18px', fontSize: '.92rem', marginTop: 14 }}>
+              <b>Em {nomeUf} não houve 2º turno para {tem2 ? 'senador e deputados' : 'governador, senador e deputados'}.</b> Esses cargos foram decididos no 1º turno.{' '}
+              <button type="button" onClick={() => setAba(1)} style={{ border: 'none', background: 'none', padding: 0, font: 'inherit', fontWeight: 700, color: t.cor.ouroTexto, cursor: 'pointer', textDecoration: 'underline' }}>Ver os eleitos do 1º turno</button>
+            </div>
+          </>
+        )}
+
         <p style={{ margin: '14px 2px 0', fontSize: '.86rem' }}>
-          <Link href="/eleicoes" style={{ color: t.cor.ouroTexto, fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>Ver todos os candidatos <Seta direcao="direita" size={14} /></Link>
+          <Link href="/eleicoes" style={linkOuro}>Ver todos os candidatos <Seta direcao="direita" size={14} /></Link>
         </p>
       </div>
       <style jsx global>{`
@@ -154,6 +335,7 @@ export default function ResumoEleicoesHome({ chapas = [], children }) {
           .elh-fundo { padding: 16px !important; }
           .elh-duelo { grid-template-columns: 1fr !important; gap: 14px !important; }
           .elh-duelo > * { flex-direction: row !important; text-align: left !important; }
+          .elh-g3, .elh-g2, .elh-sen { grid-template-columns: 1fr !important; }
         }
       `}</style>
     </section>
