@@ -41,7 +41,7 @@ const OPCOES_RESPOSTA = [
   { valor: 'contra', rotulo: 'Contra' },
   { valor: 'sem_opiniao', rotulo: 'Sem opinião' },
 ];
-// Mesma ordem das abas de /candidatos-2026.
+// Mesma ordem das abas de /eleicoes.
 const CARGOS = [
   { valor: 'senador', rotulo: 'Senador' },
   { valor: 'governador', rotulo: 'Governador' },

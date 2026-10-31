@@ -21,9 +21,9 @@ export const TIPOS = ['paginas', 'perfis', 'candidatos', 'votacoes', 'fiscal', '
 
 export const LIMITE_POR_ARQUIVO = 50000; // limite do protocolo
 
-// Páginas fixas. /presidenciaveis fica fora de propósito: redireciona para /candidatos-2026, e
+// Páginas fixas. /presidenciaveis fica fora de propósito: redireciona para /eleicoes, e
 // endereço que redireciona não deve estar no mapa. /afinidade entrou em 18/10/2026.
-export const FIXAS = ['', '/comecar', '/deputados', '/senadores', '/votacoes', '/cpis', '/gastos-publicos', '/gastos-parlamentares', '/candidatos-2026', '/entenda', '/entenda/atualizacao', '/entenda/esquerda-e-direita', '/entenda/jogo-do-mapa-politico', '/afinidade', '/sobre', '/correcoes', '/privacidade'];
+export const FIXAS = ['', '/comecar', '/deputados', '/senadores', '/votacoes', '/cpis', '/gastos-publicos', '/gastos-parlamentares', '/eleicoes', '/entenda', '/entenda/atualizacao', '/entenda/esquerda-e-direita', '/entenda/jogo-do-mapa-politico', '/afinidade', '/sobre', '/correcoes', '/privacidade'];
 
 export const UFS = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
 

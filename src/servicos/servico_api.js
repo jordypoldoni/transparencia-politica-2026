@@ -1273,7 +1273,7 @@ const ServicoAPI = {
 
     // CANDIDATOS A GOVERNADOR 2026 (24/09/2026). Sao 201 no pais, de 4 em AL a 11 no DF, MG e
     // PI: cabe tudo sem paginacao pesada, mas a lista usa o mesmo formato das outras para a
-    // pagina /candidatos-2026 poder tratar os tres cargos igual.
+    // pagina /eleicoes poder tratar os tres cargos igual.
     listarCandidatosGovernador: async ({ ano = 2026, uf = null, busca = null, pagina = 1, porPagina = 24 } = {}) => {
         let q = supabase
             .from('candidatos_governador')
@@ -1318,7 +1318,7 @@ const ServicoAPI = {
     //
     // Deputado federal nao cabe inteiro: sao 1.119 em SP, 457 no RS. O recorte aqui e quem
     // JA TEM MANDATO (agente_id preenchido), porque desses o site tem gasto e voto para
-    // mostrar; o resto fica a um clique, na lista completa de /candidatos-2026.
+    // mostrar; o resto fica a um clique, na lista completa de /eleicoes.
     // Governador entrou em 24/09. Deputado estadual ainda nao: a pagina diz isso em vez de
     // fingir que a cedula esta completa.
     montarCedula: async ({ uf, ano = 2026 }) => {

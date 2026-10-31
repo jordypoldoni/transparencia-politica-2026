@@ -1,7 +1,7 @@
 // Candidatos a Deputado ESTADUAL 2026, lidos do TSE NA HORA. (25/09/2026)
 // GET /api/candidatos-deputado-estadual?uf=RS&busca=&pagina=
 //
-// Mesmo contrato das rotas dos outros cargos ({ itens, total }), para a página /candidatos-2026
+// Mesmo contrato das rotas dos outros cargos ({ itens, total }), para a página /eleicoes
 // tratar a aba igual. A diferença é a origem: nada disto está no banco. A regra toda mora em
 // src/lib/candidatosEstaduais.js, que o getServerSideProps da página também usa.
 import { listarCandidatosEstaduais, TTL_LISTA_S } from '../../src/lib/candidatosEstaduais';

@@ -150,8 +150,8 @@ function ListaDeputadoFederal({ dadosIniciais, resumo, filtrosIniciais, paginaIn
     if (partido) q.set('partido', partido);
     if (buscaAlvo) q.set('busca', buscaAlvo);
     if (paginaAlvo > 1) q.set('pagina', String(paginaAlvo));
-    router.replace(`/candidatos-2026?${q.toString()}`, undefined, { shallow: true });
-    lembrarLista(cfg.chave, `/candidatos-2026?${q.toString()}`);
+    router.replace(`/eleicoes?${q.toString()}`, undefined, { shallow: true });
+    lembrarLista(cfg.chave, `/eleicoes?${q.toString()}`);
   };
 
   // Quem chegou já filtrado (link compartilhado, ou volta pelo navegador) também fica anotado.
@@ -161,7 +161,7 @@ function ListaDeputadoFederal({ dadosIniciais, resumo, filtrosIniciais, paginaIn
     if (filtrosIniciais.partido) q.set('partido', filtrosIniciais.partido);
     if (filtrosIniciais.busca) q.set('busca', filtrosIniciais.busca);
     if (paginaInicial > 1) q.set('pagina', String(paginaInicial));
-    lembrarLista(cfg.chave, `/candidatos-2026?${q.toString()}`);
+    lembrarLista(cfg.chave, `/eleicoes?${q.toString()}`);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const aoMudarBusca = (valor) => {
@@ -252,16 +252,16 @@ function ListaDeputadoFederal({ dadosIniciais, resumo, filtrosIniciais, paginaIn
 }
 
 // ALTERNADOR "Candidatos | Apuração" (02/10/2026): as duas visões moram na mesma página de
-// Eleições 2026. A apuração é a mesma rota com ?visao=apuracao, para não criar menu nem página nova.
+// Eleições. A apuração é a mesma rota com ?visao=apuracao, para não criar menu nem página nova.
 function AlternarVisao({ visao, cargo, turno = 1 }) {
   // Celular (22/10/2026): campo de escolha, como o de cargo, em vez de pastilhas lado a lado.
   const sufixo = turno === 2 ? '&turno=2' : '';
   return (
     <div style={{ marginBottom: '10px' }}>
       <EscolhaCompacta rotulo="Visão da página" valor={visao} opcoes={[
-        { valor: 'candidatos', rotulo: 'Candidatos', href: `/candidatos-2026?cargo=${cargo}${sufixo}` },
-        { valor: 'apuracao', rotulo: 'Apuração', href: `/candidatos-2026?visao=apuracao&cargo=${cargo}${sufixo}` },
-        { valor: 'replay', rotulo: 'Replay', href: '/candidatos-2026?visao=replay' },
+        { valor: 'candidatos', rotulo: 'Candidatos', href: `/eleicoes?cargo=${cargo}${sufixo}` },
+        { valor: 'apuracao', rotulo: 'Apuração', href: `/eleicoes?visao=apuracao&cargo=${cargo}${sufixo}` },
+        { valor: 'replay', rotulo: 'Replay', href: '/eleicoes?visao=replay' },
       ]} />
     </div>
   );
@@ -270,8 +270,8 @@ function AlternarVisao({ visao, cargo, turno = 1 }) {
 // Endereços da barra de controle (computador). O 1º turno é o padrão e não leva `turno` no endereço.
 // O Replay não tem cargo e, ao entrar nele por outra visão, abre sempre no 1º turno (o 2º só abre pelo seletor de turno, depois da hora).
 const hrefEleicoes = (visao, cargo, turno) => visao === 'replay'
-  ? `/candidatos-2026?visao=replay${turno === 2 ? '&turno=2' : ''}`
-  : `/candidatos-2026?${visao === 'apuracao' ? 'visao=apuracao&' : ''}cargo=${cargo}${turno === 2 ? '&turno=2' : ''}`;
+  ? `/eleicoes?visao=replay${turno === 2 ? '&turno=2' : ''}`
+  : `/eleicoes?${visao === 'apuracao' ? 'visao=apuracao&' : ''}cargo=${cargo}${turno === 2 ? '&turno=2' : ''}`;
 
 const CARGOS_APURACAO = [
   { valor: 'presidente', rotulo: 'Presidente' },
@@ -285,7 +285,7 @@ const CARGOS_APURACAO = [
 // não leva `turno` no endereço, então os links antigos continuam iguais. O 2º turno só tem presidente
 // e governador (src/lib/turnos.js); se o cargo não existir nele, a página abre em presidente.
 function SeletorTurno({ turno, cargo, visao = 'apuracao', turno2Travado = false }) {
-  const base = visao === 'replay' ? '/candidatos-2026?visao=replay' : `/candidatos-2026?${visao === 'apuracao' ? 'visao=apuracao&' : ''}cargo=${cargo}`;
+  const base = visao === 'replay' ? '/eleicoes?visao=replay' : `/eleicoes?${visao === 'apuracao' ? 'visao=apuracao&' : ''}cargo=${cargo}`;
   return (
     <div style={{ marginBottom: '16px' }}>
       <EscolhaCompacta rotulo="Turno" valor={turno} opcoes={[
@@ -297,14 +297,14 @@ function SeletorTurno({ turno, cargo, visao = 'apuracao', turno2Travado = false 
 }
 
 function PaginaApuracao({ cargo, ufInicial, turno }) {
-  const hrefDe = (c) => `/candidatos-2026?visao=apuracao&cargo=${c}${turno === 2 ? '&turno=2' : ''}`;
+  const hrefDe = (c) => `/eleicoes?visao=apuracao&cargo=${c}${turno === 2 ? '&turno=2' : ''}`;
   const cargosDoTurno = CARGOS_APURACAO.filter((c) => disponivelNoTurno(turno, c.valor, SEGUNDO_TURNO.ufs[0]));
   return (
     <div className="pagina">
       <Head>
         <title>Apuração 2026: resultados das eleições, seção por seção | Lume</title>
         <meta name="description" content="Resultado oficial da apuração das eleições de 2026, lido do TSE: seções apuradas, comparecimento, votos válidos, brancos, nulos e candidatos por votos. Atualiza sozinho." />
-        <link rel="canonical" href="https://www.lumecidadao.com.br/candidatos-2026?visao=apuracao" />
+        <link rel="canonical" href="https://www.lumecidadao.com.br/eleicoes?visao=apuracao" />
       </Head>
       <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.8rem,4vw,2.6rem)', margin: '0 0 10px' }}>
         Apuração 2026
@@ -329,7 +329,7 @@ function PaginaApuracao({ cargo, ufInicial, turno }) {
   );
 }
 
-// REPLAY (22/10/2026, D-077): terceira visão de Eleições 2026 (?visao=replay). O 1º turno está aberto; o 2º turno aparece
+// REPLAY (22/10/2026, D-077): terceira visão de Eleições (?visao=replay). O 1º turno está aberto; o 2º turno aparece
 // no seletor, mas só fica clicável a partir das 12h de 26/10/2026 (src/lib/replayLiberacao.js, checado no servidor).
 // O replay do 2º turno em si só existe depois dos boletins de urna do 2º turno (D-073), então, mesmo liberado, a visão
 // do 2º turno mostra um aviso e leva para a apuração ao vivo.
@@ -340,7 +340,7 @@ function PaginaReplay({ turno, liberado2t }) {
       <Head>
         <title>{`Replay da apuração ${turno === 2 ? 'do 2º turno ' : ''}de 2026: veja as urnas chegarem, estado por estado | Lume`}</title>
         <meta name="description" content={`Reveja a apuração do ${turno === 2 ? '2º' : '1º'} turno de 2026 minuto a minuto: em que ordem as urnas chegaram ao TSE e como os votos foram sendo contados, estado por estado.`} />
-        <link rel="canonical" href={`https://www.lumecidadao.com.br/candidatos-2026?visao=replay${turno === 2 ? '&turno=2' : ''}`} />
+        <link rel="canonical" href={`https://www.lumecidadao.com.br/eleicoes?visao=replay${turno === 2 ? '&turno=2' : ''}`} />
       </Head>
       <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.8rem,4vw,2.6rem)', margin: '0 0 10px' }}>
         Replay da apuração {turno === 2 ? 'do 2º turno' : 'do 1º turno'} de 2026
@@ -372,7 +372,7 @@ export default function Candidatos2026(props) {
 function PaginaCandidatosSegundoTurno({ cargo, chapas, governadores, semCadastro, erro, totalGovernador }) {
   // Contagem vem do TSE (props.totalGovernador) e vale em qualquer aba; os cards só existem na aba Governador.
   const totalGov = totalGovernador != null ? totalGovernador : governadores.reduce((n, g) => n + g.itens.length, 0);
-  const href = (c) => `/candidatos-2026?cargo=${c}&turno=2`;
+  const href = (c) => `/eleicoes?cargo=${c}&turno=2`;
   const avisoTse = (
     <p style={{ color: t.cor.alertaTexto, lineHeight: 1.5 }}>
       Não foi possível consultar o TSE agora para saber quem disputa o 2º turno. Tente de novo em alguns minutos. Você também pode consultar direto no{' '}
@@ -385,7 +385,7 @@ function PaginaCandidatosSegundoTurno({ cargo, chapas, governadores, semCadastro
       <Head>
         <title>Candidatos do 2º turno 2026: Presidente e Governador | Lume</title>
         <meta name="description" content="Quem disputa o 2º turno das eleições de 2026, em 25 de outubro: candidatos a Presidente e a Governador (AC, AM, DF, ES, RN e TO), com partido, coligação e situação da candidatura, direto da fonte oficial (TSE)." />
-        <link rel="canonical" href="https://www.lumecidadao.com.br/candidatos-2026" />
+        <link rel="canonical" href="https://www.lumecidadao.com.br/eleicoes" />
       </Head>
       <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.8rem,4vw,2.6rem)', margin: '0 0 10px' }}>
         Candidatos 2026
@@ -460,7 +460,7 @@ function PaginaCandidatos({ cargo, chapas, deputados, resumo, resumoSenado, resu
       <Head>
         <title>Candidatos 2026: Presidente, Governador, Senador, Deputado Federal e Estadual | Lume</title>
         <meta name="description" content="Todos os candidatos à Presidência, aos governos estaduais, ao Senado, à Câmara dos Deputados e às Assembleias Legislativas em 2026: partido, coligação e situação da candidatura de cada um, sem análise ou opinião, direto da fonte oficial (TSE)." />
-        <link rel="canonical" href="https://www.lumecidadao.com.br/candidatos-2026" />
+        <link rel="canonical" href="https://www.lumecidadao.com.br/eleicoes" />
       </Head>
 
       <h1 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.8rem,4vw,2.6rem)', margin: '0 0 10px' }}>
@@ -480,11 +480,11 @@ function PaginaCandidatos({ cargo, chapas, deputados, resumo, resumoSenado, resu
       {/* Celular (27/09/2026): um campo de escolha no lugar das cinco pílulas, que ocupavam 4 linhas. */}
       <nav aria-label="Cargo" className="so-celular" style={{ marginBottom: '20px' }}>
         <EscolhaCompacta rotulo="Cargo" valor={cargo} opcoes={[
-          { valor: 'presidente', rotulo: `Presidente (${totalPresidente})`, href: '/candidatos-2026?cargo=presidente' },
-          { valor: 'senador', rotulo: `Senador (${(resumoSenado.total || 0).toLocaleString('pt-BR')})`, href: '/candidatos-2026?cargo=senador' },
-          { valor: 'governador', rotulo: `Governador (${(resumoGoverno.total || 0).toLocaleString('pt-BR')})`, href: '/candidatos-2026?cargo=governador' },
-          { valor: 'deputado-federal', rotulo: `Deputado Federal (${(resumo.total || 0).toLocaleString('pt-BR')})`, href: '/candidatos-2026?cargo=deputado-federal' },
-          { valor: 'deputado-estadual', rotulo: `Deputado Estadual${resumoEstadual.total != null ? ` (${resumoEstadual.total.toLocaleString('pt-BR')})` : ''}`, href: '/candidatos-2026?cargo=deputado-estadual' },
+          { valor: 'presidente', rotulo: `Presidente (${totalPresidente})`, href: '/eleicoes?cargo=presidente' },
+          { valor: 'senador', rotulo: `Senador (${(resumoSenado.total || 0).toLocaleString('pt-BR')})`, href: '/eleicoes?cargo=senador' },
+          { valor: 'governador', rotulo: `Governador (${(resumoGoverno.total || 0).toLocaleString('pt-BR')})`, href: '/eleicoes?cargo=governador' },
+          { valor: 'deputado-federal', rotulo: `Deputado Federal (${(resumo.total || 0).toLocaleString('pt-BR')})`, href: '/eleicoes?cargo=deputado-federal' },
+          { valor: 'deputado-estadual', rotulo: `Deputado Estadual${resumoEstadual.total != null ? ` (${resumoEstadual.total.toLocaleString('pt-BR')})` : ''}`, href: '/eleicoes?cargo=deputado-estadual' },
         ]} />
       </nav>
       {/* Ordem pedida pelo Jordy em 25/09: Governador antes de Deputado Federal, e os dois legislativos da UF
@@ -493,11 +493,11 @@ function PaginaCandidatos({ cargo, chapas, deputados, resumo, resumoSenado, resu
       <BarraControleEleicoes visao="candidatos" turno={1} cargo={cargo}
         hrefVisao={(v) => hrefEleicoes(v, cargo, 1)} hrefTurno={(n) => hrefEleicoes('candidatos', cargo, n)}
         cargos={[
-          { valor: 'presidente', rotulo: `Presidente (${totalPresidente})`, href: '/candidatos-2026?cargo=presidente' },
-          { valor: 'senador', rotulo: `Senador (${(resumoSenado.total || 0).toLocaleString('pt-BR')})`, href: '/candidatos-2026?cargo=senador' },
-          { valor: 'governador', rotulo: `Governador (${(resumoGoverno.total || 0).toLocaleString('pt-BR')})`, href: '/candidatos-2026?cargo=governador' },
-          { valor: 'deputado-federal', rotulo: `Dep. Federal (${(resumo.total || 0).toLocaleString('pt-BR')})`, href: '/candidatos-2026?cargo=deputado-federal' },
-          { valor: 'deputado-estadual', rotulo: `Dep. Estadual${resumoEstadual.total != null ? ` (${resumoEstadual.total.toLocaleString('pt-BR')})` : ''}`, href: '/candidatos-2026?cargo=deputado-estadual' },
+          { valor: 'presidente', rotulo: `Presidente (${totalPresidente})`, href: '/eleicoes?cargo=presidente' },
+          { valor: 'senador', rotulo: `Senador (${(resumoSenado.total || 0).toLocaleString('pt-BR')})`, href: '/eleicoes?cargo=senador' },
+          { valor: 'governador', rotulo: `Governador (${(resumoGoverno.total || 0).toLocaleString('pt-BR')})`, href: '/eleicoes?cargo=governador' },
+          { valor: 'deputado-federal', rotulo: `Dep. Federal (${(resumo.total || 0).toLocaleString('pt-BR')})`, href: '/eleicoes?cargo=deputado-federal' },
+          { valor: 'deputado-estadual', rotulo: `Dep. Estadual${resumoEstadual.total != null ? ` (${resumoEstadual.total.toLocaleString('pt-BR')})` : ''}`, href: '/eleicoes?cargo=deputado-estadual' },
         ]} />
 
       {cargo === 'presidente' ? (

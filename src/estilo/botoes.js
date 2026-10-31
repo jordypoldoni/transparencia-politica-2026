@@ -1,7 +1,7 @@
 import { t } from './tokens';
 
 // Botao de paginacao do site. Fonte UNICA: o par "Anterior / Proxima" existia escrito duas
-// vezes, em /deputados e em /candidatos-2026, e com aparencias diferentes - um cinza claro e
+// vezes, em /deputados e em /eleicoes, e com aparencias diferentes - um cinza claro e
 // outro indigo com texto branco, um com setas e outro sem. Mesma funcao, duas caras.
 //
 // Regras das Diretrizes de Design aplicadas aqui: pilula, sem borda, indigo com texto ambar,

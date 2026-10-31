@@ -28,14 +28,14 @@ const CARGOS = {
   'deputado-federal': {
     nome: 'Deputado(a) Federal',
     chaveLista: 'deputado-federal',
-    listaPadrao: '/candidatos-2026?cargo=deputado-federal',
+    listaPadrao: '/eleicoes?cargo=deputado-federal',
     listaParlamentares: { href: '/deputados', rotulo: 'lista de Deputados' },
     semPlano: 'Deputado(a) Federal não é obrigado(a) por lei a apresentar um plano de governo na Justiça Eleitoral: essa exigência vale só para cargos majoritários do Executivo (Presidente, Governador, Prefeito). Por isso não há um documento de propostas aqui.',
   },
   senador: {
     nome: 'Senador(a)',
     chaveLista: 'senador',
-    listaPadrao: '/candidatos-2026?cargo=senador',
+    listaPadrao: '/eleicoes?cargo=senador',
     listaParlamentares: { href: '/senadores', rotulo: 'lista de Senadores' },
     semPlano: 'Senador(a) não é obrigado(a) por lei a apresentar um plano de governo na Justiça Eleitoral: a eleição para o Senado é majoritária, mas a exigência vale só para o Executivo (Presidente, Governador, Prefeito). Por isso não há um documento de propostas aqui.',
   },
@@ -45,7 +45,7 @@ const CARGOS = {
   governador: {
     nome: 'Governador(a)',
     chaveLista: 'governador',
-    listaPadrao: '/candidatos-2026?cargo=governador',
+    listaPadrao: '/eleicoes?cargo=governador',
     listaParlamentares: null,
     semMandato: 'Não exerce mandato no Congresso Nacional hoje, então não há gastos de cota, votações nem presença a mostrar aqui. Governo de estado não é acompanhado pelo site: o que temos do Executivo estadual são os gastos do estado, na seção de gastos públicos.',
     comPlano: 'Candidato(a) a Governador(a) é obrigado(a) por lei a entregar uma proposta de governo à Justiça Eleitoral. Quando o TSE publica o documento, ele aparece na seção de documentos abaixo, no original.',
@@ -57,7 +57,7 @@ const CARGOS = {
   'deputado-estadual': {
     nome: 'Deputado(a) Estadual',
     chaveLista: 'deputado-estadual',
-    listaPadrao: '/candidatos-2026?cargo=deputado-estadual',
+    listaPadrao: '/eleicoes?cargo=deputado-estadual',
     listaParlamentares: null,
     semMandato: 'Esta ficha ainda não está ligada ao mandato que o(a) candidato(a) possa exercer hoje, então gastos e votos não aparecem aqui. A trajetória eleitoral abaixo mostra se já foi eleito(a) antes. Das Assembleias Legislativas, o site acompanha por enquanto as de SP, do RS e de MG, no menu Parlamentares.',
     semPlano: 'Deputado(a) Estadual não é obrigado(a) por lei a apresentar um plano de governo na Justiça Eleitoral: essa exigência vale só para cargos majoritários do Executivo (Presidente, Governador, Prefeito). Por isso não há um documento de propostas aqui.',

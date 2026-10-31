@@ -7,7 +7,7 @@ Endereço: https://www.lumecidadao.com.br
 ## O que há no site
 - Perfil de cada deputado federal, senador e deputado estadual (SP, RS, MG): gastos da verba de mandato, presença e votos nas votações nominais, coerência com o partido, candidatura. Exemplo de endereço: /deputado/<nome-partido-uf-id> e /senador/<nome-partido-uf-id>.
 - Votações da Câmara, do Senado e da Assembleia do RS, com o resultado e como cada parlamentar votou: /votacoes e /votacao/<id>.
-- Candidatos de 2026 (Presidente, Governador, Senador, Deputado Federal e Estadual) e apuração das eleições com dados do TSE: /candidatos-2026.
+- Candidatos de 2026 (Presidente, Governador, Senador, Deputado Federal e Estadual) e apuração das eleições com dados do TSE: /eleicoes.
 - CPIs e pedidos de CPI: /cpis.
 - Gastos públicos da União, dos estados, do DF e dos municípios: /gastos-publicos.
 - Afinidade: compara as respostas do usuário com os votos dos parlamentares: /afinidade.

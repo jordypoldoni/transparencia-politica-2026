@@ -12,7 +12,7 @@ const MapaBrasilApuracao = dynamic(() => import('./MapaBrasilApuracao'), { ssr: 
 // Celular (D-032): o mapa de verdade depende de hover e tem estados minúsculos; no celular entra a grade de quadrados.
 const MapaGradeApuracao = dynamic(() => import('./MapaGradeApuracao'), { ssr: false, loading: () => <p style={{ color: t.cor.cinza }}>Carregando o resultado por estado…</p> });
 
-// APURAÇÃO dentro de "Eleições 2026" (02/10/2026). Mostra o resultado oficial do TSE lido por
+// APURAÇÃO dentro de "Eleições" (02/10/2026). Mostra o resultado oficial do TSE lido por
 // /api/apuracao (cache de 10 s na borda com a apuração em andamento, 30 s nos outros casos; nada é guardado no banco). A tela se atualiza sozinha
 // enquanto a aba está aberta. Texto neutro: só número e fonte.
 const UFS = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];

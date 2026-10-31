@@ -6,7 +6,7 @@ import ReplayLinhaDoTempo from './ReplayLinhaDoTempo';
 import ReplayAviso from './ReplayAviso';
 import { VELOCIDADES, VELOCIDADE_PADRAO, MINUTOS_TOTAIS, limitarMinuto, avancar, fracoes, urnasRecebidas, recebendoAgora, votosNoMinuto } from '../src/lib/replayApuracao';
 
-// REPLAY DA APURAÇÃO (22/10/2026, D-073, D-074, D-076, D-077): corpo da visão "Replay" de Eleições 2026 (?visao=replay).
+// REPLAY DA APURAÇÃO (22/10/2026, D-073, D-074, D-076, D-077): corpo da visão "Replay" de Eleições (?visao=replay).
 // Pinta o mapa com as seções recebidas por estado a cada minuto (public/replay/1t-2026-secoes.json) e as barras de votos
 // (public/replay/1t-2026-votos.json). Não lê o banco nem a API da apuração real.
 // LAYOUT (22/10, pedido do Jordy): tudo que importa cabe na primeira tela do computador, sem rolar. A altura da tela decide o tamanho do mapa

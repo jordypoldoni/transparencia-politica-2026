@@ -1,7 +1,7 @@
 import Segmentado from './Segmentado';
 import { t } from '../src/estilo/tokens';
 
-// BARRA DE CONTROLE de Eleições 2026 (12/10/2026), só computador. Uma linha: à esquerda "Candidatos | Apuração" e,
+// BARRA DE CONTROLE de Eleições (12/10/2026), só computador. Uma linha: à esquerda "Candidatos | Apuração" e,
 // colado nele, o turno (o "›" e a proximidade dizem que o turno pertence à visão escolhida); na ponta direita,
 // os cargos. No celular continuam os controles de antes (campo de escolha), por isso o `so-computador`.
 //   visao: 'candidatos' | 'apuracao' | 'replay'   turno: 1 | 2   cargos: [{ valor, rotulo, href }]
