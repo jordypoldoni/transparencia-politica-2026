@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { nomeBonito, pctNum, cadeirasPorPartido, governoNoPrimeiroTurno, ufConhecida } from '../src/lib/eleicoesHome.js';
+import { nomeBonito, pctNum, cadeirasPorPartido, cadeirasDeContagem, governoNoPrimeiroTurno, ufConhecida } from '../src/lib/eleicoesHome.js';
 
 test('nomeBonito deixa preposições em minúscula', () => {
   assert.equal(nomeBonito('CELINA LEÃO'), 'Celina Leão');
@@ -43,4 +43,12 @@ test('ufConhecida', () => {
   assert.equal(ufConhecida('rs', ['RS', 'SC']), true);
   assert.equal(ufConhecida('XX', ['RS']), false);
   assert.equal(ufConhecida('', ['RS']), false);
+});
+
+test('cadeirasDeContagem equivale a cadeirasPorPartido', () => {
+  const r = cadeirasDeContagem({ PL: 2, PT: 3, MDB: 1, NOVO: 1, PP: 1 }, 3);
+  assert.deepEqual(r.linhas, [{ partido: 'PT', qtd: 3 }, { partido: 'PL', qtd: 2 }, { partido: 'MDB', qtd: 1 }]);
+  assert.equal(r.outros, 2);
+  assert.equal(r.total, 8);
+  assert.deepEqual(cadeirasDeContagem(undefined), { total: 0, linhas: [], outros: 0, maior: 1 });
 });
