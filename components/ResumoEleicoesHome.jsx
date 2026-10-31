@@ -236,7 +236,7 @@ function GovernoSegundoTurno({ uf, g2, fotos }) {
         <h3 style={rotuloCaixa}>{nome} · governador no 2º turno</h3>
         <Link href={`/eleicoes?visao=apuracao&cargo=governador&uf=${uf}&turno=2`} style={linkOuro}>Ver apuração de {nome} <Seta direcao="direita" size={14} /></Link>
       </div>
-      <div style={{ background: t.cor.papelCartao, borderRadius: t.raio.lg, padding: '20px 24px', boxShadow: t.sombra.sutil }}>
+      <div className="elh-cartao" style={{ background: t.cor.papelCartao, borderRadius: t.raio.lg, padding: '20px 24px', boxShadow: t.sombra.sutil }}>
         <p style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.5rem', margin: '0 0 18px' }}>{titulo}</p>
         <div className="elh-duelo" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
           <Lado nome={a.nome} partido={a.partido} cor={INDIGO} pct={a.pct} rodape={`${fmt(a.votos)} votos`} {...lado(a)} />
@@ -386,7 +386,7 @@ export default function ResumoEleicoesHome({ chapas = [], children }) {
     return () => ctrl.abort();
   }, [uf]);
 
-  if (d1 === undefined || d2 === undefined || (d1 && aba === null)) return <section style={{ padding: '8px 24px 16px', minHeight: 520 }} aria-busy="true" />;
+  if (d1 === undefined || d2 === undefined || (d1 && aba === null)) return <section className="secao-home" style={{ paddingTop: 8, paddingBottom: 16, minHeight: 520 }} aria-busy="true" />;
   if (d1 === null) return children || null;
 
   const dados = aba === 2 && d2 ? d2 : d1;
@@ -426,7 +426,7 @@ export default function ResumoEleicoesHome({ chapas = [], children }) {
   const tem2 = !!uf && SEGUNDO_TURNO.ufs.includes(uf);
 
   return (
-    <section style={{ padding: '8px 24px 16px' }}>
+    <section className="secao-home" style={{ paddingTop: 8, paddingBottom: 16 }}>
       <div className="elh-fundo" style={{ background: t.cor.papelQuente2, borderRadius: t.raio.lg, padding: '22px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
           <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.7rem', margin: '0 0 4px' }}>Eleições</h2>
@@ -446,7 +446,7 @@ export default function ResumoEleicoesHome({ chapas = [], children }) {
           {uf ? <>Trocar aqui vale só para esta visita. Para mudar o estado do site, use o <Link href="/perfil" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>perfil</Link>.</> : ''}
         </p>
 
-        <div style={{ background: t.cor.papelCartao, borderRadius: t.raio.lg, padding: '20px 24px', boxShadow: t.sombra.sutil }}>
+        <div className="elh-cartao" style={{ background: t.cor.papelCartao, borderRadius: t.raio.lg, padding: '20px 24px', boxShadow: t.sombra.sutil }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap', marginBottom: 18 }}>
             <div>
               <h3 style={rotuloCaixa}>Presidente · {turno}º turno</h3>
@@ -500,7 +500,8 @@ export default function ResumoEleicoesHome({ chapas = [], children }) {
         @media (max-width: 640px) {
           .elh-nl { display: none; }
           .elh-nc { display: inline; }
-          .elh-fundo { padding: 16px !important; }
+          .elh-fundo { padding: 0 !important; background: transparent !important; border-radius: 0 !important; }
+          .elh-cartao { padding: 16px 14px !important; }
           .elh-duelo { grid-template-columns: 1fr !important; gap: 14px !important; }
           .elh-duelo > * { flex-direction: row !important; text-align: left !important; }
           .elh-g3, .elh-g2, .elh-sen, .elh-g3b { grid-template-columns: 1fr !important; }
