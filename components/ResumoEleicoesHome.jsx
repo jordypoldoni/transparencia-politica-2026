@@ -500,7 +500,7 @@ export default function ResumoEleicoesHome({ chapas = [], children }) {
         @media (max-width: 640px) {
           .elh-nl { display: none; }
           .elh-nc { display: inline; }
-          .elh-fundo { padding: 10px !important; }
+          .elh-fundo { padding: 0 !important; background: transparent !important; border-radius: 0 !important; }
           .elh-cartao { padding: 16px 14px !important; }
           .elh-duelo { grid-template-columns: 1fr !important; gap: 14px !important; }
           .elh-duelo > * { flex-direction: row !important; text-align: left !important; }
