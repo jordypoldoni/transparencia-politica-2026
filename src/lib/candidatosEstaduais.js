@@ -1,7 +1,7 @@
 // Candidatos a Deputado ESTADUAL 2026, lidos do TSE NA HORA. (25/09/2026)
 //
 // Mora aqui, e não na rota, porque são DOIS que usam: a rota /api/candidatos-deputado-estadual
-// (busca e troca de página no navegador) e o getServerSideProps de /candidatos-2026 (a primeira
+// (busca e troca de página no navegador) e o getServerSideProps de /eleicoes (a primeira
 // página já vem no HTML, que é o que o Google enxerga). Duas cópias viram duas regras.
 //
 // UF É OBRIGATÓRIA: a fonte só lista por estado, e o país inteiro seriam 27 chamadas por visita.

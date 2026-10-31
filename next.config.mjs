@@ -46,6 +46,9 @@ const nextConfig = {
   },
   async redirects() {
     return [
+      // 31/10/2026: "Eleições 2026" virou "Eleições" e o endereço /candidatos-2026 virou /eleicoes (pedido do Jordy, para
+      // caber outras eleições no futuro). O endereço antigo redireciona com os parâmetros (?cargo=, ?visao=, ?turno=, ?uf=).
+      { source: '/candidatos-2026', destination: '/eleicoes', permanent: true },
       // 23/10/2026: o joguinho passou a se chamar "jogo do mapa político"; o endereço antigo continua valendo.
       { source: '/entenda/joguinho', destination: '/entenda/jogo-do-mapa-politico', permanent: true },
       {

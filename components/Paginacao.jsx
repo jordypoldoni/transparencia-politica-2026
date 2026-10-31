@@ -2,7 +2,7 @@ import { t } from '../src/estilo/tokens';
 import { Seta } from './icones';
 
 // Paginacao do site, fonte UNICA (28/09/2026). Existia escrita duas vezes, em /deputados e em
-// /candidatos-2026, com arranjos diferentes.
+// /eleicoes, com arranjos diferentes.
 //
 // 21/10/2026 (pedido do Jordy): tudo numa linha so e sem fundo. Os botoes viram texto dourado com seta
 // (ouroTexto, que tem contraste legivel no fundo claro), e "Mostrando X a Y de Z" fica a esquerda, na

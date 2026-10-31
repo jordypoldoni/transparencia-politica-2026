@@ -75,7 +75,7 @@ const navItens = [
       { href: '/gastos-parlamentares', rotulo: 'Gastos parlamentares', curto: 'Gastos parl.', nota: 'a cota de cada parlamentar' },
     ],
   },
-  { href: '/candidatos-2026', rotulo: 'Eleições 2026' },
+  { href: '/eleicoes', rotulo: 'Eleições' },
   // 17/10/2026 (decisão do Jordy): Entenda vira grupo, como Pra você, Parlamentares e Decisões:
   // abre as subpáginas para o usuário escolher. "Quem é quem" mantém o endereço antigo /entenda
   // (links e Google continuam valendo); "Como atualizamos os dados" tem endereço próprio.
@@ -91,7 +91,7 @@ const navItens = [
 // Atalhos do topo do menu do celular (ideia 3). Cada um é um link direto, com a Seta padrão.
 const ATALHOS_MOVEL = [
   { href: '/', rotulo: 'Início', nota: 'página inicial' },
-  { href: '/candidatos-2026', rotulo: 'Eleições 2026', nota: 'apuração e candidatos' },
+  { href: '/eleicoes', rotulo: 'Eleições', nota: 'apuração e candidatos' },
   { href: '/entenda', rotulo: 'Entenda', nota: 'cargos, dados e joguinho', largo: true },
 ];
 
@@ -110,7 +110,7 @@ function ehAtivo(href, pathname) {
   if (hp === '/entenda') return pathname === '/entenda';
   if (hp === '/indicacoes') return pathname === '/indicacoes' || pathname.startsWith('/indicacao/');
   if (hp === '/votacoes') return pathname === '/votacoes' || pathname.startsWith('/votacao');
-  if (hp === '/candidatos-2026') return pathname === '/candidatos-2026' || pathname.startsWith('/presidencial/') || pathname.startsWith('/deputado-federal/') || pathname.startsWith('/candidato-');
+  if (hp === '/eleicoes') return pathname === '/eleicoes' || pathname.startsWith('/presidencial/') || pathname.startsWith('/deputado-federal/') || pathname.startsWith('/candidato-');
   return pathname === hp || pathname.startsWith(hp + '/');
 }
 
@@ -389,7 +389,7 @@ export default function Layout({ children, pageProps }) {
         {menu && (
           <nav className="menu-mobile" aria-label="Navegação principal"
             style={{ position: 'absolute', top: '100%', left: 0, right: 0, maxHeight: `calc(100dvh - ${alturaTopo}px)`, overflowY: 'auto', overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch', background: t.cor.papel, padding: '8px 12px 14px', boxShadow: t.sombra.media }}>
-            {/* 23/10/2026 (ideia 3, aprovada pelo Jordy): atalhos grandes no topo (Início, Eleições 2026 e
+            {/* 23/10/2026 (ideia 3, aprovada pelo Jordy): atalhos grandes no topo (Início, Eleições e
                 Entenda, cada um com a Seta padrão do site) e os demais grupos em SANFONA, um aberto por
                 vez. O grupo da página atual já abre sozinho. Só o menu do celular muda: o do
                 computador segue com os menus suspensos. */}

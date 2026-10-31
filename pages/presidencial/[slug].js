@@ -49,7 +49,7 @@ export default function PerfilPresidenciavel({ candidato, colega, canonical }) {
         {c.foto_url && <meta property="og:image" content={c.foto_url} />}
       </Head>
 
-      <BotaoVoltar href="/candidatos-2026?cargo=presidente" />
+      <BotaoVoltar href="/eleicoes?cargo=presidente" />
 
       <div style={{ display: 'flex', gap: '18px', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap' }}>
         <Avatar nome={c.nome_urna} foto={c.foto_url} size={92} />

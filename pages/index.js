@@ -177,14 +177,14 @@ export default function Home({ votacoes, parlamentares = [], uniao = null, estad
 
       {/* ELEIÇÕES 2026 (12/10/2026): depois do 1º turno a home mostra o resultado (ResumoEleicoesHome); a lista de candidatos
           abaixo é o que aparece se o TSE ainda não publicou o resultado. Antes: CANDIDATOS 2026 — destaque de temporada (eleição em outubro). Mostra Presidenciáveis
-          aqui na home (teaser); a página unificada /candidatos-2026 traz os cinco cargos (texto e link
+          aqui na home (teaser); a página unificada /eleicoes traz os cinco cargos (texto e link
           atualizados em 28/09/2026: ainda falavam só em Presidência e Câmara). */}
       {chapas.length > 0 && (
         <ResumoEleicoesHome chapas={chapas}>
         <section style={{ padding: '8px 24px 16px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '12px', flexWrap: 'wrap' }}>
             <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.7rem', margin: '0 0 4px' }}>Candidatos 2026</h2>
-            <Link href="/candidatos-2026" style={{ fontSize: '0.85rem', fontWeight: 700, color: t.cor.ouroTexto, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>Ver todos os cargos <Seta direcao="direita" size={14} /></Link>
+            <Link href="/eleicoes" style={{ fontSize: '0.85rem', fontWeight: 700, color: t.cor.ouroTexto, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>Ver todos os cargos <Seta direcao="direita" size={14} /></Link>
           </div>
           <p style={{ color: t.cor.cinza, fontSize: '0.92rem', margin: '0 0 16px' }}>Abaixo, quem disputa a Presidência. Na página completa estão também governador, senador, deputado federal e deputado estadual de cada estado, com o partido e a situação da candidatura, direto da fonte oficial (TSE) e sem opinião.</p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(220px, 100%), 1fr))', gap: '12px' }}>

@@ -286,7 +286,7 @@ export default function App({ Component, pageProps }) {
         @media (prefers-reduced-motion: reduce) {
           :is(button, a, summary, [role="button"], label):is([style*="border-radius:999px"], [style*="border-radius: 999px"]):hover { transform: none !important; }
         }
-        /* Hover dos cards clicaveis (23/10/2026, pedido do Jordy): mesmo padrao dos cards de /deputados e /candidatos-2026
+        /* Hover dos cards clicaveis (23/10/2026, pedido do Jordy): mesmo padrao dos cards de /deputados e /eleicoes
            (sombra .hover e sobe 2px). .linha-clicavel e a versao leve para linhas e faixas (sobe 1px). Inline pede !important. */
         .card-clicavel, .linha-clicavel { transition: box-shadow .15s ease, transform .15s ease; }
         @media (hover: hover) {

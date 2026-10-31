@@ -7,7 +7,7 @@ import BotaoMeuVoto from './BotaoMeuVoto';
 import { cargoPelaRota } from '../src/lib/meuVoto';
 
 // Cartao de candidato das grades do site. Fonte UNICA: nasceu dentro de
-// /candidatos-2026 e passou a ser usado tambem pela cedula do eleitor (/comecar).
+// /eleicoes e passou a ser usado tambem pela cedula do eleitor (/comecar).
 // Duas copias do mesmo cartao viram, com o tempo, dois cartoes diferentes.
 //
 // Mesmo cartao da grade de /deputados: avatar 40, duas linhas e a seta a direita.

@@ -69,7 +69,7 @@ function Cedula({ uf, cedula }) {
           <AindaNaoTemos texto={`Nenhum candidato ${deUf(uf)} tem mandato na Câmara hoje.`} />
         )}
         <div style={{ marginTop: '14px' }}>
-          <Link href={`/candidatos-2026?cargo=deputado-federal&uf=${uf}`}
+          <Link href={`/eleicoes?cargo=deputado-federal&uf=${uf}`}
             style={{ display: 'inline-block', padding: '11px 20px', borderRadius: t.raio.pill, background: t.cor.verde, color: t.cor.ouro, fontWeight: 700, fontSize: '0.88rem', textDecoration: 'none', boxShadow: t.sombra.botao }}>
             Ver os {federais.total.toLocaleString('pt-BR')} candidatos do {uf}<Seta direcao="direita" size={16} emTexto />
           </Link>
@@ -97,7 +97,7 @@ function Cedula({ uf, cedula }) {
               <AindaNaoTemos texto={`Nenhum candidato ${deUf(uf)} tem mandato na Assembleia hoje.`} />
             ) : null}
             <div style={{ marginTop: '14px' }}>
-              <Link href={`/candidatos-2026?cargo=deputado-estadual&uf=${uf}`}
+              <Link href={`/eleicoes?cargo=deputado-estadual&uf=${uf}`}
                 style={{ display: 'inline-block', padding: '11px 20px', borderRadius: t.raio.pill, background: t.cor.verde, color: t.cor.ouro, fontWeight: 700, fontSize: '0.88rem', textDecoration: 'none', boxShadow: t.sombra.botao }}>
                 {estaduais?.total ? <>Ver os {estaduais.total.toLocaleString('pt-BR')} candidatos do {uf}<Seta direcao="direita" size={16} emTexto /></> : <>Ver os candidatos a deputado estadual do {uf}<Seta direcao="direita" size={16} emTexto /></>}
               </Link>

@@ -26,7 +26,7 @@ export function useVoltarLista(chave, padrao) {
     try {
       const salvo = window.sessionStorage.getItem(PREFIXO + chave);
       // Só aceita caminho interno do próprio site: a anotação nunca vira link para fora.
-      if (salvo && salvo.startsWith('/candidatos-2026')) setDestino(salvo);
+      if (salvo && salvo.startsWith('/eleicoes')) setDestino(salvo);
     } catch { /* fica o padrão */ }
   }, [chave]);
   return destino;
