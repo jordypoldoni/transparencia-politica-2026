@@ -4,10 +4,12 @@ import { t } from '../src/estilo/tokens';
 import Avatar from './Avatar';
 import Segmentado from './Segmentado';
 import CampoSelect from './CampoSelect';
+import CampoBusca from './CampoBusca';
 import { Seta, Pino } from './icones';
 import { NOMES_UF } from '../src/lib/cotas';
 import { ufLocal, EVENTO_UF } from '../src/lib/perfilUsuario';
 import { SEGUNDO_TURNO } from '../src/lib/turnos';
+import { hrefTodos } from '../src/lib/buscaCandidatosHome';
 import { nomeBonito as bonito, pctNum as num, cadeirasPorPartido, cadeirasDeContagem, governoNoPrimeiroTurno } from '../src/lib/eleicoesHome';
 
 // ELEIÇÕES NA HOME (12/10/2026, pedido do Jordy; refeito em 31/10/2026, D-101 e D-102).
@@ -22,7 +24,7 @@ import { nomeBonito as bonito, pctNum as num, cadeirasPorPartido, cadeirasDeCont
 // dizendo que não houve 2º turno para os demais cargos (sem popup). "Todo o Brasil" = sem estado (a visão do visitante é a etapa 3, feita em 31/10/2026: cadeiras por partido da Câmara e do Senado no país + os 27 governadores; na aba 2º turno, os governos que foram ao 2º turno; cada estado é um botão que mostra o estado só nesta visita).
 // Os números vêm de /api/apuracao (cache de borda, nada no banco). Sem resultado do TSE, mostra `children`
 // (a lista de candidatos de antes).
-// Etapa seguinte (pendente, com OK): busca de candidatos.
+// Etapa 4 (31/10/2026): campo de busca de candidatos (BuscaCandidatos) ao lado do seletor.
 const fmt = (x) => Number(x || 0).toLocaleString('pt-BR');
 const mesmo = (c, ch) => String(ch.nr_candidato) === String(c.numero);
 const INDIGO = t.cor.verde; // índigo
@@ -244,6 +246,72 @@ function GovernoSegundoTurno({ uf, g2 }) {
   );
 }
 
+// Busca de candidatos (etapa 4, 31/10/2026): só quem foi candidato em 2026. A lista abre sobre o resumo; clicar leva à
+// ficha do candidato; "Ver todos os resultados" leva à página Eleições com a busca preenchida. Deputado estadual só
+// entra com estado escolhido (a fonte só lista por estado).
+function BuscaCandidatos({ uf }) {
+  const [q, setQ] = useState('');
+  const [res, setRes] = useState(null); // null = nada pedido; { grupos, estadual } | { falhou }
+  const [carregando, setCarregando] = useState(false);
+  const [aberta, setAberta] = useState(true);
+  const caixa = useRef(null);
+  const termo = q.trim();
+
+  useEffect(() => {
+    if (termo.length < 2 && !/^\d+$/.test(termo)) { setRes(null); setCarregando(false); return undefined; }
+    setCarregando(true);
+    const ctrl = new AbortController();
+    const id = setTimeout(() => {
+      fetch(`/api/buscar-candidatos?q=${encodeURIComponent(termo)}${uf ? `&uf=${uf}` : ''}`, { signal: ctrl.signal })
+        .then((r) => (r.ok ? r.json() : { falhou: true })).then((j) => { setRes(j); setCarregando(false); })
+        .catch((e) => { if (e.name !== 'AbortError') { setRes({ falhou: true }); setCarregando(false); } });
+    }, 250);
+    return () => { clearTimeout(id); ctrl.abort(); };
+  }, [termo, uf]);
+
+  useEffect(() => {
+    const fora = (e) => { if (caixa.current && !caixa.current.contains(e.target)) setAberta(false); };
+    document.addEventListener('mousedown', fora);
+    return () => document.removeEventListener('mousedown', fora);
+  }, []);
+
+  const mostrar = aberta && termo && (carregando || res);
+  const grupos = res?.grupos || [];
+  return (
+    <div ref={caixa} className="elh-busca" style={{ position: 'relative', flex: '1 1 260px', minWidth: 0 }}
+      onKeyDown={(e) => { if (e.key === 'Escape') setAberta(false); }}>
+      <CampoBusca valor={q} aoMudar={(v) => { setQ(v); setAberta(true); }} placeholder="Buscar candidato por nome, partido ou número…" aoLabel="Buscar candidato das eleições de 2026" />
+      {mostrar && (
+        <div role="region" aria-label="Resultados da busca de candidatos" style={{ position: 'absolute', zIndex: 20, left: 0, right: 0, top: 'calc(100% + 8px)', background: t.cor.papelCartao, borderRadius: t.raio.md, boxShadow: '0 12px 32px rgba(36,30,82,.18)', padding: '10px 14px 12px', maxHeight: 420, overflowY: 'auto' }}>
+          {carregando && !res && <p style={{ margin: '6px 2px', color: t.cor.cinza, fontSize: '.9rem' }}>Buscando…</p>}
+          {res?.falhou && <p style={{ margin: '6px 2px', color: t.cor.cinza, fontSize: '.9rem' }}>Não foi possível buscar agora. Tente de novo em instantes.</p>}
+          {res && !res.falhou && !grupos.length && !carregando && <p style={{ margin: '6px 2px', color: t.cor.cinza, fontSize: '.9rem' }}>Nenhum candidato encontrado para “{termo}”.</p>}
+          {grupos.map((g) => (
+            <div key={g.cargo}>
+              <h4 style={{ ...rotuloCaixa, margin: '10px 2px 2px', display: 'flex', justifyContent: 'space-between' }}><span>{g.rotulo}</span><span style={{ fontWeight: 400 }}>{g.total} {g.total === 1 ? 'resultado' : 'resultados'}</span></h4>
+              {g.itens.map((c) => (
+                <Link key={c.slug} href={`${g.hrefBase}/${c.slug}`} className="elh-res" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '6px 4px', borderRadius: 8, textDecoration: 'none', color: 'inherit' }}>
+                  <Avatar nome={c.nome} foto={c.foto} size={38} />
+                  <span style={{ minWidth: 0, flex: 1 }}>
+                    <b style={{ display: 'block', fontSize: '.92rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{bonito(c.nome)}</b>
+                    <small style={{ color: t.cor.cinza, fontSize: '.8rem' }}>{c.partido}{c.numero ? ` · ${c.numero}` : ''}{c.uf ? ` · ${c.uf}` : ''}</small>
+                  </span>
+                </Link>
+              ))}
+            </div>
+          ))}
+          {res && !res.falhou && !carregando && (
+            <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${t.cor.papelQuente2}`, display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', alignItems: 'baseline' }}>
+              <small style={{ color: t.cor.cinza, fontSize: '.78rem' }}>{uf ? '' : 'Para achar deputados estaduais, escolha um estado ao lado.'}</small>
+              {grupos.length > 0 && <Link href={hrefTodos(grupos, termo, uf)} style={linkOuro}>Ver todos os resultados <Seta direcao="direita" size={14} /></Link>}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function ResumoEleicoesHome({ chapas = [], children }) {
   const [d1, setD1] = useState(undefined); // undefined = carregando, null = sem resultado
   const [d2, setD2] = useState(undefined);
@@ -349,8 +417,9 @@ export default function ResumoEleicoesHome({ chapas = [], children }) {
           {d2 ? 'Resumo do 1º turno (4 de outubro) e do 2º turno (25 de outubro)' : 'Resultado do 1º turno (4 de outubro)'}, com {dados.secoes.pct_totalizadas}% das seções apuradas.
         </p>
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 6 }}>
-          <div style={{ width: 340, maxWidth: '100%' }}>
+        <div className="elh-linha" style={{ display: 'flex', gap: 12, flexWrap: 'wrap', alignItems: 'flex-start', marginBottom: 6 }}>
+          <BuscaCandidatos uf={uf} />
+          <div style={{ flex: '0 1 340px', minWidth: 0, width: '100%', maxWidth: 340 }}>
             <CampoSelect opcoes={OPCOES_UF} valor={uf} placeholder="Escolha seu estado" aoLabel="Escolha o estado dos eleitos" icone={<Pino />} aoSelecionar={(v) => setUfVisita(v)} />
           </div>
         </div>
@@ -406,6 +475,7 @@ export default function ResumoEleicoesHome({ chapas = [], children }) {
       <style jsx global>{`
         .elh-lado:hover .elh-nome { text-decoration: underline; }
         .elh-nc { display: none; }
+        .elh-res:hover { background: rgba(36,30,82,.07); }
         .elh-gov:hover { background: rgba(36,30,82,.07) !important; }
         .elh-gov:focus-visible { outline: 2px solid #241E52; outline-offset: 1px; }
         @media (max-width: 640px) {
