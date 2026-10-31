@@ -181,7 +181,7 @@ export default function Home({ votacoes, parlamentares = [], uniao = null, estad
           atualizados em 28/09/2026: ainda falavam só em Presidência e Câmara). */}
       {chapas.length > 0 && (
         <ResumoEleicoesHome chapas={chapas}>
-        <section style={{ padding: '8px 24px 16px' }}>
+        <section className="secao-home" style={{ paddingTop: '8px', paddingBottom: '16px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '12px', flexWrap: 'wrap' }}>
             <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.7rem', margin: '0 0 4px' }}>Candidatos 2026</h2>
             <Link href="/eleicoes" style={{ fontSize: '0.85rem', fontWeight: 700, color: t.cor.ouroTexto, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>Ver todos os cargos <Seta direcao="direita" size={14} /></Link>
@@ -208,7 +208,7 @@ export default function Home({ votacoes, parlamentares = [], uniao = null, estad
       )}
 
       {/* PANORAMA FISCAL — União, estados, DF, municípios (SICONFI) */}
-      <section style={{ padding: '16px 24px' }}>
+      <section className="secao-home" style={{ paddingTop: '16px', paddingBottom: '16px' }}>
         <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.7rem', margin: '0 0 4px' }}>Para onde vai o dinheiro público</h2>
         <p style={{ color: t.cor.cinza, fontSize: '0.92rem', margin: '0 0 18px', lineHeight: 1.5 }}>
           Quanto a União, os estados, o DF e os municípios <strong>arrecadam e gastam</strong>, em linguagem clara, direto da fonte oficial (<a href="https://siconfi.tesouro.gov.br/" target="_blank" rel="noopener noreferrer" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>SICONFI/Tesouro</a>). Números acumulados de {uniao?.resumo?.ano || '2026'}.
@@ -246,7 +246,7 @@ export default function Home({ votacoes, parlamentares = [], uniao = null, estad
       </section>
 
       {/* VOTAÇÕES — em linguagem clara */}
-      <section style={{ padding: '16px 24px 24px' }}>
+      <section className="secao-home" style={{ paddingTop: '16px', paddingBottom: '24px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '12px', flexWrap: 'wrap' }}>
           <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.7rem', margin: '0 0 4px' }}>O que os deputados decidiram</h2>
           <Link href="/votacoes" style={{ fontSize: '0.85rem', fontWeight: 700, color: t.cor.ouroTexto, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>Ver todas as votações <Seta direcao="direita" size={14} /></Link>

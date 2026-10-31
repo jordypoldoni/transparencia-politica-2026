@@ -47,6 +47,7 @@ export default function App({ Component, pageProps }) {
         }
 
         .pagina { width: 100%; padding: 24px; }
+        .secao-home { padding-left: 24px; padding-right: 24px; }
         .leitura { width: 100%; }
 
         /* flex-wrap: nowrap + flex-shrink: 0 desde 18/09/2026.
@@ -147,6 +148,7 @@ export default function App({ Component, pageProps }) {
         @media (max-width: 640px) {
           html { font-size: 15px; }
           .pagina { padding: 16px 14px; }
+          .secao-home { padding-left: 14px; padding-right: 14px; }
           .pagina h1 { font-size: 1.75rem !important; line-height: 1.15 !important; }
           .topo-linha { padding: 10px 14px !important; }
           .so-computador { display: none !important; }
