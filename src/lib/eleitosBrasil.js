@@ -9,7 +9,7 @@ import { SEGUNDO_TURNO } from './turnos';
 const UF_SONDA = 'SP';
 const SIMULTANEOS = 9;
 
-const resumo = (c) => ({ nome: c.nome, partido: c.partido, pct: c.pct, votos: c.votos, eleito: !!c.eleito });
+const resumo = (c) => ({ numero: c.numero, nome: c.nome, partido: c.partido, pct: c.pct, votos: c.votos, eleito: !!c.eleito });
 const completo = (r) => r.secoes.total > 0 && r.secoes.totalizadas === r.secoes.total;
 
 // Soma uma contagem { PARTIDO: qtd } com os eleitos de uma lista.

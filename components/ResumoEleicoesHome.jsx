@@ -10,7 +10,7 @@ import { NOMES_UF } from '../src/lib/cotas';
 import { ufLocal, EVENTO_UF } from '../src/lib/perfilUsuario';
 import { SEGUNDO_TURNO } from '../src/lib/turnos';
 import { hrefTodos } from '../src/lib/buscaCandidatosHome';
-import { nomeBonito as bonito, pctNum as num, cadeirasPorPartido, cadeirasDeContagem, governoNoPrimeiroTurno } from '../src/lib/eleicoesHome';
+import { nomeBonito as bonito, pctNum as num, cadeirasPorPartido, cadeirasDeContagem, governoNoPrimeiroTurno, chaveFoto, fotoDe } from '../src/lib/eleicoesHome';
 
 // ELEIÇÕES NA HOME (12/10/2026, pedido do Jordy; refeito em 31/10/2026, D-101 e D-102).
 // Etapa 1 (31/10/2026): fundo quente que une o bloco e cartão do Presidente com as abas "1º turno | 2º turno".
@@ -71,17 +71,19 @@ function Faixa({ a, b, corA, corB, larga, marca }) {
   );
 }
 
-function Pessoa({ nome, partido, cargo, pct }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '6px 0', minWidth: 0 }}>
-      <Avatar nome={nome} size={46} />
+function Pessoa({ nome, partido, cargo, pct, foto, href }) {
+  const miolo = (
+    <>
+      <Avatar nome={nome} foto={foto} size={46} />
       <div style={{ minWidth: 0, flex: 1 }}>
-        <b style={{ display: 'block', fontSize: '.95rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{bonito(nome)}</b>
+        <b className="elh-nome" style={{ display: 'block', fontSize: '.95rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{bonito(nome)}</b>
         <small style={{ color: t.cor.cinza, fontSize: '.8rem' }}>{partido} · {cargo}</small>
       </div>
       {pct != null && <b style={{ fontSize: '1rem', flexShrink: 0 }}>{pct}%</b>}
-    </div>
+    </>
   );
+  const estilo = { display: 'flex', alignItems: 'center', gap: 12, padding: '6px 0', minWidth: 0, textDecoration: 'none', color: 'inherit' };
+  return href ? <Link href={href} className="elh-lado" style={estilo}>{miolo}</Link> : <div style={estilo}>{miolo}</div>;
 }
 
 function Bloco({ titulo, contagem, children, estilo }) {
@@ -113,22 +115,23 @@ function Cadeiras({ eleitos, contagem }) {
   );
 }
 
-function Governo({ gov }) {
+function Governo({ gov, uf, fotos }) {
   const g = governoNoPrimeiroTurno(gov.candidatos);
+  const ficha = (c) => { const f = fotoDe(fotos, 'governador', uf, c.numero); return { foto: f?.foto, href: f?.slug ? `/candidato-governador/${f.slug}` : null }; };
   if (g.eleito) {
-    return <Bloco titulo="Governador" contagem="1 eleito"><Pessoa nome={g.eleito.nome} partido={g.eleito.partido} cargo="Governador" pct={g.eleito.pct} /></Bloco>;
+    return <Bloco titulo="Governador" contagem="1 eleito"><Pessoa nome={g.eleito.nome} partido={g.eleito.partido} cargo="Governador" pct={g.eleito.pct} {...ficha(g.eleito)} /></Bloco>;
   }
   if (g.finalistas.length) {
     return (
       <Bloco titulo="Governador" contagem="2º turno">
-        {g.finalistas.map((c) => <Pessoa key={`${c.numero}|${c.nome}`} nome={c.nome} partido={c.partido} cargo="foi ao 2º turno" pct={c.pct} />)}
+        {g.finalistas.map((c) => <Pessoa key={`${c.numero}|${c.nome}`} nome={c.nome} partido={c.partido} cargo="foi ao 2º turno" pct={c.pct} {...ficha(c)} />)}
       </Bloco>
     );
   }
   return null;
 }
 
-function EleitosDoEstado({ uf, d }) {
+function EleitosDoEstado({ uf, d, fotos }) {
   const nome = NOMES_UF[uf] || uf;
   const sen = d.sen?.eleitos || [];
   return (
@@ -138,11 +141,11 @@ function EleitosDoEstado({ uf, d }) {
         <Link href={`/estado/${uf}`} style={linkOuro}>Ver tudo de {nome} <Seta direcao="direita" size={14} /></Link>
       </div>
       <div className="elh-g3" style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: 12 }}>
-        {d.gov && <Governo gov={d.gov} />}
+        {d.gov && <Governo gov={d.gov} uf={uf} fotos={fotos} />}
         {sen.length > 0 && (
           <Bloco titulo="Senado" contagem={`${sen.length} ${sen.length === 1 ? 'eleito' : 'eleitos'}`}>
             <div className="elh-sen" style={{ display: 'grid', gridTemplateColumns: sen.length > 1 ? '1fr 1fr' : '1fr', gap: 18 }}>
-              {sen.map((c) => <Pessoa key={`${c.numero}|${c.nome}`} nome={c.nome} partido={c.partido} cargo="Senador" pct={c.pct} />)}
+              {sen.map((c) => { const f = fotoDe(fotos, 'senador', uf, c.numero); return <Pessoa key={`${c.numero}|${c.nome}`} nome={c.nome} partido={c.partido} cargo="Senador" pct={c.pct} foto={f?.foto} href={f?.slug ? `/candidato-senador/${f.slug}` : null} />; })}
             </div>
           </Bloco>
         )}
@@ -157,7 +160,7 @@ function EleitosDoEstado({ uf, d }) {
 
 // Visão do país (etapa 3): quem não tem estado vê o resumo do Brasil. Cadeiras por partido (Câmara e Senado) e os 27
 // governadores; cada estado é um botão que mostra aquele estado só nesta visita.
-function GovernadoresDoPais({ lista, aoEscolher }) {
+function GovernadoresDoPais({ lista, aoEscolher, fotos }) {
   return (
     <Bloco titulo="Governadores" contagem="27 estados" estilo={{ marginTop: 12 }}>
       <div className="elh-gp" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '2px 18px' }}>
@@ -168,6 +171,7 @@ function GovernadoresDoPais({ lista, aoEscolher }) {
             <button key={g.uf} type="button" className="elh-gov" onClick={() => aoEscolher(g.uf)} aria-label={`Ver ${NOMES_UF[g.uf] || g.uf}`}
               style={{ display: 'flex', alignItems: 'baseline', gap: 10, textAlign: 'left', border: 'none', background: 'none', padding: '6px 4px', borderRadius: 6, cursor: 'pointer', font: 'inherit', color: 'inherit', minWidth: 0 }}>
               <b style={{ width: 26, flexShrink: 0, fontSize: '.8rem' }}>{g.uf}</b>
+              <span style={{ alignSelf: 'center', display: 'flex', width: 26, height: 26, flexShrink: 0 }}>{f && <Avatar nome={f.nome} foto={fotoDe(fotos, 'governador', g.uf, f.numero)?.foto} size={26} />}</span>
               <span style={{ fontSize: '.84rem', color: f ? t.cor.tinta : t.cor.ouroTexto, fontWeight: f ? 400 : 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{detalhe}</span>
             </button>
           );
@@ -177,7 +181,7 @@ function GovernadoresDoPais({ lista, aoEscolher }) {
   );
 }
 
-function PaisPrimeiroTurno({ p, aoEscolher }) {
+function PaisPrimeiroTurno({ p, aoEscolher, fotos }) {
   return (
     <>
       <div style={{ margin: '22px 2px 10px' }}><h3 style={rotuloCaixa}>Brasil · eleitos no 1º turno</h3></div>
@@ -185,12 +189,12 @@ function PaisPrimeiroTurno({ p, aoEscolher }) {
         <Bloco titulo="Câmara dos Deputados" contagem={`${p.camara.total} eleitos`}><Cadeiras contagem={p.camara.contagem} /></Bloco>
         <Bloco titulo="Senado" contagem={`${p.senado.total} eleitos`}><Cadeiras contagem={p.senado.contagem} /></Bloco>
       </div>
-      <GovernadoresDoPais lista={p.governadores} aoEscolher={aoEscolher} />
+      <GovernadoresDoPais lista={p.governadores} aoEscolher={aoEscolher} fotos={fotos} />
     </>
   );
 }
 
-function PaisSegundoTurno({ p, aoEscolher }) {
+function PaisSegundoTurno({ p, aoEscolher, fotos }) {
   const lista = p.governadores.filter((g) => g.segundo);
   if (!lista.length) return null;
   return (
@@ -205,8 +209,9 @@ function PaisSegundoTurno({ p, aoEscolher }) {
             style={{ textAlign: 'left', border: 'none', cursor: 'pointer', font: 'inherit', color: 'inherit', background: t.cor.papelCartao, borderRadius: t.raio.md, padding: '14px 16px', boxShadow: t.sombra.sutil, minWidth: 0 }}>
             <b style={{ ...rotuloCaixa, display: 'block', marginBottom: 6 }}>{NOMES_UF[g.uf] || g.uf}</b>
             {g.segundo.candidatos.map((c) => (
-              <span key={c.nome} style={{ display: 'flex', justifyContent: 'space-between', gap: 8, fontSize: '.88rem', padding: '2px 0', fontWeight: c.eleito ? 800 : 400, color: c.eleito ? t.cor.sim : t.cor.tinta }}>
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.eleito ? '✓ ' : ''}{bonito(c.nome)} · {c.partido}</span>
+              <span key={c.nome} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, fontSize: '.88rem', padding: '3px 0', fontWeight: c.eleito ? 800 : 400, color: c.eleito ? t.cor.sim : t.cor.tinta }}>
+                <Avatar nome={c.nome} foto={fotoDe(fotos, 'governador', g.uf, c.numero)?.foto} size={28} />
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>{c.eleito ? '✓ ' : ''}{bonito(c.nome)} · {c.partido}</span>
                 <span>{c.pct}%</span>
               </span>
             ))}
@@ -217,7 +222,8 @@ function PaisSegundoTurno({ p, aoEscolher }) {
   );
 }
 
-function GovernoSegundoTurno({ uf, g2 }) {
+function GovernoSegundoTurno({ uf, g2, fotos }) {
+  const lado = (c) => { const f = fotoDe(fotos, 'governador', uf, c.numero); return { foto: f?.foto, href: f?.slug ? `/candidato-governador/${f.slug}` : null }; };
   const nome = NOMES_UF[uf] || uf;
   const [a, b] = [...g2.candidatos].sort((x, y) => y.votos - x.votos).slice(0, 2);
   const pa = num(a.pct); const pb = num(b.pct);
@@ -233,8 +239,8 @@ function GovernoSegundoTurno({ uf, g2 }) {
       <div style={{ background: t.cor.papelCartao, borderRadius: t.raio.lg, padding: '20px 24px', boxShadow: t.sombra.sutil }}>
         <p style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.5rem', margin: '0 0 18px' }}>{titulo}</p>
         <div className="elh-duelo" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-          <Lado nome={a.nome} partido={a.partido} cor={INDIGO} pct={a.pct} rodape={`${fmt(a.votos)} votos`} />
-          <Lado nome={b.nome} partido={b.partido} cor={AMBAR} pct={b.pct} rodape={`${fmt(b.votos)} votos`} direita />
+          <Lado nome={a.nome} partido={a.partido} cor={INDIGO} pct={a.pct} rodape={`${fmt(a.votos)} votos`} {...lado(a)} />
+          <Lado nome={b.nome} partido={b.partido} cor={AMBAR} pct={b.pct} rodape={`${fmt(b.votos)} votos`} direita {...lado(b)} />
         </div>
         <Faixa a={a} b={b} corA={INDIGO} corB={AMBAR} larga={larga} marca />
         <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', fontSize: '.8rem', color: t.cor.cinza }}>
@@ -318,6 +324,7 @@ export default function ResumoEleicoesHome({ chapas = [], children }) {
   const [aba, setAba] = useState(null);
   const [ufSalva, setUfSalva] = useState('');
   const [ufLida, setUfLida] = useState(false);
+  const [fotos, setFotos] = useState({}); // 'cargo|UF|número' -> { foto, slug }
   const [pais, setPais] = useState(undefined); // undefined = não pedido/carregando, null = falhou
   const [ufVisita, setUfVisita] = useState(null); // null = não escolheu nesta visita; '' = "Todo o Brasil"
   const cache = useRef({});
@@ -350,6 +357,18 @@ export default function ResumoEleicoesHome({ chapas = [], children }) {
       .catch((e) => { if (e.name !== 'AbortError') setPais(null); });
     return () => ctrl.abort();
   }, [ufLida, uf, pais]);
+
+  // Fotos e fichas dos governadores e senadores (já estão no Storage; só liga número -> foto). Sem estado: governadores do país.
+  useEffect(() => {
+    if (!ufLida) return undefined;
+    const ctrl = new AbortController();
+    const pedir = (cargo, ufP) => fetch(`/api/fotos-candidatos?cargo=${cargo}${ufP ? `&uf=${ufP}` : ''}`, { signal: ctrl.signal })
+      .then((r) => (r.ok ? r.json() : { itens: [] }))
+      .then((j) => setFotos((ant) => { const novo = { ...ant }; for (const i of j.itens || []) novo[chaveFoto(cargo, i.uf, i.numero)] = { foto: i.foto, slug: i.slug }; return novo; }))
+      .catch(() => {});
+    if (uf) { pedir('governador', uf); pedir('senador', uf); } else pedir('governador', '');
+    return () => ctrl.abort();
+  }, [ufLida, uf]);
 
   // Eleitos do estado: 4 cargos no 1º turno e, nos 6 estados com 2º turno, o governador do 2º turno.
   useEffect(() => {
@@ -453,14 +472,14 @@ export default function ResumoEleicoesHome({ chapas = [], children }) {
         </div>
 
         {!uf && ufLida && pais === undefined && <div aria-busy="true" style={{ minHeight: 260 }} />}
-        {!uf && pais && turno === 1 && <PaisPrimeiroTurno p={pais} aoEscolher={setUfVisita} />}
-        {!uf && pais && turno === 2 && <PaisSegundoTurno p={pais} aoEscolher={setUfVisita} />}
+        {!uf && pais && turno === 1 && <PaisPrimeiroTurno p={pais} aoEscolher={setUfVisita} fotos={fotos} />}
+        {!uf && pais && turno === 2 && <PaisSegundoTurno p={pais} aoEscolher={setUfVisita} fotos={fotos} />}
         {uf && !estado && <div aria-busy="true" style={{ minHeight: 260 }} />}
         {uf && estado?.falhou && <p style={{ margin: '18px 2px 0', color: t.cor.cinza, fontSize: '.9rem' }}>Não foi possível carregar os eleitos de {nomeUf} agora. Tente de novo em instantes.</p>}
-        {uf && estado && !estado.falhou && turno === 1 && <EleitosDoEstado uf={uf} d={estado} />}
+        {uf && estado && !estado.falhou && turno === 1 && <EleitosDoEstado uf={uf} d={estado} fotos={fotos} />}
         {uf && estado && !estado.falhou && turno === 2 && (
           <>
-            {tem2 && estado.g2 && <GovernoSegundoTurno uf={uf} g2={estado.g2} />}
+            {tem2 && estado.g2 && <GovernoSegundoTurno uf={uf} g2={estado.g2} fotos={fotos} />}
             <div role="note" style={{ background: t.cor.papelQuente, borderRadius: t.raio.md, padding: '14px 18px', fontSize: '.92rem', marginTop: 14 }}>
               <b>Em {nomeUf} não houve 2º turno para {tem2 ? 'senador e deputados' : 'governador, senador e deputados'}.</b> Esses cargos foram decididos no 1º turno.{' '}
               <button type="button" onClick={() => setAba(1)} style={{ border: 'none', background: 'none', padding: 0, font: 'inherit', fontWeight: 700, color: t.cor.ouroTexto, cursor: 'pointer', textDecoration: 'underline' }}>Ver os eleitos do 1º turno</button>

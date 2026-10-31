@@ -52,3 +52,11 @@ test('cadeirasDeContagem equivale a cadeirasPorPartido', () => {
   assert.equal(r.total, 8);
   assert.deepEqual(cadeirasDeContagem(undefined), { total: 0, linhas: [], outros: 0, maior: 1 });
 });
+
+test('fotoDe acha pela chave cargo|UF|número', async () => {
+  const { chaveFoto, fotoDe } = await import('../src/lib/eleicoesHome.js');
+  const fotos = { [chaveFoto('governador', 'rs', '22')]: { foto: 'f.jpg', slug: 's' } };
+  assert.deepEqual(fotoDe(fotos, 'governador', 'RS', '22'), { foto: 'f.jpg', slug: 's' });
+  assert.equal(fotoDe(fotos, 'senador', 'RS', '22'), null);
+  assert.equal(fotoDe(undefined, 'governador', 'RS', '22'), null);
+});
