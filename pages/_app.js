@@ -1,5 +1,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
+import { Analytics } from '@vercel/analytics/next';
+import { limparEnderecoParaMedicao } from '../src/lib/analitica';
 import Layout from '../components/Layout';
 import IndicadorNavegacao from '../components/IndicadorNavegacao';
 import { comecouNavegacao, terminouNavegacao, cancelouNavegacao, falhouNavegacao } from '../src/lib/navegacao';
@@ -26,6 +28,7 @@ export default function App({ Component, pageProps }) {
     <Layout pageProps={pageProps}>
       <IndicadorNavegacao />
       <Component {...pageProps} />
+      <Analytics beforeSend={limparEnderecoParaMedicao} />
       <style jsx global>{`
         * { box-sizing: border-box; }
         html, body { margin: 0; padding: 0; }
