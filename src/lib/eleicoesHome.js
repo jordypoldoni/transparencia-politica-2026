@@ -43,3 +43,7 @@ export function governoNoPrimeiroTurno(candidatos) {
 
 // A sigla é de um estado conhecido?
 export const ufConhecida = (uf, lista) => lista.includes(String(uf || '').toUpperCase());
+
+// Foto e ficha de um candidato: `fotos` é { 'cargo|UF|número': { foto, slug } } (vem de /api/fotos-candidatos).
+export const chaveFoto = (cargo, uf, numero) => `${cargo}|${String(uf || '').toUpperCase()}|${numero}`;
+export const fotoDe = (fotos, cargo, uf, numero) => (fotos && fotos[chaveFoto(cargo, uf, numero)]) || null;
