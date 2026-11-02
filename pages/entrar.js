@@ -162,7 +162,9 @@ export default function Entrar() {
           )}
           {erro && <p id="erro-entrar" role="alert" style={{ color: t.cor.alertaTexto, margin: '12px 4px 0', fontWeight: 600 }}>{erro}</p>}
           <p style={{ color: t.cor.cinza, fontSize: '0.84rem', lineHeight: 1.6, margin: '14px 4px 0' }}>
-            Ao entrar, nada é guardado no seu perfil sem você autorizar na página seguinte. Veja{' '}
+            Ao entrar, você concorda com os{' '}
+            <Link href="/termos" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>Termos de uso</Link>.
+            Nada é guardado no seu perfil sem você autorizar na página seguinte. Veja{' '}
             <Link href="/privacidade" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>o que guardamos e como apagar</Link>.
           </p>
         </div>

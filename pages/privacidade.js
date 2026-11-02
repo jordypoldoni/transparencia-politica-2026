@@ -99,6 +99,9 @@ export default function Privacidade() {
           Se o site passar a guardar algum dado novo ou a usar outro serviço externo, esta página muda antes, com nova data no topo.
           Mudança que afete o que você já consentiu pede o seu consentimento de novo.
         </p>
+        <p style={p}>
+          As regras para usar o site estão nos <Link href="/termos" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>Termos de uso</Link>.
+        </p>
       </div>
     </div>
   );

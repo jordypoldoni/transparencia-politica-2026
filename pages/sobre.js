@@ -97,6 +97,7 @@ export default function Sobre() {
       <p style={{ color: t.cor.cinza, lineHeight: 1.6, margin: '0 0 28px' }}>
         Entrar com uma conta Google é opcional e serve para levar seus favoritos e preferências a outros aparelhos. Sem conta, nada que
         identifique você fica guardado pelo Lume. Detalhes em <Link href="/privacidade" style={{ color: t.cor.verde, fontWeight: 700 }}>Privacidade</Link>.
+        As regras para usar o site estão nos <Link href="/termos" style={{ color: t.cor.verde, fontWeight: 700 }}>Termos de uso</Link>.
       </p>
 
       <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.5rem', margin: '40px 0 16px' }}>O que é a cota parlamentar?</h2>
