@@ -80,6 +80,7 @@ export default function Privacidade() {
         </ul>
 
         <h2 style={h2}>Seus direitos</h2>
+        <p style={p}>O Lume Cidadão é administrado por Jordy Oldoni.</p>
         <p style={p}>
           Você pode ver, corrigir e apagar os seus dados, e retirar o consentimento quando quiser (LGPD, art. 18). Na página{' '}
           <Link href="/perfil" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>Seu perfil</Link>, a opção "Apagar minha conta"
