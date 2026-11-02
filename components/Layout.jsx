@@ -8,6 +8,7 @@ import { Seta as SetaPadrao } from './icones'; // seta dourada padrão do site (
 import { sincronizarTudo } from '../src/lib/sincronizacao';
 import { casaDoPerfil } from '../src/lib/casa';
 import { aoMudarSessao, validarSessao, ufLocal, guardarUfCookie, COOKIE_UF } from '../src/lib/perfilUsuario';
+import { souAdmin } from '../src/lib/souAdmin';
 
 // ============================================================================
 // MENU PRINCIPAL, REORGANIZADO EM 19/09/2026
@@ -41,7 +42,7 @@ import { aoMudarSessao, validarSessao, ufLocal, guardarUfCookie, COOKIE_UF } fro
 // links, que é o padrão recomendado para navegação e o que o leitor de tela anuncia certo.
 // ============================================================================
 
-const navItens = [
+const NAV_BASE = [
   { href: '/', rotulo: 'Início' },
   // 26/09/2026: "Pra você" virou grupo (decisão do Jordy): cédula, afinidade, favoritos e perfil,
   // cada um com endereço próprio. A lista mora em NavPraVoce.jsx, que as páginas também usam.
@@ -119,10 +120,14 @@ function ehAtivo(href, pathname) {
 // as páginas que não estão no menu têm nome aqui.
 const FORA_DO_MENU = [
   ['/entrar', 'Entrar'], ['/privacidade', 'Privacidade'], ['/termos', 'Termos de uso'], ['/sobre', 'Sobre o Lume'],
-  ['/estado/', 'Parlamentares do estado'], ['/ente/', 'Gastos públicos'],
+  ['/estado/', 'Parlamentares do estado'], ['/ente/', 'Gastos públicos'], ['/admin/avisos', 'Avisos de erro'],
 ];
+
+// ITEM SÓ DO ADMINISTRADOR (02/11/2026): entra no fim de "Pra você" quando a conta logada é a administradora (src/lib/souAdmin.js).
+// Esconder aqui é conforto; quem abrir /admin/avisos na mão é recusado pelo servidor.
+const ITEM_ADMIN = { href: '/admin/avisos', rotulo: 'Avisos de erro', nota: 'só você vê, administração' };
 function nomeDaPagina(pathname) {
-  for (const n of navItens) {
+  for (const n of NAV_BASE) {
     if (n.filhos) { const f = n.filhos.find((x) => ehAtivo(x.href, pathname)); if (f) return f.curto || f.rotulo; }
     else if (ehAtivo(n.href, pathname)) return n.rotulo;
   }
@@ -180,6 +185,15 @@ export default function Layout({ children, pageProps }) {
   const [grupoMovel, setGrupoMovel] = useState(null); // grupo aberto na sanfona do menu do celular
   const navRef = useRef(null);
   const relogio = useRef(null);
+  const [admin, setAdmin] = useState(false); // conta logada é a administradora? só então o menu mostra "Avisos de erro"
+  const navItens = admin ? NAV_BASE.map((n) => (n.rotulo === 'Pra você' ? { ...n, filhos: [...n.filhos, ITEM_ADMIN] } : n)) : NAV_BASE;
+  useEffect(() => {
+    let vivo = true;
+    const checar = () => { souAdmin().then((v) => { if (vivo) setAdmin(v); }); };
+    checar();
+    const parar = aoMudarSessao(() => checar());
+    return () => { vivo = false; parar(); };
+  }, []);
 
   useEffect(() => { setMenu(false); setAberto(null); }, [asPath]); // fecha ao navegar
   // Ao abrir o menu do celular, a sanfona já mostra o grupo da página atual (se houver).
