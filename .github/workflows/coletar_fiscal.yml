@@ -5,8 +5,10 @@
 #  - coletor_siconfi.js: pendência aberta em 22/08/2026. O painel fiscal só atualizava
 #    quando alguém lembrava de rodar à mão. O dado do Tesouro é BIMESTRAL, então rodar
 #    todo dia seria bater na API do Tesouro por nada. ESTE É AGENDADO.
-#  - a ficha do TSE (presidenciáveis e deputados federais): diária até a eleição. Ficou só como
-#    botão entre 19/09 e 21/09 porque a ponte ainda não funcionava; a história está no job.
+#  - a ficha do TSE (presidenciáveis e deputados federais): foi diária até a eleição; os dois
+#    agendamentos dela foram removidos em 02/11/2026, depois que a ficha congelou. Hoje roda só
+#    pelo botão manual. Ficou só como botão entre 19/09 e 21/09 porque a ponte ainda não
+#    funcionava; a história está no job.
 #
 # LEMBRETE DO QUE O HORÁRIO SIGNIFICA (mesma nota do coletar.yml): o cron do GitHub é um
 # PEDIDO, não uma promessa. O atraso típico neste repo foi de 3 a 6 horas, com um caso de 10h.
@@ -20,10 +22,6 @@ on:
     # 08:23 de Brasília, dia 5 de fev/abr/jun/ago/out/dez. Alinhado ao calendário de
     # publicação do Tesouro, que é bimestral.
     - cron: '23 11 5 2,4,6,8,10,12 *'
-    # Ficha do TSE, DIÁRIA: só quem ainda pode mudar de situação. 07:41 de Brasília.
-    - cron: '41 10 * * *'
-    # Ficha do TSE, SEMANAL (domingo): todos os 7.703. 03:53 de Brasília, fila vazia.
-    - cron: '53 6 * * 0'
   workflow_dispatch:
     inputs:
       alvo:
@@ -68,10 +66,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 150
     if: >-
-      ${{ github.event.schedule == '41 10 * * *'
-          || github.event.schedule == '53 6 * * 0'
-          || (github.event_name == 'workflow_dispatch'
-              && (inputs.alvo == 'ficha-tse' || inputs.alvo == 'ficha-tse-completa' || inputs.alvo == 'ambos')) }}
+      ${{ github.event_name == 'workflow_dispatch'
+          && (inputs.alvo == 'ficha-tse' || inputs.alvo == 'ficha-tse-completa' || inputs.alvo == 'ambos') }}
     env:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
