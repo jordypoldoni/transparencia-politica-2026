@@ -36,8 +36,9 @@ export const REGRAS = [
   { fonte: 'candidatos_senador', maxHoras: 3 * DIA, ate: '2026-11-02' },
   // SICONFI: dia 5 de meses pares
   { fonte: 'fiscal_siconfi', maxHoras: 70 * DIA, soAviso: true },
-  // ainda sem linha em fonte_status (conferir após o cron de 18/10/2026); só avisam
-  { fonte: 'gastos_camara', maxHoras: 3 * DIA, soAviso: true },
+  // gastos_camara (coletar.yml, diário): grava fonte_status desde o PR #27; coleta confirmada em 01/11/2026
+  { fonte: 'gastos_camara', maxHoras: 3 * DIA },
+  // ainda sem linha em fonte_status; só avisam
   { fonte: 'candidatos_deputado_federal', maxHoras: 3 * DIA, ate: '2026-11-02', soAviso: true },
   { fonte: 'candidatos_presidenciais', maxHoras: 3 * DIA, ate: '2026-11-02', soAviso: true },
 ];
