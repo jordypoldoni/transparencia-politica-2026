@@ -11,6 +11,7 @@ import { ufLocal, EVENTO_UF } from '../src/lib/perfilUsuario';
 import { SEGUNDO_TURNO } from '../src/lib/turnos';
 import { hrefTodos } from '../src/lib/buscaCandidatosHome';
 import { nomeBonito as bonito, pctNum as num, cadeirasPorPartido, cadeirasDeContagem, governoNoPrimeiroTurno, chaveFoto, fotoDe } from '../src/lib/eleicoesHome';
+import { linhaAtual } from '../src/lib/cargoAtual';
 
 // ELEIÇÕES NA HOME (12/10/2026, pedido do Jordy; refeito em 31/10/2026, D-101 e D-102).
 // Etapa 1 (31/10/2026): fundo quente que une o bloco e cartão do Presidente com as abas "1º turno | 2º turno".
@@ -71,18 +72,21 @@ function Faixa({ a, b, corA, corB, larga, marca }) {
   );
 }
 
-function Pessoa({ nome, partido, cargo, pct, foto, href }) {
+// Cartão de pessoa: foto, nome, linha de baixo e percentual dentro de UMA faixa de fundo (região comum, regra de proximidade
+// das Diretrizes de Design): o valor fica colado ao nome, sem ir para a ponta do cartão. Cinza escuro na faixa para passar de 4,5:1.
+const CINZA_NA_FAIXA = '#555C68';
+function Pessoa({ nome, partido, atual, pct, foto, href }) {
   const miolo = (
     <>
-      <Avatar nome={nome} foto={foto} size={46} />
+      <span style={{ display: 'flex', flexShrink: 0, background: t.cor.papelCartao, borderRadius: '50%' }}><Avatar nome={nome} foto={foto} size={46} /></span>
       <div style={{ minWidth: 0, flex: 1 }}>
         <b className="elh-nome" style={{ display: 'block', fontSize: '.95rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{bonito(nome)}</b>
-        <small style={{ color: t.cor.cinza, fontSize: '.8rem' }}>{partido} · {cargo}</small>
+        <small style={{ display: 'block', color: CINZA_NA_FAIXA, fontSize: '.8rem', lineHeight: 1.35 }}>{linhaAtual(atual, partido)}</small>
       </div>
       {pct != null && <b style={{ fontSize: '1rem', flexShrink: 0 }}>{pct}%</b>}
     </>
   );
-  const estilo = { display: 'flex', alignItems: 'center', gap: 12, padding: '6px 0', minWidth: 0, textDecoration: 'none', color: 'inherit' };
+  const estilo = { display: 'flex', alignItems: 'center', gap: 12, padding: '8px 16px 8px 10px', margin: '4px 0', background: t.cor.papelQuente2, borderRadius: t.raio.md, minWidth: 0, textDecoration: 'none', color: 'inherit' };
   return href ? <Link href={href} className="elh-lado" style={estilo}>{miolo}</Link> : <div style={estilo}>{miolo}</div>;
 }
 
@@ -117,14 +121,14 @@ function Cadeiras({ eleitos, contagem }) {
 
 function Governo({ gov, uf, fotos }) {
   const g = governoNoPrimeiroTurno(gov.candidatos);
-  const ficha = (c) => { const f = fotoDe(fotos, 'governador', uf, c.numero); return { foto: f?.foto, href: f?.slug ? `/candidato-governador/${f.slug}` : null }; };
+  const ficha = (c) => { const f = fotoDe(fotos, 'governador', uf, c.numero); return { foto: f?.foto, atual: f?.atual, href: f?.slug ? `/candidato-governador/${f.slug}` : null }; };
   if (g.eleito) {
-    return <Bloco titulo="Governador" contagem="1 eleito"><Pessoa nome={g.eleito.nome} partido={g.eleito.partido} cargo="Governador" pct={g.eleito.pct} {...ficha(g.eleito)} /></Bloco>;
+    return <Bloco titulo="Governador" contagem="1 eleito"><Pessoa nome={g.eleito.nome} partido={g.eleito.partido} pct={g.eleito.pct} {...ficha(g.eleito)} /></Bloco>;
   }
   if (g.finalistas.length) {
     return (
       <Bloco titulo="Governador" contagem="2º turno">
-        {g.finalistas.map((c) => <Pessoa key={`${c.numero}|${c.nome}`} nome={c.nome} partido={c.partido} cargo="foi ao 2º turno" pct={c.pct} {...ficha(c)} />)}
+        {g.finalistas.map((c) => <Pessoa key={`${c.numero}|${c.nome}`} nome={c.nome} partido={c.partido} pct={c.pct} {...ficha(c)} />)}
       </Bloco>
     );
   }
@@ -145,7 +149,7 @@ function EleitosDoEstado({ uf, d, fotos }) {
         {sen.length > 0 && (
           <Bloco titulo="Senado" contagem={`${sen.length} ${sen.length === 1 ? 'eleito' : 'eleitos'}`}>
             <div className="elh-sen" style={{ display: 'grid', gridTemplateColumns: sen.length > 1 ? '1fr 1fr' : '1fr', gap: 18 }}>
-              {sen.map((c) => { const f = fotoDe(fotos, 'senador', uf, c.numero); return <Pessoa key={`${c.numero}|${c.nome}`} nome={c.nome} partido={c.partido} cargo="Senador" pct={c.pct} foto={f?.foto} href={f?.slug ? `/candidato-senador/${f.slug}` : null} />; })}
+              {sen.map((c) => { const f = fotoDe(fotos, 'senador', uf, c.numero); return <Pessoa key={`${c.numero}|${c.nome}`} nome={c.nome} partido={c.partido} atual={f?.atual} pct={c.pct} foto={f?.foto} href={f?.slug ? `/candidato-senador/${f.slug}` : null} />; })}
             </div>
           </Bloco>
         )}
@@ -324,7 +328,7 @@ export default function ResumoEleicoesHome({ chapas = [], children }) {
   const [aba, setAba] = useState(null);
   const [ufSalva, setUfSalva] = useState('');
   const [ufLida, setUfLida] = useState(false);
-  const [fotos, setFotos] = useState({}); // 'cargo|UF|número' -> { foto, slug }
+  const [fotos, setFotos] = useState({}); // 'cargo|UF|número' -> { foto, slug, atual }
   const [pais, setPais] = useState(undefined); // undefined = não pedido/carregando, null = falhou
   const [ufVisita, setUfVisita] = useState(null); // null = não escolheu nesta visita; '' = "Todo o Brasil"
   const cache = useRef({});
@@ -364,7 +368,7 @@ export default function ResumoEleicoesHome({ chapas = [], children }) {
     const ctrl = new AbortController();
     const pedir = (cargo, ufP) => fetch(`/api/fotos-candidatos?cargo=${cargo}${ufP ? `&uf=${ufP}` : ''}`, { signal: ctrl.signal })
       .then((r) => (r.ok ? r.json() : { itens: [] }))
-      .then((j) => setFotos((ant) => { const novo = { ...ant }; for (const i of j.itens || []) novo[chaveFoto(cargo, i.uf, i.numero)] = { foto: i.foto, slug: i.slug }; return novo; }))
+      .then((j) => setFotos((ant) => { const novo = { ...ant }; for (const i of j.itens || []) novo[chaveFoto(cargo, i.uf, i.numero)] = { foto: i.foto, slug: i.slug, atual: i.atual || null }; return novo; }))
       .catch(() => {});
     if (uf) { pedir('governador', uf); pedir('senador', uf); } else pedir('governador', '');
     return () => ctrl.abort();
