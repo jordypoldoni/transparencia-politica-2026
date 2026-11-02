@@ -20,10 +20,8 @@ on:
     # 08:23 de Brasília, dia 5 de fev/abr/jun/ago/out/dez. Alinhado ao calendário de
     # publicação do Tesouro, que é bimestral.
     - cron: '23 11 5 2,4,6,8,10,12 *'
-    # Ficha do TSE, DIÁRIA: só quem ainda pode mudar de situação. 07:41 de Brasília.
-    - cron: '41 10 * * *'
-    # Ficha do TSE, SEMANAL (domingo): todos os 7.703. 03:53 de Brasília, fila vazia.
-    - cron: '53 6 * * 0'
+    # Ficha do TSE: crons diário e semanal REMOVIDOS em 02/11/2026 (a trava de 01/11 já
+    # tinha encerrado o agendamento). O job continua disponível pelo botão manual.
   workflow_dispatch:
     inputs:
       alvo:
@@ -68,10 +66,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 150
     if: >-
-      ${{ github.event.schedule == '41 10 * * *'
-          || github.event.schedule == '53 6 * * 0'
-          || (github.event_name == 'workflow_dispatch'
-              && (inputs.alvo == 'ficha-tse' || inputs.alvo == 'ficha-tse-completa' || inputs.alvo == 'ambos')) }}
+      ${{ github.event_name == 'workflow_dispatch'
+          && (inputs.alvo == 'ficha-tse' || inputs.alvo == 'ficha-tse-completa' || inputs.alvo == 'ambos') }}
     env:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
@@ -185,7 +181,7 @@ jobs:
         run: npm install --ignore-scripts
 
       # 29 entes (União, 26 estados e o DF) com pausa de 200ms entre eles, mais o download da
-      # lista completa de entes. Leva alguns minutos; o teto de 30 é rede travada, não trabalho.
+      # lista completa de entes. Leva alguns minutos; o timeout de 30 é rede travada, não trabalho.
       - name: Coletar entes e execução orçamentária
         timeout-minutes: 30
         env:
