@@ -8,7 +8,7 @@ import { Seta as SetaPadrao } from './icones'; // seta dourada padrão do site (
 import { sincronizarTudo } from '../src/lib/sincronizacao';
 import { casaDoPerfil } from '../src/lib/casa';
 import { aoMudarSessao, validarSessao, ufLocal, guardarUfCookie, COOKIE_UF } from '../src/lib/perfilUsuario';
-import { souAdmin } from '../src/lib/souAdmin';
+import { consultarAdmin, EVENTO_AVISOS } from '../src/lib/souAdmin';
 
 // ============================================================================
 // MENU PRINCIPAL, REORGANIZADO EM 19/09/2026
@@ -126,6 +126,16 @@ const FORA_DO_MENU = [
 // ITEM SÓ DO ADMINISTRADOR (02/11/2026): entra no fim de "Pra você" quando a conta logada é a administradora (src/lib/souAdmin.js).
 // Esconder aqui é conforto; quem abrir /admin/avisos na mão é recusado pelo servidor.
 const ITEM_ADMIN = { href: '/admin/avisos', rotulo: 'Avisos de erro', nota: 'só você vê, administração' };
+
+// SELO VERMELHO COM O NÚMERO DE AVISOS NOVOS (02/11/2026, pedido do Jordy): fundo vermelho do site (o mesmo do voto Não, 5,4:1 com o branco) e número branco.
+const seloNumero = { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', minWidth: '22px', height: '22px', padding: '0 7px', borderRadius: t.raio.pill, background: t.cor.nao, color: '#fff', fontSize: '0.78rem', fontWeight: 800, lineHeight: 1, flexShrink: 0, boxSizing: 'border-box' };
+function Selo({ n }) {
+  return <span role="img" aria-label={`${n} ${n === 1 ? 'aviso novo' : 'avisos novos'}`} style={seloNumero}>{n > 99 ? '99+' : n}</span>;
+}
+// "!" no fim de "Pra você" enquanto o grupo está fechado e há aviso novo (o item mora dentro dele).
+function Exclama() {
+  return <span role="img" aria-label="há avisos de erro novos" style={{ ...seloNumero, minWidth: '20px', height: '20px', padding: 0, fontSize: '0.75rem' }}>!</span>;
+}
 function nomeDaPagina(pathname) {
   for (const n of NAV_BASE) {
     if (n.filhos) { const f = n.filhos.find((x) => ehAtivo(x.href, pathname)); if (f) return f.curto || f.rotulo; }
@@ -186,14 +196,19 @@ export default function Layout({ children, pageProps }) {
   const navRef = useRef(null);
   const relogio = useRef(null);
   const [admin, setAdmin] = useState(false); // conta logada é a administradora? só então o menu mostra "Avisos de erro"
-  const navItens = admin ? NAV_BASE.map((n) => (n.rotulo === 'Pra você' ? { ...n, filhos: [...n.filhos, ITEM_ADMIN] } : n)) : NAV_BASE;
+  const [novos, setNovos] = useState(0);      // quantos avisos estão com status "novo" (só o administrador recebe o número)
+  const navItens = admin
+    ? NAV_BASE.map((n) => (n.rotulo === 'Pra você' ? { ...n, alerta: novos > 0, filhos: [...n.filhos, { ...ITEM_ADMIN, contador: novos }] } : n))
+    : NAV_BASE;
+  // Pergunta ao entrar, ao mudar de página, ao mudar a sessão e quando o painel muda um status.
   useEffect(() => {
     let vivo = true;
-    const checar = () => { souAdmin().then((v) => { if (vivo) setAdmin(v); }); };
+    const checar = () => { consultarAdmin().then((r) => { if (vivo) { setAdmin(r.admin); setNovos(r.novos); } }); };
     checar();
     const parar = aoMudarSessao(() => checar());
-    return () => { vivo = false; parar(); };
-  }, []);
+    window.addEventListener(EVENTO_AVISOS, checar);
+    return () => { vivo = false; parar(); window.removeEventListener(EVENTO_AVISOS, checar); };
+  }, [asPath]);
 
   useEffect(() => { setMenu(false); setAberto(null); }, [asPath]); // fecha ao navegar
   // Ao abrir o menu do celular, a sanfona já mostra o grupo da página atual (se houver).
@@ -328,6 +343,7 @@ export default function Layout({ children, pageProps }) {
                   >
                     {n.rotulo}
                     <Seta aberto={estaAberto} />
+                    {!estaAberto && n.alerta && <Exclama />}
                   </button>
 
                   {estaAberto && (
@@ -356,7 +372,10 @@ export default function Layout({ children, pageProps }) {
                               onMouseOver={(e) => { if (!fAtivo) e.currentTarget.style.background = t.cor.papelQuente; }}
                               onMouseOut={(e) => { if (!fAtivo) e.currentTarget.style.background = 'transparent'; }}
                             >
-                              <span style={{ display: 'block', fontSize: '0.9rem', fontWeight: fAtivo ? 800 : 700, color: t.cor.tinta }}>{f.rotulo}</span>
+                              <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', fontSize: '0.9rem', fontWeight: fAtivo ? 800 : 700, color: t.cor.tinta }}>
+                                {f.rotulo}
+                                {f.contador > 0 && <Selo n={f.contador} />}
+                              </span>
                               {/* Na pastilha âmbar a nota vai em tinta, nunca em cinza:
                                   cinza sobre âmbar não alcança o mínimo do AA. */}
                               {f.nota && <span style={{ display: 'block', fontSize: '0.76rem', color: fAtivo ? ATIVO_TEXTO : t.cor.cinza, marginTop: '1px' }}>{f.nota}</span>}
@@ -433,7 +452,10 @@ export default function Layout({ children, pageProps }) {
                 <div key={n.rotulo} style={{ background: t.cor.papelCartao, borderRadius: t.raio.md, boxShadow: t.sombra.sutil, marginBottom: '10px', overflow: 'hidden' }}>
                   <button type="button" onClick={() => setGrupoMovel(aberta ? null : n.rotulo)} aria-expanded={aberta}
                     style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', width: '100%', background: 'none', border: 'none', margin: 0, padding: '14px 16px', textAlign: 'left', cursor: 'pointer', color: 'inherit', font: 'inherit' }}>
-                    <span style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.1rem', color: ativo ? t.cor.ouroTexto : t.cor.tinta }}>{n.rotulo}</span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.1rem', color: ativo ? t.cor.ouroTexto : t.cor.tinta }}>
+                      {n.rotulo}
+                      {!aberta && n.alerta && <Exclama />}
+                    </span>
                     <span style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', fontWeight: 700, color: t.cor.ouroTexto }}>
                       {aberta ? 'Recolher' : 'Ver'}
                       <SetaPadrao aberta={aberta} size={14} />
@@ -444,7 +466,10 @@ export default function Layout({ children, pageProps }) {
                     return (
                       <Link key={f.href} href={f.href} aria-current={fAtivo ? 'page' : undefined}
                         style={{ display: 'block', textDecoration: 'none', padding: '11px 16px', borderTop: `1px solid ${t.cor.papelQuente2}`, background: fAtivo ? ATIVO_FUNDO : 'transparent', color: fAtivo ? ATIVO_TEXTO : t.cor.tinta }}>
-                        <span style={{ display: 'block', fontWeight: fAtivo ? 800 : 700, fontSize: '1rem' }}>{f.rotulo}</span>
+                        <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', fontWeight: fAtivo ? 800 : 700, fontSize: '1rem' }}>
+                          {f.rotulo}
+                          {f.contador > 0 && <Selo n={f.contador} />}
+                        </span>
                         {f.nota && <span style={{ display: 'block', fontSize: '0.78rem', color: fAtivo ? ATIVO_TEXTO : t.cor.cinza, marginTop: '1px' }}>{f.nota}</span>}
                       </Link>
                     );
