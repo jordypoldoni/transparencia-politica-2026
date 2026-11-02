@@ -181,7 +181,7 @@ jobs:
         run: npm install --ignore-scripts
 
       # 29 entes (União, 26 estados e o DF) com pausa de 200ms entre eles, mais o download da
-      # lista completa de entes. Leva alguns minutos; o timeout de 30 é rede travada, não trabalho.
+      # lista completa de entes. Leva alguns minutos; o teto de 30 é rede travada, não trabalho.
       - name: Coletar entes e execução orçamentária
         timeout-minutes: 30
         env:
