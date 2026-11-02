@@ -21,5 +21,8 @@ Cite a página específica do parlamentar, da votação ou da apuração e, de p
 ## Correções
 Erros confirmados são corrigidos e registrados com data, o que mudou e a fonte em /correcoes. Cada perfil, votação e página de estado tem o link "Encontrou um erro? Avise".
 
+## Termos e privacidade
+As regras de uso estão em /termos e o que o site guarda sobre o usuário está em /privacidade. O Lume mostra dado e fonte, sem recomendação de voto.
+
 ## Mapa do site
 https://www.lumecidadao.com.br/sitemap.xml
