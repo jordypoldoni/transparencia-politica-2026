@@ -49,28 +49,12 @@ export default function Privacidade() {
         <p style={p}>Você entra com a sua conta Google. A conta serve só para levar o seu perfil para outros aparelhos. Guardamos:</p>
         <ul style={{ paddingLeft: '20px', margin: '0 0 12px' }}>
           <li style={li}><strong style={forte}>Da conta:</strong> seu e-mail e, se entrar com Google, o nome e a foto que o Google envia.</li>
-          <li style={li}><strong style={forte}>Do perfil:</strong> o seu estado, a data em que você deu o consentimento abaixo, a sua posição (a favor, contra ou sem opinião) em cada pergunta do questionário, com a indicação de como ela foi dada (marcada por você, ou sugerida pela leitura automática e confirmada ou corrigida por você), os candidatos que você escolheu como seu voto na cédula, e os políticos e partidos que você marcou como favoritos.</li>
+          <li style={li}><strong style={forte}>Do perfil:</strong> o seu estado, a data em que você deu o consentimento abaixo, a sua posição (a favor, contra ou sem opinião) em cada pergunta do questionário, com a indicação de que foi marcada por você, os candidatos que você escolheu como seu voto na cédula, e os políticos e partidos que você marcou como favoritos.</li>
         </ul>
         <p style={p}>
           A sua posição sobre temas políticos, e também quais políticos e partidos você favorita e em quem você pretende votar, é <strong style={forte}>dado pessoal sensível</strong> pela Lei Geral de Proteção de Dados.
           Por isso ela só é guardada no perfil depois que você marca, na própria página, que concorda com isso (LGPD, art. 11, I).
           Sem esse consentimento, o sistema recusa gravar.
-        </p>
-
-        <h2 style={h2}>O texto que você escreve para a leitura automática</h2>
-        <p style={p}>
-          Na página "Pra você" você pode escrever, com as suas palavras, no que acredita. Esse texto é enviado a um serviço de
-          inteligência artificial, a <strong style={forte}>Groq, Inc.</strong>, empresa dos Estados Unidos, apenas para sugerir as
-          suas respostas às perguntas. <strong style={forte}>O Lume não guarda esse texto</strong>: guardamos só as respostas que você
-          confirmar. Não escreva nesse campo nomes, documentos ou qualquer coisa que identifique você ou outra pessoa.
-        </p>
-        <p style={p}>
-          Esse envio é <strong style={forte}>opcional</strong>: o questionário pode ser respondido inteiro sem escrever nada, e
-          nesse caminho nenhuma resposta sai do seu aparelho para serviço externo. Se você escolher escrever, o site só envia o
-          texto depois que você marca a autorização ao lado do campo, e <strong style={forte}>registra que a autorização foi dada</strong>:
-          a data e a versão do aviso que estava na tela. Se você estiver com a conta aberta, o registro fica ligado a ela; se não,
-          não guarda nada que identifique você. O texto em si nunca é registrado. A Groq foi configurada para não guardar os
-          textos recebidos (retenção zero).
         </p>
 
         <h2 style={h2}>Se você avisar de um erro</h2>
