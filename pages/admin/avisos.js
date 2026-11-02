@@ -5,6 +5,7 @@ import { t } from '../../src/estilo/tokens';
 import Giro from '../../components/Giro';
 import { validarSessao, sessaoAtual } from '../../src/lib/perfilUsuario';
 import { STATUS_AVISO, ROTULO_STATUS } from '../../src/lib/admin';
+import { avisarMudancaDeAvisos } from '../../src/lib/souAdmin';
 
 // PAINEL DE AVISOS DE ERRO (02/11/2026). Só o administrador do Lume (e-mail em ADMIN_EMAIL, conferido no servidor)
 // vê a lista dos avisos do formulário /avisar-erro e muda o status de cada um. Fora do Google (noindex) e fora do mapa do site.
@@ -60,6 +61,7 @@ export default function AdminAvisos() {
     setSalvando(0);
     if (r.status !== 200) { setMsg('Não foi possível salvar. Tente de novo.'); return; }
     await carregar(filtro);
+    avisarMudancaDeAvisos();
   };
 
   return (
