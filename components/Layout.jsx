@@ -118,7 +118,7 @@ function ehAtivo(href, pathname) {
 // hambúrguer e some a pista de onde a pessoa está. O nome sai do próprio menu (o item ativo), e
 // as páginas que não estão no menu têm nome aqui.
 const FORA_DO_MENU = [
-  ['/entrar', 'Entrar'], ['/privacidade', 'Privacidade'], ['/sobre', 'Sobre o Lume'],
+  ['/entrar', 'Entrar'], ['/privacidade', 'Privacidade'], ['/termos', 'Termos de uso'], ['/sobre', 'Sobre o Lume'],
   ['/estado/', 'Parlamentares do estado'], ['/ente/', 'Gastos públicos'],
 ];
 function nomeDaPagina(pathname) {
@@ -465,6 +465,10 @@ export default function Layout({ children, pageProps }) {
             {/* 26/09/2026: a política de privacidade entrou com o perfil do usuário (banco 2). */}
             <p style={{ margin: '8px 0 0' }}>
               <Link href="/privacidade" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>Privacidade: o que guardamos sobre você</Link>
+            </p>
+            {/* 02/11/2026: regras de uso do site, complementares à privacidade. */}
+            <p style={{ margin: '8px 0 0' }}>
+              <Link href="/termos" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>Termos de uso: as regras para usar o Lume</Link>
             </p>
             {/* 18/10/2026 (B7): canal de erro e histórico público de correções. */}
             <p style={{ margin: '8px 0 0' }}>
