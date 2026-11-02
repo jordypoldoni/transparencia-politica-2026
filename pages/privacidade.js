@@ -10,7 +10,7 @@ import { CONTATO } from '../src/lib/contato';
 //
 // Regra da página: descrever o que o CÓDIGO faz, sem promessa que o código não cumpre. Mudou o
 // código (novo dado guardado, novo serviço externo), muda esta página e a data de ATUALIZADA.
-const ATUALIZADA = '31 de outubro de 2026';
+const ATUALIZADA = '2 de novembro de 2026';
 // CONTATO (e-mail público para pedidos sobre dados pessoais, escolhido pelo Jordy em 26/09) mora em src/lib/contato.js.
 
 const h2 = { fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.4rem', margin: '36px 0 12px' };
@@ -71,6 +71,15 @@ export default function Privacidade() {
           a data e a versão do aviso que estava na tela. Se você estiver com a conta aberta, o registro fica ligado a ela; se não,
           não guarda nada que identifique você. O texto em si nunca é registrado. A Groq foi configurada para não guardar os
           textos recebidos (retenção zero).
+        </p>
+
+        <h2 style={h2}>Se você avisar de um erro</h2>
+        <p style={p}>
+          No formulário <Link href="/avisar-erro" style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>Avisar de um erro</Link> guardamos a página em que você viu o erro, o texto que você escreveu,
+          o link da fonte oficial, se você colocar, e o seu e-mail, <strong style={forte}>só se você quiser resposta</strong>. Não guardamos o endereço de internet nem o navegador.
+          Só o responsável pelo Lume lê esses avisos, e eles não aparecem para mais ninguém. Usamos o e-mail apenas para responder o seu aviso.
+          Não escreva dados pessoais de outras pessoas no texto. Guardamos o aviso até o erro ser conferido e tratado, e você pode pedir para apagar o seu escrevendo para{' '}
+          <a href={`mailto:${CONTATO}`} style={{ color: t.cor.ouroTexto, fontWeight: 700 }}>{CONTATO}</a>.
         </p>
 
         <h2 style={h2}>Onde os dados ficam</h2>

@@ -2,7 +2,6 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { t } from '../src/estilo/tokens';
 import { CORRECOES } from '../src/dados/correcoes';
-import { linkErro } from '../src/lib/contato';
 import { dataBr } from '../src/lib/datas';
 
 // CORREÇÕES (18/10/2026, B7): como avisar de um erro e o histórico público do que já foi corrigido.
@@ -32,14 +31,14 @@ export default function Correcoes() {
 
         <h2 style={h2}>Como avisar</h2>
         <p style={p}>
-          Em cada perfil, votação e página de estado há o link <strong style={forte}>“Encontrou um erro? Avise”</strong>. Ele abre o seu e-mail já com a página e o dado,
+          Em cada perfil, votação e página de estado há o link <strong style={forte}>“Encontrou um erro? Avise”</strong>. Ele abre um formulário já com a página e o dado,
           e você só escreve o que viu. Se preferir, use o botão abaixo.
         </p>
         <p style={{ margin: '0 0 12px' }}>
-          <a href={linkErro({ caminho: '/correcoes', assunto: 'aviso geral' })}
+          <Link href="/avisar-erro?pagina=%2Fcorrecoes&assunto=aviso%20geral"
             style={{ display: 'inline-flex', alignItems: 'center', padding: '10px 18px', fontSize: '0.9rem', fontWeight: 700, fontFamily: t.fonte.corpo, borderRadius: t.raio.pill, textDecoration: 'none', background: t.cor.verde, color: t.cor.ouro }}>
             Avisar de um erro
-          </a>
+          </Link>
         </p>
         <p style={p}>Ajuda muito: o link da página, o dado que parece errado e, se puder, o link da fonte oficial.</p>
 
