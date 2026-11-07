@@ -105,6 +105,9 @@ export default function App({ Component, pageProps }) {
         .entenda-etapa { background: #FAF5EE; border-radius: 16px; padding: 16px 18px; }
         .entenda-etapa b { display: block; font-size: .98rem; margin-bottom: 4px; color: #191C20; }
         .entenda-etapa span { font-size: .88rem; line-height: 1.5; color: #666E7B; }
+        .entenda-etapa-link { display: block; text-decoration: none; color: inherit; transition: box-shadow .15s; }
+        .entenda-etapa-link:hover { box-shadow: 0 8px 24px rgba(74,52,30,.14); }
+        .entenda-ver { display: block; margin-top: 8px; font-style: normal; font-size: .82rem; font-weight: 800; color: #A85B00; }
         .entenda-etapa.fim { background: #241E52; }
         .entenda-etapa.fim b { color: #fff; }
         .entenda-etapa.fim span { color: rgba(255,255,255,.82); }

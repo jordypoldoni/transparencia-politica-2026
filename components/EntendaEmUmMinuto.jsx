@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import ReportarErro from './ReportarErro';
 import { dataBr } from '../src/lib/datas';
 import { explicarStatus } from '../src/lib/destaques';
@@ -70,7 +71,13 @@ export default function EntendaEmUmMinuto({ dados, assunto }) {
               {fluxo.etapas.map((e, i) => (
                 <span key={i} style={{ display: 'contents' }}>
                   {i > 0 && <div className="entenda-seta" aria-hidden="true">→</div>}
-                  <div className={`entenda-etapa${e.final ? ' fim' : ''}`}><b>{e.titulo}</b>{e.texto && <span>{e.texto}</span>}</div>
+                  {e.votacaoId ? (
+                    <Link href={`/votacao/${encodeURIComponent(e.votacaoId)}`} className={`entenda-etapa entenda-etapa-link${e.final ? ' fim' : ''}`}>
+                      <b>{e.titulo}</b>{e.texto && <span>{e.texto}</span>}<i className="entenda-ver">Ver a votação ›</i>
+                    </Link>
+                  ) : (
+                    <div className={`entenda-etapa${e.final ? ' fim' : ''}`}><b>{e.titulo}</b>{e.texto && <span>{e.texto}</span>}</div>
+                  )}
                 </span>
               ))}
             </div>
