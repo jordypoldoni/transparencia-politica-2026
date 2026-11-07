@@ -75,14 +75,14 @@ export function ehProjeto(sigla) {
 // MESMA REGRA DO NOMES ACIMA: sigla desconhecida devolve null, e a tela simplesmente não mostra
 // a linha. Nunca inventar uma explicação plausível.
 const O_QUE_FAZ = {
-  PL: 'proposta para criar ou mudar uma lei comum. Precisa passar pela Câmara, pelo Senado e pela sanção do presidente.',
+  PL: 'proposta para criar ou mudar uma lei comum. Precisa passar pela Câmara dos Deputados, pelo Senado Federal e pela sanção do presidente.',
   PLP: 'proposta para criar ou mudar uma lei complementar, exigida pela Constituição em certos temas. Precisa de maioria absoluta.',
-  PEC: 'proposta para mudar o texto da Constituição. Exige três quintos dos votos, em dois turnos, nas duas Casas.',
+  PEC: 'proposta para mudar o texto da Constituição. Exige três quintos dos votos, em dois turnos, na Câmara dos Deputados e no Senado Federal.',
   PDL: 'decisão do Congresso que não passa pela sanção do presidente. Usada para sustar atos do Executivo, aprovar tratados e indicações.',
   PDC: 'decisão do Congresso que não passa pela sanção do presidente. Usada para sustar atos do Executivo, aprovar tratados e indicações.',
   MPV: 'norma editada pelo presidente que JÁ ESTÁ VALENDO desde que foi publicada. O Congresso decide depois se ela vira lei em definitivo.',
   PLV: 'versão de uma medida provisória depois de alterada pelo Congresso.',
-  PRC: 'norma interna da Casa legislativa. Não vira lei federal.',
+  PRC: 'norma interna da Câmara dos Deputados ou do Senado Federal. Não vira lei federal.',
   PRS: 'norma interna do Senado. Não vira lei federal.',
   PLS: 'proposta para criar ou mudar uma lei, apresentada no Senado.',
   PLN: 'proposta de lei sobre orçamento e créditos, votada pelo Congresso reunido.',
@@ -131,7 +131,7 @@ const NA_SUA_VIDA = {
     PDC: 'É o Congresso decidindo sem passar pelo presidente: derrubar uma regra que o governo editou, aprovar acordos com outros países e confirmar ou recusar nomes indicados para cargos.',
     PLV: 'É a medida provisória já com as mudanças que o Congresso fez. O que valia desde a publicação pode sair daqui diferente do que entrou.',
     PLN: 'Decide para onde vai o dinheiro público do ano: quanto cada área recebe, e de onde sai verba extra quando o governo precisa gastar além do previsto.',
-    PRC: 'Não muda lei nenhuma: define como a própria Casa funciona. Alcança a sua vida de forma indireta, porque é o que determina o ritmo e a ordem com que tudo o mais é votado.',
+    PRC: 'Não muda lei nenhuma: define como a própria Câmara dos Deputados funciona. Alcança a sua vida de forma indireta, porque é o que determina o ritmo e a ordem com que tudo o mais é votado.',
     PRS: 'Não muda lei nenhuma: define como o Senado funciona por dentro, o que determina o ritmo e a ordem com que tudo o mais é votado.',
   },
   Estadual: {

@@ -62,7 +62,7 @@ const NAV_BASE = [
   {
     rotulo: 'Decisões',
     filhos: [
-      { href: '/votacoes', rotulo: 'Votações', nota: 'Câmara, Senado e Assembleia do RS' },
+      { href: '/votacoes', rotulo: 'Votações', nota: 'Câmara dos Deputados, Senado Federal e Assembleia Legislativa do RS' },
       { href: '/indicacoes', rotulo: 'Indicações', nota: 'nomes do presidente no Senado' },
       { href: '/cpis', rotulo: 'CPIs', nota: 'investigações do Congresso' },
     ],
