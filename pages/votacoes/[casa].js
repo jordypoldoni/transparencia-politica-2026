@@ -243,7 +243,7 @@ export default function VotacoesDaCasa({ casa, votacoes, temas = [], temaInicial
                           onMouseOut={(e) => { e.currentTarget.style.background = t.cor.papelQuente; }}>
                           <span style={{ flexShrink: 0, width: '8px', height: '8px', borderRadius: '50%', background: h.status ? (aprov ? t.cor.sim : t.cor.nao) : t.cor.cinza }} />
                           <span style={{ flexShrink: 0, fontSize: '0.8rem', fontWeight: 700, color: t.cor.tinta, minWidth: '96px' }} className="etapa-papel">{papel}</span>
-                          <span style={{ flex: 1, minWidth: 0, fontSize: '0.8rem', color: h.status ? (aprov ? t.cor.sim : t.cor.nao) : t.cor.cinza, fontWeight: 600 }}>
+                          <span className="etapa-res" style={{ flex: 1, minWidth: 0, fontSize: '0.8rem', color: h.status ? (aprov ? t.cor.sim : t.cor.nao) : t.cor.cinza, fontWeight: 600 }}>
                             {h.status || 'Sem resultado'}{h.sim != null ? ` · ${h.sim}×${h.nao}` : ''}
                           </span>
                           <span style={{ flexShrink: 0, fontSize: '0.74rem', color: t.cor.cinza }}>{dataBR(v.data_voto)}</span>
