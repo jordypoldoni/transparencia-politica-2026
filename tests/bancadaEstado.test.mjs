@@ -92,7 +92,7 @@ test('fraseResumo: faixa, mediana (só com 4 ou mais), teto e sem adjetivo', () 
   const mk = (totais) => montarLinhas({ lista: totais.map((v, i) => dep('p' + i, v, 1)) }, 'RS', {});
   const l4 = mk([10000, 20000, 30000, 40000]);
   const f4 = fraseResumo(g, resumoDoGrupo(l4, 'federal', 'RS'));
-  assert.equal(f4, `Em 2026, a média mensal de gasto dos 4 deputados federais do estado vai de ${reais(10000)} a ${reais(40000)}, com mediana de ${reais(25000)}. O teto mensal da cota da Câmara para o estado é ${reais(53086.78)}.`);
+  assert.equal(f4, `Em 2026, a média mensal de gasto dos 4 deputados federais do estado vai de ${reais(10000)} a ${reais(40000)}, com mediana de ${reais(25000)}. O teto mensal da cota da Câmara dos Deputados para o estado é ${reais(53086.78)}.`);
   const l2 = mk([10000, 20000]);
   assert.ok(!/mediana/.test(fraseResumo(g, resumoDoGrupo(l2, 'federal', 'RS'))));
   assert.match(fraseResumo(g, resumoDoGrupo(mk([7000]), 'federal', 'RS')), /gastou, em média/);
