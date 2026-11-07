@@ -2,7 +2,8 @@ import supabase from '../supabase_cliente.js';
 import { buscarTudo } from '../lib/paginar.js';
 import { garantirResumo } from '../lib/siconfi.js';
 import { agruparPorMateria } from '../lib/votacao.js';
-import { casaDoPerfil } from '../lib/casa.js';
+import { casaDoPerfil, casaDaVotacao } from '../lib/casa.js';
+import { chaveEntenda, normalizarEntenda } from '../lib/entenda.js';
 import { todosCandidatosEstaduais } from '../lib/candidatosEstaduais.js';
 import { mandatoEstadual } from '../lib/mandatoEstadual.js';
 import { ASSEMBLEIAS } from '../lib/assembleias.js';
@@ -769,6 +770,8 @@ const ServicoAPI = {
             // ARMADILHA (14/09/2026): a consulta acima usa select('*'), mas ESTE objeto é
             // remontado campo a campo, então tudo que não estiver listado aqui é descartado
             // silenciosamente. Colunas novas no banco NÃO chegam na tela só por existirem.
+            // 07/11/2026: o id da proposicao liga a votacao ao resumo visual (resumos_entenda).
+            proposicao_id: vm?.proposicao_id ?? null,
             url_inteiro_teor: vm?.url_inteiro_teor || null,
             explicacao_cidada: vm?.explicacao_cidada || null,
             contexto_extra: vm?.contexto_extra || null,
@@ -787,7 +790,16 @@ const ServicoAPI = {
                 rota: casaDoPerfil(r.agentes_politicos || {}).rota,
             }))
             .sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
-        return { meta, votos };
+        // Resumo visual por proposicao. Falha aqui nunca derruba a pagina: sem resumo, tela igual a de antes.
+        let entenda = null;
+        try {
+            const chave = chaveEntenda(casaDaVotacao({ votacao_id_externa: id }).chave, meta.proposicao_id);
+            if (chave) {
+                const { data } = await supabase.from('resumos_entenda').select('conteudo').eq('chave', chave).maybeSingle();
+                entenda = normalizarEntenda(data?.conteudo);
+            }
+        } catch { entenda = null; }
+        return { meta, votos, entenda };
     },
 
     // Resolve a página de perfil a partir do slug (URL amigável / SEO)
