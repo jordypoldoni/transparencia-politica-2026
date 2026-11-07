@@ -30,11 +30,11 @@ const CARGOS = [
   {
     nome: 'Deputado Federal', onde: 'Câmara dos Deputados, Brasília', quantos: '513 no total', mandato: '4 anos',
     faz: 'Representa o povo do seu estado (quanto mais população, mais deputados). Cria e muda leis nacionais, fiscaliza o governo federal, vota o Orçamento da União e pode abrir processo de impeachment.',
-    naofaz: 'Sozinho não aprova uma lei: a proposta ainda passa pelo Senado.',
+    naofaz: 'Sozinho não aprova uma lei: a proposta ainda passa pelo Senado Federal.',
   },
   {
     nome: 'Senador', onde: 'Senado Federal, Brasília', quantos: '81 (3 por estado)', mandato: '8 anos',
-    faz: 'Representa o estado em si, por isso todo estado tem o mesmo número (3), independentemente do tamanho. Também cria leis nacionais, revisa o que a Câmara aprova, aprova autoridades (como ministros do STF) e julga o impeachment.',
+    faz: 'Representa o estado em si, por isso todo estado tem o mesmo número (3), independentemente do tamanho. Também cria leis nacionais, revisa o que a Câmara dos Deputados aprova, aprova autoridades (como ministros do Supremo Tribunal Federal (STF)) e julga o impeachment.',
     naofaz: 'Senador também vota e legisla, não fica parado.',
   },
 ];
@@ -80,7 +80,7 @@ export default function Entenda() {
 
         <div style={{ ...cartao, marginBottom: '48px' }}>
           <p style={{ margin: 0, fontSize: '0.95rem', lineHeight: 1.6 }}>
-            <strong>E quem vota as leis?</strong> Tanto deputados quanto senadores. Uma proposta normalmente precisa passar pelas <strong>duas casas</strong> (Câmara e Senado) antes de virar lei. Hoje este site mostra os <strong>votos nominais da Câmara</strong>; os votos do Senado entram em breve.
+            <strong>E quem vota as leis?</strong> Tanto deputados quanto senadores. Uma proposta normalmente precisa passar pelas <strong>duas casas</strong> (Câmara dos Deputados e Senado Federal) antes de virar lei. Hoje este site mostra os <strong>votos nominais da Câmara dos Deputados</strong>; os votos do Senado Federal entram em breve.
           </p>
         </div>
 
@@ -93,13 +93,13 @@ export default function Entenda() {
 
             REGRA DO JORDY (18/09/2026): nada de travessão no texto do site. Usar vírgula,
             dois-pontos, parênteses ou ponto final. */}
-        <h2 id="senado" style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.6rem', margin: '0 0 8px', scrollMarginTop: '90px' }}>Como o Senado se compõe</h2>
+        <h2 id="senado" style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.6rem', margin: '0 0 8px', scrollMarginTop: '90px' }}>Como o Senado Federal se compõe</h2>
         <p style={{ color: t.cor.cinza, fontSize: '1rem', margin: '0 0 18px', lineHeight: 1.6 }}>
-          O Senado tem <strong style={{ color: t.cor.tinta }}>81 cadeiras</strong>, e esse número não muda:
+          O Senado Federal tem <strong style={{ color: t.cor.tinta }}>81 cadeiras</strong>, e esse número não muda:
           três para cada um dos 26 estados e três para o Distrito Federal. Roraima, com menos de
           700 mil habitantes, tem os mesmos três senadores que São Paulo, com mais de 44 milhões.
-          É assim de propósito, porque no Senado quem é representado é o <strong style={{ color: t.cor.tinta }}>estado</strong>,
-          não a população. Na Câmara é o contrário: lá o tamanho da bancada segue o número de habitantes.
+          É assim de propósito, porque no Senado Federal quem é representado é o <strong style={{ color: t.cor.tinta }}>estado</strong>,
+          não a população. Na Câmara dos Deputados é o contrário: lá o tamanho da bancada segue o número de habitantes.
         </p>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px, 100%), 1fr))', gap: '14px', marginBottom: '20px' }}>
@@ -113,9 +113,9 @@ export default function Entenda() {
           <div style={cartao}>
             <h3 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.15rem', margin: '0 0 10px' }}>Renovação alternada</h3>
             <p style={{ margin: 0, fontSize: '0.95rem', lineHeight: 1.6, color: t.cor.tinta }}>
-              Como o mandato é o dobro, o Senado nunca troca inteiro. A cada 4 anos renova-se
+              Como o mandato é o dobro, o Senado Federal nunca troca inteiro. A cada 4 anos renova-se
               <strong> um terço</strong> (27 cadeiras, uma por estado) ou <strong>dois terços</strong> (54,
-              duas por estado), alternadamente. Assim a Casa nunca fica sem quem já conhece o
+              duas por estado), alternadamente. Assim o Senado Federal nunca fica sem quem já conhece o
               trabalho em andamento.
             </p>
           </div>
@@ -168,7 +168,7 @@ export default function Entenda() {
               </div>
             ))}
           </div>
-          <a href="https://www2.camara.leg.br/comunicacao/assessoria-de-imprensa/guia-para-jornalistas/cota-parlamentar" target="_blank" rel="noopener noreferrer" style={{ ...fonte, marginTop: '14px' }}>Ver na fonte oficial (Câmara) ↗</a>
+          <a href="https://www2.camara.leg.br/comunicacao/assessoria-de-imprensa/guia-para-jornalistas/cota-parlamentar" target="_blank" rel="noopener noreferrer" style={{ ...fonte, marginTop: '14px' }}>Ver na fonte oficial (Câmara dos Deputados) ↗</a>
         </div>
 
         {/* Sublimites */}
@@ -189,15 +189,15 @@ export default function Entenda() {
         <div style={{ ...cartao, marginBottom: '20px' }}>
           <h3 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.15rem', margin: '0 0 6px' }}>Senado Federal (CEAPS)</h3>
           <p style={{ margin: '0 0 10px', fontSize: '0.95rem', lineHeight: 1.6, color: t.cor.tinta }}>
-            No Senado a conta é montada diferente: uma parte <strong>fixa de R$ 15.000/mês</strong> + uma parte <strong>variável</strong> para transporte aéreo (até 5 trechos entre o estado e Brasília). Por isso o total também <strong>varia por estado</strong>, por exemplo, para Goiás e o DF fica em torno de <strong>R$ 25.000/mês</strong>.
+            No Senado Federal a conta é montada diferente: uma parte <strong>fixa de R$ 15.000/mês</strong> + uma parte <strong>variável</strong> para transporte aéreo (até 5 trechos entre o estado e Brasília). Por isso o total também <strong>varia por estado</strong>, por exemplo, para Goiás e o DF fica em torno de <strong>R$ 25.000/mês</strong>.
           </p>
-          <a href="https://www12.senado.leg.br/transparencia/perguntas-frequentes-1/sobre-os-senadores/o-que-e-ceaps" target="_blank" rel="noopener noreferrer" style={fonte}>Ver na fonte oficial (Senado) ↗</a>
+          <a href="https://www12.senado.leg.br/transparencia/perguntas-frequentes-1/sobre-os-senadores/o-que-e-ceaps" target="_blank" rel="noopener noreferrer" style={fonte}>Ver na fonte oficial (Senado Federal) ↗</a>
         </div>
 
         {/* Contexto */}
         <div style={{ ...cartao, background: t.cor.papel, marginBottom: '32px' }}>
           <p style={{ margin: 0, fontSize: '0.9rem', lineHeight: 1.6, color: t.cor.cinza }}>
-            <strong style={{ color: t.cor.tinta }}>Para dar tamanho:</strong> a cota é separada do <strong>salário</strong> (subsídio de R$ 46.366,19/mês para deputados e senadores) e, na Câmara, da <strong>verba de gabinete</strong> (R$ 133.170,54/mês para contratar de 5 a 25 assessores). A cota cobre só os custos do mandato.
+            <strong style={{ color: t.cor.tinta }}>Para dar tamanho:</strong> a cota é separada do <strong>salário</strong> (subsídio de R$ 46.366,19/mês para deputados e senadores) e, na Câmara dos Deputados, da <strong>verba de gabinete</strong> (R$ 133.170,54/mês para contratar de 5 a 25 assessores). A cota cobre só os custos do mandato.
           </p>
         </div>
 
