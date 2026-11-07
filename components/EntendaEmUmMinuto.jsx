@@ -1,6 +1,9 @@
 import ReportarErro from './ReportarErro';
 import { dataBr } from '../src/lib/datas';
 
+// **trecho** vira negrito. Só isso: o texto vem do banco e nunca entra como HTML.
+const comNegrito = (texto) => String(texto).split('**').map((parte, i) => (i % 2 ? <strong key={i}>{parte}</strong> : parte));
+
 // Bloco "Entenda em 1 minuto" da página de uma votação (desenho aprovado pelo Jordy em 07/11/2026).
 // Recebe o resultado de normalizarEntenda(); cada parte é opcional e some sozinha se faltar.
 // Estilo em pages/_app.js (classes .entenda-*), para a grade virar coluna única no celular.
@@ -12,14 +15,14 @@ export default function EntendaEmUmMinuto({ dados, assunto }) {
       <h2 id="entenda-titulo">Entenda em 1 minuto</h2>
       <p className="entenda-sub">
         Resumo escrito por inteligência artificial a partir do texto oficial, com os dados conferidos nas fontes abaixo. Descreve o que o texto faz, sem opinar.
-        {' '}Achou um erro? <ReportarErro assunto={`Resumo: ${String(assunto || 'votação').slice(0, 80)}`} />
+        {' '}<ReportarErro assunto={`Resumo: ${String(assunto || 'votação').slice(0, 80)}`} />
       </p>
       <div className="entenda-grade">
         {mudancas.length > 0 && (
           <div className="entenda-cartao">
             <h3>O que muda na prática</h3>
             <ul className="entenda-lista">
-              {mudancas.map((m, i) => (<li key={i}><span className="entenda-n" aria-hidden="true">{i + 1}</span><span>{m}</span></li>))}
+              {mudancas.map((m, i) => (<li key={i}><span className="entenda-n" aria-hidden="true">{i + 1}</span><span>{comNegrito(m)}</span></li>))}
             </ul>
           </div>
         )}
@@ -73,7 +76,7 @@ export default function EntendaEmUmMinuto({ dados, assunto }) {
         {excecoes.length > 0 && (
           <div className="entenda-cartao entenda-cheio">
             <h3>Exceções e detalhes</h3>
-            <ul className="entenda-exc">{excecoes.map((e, i) => (<li key={i}>{e}</li>))}</ul>
+            <ul className="entenda-exc">{excecoes.map((e, i) => (<li key={i}>{comNegrito(e)}</li>))}</ul>
           </div>
         )}
       </div>
