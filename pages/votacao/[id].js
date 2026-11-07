@@ -11,6 +11,7 @@ import { t } from '../../src/estilo/tokens';
 import { Seta } from '../../components/icones';
 import BotaoVoltar from '../../components/BotaoVoltar';
 import ReportarErro from '../../components/ReportarErro';
+import EntendaEmUmMinuto from '../../components/EntendaEmUmMinuto';
 import { dataBr } from '../../src/lib/datas';
 import { grafo, organizacao, site, migalhas, pagina, jsonSeguro } from '../../src/lib/dadosEstruturados';
 
@@ -29,7 +30,7 @@ const rotuloVoto = (tp) => (tp === 'Sim' ? 'A favor' : tp === 'Não' ? 'Contra' 
 const rotulo = { margin: 0, fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase', color: t.cor.ouro };
 const pilula = { display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '10px 18px', fontSize: '0.9rem', fontWeight: 700, fontFamily: t.fonte.corpo, borderRadius: t.raio.pill, cursor: 'pointer', textDecoration: 'none', border: 'none', background: '#fff', color: t.cor.tinta, boxShadow: t.sombra.botao };
 
-export default function Votacao({ meta, votos }) {
+export default function Votacao({ meta, votos, entenda }) {
   const router = useRouter();
   const [busca, setBusca] = useState('');
   const [abertos, setAbertos] = useState({});
@@ -114,8 +115,8 @@ export default function Votacao({ meta, votos }) {
 
         <div style={{ background: t.cor.verde, color: '#fff', borderRadius: t.raio.lg, padding: 'clamp(22px,4vw,36px)' }}>
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '0.74rem', fontWeight: 800, padding: '4px 12px', borderRadius: '6px', background: h.status ? (aprovado ? '#E7F3EC' : '#FBEAE7') : '#EEEDE8', color: h.status ? (aprovado ? t.cor.sim : t.cor.nao) : t.cor.tinta, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{h.status || 'Sem resultado'}</span>
-            {meta.proposicao_titulo && <span style={{ fontSize: '0.74rem', fontWeight: 700, padding: '4px 12px', borderRadius: '6px', background: 'rgba(255,255,255,0.14)' }}>{meta.proposicao_titulo}</span>}
+            <span style={{ fontSize: '0.74rem', fontWeight: 800, padding: '4px 12px', borderRadius: '6px', background: h.status ? (aprovado ? '#E7F3EC' : '#FBEAE7') : '#EEEDE8', color: h.status ? (aprovado ? t.cor.sim : t.cor.nao) : t.cor.tinta, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{(entenda && entenda.status && entenda.status.rotulo) || h.status || 'Sem resultado'}</span>
+            {(meta.proposicao_titulo || (entenda && entenda.rotuloProposicao)) && <span style={{ fontSize: '0.74rem', fontWeight: 700, padding: '4px 12px', borderRadius: '6px', background: 'rgba(255,255,255,0.14)' }}>{(entenda && entenda.rotuloProposicao) || meta.proposicao_titulo}{entenda && entenda.status && entenda.status.texto ? ` · ${entenda.status.texto}` : ''}</span>}
             <span style={{ opacity: 0.8, fontSize: '0.85rem' }}>{dataBr(meta.data_voto)}</span>
           </div>
 
@@ -191,10 +192,13 @@ export default function Votacao({ meta, votos }) {
             <p style={rotulo}>Que tipo de votação é esta</p>
             <p style={{ margin: '6px 0 0', fontSize: '1rem', lineHeight: 1.55 }}><strong style={{ fontWeight: 800 }}>{explicacao.termo}:</strong> {explicacao.texto}</p>
             {(meta.resultado || h.limpo) && (
-              <p style={{ margin: '10px 0 0', fontSize: '0.85rem', opacity: 0.78 }}>Decisão registrada: {meta.resultado || h.limpo}.</p>
+              <p style={{ margin: '10px 0 0', fontSize: '0.85rem', opacity: 0.78 }}>{h.status ? `Resultado: ${h.status.toLowerCase()}.` : `Decisão registrada: ${meta.resultado || h.limpo}.`}</p>
             )}
           </div>
         </div>
+
+        {/* Resumo visual (07/11/2026): só aparece quando a proposição tem resumo em resumos_entenda. */}
+        <EntendaEmUmMinuto dados={entenda} assunto={assunto} />
 
         {/* Placar */}
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', margin: '20px 0' }}>
@@ -252,5 +256,5 @@ export default function Votacao({ meta, votos }) {
 export async function getServerSideProps({ params }) {
   const dados = await ServicoAPI.getVotacao(params.id);
   if (!dados) return { notFound: true };
-  return { props: { meta: JSON.parse(JSON.stringify(dados.meta)), votos: JSON.parse(JSON.stringify(dados.votos)) } };
+  return { props: { meta: JSON.parse(JSON.stringify(dados.meta)), votos: JSON.parse(JSON.stringify(dados.votos)), entenda: dados.entenda ? JSON.parse(JSON.stringify(dados.entenda)) : null } };
 }

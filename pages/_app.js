@@ -49,6 +49,49 @@ export default function App({ Component, pageProps }) {
         .pagina { width: 100%; padding: 24px; }
         .secao-home { padding-left: 24px; padding-right: 24px; }
         .leitura { width: 100%; }
+        /* Resumo "Entenda em 1 minuto" (pagina de uma votacao), 07/11/2026. Desenho aprovado pelo Jordy. Sem borda colorida: destaque por sombra e fundo. */
+        .entenda-sec { margin: 28px 0 8px; }
+        .entenda-sec h2 { font-family: "Fraunces", Georgia, serif; font-weight: 600; font-size: 1.5rem; margin: 0 0 6px; color: #191C20; }
+        .entenda-sub { margin: 0 0 16px; font-size: 0.9rem; line-height: 1.5; color: #666E7B; }
+        .entenda-grade { display: grid; grid-template-columns: 1.15fr 1fr; gap: 16px; }
+        .entenda-cartao { background: #fff; border-radius: 24px; box-shadow: 0 1px 2px rgba(74,52,30,.06), 0 4px 16px rgba(74,52,30,.05); padding: 24px; }
+        .entenda-cartao h3 { font-size: 1.05rem; font-weight: 700; margin: 0 0 14px; color: #191C20; }
+        .entenda-cheio { grid-column: 1 / -1; }
+        .entenda-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+        .entenda-lista li { display: flex; gap: 14px; align-items: flex-start; font-size: 1rem; line-height: 1.5; color: #191C20; }
+        .entenda-n { flex: none; width: 28px; height: 28px; border-radius: 999px; background: #241E52; color: #FF8A00; font-weight: 800; font-size: .85rem; display: flex; align-items: center; justify-content: center; margin-top: 1px; }
+        .entenda-rotulo { font-size: .78rem; font-weight: 700; color: #666E7B; margin: 0 0 8px; letter-spacing: .02em; text-transform: uppercase; }
+        .entenda-barras { display: grid; gap: 12px; margin: 0 0 22px; }
+        .entenda-linha { display: grid; grid-template-columns: 150px 1fr; gap: 12px; align-items: center; font-size: .88rem; color: #191C20; }
+        .entenda-linha small { display: block; color: #666E7B; font-size: .76rem; }
+        .entenda-trilho { background: #F4ECE1; border-radius: 999px; height: 26px; }
+        .entenda-barra { height: 100%; border-radius: 999px; background: #241E52; color: #fff; font-weight: 800; font-size: .82rem; display: flex; align-items: center; justify-content: flex-end; padding-right: 12px; min-width: 60px; box-sizing: border-box; }
+        .entenda-barra.am { background: #FF8A00; color: #171238; }
+        .entenda-semana { display: grid; gap: 10px; }
+        .entenda-dias { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+        .entenda-dia { width: 30px; height: 30px; border-radius: 10px; background: #241E52; }
+        .entenda-dia.d { background: #FF8A00; }
+        .entenda-leg { font-size: .88rem; color: #191C20; margin-left: 8px; }
+        .entenda-nota { margin: 10px 0 0; font-size: .78rem; color: #666E7B; }
+        .entenda-fluxo { display: grid; gap: 12px; align-items: stretch; }
+        .entenda-etapa { background: #FAF5EE; border-radius: 16px; padding: 16px 18px; }
+        .entenda-etapa b { display: block; font-size: .98rem; margin-bottom: 4px; color: #191C20; }
+        .entenda-etapa span { font-size: .88rem; line-height: 1.5; color: #666E7B; }
+        .entenda-etapa.fim { background: #241E52; }
+        .entenda-etapa.fim b { color: #fff; }
+        .entenda-etapa.fim span { color: rgba(255,255,255,.82); }
+        .entenda-seta { display: flex; align-items: center; color: #A85B00; font-size: 1.4rem; font-weight: 700; }
+        .entenda-regra { margin: 14px 0 0; font-size: .88rem; color: #666E7B; line-height: 1.5; }
+        .entenda-exc { margin: 0; padding-left: 20px; display: grid; gap: 8px; font-size: .98rem; line-height: 1.55; color: #191C20; }
+        .entenda-fonte { margin: 14px 2px 0; font-size: .8rem; color: #666E7B; line-height: 1.5; }
+        .entenda-fonte a { color: #A85B00; font-weight: 700; }
+        @media (max-width: 760px) {
+          .entenda-grade { grid-template-columns: 1fr; }
+          .entenda-fluxo { grid-template-columns: 1fr !important; }
+          .entenda-seta { justify-content: center; transform: rotate(90deg); }
+          .entenda-linha { grid-template-columns: 1fr; }
+          .entenda-cartao { padding: 20px 18px; }
+        }
         /* Faixa "Como o Lume nasceu" (pagina Sobre), 07/11/2026: sangra ate as bordas da tela e devolve o mesmo recuo por dentro, para o texto alinhar com o resto da pagina. */
         .nasceu-etiqueta, .nasceu-faixa { margin-left: -24px; margin-right: -24px; padding-left: 24px; padding-right: 24px; }
         .nasceu-etiqueta { display: flex; align-items: center; padding-top: 13px; padding-bottom: 13px; background: #FF8A00; color: #171238; font-family: 'Fraunces', Georgia, serif; font-size: 0.95rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; border-radius: 6px 6px 0 0; }
