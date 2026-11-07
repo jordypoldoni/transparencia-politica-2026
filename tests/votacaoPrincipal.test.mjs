@@ -16,3 +16,8 @@ test('sem texto principal, vale a última do processo; vazio dá null', () => {
   assert.equal(votacaoPrincipal([]), null);
   assert.equal(votacaoPrincipal(undefined), null);
 });
+
+test('o substitutivo conta como texto principal (PL votado por substitutivo)', () => {
+  const lista = [v('1', 'Aprovado o Requerimento.'), v('2', 'Aprovado o Substitutivo ao Projeto de Lei nº 5.582, de 2025.'), v('3', 'Aprovada a Emenda de Plenário nº 25.')];
+  assert.equal(votacaoPrincipal(lista).votacao_id_externa, '2');
+});
