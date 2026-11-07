@@ -251,7 +251,7 @@ export default function Home({ votacoes, parlamentares = [], uniao = null, estad
           <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.7rem', margin: '0 0 4px' }}>O que os deputados decidiram</h2>
           <Link href="/votacoes" style={{ fontSize: '0.85rem', fontWeight: 700, color: t.cor.ouroTexto, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>Ver todas as votações <Seta direcao="direita" size={14} /></Link>
         </div>
-        <p style={{ color: t.cor.cinza, fontSize: '0.92rem', margin: '0 0 18px' }}>Votações recentes no plenário da Câmara: o assunto, quem propôs e o que foi decidido. O título de cada card é um resumo em linguagem comum, escrito por inteligência artificial a partir da ementa oficial, que está na íntegra na página da votação. Fonte: Câmara dos Deputados.</p>
+        <p style={{ color: t.cor.cinza, fontSize: '0.92rem', margin: '0 0 18px' }}>Votações recentes no plenário da Câmara dos Deputados: o assunto, quem propôs e o que foi decidido. O título de cada card é um resumo em linguagem comum, escrito por inteligência artificial a partir da ementa oficial, que está na íntegra na página da votação. Fonte: Câmara dos Deputados.</p>
         {votacoes && votacoes.length > 0 ? (
           <div style={{ display: 'grid', gap: '10px' }}>
             {votacoes.slice(0, 6).map((g) => {
