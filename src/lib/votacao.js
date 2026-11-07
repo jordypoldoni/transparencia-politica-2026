@@ -165,6 +165,11 @@ export function situacaoCidada(situacao) {
   return situacao;
 }
 
+// Título do card para o leitor comum: resumo da proposição; sem ele, a frase da votação; sem ela, a ementa.
+export function tituloCidadao(g) {
+  return (g && (g.resumo_simples || g.explicacao_cidada || g.ementa)) || null;
+}
+
 // Agrupa linhas de `votacoes` por matéria (proposicao_titulo). Órfãs (sem título) viram card próprio.
 // Devolve grupos ordenados do mais recente ao mais antigo, com as votações em ordem cronológica.
 export function agruparPorMateria(votacoes) {
@@ -195,6 +200,9 @@ export function agruparPorMateria(votacoes) {
     // que descreve o rito e não a matéria, e o card da lista anunciaria o rito.
     const dona = g.votacoes.find((v) => v.ementa && v.ementa === g.ementa);
     g.explicacao_cidada = (dona && dona.explicacao_cidada) || null;
+    // 07/11/2026: resumo por PROPOSIÇÃO (igual em todas as linhas dela), escrito por Claude a partir
+    // da ementa oficial. É o título do card; a ementa oficial desce para detalhe.
+    g.resumo_simples = pega('resumo_simples');
     g.autor_nome = pega('autor_nome');
     g.proposicao_id = pega('proposicao_id');
     g.votacoes.sort((a, b) => new Date(a.data_voto || 0) - new Date(b.data_voto || 0));

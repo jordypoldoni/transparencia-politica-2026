@@ -24,7 +24,7 @@ import Link from 'next/link';
 import ServicoAPI from '../src/servicos/servico_api';
 import { CASAS_VOTACAO } from '../src/lib/casa';
 import { explicarProposicao, naSuaVida } from '../src/lib/proposicoes';
-import { agruparPorMateria, humanizarVotacao, papelVotacao } from '../src/lib/votacao';
+import { agruparPorMateria, humanizarVotacao, papelVotacao, tituloCidadao } from '../src/lib/votacao';
 import { t } from '../src/estilo/tokens';
 import { dataBr, anoDe } from '../src/lib/datas';
 import SeloAtualizacao from '../components/SeloAtualizacao';
@@ -145,7 +145,7 @@ export default function PainelVotacoes({ resumo }) {
                         <p style={rotuloSecao}>Votado por último</p>
                         {grupos.map((g) => {
                           const status = statusDoGrupo(g);
-                          const titulo = g.explicacao_cidada || g.ementa || g.votacoes[0]?.descricao || 'Votação';
+                          const titulo = tituloCidadao(g) || g.votacoes[0]?.descricao || 'Votação';
                           return (
                             <div key={g.chave} style={{ marginBottom: '11px' }}>
                               <p style={{ margin: '0 0 2px', fontSize: '0.85rem', lineHeight: 1.4, color: t.cor.tinta }}>
