@@ -80,14 +80,14 @@ export default function PaginaPedido({ pedido, movs, tramitacaoOk, lidoEm }) {
   return (
     <>
       <Head>
-        <title>{`${nome}: pedido de CPI na Câmara | Lume`}</title>
+        <title>{`${nome}: pedido de CPI na Câmara dos Deputados | Lume`}</title>
         <meta name="description" content={descricao} />
         <link rel="canonical" href={`https://www.lumecidadao.com.br${caminho}`} />
         <script key="ld-pedido" type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonSeguro(grafo(
           organizacao(),
           site(),
           migalhas([{ nome: 'Início', caminho: '/' }, { nome: 'CPIs', caminho: '/cpis' }, { nome, caminho }]),
-          pagina({ nome: `${nome}: pedido de CPI na Câmara`, descricao, caminho }),
+          pagina({ nome: `${nome}: pedido de CPI na Câmara dos Deputados`, descricao, caminho }),
           conjuntoDeDados({
             nome: `Tramitação do pedido de CPI ${nome}`,
             descricao: `Movimentações do pedido de CPI ${nome} na Câmara dos Deputados, lidas da fonte oficial.`,
@@ -115,7 +115,7 @@ export default function PaginaPedido({ pedido, movs, tramitacaoOk, lidoEm }) {
               <span style={fatoValor}>{pedido.assinaturas != null ? pedido.assinaturas : 'a fonte não informa'}</span>
               {pedido.primeiro_autor ? <>1ª assinatura: {pedido.primeiro_autor}</> : null}
             </div>
-            <div style={fato}>Situação na Câmara<span style={{ ...fatoValor, fontSize: '0.95rem' }}>{situ || 'a fonte não informa'}</span></div>
+            <div style={fato}>Situação na Câmara dos Deputados<span style={{ ...fatoValor, fontSize: '0.95rem' }}>{situ || 'a fonte não informa'}</span></div>
           </div>
 
           <div className="pedido-tramitacao">
@@ -124,20 +124,20 @@ export default function PaginaPedido({ pedido, movs, tramitacaoOk, lidoEm }) {
             <>
               <p style={{ margin: '0 0 14px', fontSize: '0.84rem', color: t.cor.cinza, lineHeight: 1.5 }}>
                 {plural(movs.length, 'movimentação', 'movimentações')}, da mais recente para a mais antiga.
-                {lidoEm ? ` Lida da Câmara em ${dataBr(String(lidoEm).slice(0, 10))}.` : ''}
+                {lidoEm ? ` Lida da Câmara dos Deputados em ${dataBr(String(lidoEm).slice(0, 10))}.` : ''}
               </p>
               <Tramitacao movs={movs} />
             </>
           ) : (
             <p style={{ margin: '4px 0 0', fontSize: '0.9rem', color: t.cor.cinza, lineHeight: 1.5 }}>
-              {tramitacaoOk ? 'A tramitação deste pedido ainda não foi coletada.' : 'Não foi possível carregar a tramitação agora.'} A ficha oficial na Câmara mostra tudo.
+              {tramitacaoOk ? 'A tramitação deste pedido ainda não foi coletada.' : 'Não foi possível carregar a tramitação agora.'} A ficha oficial na Câmara dos Deputados mostra tudo.
             </p>
           )}
           </div>
           </div>
 
           <p style={{ margin: '22px 0 0', fontSize: '0.8rem', lineHeight: 1.6, color: t.cor.cinza }}>
-            <strong style={{ color: t.cor.tinta }}>Um pedido de CPI não é uma acusação.</strong> Esta página só registra o que a Câmara publica.
+            <strong style={{ color: t.cor.tinta }}>Um pedido de CPI não é uma acusação.</strong> Esta página só registra o que a Câmara dos Deputados publica.
             Fonte: Dados Abertos da Câmara dos Deputados.{' '}
             {pedido.inteiro_teor ? <><a href={pedido.inteiro_teor} target="_blank" rel="noopener noreferrer" style={linkFonte}>Requerimento (PDF)</a>{' · '}</> : null}
             <a href={pedido.ficha} target="_blank" rel="noopener noreferrer" style={linkFonte}>Ficha de tramitação</a>.

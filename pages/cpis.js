@@ -46,7 +46,7 @@ function CartaoSenado({ c }) {
   const temCargos = c.cargos && c.cargos.length > 0;
   return (
     <div style={linhaItem}>
-      <span style={rotulo}>Comissão do Senado{c.sigla ? ` · ${c.sigla}` : ''}</span>
+      <span style={rotulo}>Comissão do Senado Federal{c.sigla ? ` · ${c.sigla}` : ''}</span>
       <h3 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.15rem', margin: '0 0 6px', color: t.cor.tinta }}>{c.nome}</h3>
       <p style={{ margin: '0 0 8px', fontSize: '0.84rem', color: t.cor.cinza }}>
         {c.inicio ? <>Criada em {dataBr(c.inicio)}</> : null}
@@ -98,7 +98,7 @@ function ResumoTramitacao({ id, r }) {
         ))}
       </ul>
       <p style={{ margin: '12px 0 0', fontSize: '0.8rem', lineHeight: 1.55, color: t.cor.cinza }}>
-        Resumo montado com a tramitação oficial da Câmara: tipos com até 3 registros aparecem um a um; os demais, somados.
+        Resumo montado com a tramitação oficial da Câmara dos Deputados: tipos com até 3 registros aparecem um a um; os demais, somados.
         {r.restantes > 0 ? ` Mais ${plural(r.restantes, 'movimentação ficou', 'movimentações ficaram')} fora deste resumo; todas estão na tramitação completa.` : ''}
       </p>
     </div>
@@ -119,7 +119,7 @@ function CartaoPedido({ p }) {
             {p.primeiro ? <>, a primeira de {p.primeiro}</> : null}.
           </li>
         )}
-        <li>Situação na Câmara: {situacaoLegivel(p.situacao) ? `${situacaoLegivel(p.situacao)}.` : 'a fonte não informa.'}</li>
+        <li>Situação na Câmara dos Deputados: {situacaoLegivel(p.situacao) ? `${situacaoLegivel(p.situacao)}.` : 'a fonte não informa.'}</li>
         {p.despacho && <li>Última movimentação{p.dataSituacao ? ` (${dataBr(p.dataSituacao)})` : ''}: {p.despacho}</li>}
       </ul>
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', columnGap: '22px' }}>
@@ -143,14 +143,14 @@ export default function PaginaCpis({ senado, camara }) {
     <>
       <Head>
         <title>CPIs e pedidos de CPI | Lume</title>
-        <meta name="description" content="CPIs em atividade no Senado e pedidos de CPI na Câmara, direto das fontes oficiais, com data, situação e assinaturas. Só fato e fonte." />
+        <meta name="description" content="CPIs em atividade no Senado Federal e pedidos de CPI na Câmara dos Deputados, direto das fontes oficiais, com data, situação e assinaturas. Só fato e fonte." />
         <link rel="canonical" href="https://www.lumecidadao.com.br/cpis" />
         <script key="ld-cpis" type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonSeguro(grafo(
           organizacao(),
           site(),
           migalhas([{ nome: 'Início', caminho: '/' }, { nome: 'CPIs', caminho: '/cpis' }]),
           conjuntoDeDados({
-            nome: 'CPIs em atividade no Senado e pedidos de CPI na Câmara',
+            nome: 'CPIs em atividade no Senado Federal e pedidos de CPI na Câmara dos Deputados',
             descricao: 'CPIs em atividade no Senado e pedidos de CPI na Câmara dos Deputados, com data, situação e assinaturas, lidos das fontes oficiais.',
             caminho: '/cpis',
             fontes: [
@@ -175,14 +175,14 @@ export default function PaginaCpis({ senado, camara }) {
 
         <div style={{ display: 'grid', gap: '18px' }}>
           <section style={cartao}>
-            <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.35rem', margin: '0 0 4px' }}>Em atividade no Senado</h2>
+            <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.35rem', margin: '0 0 4px' }}>Em atividade no Senado Federal</h2>
             <p style={{ ...aviso, margin: '0 0 14px', fontSize: '0.84rem' }}>
-              Lista do cadastro de comissões do Senado. A Câmara não informa se uma CPI está ativa, por isso não há lista equivalente dela aqui.
+              Lista do cadastro de comissões do Senado Federal. A Câmara dos Deputados não informa se uma CPI está ativa, por isso não há lista equivalente dela aqui.
             </p>
             {!senado.ok ? (
               <p style={aviso}>Não foi possível carregar agora. A fonte oficial não respondeu.</p>
             ) : senado.itens.length === 0 ? (
-              <p style={aviso}>O cadastro de comissões do Senado não lista nenhuma CPI em atividade neste momento.</p>
+              <p style={aviso}>O cadastro de comissões do Senado Federal não lista nenhuma CPI em atividade neste momento.</p>
             ) : (
               <div style={{ display: 'grid', gap: '10px' }}>
                 {senado.itens.map((c) => <CartaoSenado key={c.codigo} c={c} />)}
@@ -191,14 +191,14 @@ export default function PaginaCpis({ senado, camara }) {
           </section>
 
           <section style={cartao}>
-            <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.35rem', margin: '0 0 4px' }}>Pedidos de CPI na Câmara</h2>
+            <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.35rem', margin: '0 0 4px' }}>Pedidos de CPI na Câmara dos Deputados</h2>
             <p style={{ ...aviso, margin: '0 0 14px', fontSize: '0.84rem' }}>
-              Requerimentos de instituição de CPI apresentados de 2023 em diante, do mais recente para o mais antigo. O número de assinaturas é o que consta no requerimento; a Câmara decide se o pedido atende às exigências.{camara.atualizadoEm ? <> Lista atualizada em {dataBr(String(camara.atualizadoEm).slice(0, 10))}.</> : null}
+              Requerimentos de instituição de CPI apresentados de 2023 em diante, do mais recente para o mais antigo. O número de assinaturas é o que consta no requerimento; a Câmara dos Deputados decide se o pedido atende às exigências.{camara.atualizadoEm ? <> Lista atualizada em {dataBr(String(camara.atualizadoEm).slice(0, 10))}.</> : null}
             </p>
             {!camara.ok ? (
               <p style={aviso}>Não foi possível carregar agora. A fonte oficial não respondeu.</p>
             ) : camara.itens.length === 0 ? (
-              <p style={aviso}>A Câmara não registra pedidos de CPI neste período.</p>
+              <p style={aviso}>A Câmara dos Deputados não registra pedidos de CPI neste período.</p>
             ) : (
               <div style={{ display: 'grid', gap: '10px' }}>
                 {camara.itens.map((p) => <CartaoPedido key={p.id} p={p} />)}
@@ -209,7 +209,7 @@ export default function PaginaCpis({ senado, camara }) {
 
         <p style={{ margin: '18px 0 0', fontSize: '0.78rem', color: t.cor.cinza, lineHeight: 1.5 }}>
           Fontes: Senado Federal (cadastro de comissões) e Câmara dos Deputados (dados abertos, proposições do tipo requerimento de CPI).
-          Pedidos de CPI feitos no Senado ainda não entram nesta página.
+          Pedidos de CPI feitos no Senado Federal ainda não entram nesta página.
         </p>
       </div>
     </>
