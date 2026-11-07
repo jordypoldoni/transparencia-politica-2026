@@ -44,7 +44,7 @@ export const PERGUNTAS_AFINIDADE = [
     palavras: ['pena', '8 de janeiro', 'golpe', 'tres poderes', 'condenad', 'anistia', 'dosimetria', 'prisao', 'preso', 'invas', 'depred'],
     tema: 'Segurança Pública',
     texto: 'Reduzir as penas dos condenados pelo 8 de janeiro e pela tentativa de golpe de Estado, mudando o cálculo das penas (PL da Dosimetria)',
-    proposta: 'PL 2162/2023',
+    proposta: 'Projeto de Lei (PL) 2162/2023',
     votacoes: [
       { casa: 'senado', id: 'SF-7041', data: '2025-12-17', simE: 'a_favor' },
       { casa: 'camara', id: '2358548-89', data: '2025-12-09', simE: 'a_favor' },
@@ -59,7 +59,7 @@ export const PERGUNTAS_AFINIDADE = [
     id: 'decreto-armas-2019-manter',
     curto: 'Decreto de armas de 2019',
     explicacao: {
-      oque: "Em maio de 2019, o governo federal publicou um decreto que facilitava comprar e andar com armas: aumentava as profissões que podiam andar armadas e a quantidade de munição que se podia comprar. O Senado votou um projeto para derrubar esse decreto e aprovou. Antes de a Câmara votar, o próprio governo revogou o decreto e publicou outros no lugar.",
+      oque: "Em maio de 2019, o governo federal publicou um decreto que facilitava comprar e andar com armas: aumentava as profissões que podiam andar armadas e a quantidade de munição que se podia comprar. O Senado Federal votou um projeto para derrubar esse decreto e aprovou. Antes de a Câmara dos Deputados votar, o próprio governo revogou o decreto e publicou outros no lugar.",
       pratica: "Manter o decreto significava mais facilidade para o cidadão comum ter arma em casa e carregar arma na rua. Derrubar significava voltar às regras mais restritas que valiam antes.",
       aFavor: "o cidadão tem direito de se defender, e a regra anterior dificultava demais.",
       contra: "o decreto ia além do que o Estatuto do Desarmamento permite, e mais armas em circulação aumentam as mortes.",
@@ -68,7 +68,7 @@ export const PERGUNTAS_AFINIDADE = [
     palavras: ['arma', 'porte', 'posse', 'defesa', 'defender', 'atirador', 'municao', 'desarm'],
     tema: 'Segurança Pública',
     texto: 'Manter o decreto de 2019 que ampliou a posse e o porte de armas',
-    proposta: 'PDL 233/2019 (projeto que derrubava o decreto)',
+    proposta: 'Projeto de Decreto Legislativo (PDL) 233/2019 (projeto que derrubava o decreto)',
     // A Câmara não chegou a votar: o decreto foi revogado pelo próprio governo em seguida.
     votacoes: [{ casa: 'senado', id: 'SF-5971', data: '2019-06-18', simE: 'contra' }],
   },
@@ -85,7 +85,7 @@ export const PERGUNTAS_AFINIDADE = [
     palavras: ['licenc', 'ambiental', 'meio ambiente', 'desmat', 'obra', 'empreendimento', 'burocracia', 'natureza'],
     tema: 'Meio Ambiente',
     texto: 'Aprovar a nova Lei Geral do Licenciamento Ambiental, que cria licenças mais simples e dispensa algumas atividades de licença',
-    proposta: 'PL 2159/2021 (na Câmara, PL 3729/2004)',
+    proposta: 'Projeto de Lei (PL) 2159/2021 (na Câmara dos Deputados, PL 3729/2004)',
     // Câmara (achada em 26/09 pela proposição 257161): vale a votação de 12/05/2021, da
     // Subemenda Substitutiva Global, que é o TEXTO INTEIRO da lei. A rodada de 16/07/2025 votou
     // emendas do Senado uma a uma, e nenhuma delas é a pergunta.
@@ -100,7 +100,7 @@ export const PERGUNTAS_AFINIDADE = [
     id: 'marco-temporal-lei',
     curto: 'Marco temporal indígena',
     explicacao: {
-      oque: "A Constituição garante aos povos indígenas as terras que eles tradicionalmente ocupam. O marco temporal diz que só pode ser demarcada como indígena a terra que estava ocupada por eles em 5 de outubro de 1988, dia em que a Constituição foi promulgada. A Câmara aprovou esta lei em maio de 2023. Em setembro, o STF julgou a tese inconstitucional e, dias depois, o Senado aprovou a lei, colocando o marco temporal na legislação.",
+      oque: "A Constituição garante aos povos indígenas as terras que eles tradicionalmente ocupam. O marco temporal diz que só pode ser demarcada como indígena a terra que estava ocupada por eles em 5 de outubro de 1988, dia em que a Constituição foi promulgada. A Câmara dos Deputados aprovou esta lei em maio de 2023. Em setembro, o STF julgou a tese inconstitucional e, dias depois, o Senado Federal aprovou a lei, colocando o marco temporal na legislação.",
       pratica: "Terras que não estavam ocupadas por indígenas em 5 de outubro de 1988 deixam de poder ser demarcadas, a não ser que houvesse conflito ou disputa pela terra naquela data.",
       aFavor: "dá segurança a quem produz e tem título da terra, e encerra disputas que duram décadas.",
       contra: "muitos povos foram expulsos à força antes de 1988 e não teriam como provar a disputa pela terra naquela data.",
@@ -109,7 +109,7 @@ export const PERGUNTAS_AFINIDADE = [
     palavras: ['indigen', 'terra', 'demarca', 'marco temporal', 'produtor', 'agro', 'rural', 'fazend'],
     tema: 'Meio Ambiente',
     texto: 'Adotar em lei o marco temporal: só seriam terras indígenas as ocupadas em 5 de outubro de 1988',
-    proposta: 'PL 2903/2023 (na Câmara, PL 490/2007)',
+    proposta: 'Projeto de Lei (PL) 2903/2023 (na Câmara dos Deputados, PL 490/2007)',
     votacoes: [
       { casa: 'senado', id: 'SF-6756', data: '2023-09-27', simE: 'a_favor' },
       { casa: 'camara', id: '345311-270', data: '2023-05-30', simE: 'a_favor' },
@@ -128,7 +128,7 @@ export const PERGUNTAS_AFINIDADE = [
     palavras: ['imposto', 'tribut', 'cbs', 'ibs', 'icms', 'iss', 'consumo', 'reforma tribut'],
     tema: 'Economia e Tributos',
     texto: 'Trocar cinco tributos sobre consumo (PIS, Cofins, IPI, ICMS e ISS) pela CBS e pelo IBS (reforma tributária)',
-    proposta: 'PEC 45/2019',
+    proposta: 'Proposta de Emenda à Constituição (PEC) 45/2019',
     votacoes: [
       { casa: 'senado', id: 'SF-6777', data: '2023-11-08', simE: 'a_favor' },
       { casa: 'camara', id: '2196833-373', data: '2023-07-06', simE: 'a_favor' },
@@ -147,7 +147,7 @@ export const PERGUNTAS_AFINIDADE = [
     palavras: ['gast', 'despesa', 'teto', 'fiscal', 'contas publicas', 'orcament', 'divida', 'arrecad', 'receita'],
     tema: 'Economia e Tributos',
     texto: 'Substituir o teto de gastos pelo arcabouço fiscal, que liga o crescimento da despesa ao crescimento da receita',
-    proposta: 'PLP 93/2023',
+    proposta: 'Projeto de Lei Complementar (PLP) 93/2023',
     votacoes: [
       { casa: 'senado', id: 'SF-6714', data: '2023-06-21', simE: 'a_favor' },
       { casa: 'camara', id: '2357053-47', data: '2023-05-23', simE: 'a_favor' },
@@ -171,7 +171,7 @@ export const PERGUNTAS_AFINIDADE = [
     palavras: ['aposent', 'previd', 'inss', 'idade minima', 'contribui', 'pensao', 'velhice', 'idoso'],
     tema: 'Trabalho e Previdência',
     texto: 'Aprovar a reforma da Previdência de 2019, que criou idade mínima para se aposentar (65 anos para homens e 62 para mulheres)',
-    proposta: 'PEC 6/2019',
+    proposta: 'Proposta de Emenda à Constituição (PEC) 6/2019',
     votacoes: [
       { casa: 'senado', id: 'SF-6046', data: '2019-10-22', simE: 'a_favor' },
       { casa: 'camara', id: '2192459-786', data: '2019-08-06', simE: 'a_favor' },
@@ -190,7 +190,7 @@ export const PERGUNTAS_AFINIDADE = [
     palavras: ['despej', 'aluguel', 'moradia', 'inquilin', 'pandemia', 'desocup'],
     tema: 'Habitação',
     texto: 'Suspender despejos e desocupações durante a pandemia de covid-19',
-    proposta: 'PL 827/2020',
+    proposta: 'Projeto de Lei (PL) 827/2020',
     votacoes: [
       { casa: 'senado', id: 'SF-6336', data: '2021-06-23', simE: 'a_favor' },
       { casa: 'camara', id: '2241695-65', data: '2021-05-18', simE: 'a_favor' },
@@ -209,7 +209,7 @@ export const PERGUNTAS_AFINIDADE = [
     palavras: ['saneamento', 'agua', 'esgoto', 'privad', 'privatiz', 'estatal'],
     tema: 'Habitação',
     texto: 'Aprovar o novo marco do saneamento, que abre os serviços de água e esgoto à concorrência de empresas privadas',
-    proposta: 'PL 4162/2019',
+    proposta: 'Projeto de Lei (PL) 4162/2019',
     // Câmara: a API da Câmara lista a proposição SEM votação de plenário (conferido em 26/09),
     // embora ela tenha passado pelo plenário em dez/2019. Fica só o Senado.
     votacoes: [{ casa: 'senado', id: 'SF-6144', data: '2020-06-24', simE: 'a_favor' }],
@@ -227,7 +227,7 @@ export const PERGUNTAS_AFINIDADE = [
     palavras: ['escola', 'civico', 'militar', 'ensino', 'educa'],
     tema: 'Educação',
     texto: 'Autorizar o governo do Rio Grande do Sul a criar escolas cívico-militares',
-    proposta: 'PL 344/2023 (ALERGS)',
+    proposta: 'Projeto de Lei (PL) 344/2023 (Assembleia Legislativa do Rio Grande do Sul)',
     // Só a Assembleia do RS: compara apenas deputados estaduais gaúchos.
     uf: 'RS',
     votacoes: [{ casa: 'alergs', id: 'ALERGS-2024-04-09-PL344-2023', data: '2024-04-09', simE: 'a_favor' }],
@@ -248,7 +248,7 @@ export const PERGUNTAS_AFINIDADE = [
     palavras: ['invas', 'ocupac', 'ocupante', 'propriedade', 'terra', 'sem terra', 'mst', 'moradia', 'reintegra'],
     tema: 'Segurança Pública',
     texto: 'Punir quem invade ou ocupa propriedade no RS, tirando o acesso a programas sociais, cargos e contratos do Estado',
-    proposta: 'PL 154/2023 (ALERGS)',
+    proposta: 'Projeto de Lei (PL) 154/2023 (Assembleia Legislativa do Rio Grande do Sul)',
     uf: 'RS',
     votacoes: [{ casa: 'alergs', id: 'ALERGS-2024-06-04-PL154-2023', data: '2024-06-04', simE: 'a_favor' }],
   },
@@ -265,7 +265,7 @@ export const PERGUNTAS_AFINIDADE = [
     palavras: ['barragem', 'acude', 'irriga', 'app', 'preservacao', 'estiagem', 'seca', 'agua', 'margem', 'nascente'],
     tema: 'Meio Ambiente',
     texto: 'Permitir açudes e barragens para irrigação em áreas de preservação permanente (APP) no RS',
-    proposta: 'PL 151/2023 (ALERGS)',
+    proposta: 'Projeto de Lei (PL) 151/2023 (Assembleia Legislativa do Rio Grande do Sul)',
     uf: 'RS',
     votacoes: [{ casa: 'alergs', id: 'ALERGS-2024-03-12-PL151-2023', data: '2024-03-12', simE: 'a_favor' }],
   },
@@ -282,7 +282,7 @@ export const PERGUNTAS_AFINIDADE = [
     palavras: ['organizac', 'privatiz', 'terceiriz', 'gestao', 'servico publico', 'hospital', 'concurso'],
     tema: 'Serviços Públicos',
     texto: 'Ampliar a gestão de serviços públicos do RS por organizações sociais (entidades privadas sem fins lucrativos)',
-    proposta: 'PL 439/2025 (ALERGS)',
+    proposta: 'Projeto de Lei (PL) 439/2025 (Assembleia Legislativa do Rio Grande do Sul)',
     uf: 'RS',
     votacoes: [{ casa: 'alergs', id: 'ALERGS-2025-12-09-PL439-2025', data: '2025-12-09', simE: 'a_favor' }],
   },
@@ -299,7 +299,7 @@ export const PERGUNTAS_AFINIDADE = [
     palavras: ['aposta', 'bet', 'jogo', 'publicidade', 'propaganda', 'vicio', 'anuncio'],
     tema: 'Consumo',
     texto: 'Restringir a publicidade de apostas esportivas (bets) no RS',
-    proposta: 'PL 408/2025 (ALERGS)',
+    proposta: 'Projeto de Lei (PL) 408/2025 (Assembleia Legislativa do Rio Grande do Sul)',
     uf: 'RS',
     votacoes: [{ casa: 'alergs', id: 'ALERGS-2026-04-07-PL408-2025', data: '2026-04-07', simE: 'a_favor' }],
   },
