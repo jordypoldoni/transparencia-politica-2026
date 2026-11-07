@@ -45,7 +45,13 @@ export function normalizarEntenda(bruto) {
 
   let fluxo = null;
   if (bruto.fluxo && typeof bruto.fluxo === 'object') {
-    const etapas = lista(bruto.fluxo.etapas, 5).map((e) => ({ titulo: txt(e && e.titulo, 100), texto: txt(e && e.texto, 300), final: !!(e && e.final) })).filter((e) => e.titulo);
+    // `casa` + `proposicao` dizem em qual votação a etapa clica (resolvido em tempo de página, para
+    // acompanhar a votação principal quando entram votos novos). Sem os dois, a etapa é só texto.
+    const etapas = lista(bruto.fluxo.etapas, 5).map((e) => ({
+      titulo: txt(e && e.titulo, 100), texto: txt(e && e.texto, 300), final: !!(e && e.final),
+      casa: e && ['camara', 'senado', 'rs'].includes(e.casa) && /^\d{1,12}$/.test(String(e.proposicao || '')) ? e.casa : null,
+      proposicao: e && /^\d{1,12}$/.test(String(e.proposicao || '')) ? String(e.proposicao) : null,
+    })).filter((e) => e.titulo);
     if (etapas.length) fluxo = { etapas, nota: txt(bruto.fluxo.nota, 400) };
   }
 

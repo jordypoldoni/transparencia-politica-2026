@@ -39,3 +39,19 @@ test('texto longo é cortado', () => {
   const d = normalizarEntenda({ mudancas: ['a'.repeat(1000)] });
   assert.equal(d.mudancas[0].length, 400);
 });
+
+test('etapa só guarda casa e proposição quando os dois são válidos', () => {
+  const d = normalizarEntenda({ mudancas: ['x'], fluxo: { etapas: [
+    { titulo: 'Câmara', casa: 'camara', proposicao: '2500080' },
+    { titulo: 'Senado', casa: 'senado', proposicao: 172997 },
+    { titulo: 'Ruim', casa: 'marte', proposicao: '1' },
+    { titulo: 'Sem id', casa: 'camara' },
+    { titulo: 'Injeção', casa: 'camara', proposicao: '1; drop table' },
+  ] } });
+  const e = d.fluxo.etapas;
+  assert.deepEqual([e[0].casa, e[0].proposicao], ['camara', '2500080']);
+  assert.deepEqual([e[1].casa, e[1].proposicao], ['senado', '172997']);
+  assert.equal(e[2].casa, null);
+  assert.equal(e[3].proposicao, null);
+  assert.equal(e[4].proposicao, null);
+});

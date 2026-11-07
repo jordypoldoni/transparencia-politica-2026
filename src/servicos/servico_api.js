@@ -1,7 +1,7 @@
 import supabase from '../supabase_cliente.js';
 import { buscarTudo } from '../lib/paginar.js';
 import { garantirResumo } from '../lib/siconfi.js';
-import { agruparPorMateria } from '../lib/votacao.js';
+import { agruparPorMateria, votacaoPrincipal } from '../lib/votacao.js';
 import { casaDoPerfil, casaDaVotacao } from '../lib/casa.js';
 import { chaveEntenda, normalizarEntenda } from '../lib/entenda.js';
 import { cargoProcurado, rotuloCargoAutor, escolherPerfilUnico } from '../lib/autorVotacao.js';
@@ -851,6 +851,20 @@ const ServicoAPI = {
             if (chave) {
                 const { data } = await supabase.from('resumos_entenda').select('conteudo').eq('chave', chave).maybeSingle();
                 entenda = normalizarEntenda(data?.conteudo);
+            }
+            // Etapas do fluxo que apontam para uma votacao do site (07/11/2026): a votacao principal
+            // daquela casa. A propria votacao aberta nao vira link para si mesma.
+            if (entenda && entenda.fluxo) {
+                await Promise.all(entenda.fluxo.etapas.map(async (e) => {
+                    if (!e.casa || !e.proposicao) return;
+                    try {
+                        const { data: vs } = await ServicoAPI._filtrarCasa(
+                            supabase.from('votacoes').select('votacao_id_externa, descricao, data_voto').eq('proposicao_id', e.proposicao), e.casa,
+                        ).order('data_voto', { ascending: true });
+                        const alvo = votacaoPrincipal(vs || []);
+                        if (alvo && alvo.votacao_id_externa !== id) e.votacaoId = alvo.votacao_id_externa;
+                    } catch { /* sem link: a etapa segue como texto */ }
+                }));
             }
         } catch { entenda = null; }
         return { meta, votos, entenda };
