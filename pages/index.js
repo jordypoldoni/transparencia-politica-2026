@@ -17,7 +17,7 @@ import { dataBr } from '../src/lib/datas';
 import SeloAtualizacao from '../components/SeloAtualizacao';
 import { grafo, organizacao, site, jsonSeguro } from '../src/lib/dadosEstruturados';
 
-const DESCRICAO_HOME = 'Quanto cada deputado e senador gastou da verba pública, como votou e quem são os candidatos de 2026 no seu estado. Dados oficiais da Câmara, do Senado, das Assembleias e do TSE, sempre com link para a fonte.';
+const DESCRICAO_HOME = 'Quanto cada deputado e senador gastou da verba pública, como votou e quem são os candidatos de 2026 no seu estado. Dados oficiais da Câmara dos Deputados, do Senado Federal, das Assembleias Legislativas e do Tribunal Superior Eleitoral (TSE), sempre com link para a fonte.';
 // 18/10/2026: além do WebSite, a home agora declara a Organization (quem publica), em src/lib/dadosEstruturados.js.
 const DADOS_ESTRUTURADOS_HOME = grafo(organizacao(), site());
 
@@ -153,7 +153,7 @@ export default function Home({ votacoes, parlamentares = [], uniao = null, estad
               // 01/10/2026 (Jordy): as tres paginas de Parlamentares do menu (desde 29/09), com os
               // mesmos nomes e notas do menu (Layout.jsx). Antes: "Deputados / 513 federais" e
               // Senadores, por enderecos antigos (/deputados?casa=...).
-              { href: '/deputados', titulo: 'Deputados federais', desc: 'os 513 da Câmara' },
+              { href: '/deputados', titulo: 'Deputados federais', desc: 'os 513 da Câmara dos Deputados' },
               { href: '/deputados-estaduais', titulo: 'Deputados estaduais', desc: 'as Assembleias dos estados' },
               { href: '/senadores', titulo: 'Senadores', desc: 'os 81 em exercício' },
               // 28/09/2026 (Jordy): era "Montar minha página / responda 2 perguntas", nome e
@@ -251,7 +251,7 @@ export default function Home({ votacoes, parlamentares = [], uniao = null, estad
           <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.7rem', margin: '0 0 4px' }}>O que os deputados decidiram</h2>
           <Link href="/votacoes" style={{ fontSize: '0.85rem', fontWeight: 700, color: t.cor.ouroTexto, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>Ver todas as votações <Seta direcao="direita" size={14} /></Link>
         </div>
-        <p style={{ color: t.cor.cinza, fontSize: '0.92rem', margin: '0 0 18px' }}>Votações recentes no plenário da Câmara: o assunto, quem propôs e o que foi decidido. O título de cada card é um resumo em linguagem comum, escrito por inteligência artificial a partir da ementa oficial, que está na íntegra na página da votação. Fonte: Câmara dos Deputados.</p>
+        <p style={{ color: t.cor.cinza, fontSize: '0.92rem', margin: '0 0 18px' }}>Votações recentes no plenário da Câmara dos Deputados: o assunto, quem propôs e o que foi decidido. O título de cada card é um resumo em linguagem comum, escrito por inteligência artificial a partir da ementa oficial, que está na íntegra na página da votação. Fonte: Câmara dos Deputados.</p>
         {votacoes && votacoes.length > 0 ? (
           <div style={{ display: 'grid', gap: '10px' }}>
             {votacoes.slice(0, 6).map((g) => {
