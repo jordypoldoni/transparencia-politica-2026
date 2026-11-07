@@ -215,7 +215,7 @@ export default function ApuracaoEleicao({ cargo, ufInicial, turno = 1 }) {
                 <div style={{ width: `${numPct(d.secoes.pct_totalizadas)}%`, height: '100%', background: t.cor.verde, borderRadius: t.raio.pill }} />
               </div>
               {avisoVotacaoProrrogada(turno, d) && <p role="status" style={{ margin: '8px 0 0', fontSize: '0.84rem', fontWeight: 700, color: t.cor.tinta, lineHeight: 1.45 }}>Votação prorrogada até as 19h (horário de Brasília) por decisão do ministro Zanin, do STF. A divulgação da apuração está pausada pelo TSE e os números voltam a mudar quando ela for retomada.</p>}
-              {d.gerado_em && <p style={{ margin: '8px 0 0', fontSize: '0.76rem', color: t.cor.cinza }}>{d.origem === 'soma_dos_estados' ? `Soma dos 27 estados e do exterior, o arquivo nacional do TSE ainda não atualizou. Arquivos dos estados gerados até ${d.gerado_em}` : `Arquivo do TSE gerado em ${d.gerado_em}`}{erro ? ' · a última atualização falhou, mostrando o dado anterior' : ''}.</p>}
+              {d.gerado_em && <p style={{ margin: '8px 0 0', fontSize: '0.76rem', color: t.cor.cinza }}>{`Arquivo do TSE gerado em ${d.gerado_em}`}{erro ? ' · a última atualização falhou, mostrando o dado anterior' : ''}.</p>}
             </div>
             {!porEstados && (
               <div style={{ display: 'grid', gap: '10px', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))' }}>
@@ -240,7 +240,7 @@ export default function ApuracaoEleicao({ cargo, ufInicial, turno = 1 }) {
                   <div style={{ width: `${numPct(d.secoes.pct_totalizadas)}%`, height: '100%', background: t.cor.verde, borderRadius: t.raio.pill }} />
                 </div>
                 {avisoVotacaoProrrogada(turno, d) && <p role="status" style={{ margin: '8px 0 0', fontSize: '0.84rem', fontWeight: 700, color: t.cor.tinta, lineHeight: 1.45 }}>Votação prorrogada até as 19h (horário de Brasília) por decisão do ministro Zanin, do STF. A divulgação da apuração está pausada pelo TSE e os números voltam a mudar quando ela for retomada.</p>}
-                {d.gerado_em && <p style={{ margin: '8px 0 0', fontSize: '0.76rem', color: t.cor.cinza }}>{d.origem === 'soma_dos_estados' ? `Soma dos 27 estados e do exterior, o arquivo nacional do TSE ainda não atualizou. Arquivos dos estados gerados até ${d.gerado_em}` : `Arquivo do TSE gerado em ${d.gerado_em}`}{erro ? ' · a última atualização falhou, mostrando o dado anterior' : ''}.</p>}
+                {d.gerado_em && <p style={{ margin: '8px 0 0', fontSize: '0.76rem', color: t.cor.cinza }}>{`Arquivo do TSE gerado em ${d.gerado_em}`}{erro ? ' · a última atualização falhou, mostrando o dado anterior' : ''}.</p>}
               </div>
               {podeMapa && (
                 <Segmentado aria="Forma de ver o resultado" itens={[
