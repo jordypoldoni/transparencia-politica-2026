@@ -130,6 +130,15 @@ export function papelVotacao(descricao) {
   return 'Votação';
 }
 
+// A votação que representa o processo no cartão da lista (07/11/2026): a última do "texto
+// principal" ou da redação final; sem nenhuma dessas, a última do processo. `votacoes` vem em
+// ordem cronológica. As demais ficam recolhidas atrás de "Ver as outras N votações".
+export function votacaoPrincipal(votacoes) {
+  const lista = Array.isArray(votacoes) ? votacoes : [];
+  const principais = lista.filter((v) => /texto principal|reda/i.test(papelVotacao(v.descricao)));
+  return principais[principais.length - 1] || lista[lista.length - 1] || null;
+}
+
 // Traduz a situação da tramitação (descricaoSituacao da Câmara) para linguagem cidadã.
 export function situacaoCidada(situacao) {
   const s = (situacao || '').toLowerCase();

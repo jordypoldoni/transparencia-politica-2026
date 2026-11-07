@@ -20,7 +20,7 @@ import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import Head from 'next/head';
 import ServicoAPI from '../../src/servicos/servico_api';
-import { humanizarVotacao, explicarTipo, agruparPorMateria, papelVotacao, situacaoCidada } from '../../src/lib/votacao';
+import { humanizarVotacao, explicarTipo, agruparPorMateria, papelVotacao, situacaoCidada, votacaoPrincipal } from '../../src/lib/votacao';
 import { CASAS_VOTACAO, casaVotacaoPorChave } from '../../src/lib/casa';
 import CampoBusca from '../../components/CampoBusca';
 import CampoSelect from '../../components/CampoSelect';
@@ -38,9 +38,60 @@ const hv = (v) => humanizarVotacao({ descricao_votacao: v.descricao, aprovacao: 
 const dataBR = dataBr; // src/lib/datas.js (29/09/2026)
 
 function statusGrupo(g) {
-  const principais = g.votacoes.filter((v) => /texto principal|reda/i.test(papelVotacao(v.descricao)));
-  const alvo = principais[principais.length - 1] || g.votacoes[g.votacoes.length - 1];
+  const alvo = votacaoPrincipal(g.votacoes);
   return alvo ? hv(alvo).status : null;
+}
+
+// Uma linha clicável = UMA votação, com resultado e votos próprios.
+function LinhaEtapa({ v }) {
+  const h = hv(v);
+  const papel = papelVotacao(v.descricao);
+  const aprov = h.status === 'Aprovado';
+  return (
+    <Link href={`/votacao/${v.votacao_id_externa}`} className="etapa-linha" style={{ textDecoration: 'none', color: 'inherit', padding: '8px 10px', borderRadius: t.raio.sm, background: t.cor.papelQuente, transition: 'background .12s' }}
+      onMouseOver={(e) => { e.currentTarget.style.background = t.cor.papelQuente2; }}
+      onMouseOut={(e) => { e.currentTarget.style.background = t.cor.papelQuente; }}>
+      <span style={{ flexShrink: 0, width: '8px', height: '8px', borderRadius: '50%', background: h.status ? (aprov ? t.cor.sim : t.cor.nao) : t.cor.cinza }} />
+      <span style={{ flexShrink: 0, fontSize: '0.8rem', fontWeight: 700, color: t.cor.tinta, minWidth: '96px' }} className="etapa-papel">{papel}</span>
+      <span className="etapa-res" style={{ flex: 1, minWidth: 0, fontSize: '0.8rem', color: h.status ? (aprov ? t.cor.sim : t.cor.nao) : t.cor.cinza, fontWeight: 600 }}>
+        {h.status || 'Sem resultado'}{h.sim != null ? ` · ${h.sim}×${h.nao}` : ''}
+      </span>
+      <span style={{ flexShrink: 0, fontSize: '0.74rem', color: t.cor.cinza }}>{dataBR(v.data_voto)}</span>
+      <span style={{ flexShrink: 0, fontSize: '0.74rem', fontWeight: 700, color: t.cor.ouroTexto }}>quem votou<Seta direcao="direita" size={13} emTexto /></span>
+    </Link>
+  );
+}
+
+// As outras votações do processo ficam recolhidas (07/11/2026): várias linhas clicáveis iguais
+// faziam o leitor perguntar se algo mudava em cada uma. Padrão Ver/Recolher do site.
+function OutrasEtapas({ votacoes }) {
+  const [aberta, setAberta] = useState(false);
+  if (!votacoes.length) return null;
+  const n = votacoes.length;
+  return (
+    <div>
+      <button
+        type="button" onClick={() => setAberta((v) => !v)} aria-expanded={aberta}
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', width: '100%', background: 'none', border: 'none', padding: '6px 2px', margin: 0, textAlign: 'left', cursor: 'pointer', color: 'inherit', font: 'inherit' }}
+      >
+        <span style={{ fontSize: '0.84rem', fontWeight: 600, color: t.cor.tinta }}>
+          {n === 1 ? 'Há mais 1 votação neste processo' : `Há mais ${n} votações neste processo`}
+        </span>
+        <span style={{ flexShrink: 0, display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', fontWeight: 700, color: t.cor.ouroTexto }}>
+          {aberta ? 'Recolher' : 'Ver'}
+          <Seta aberta={aberta} size={14} />
+        </span>
+      </button>
+      {aberta && (
+        <div style={{ display: 'grid', gap: '4px', marginTop: '6px' }}>
+          <p style={{ margin: '0 0 4px', fontSize: '0.8rem', lineHeight: 1.45, color: t.cor.cinza }}>
+            Cada etapa teve a sua própria votação, com resultado e votos próprios.
+          </p>
+          {votacoes.map((v) => <LinhaEtapa key={v.votacao_id_externa} v={v} />)}
+        </div>
+      )}
+    </div>
+  );
 }
 
 const badgeStatus = (status) => ({
@@ -158,16 +209,17 @@ export default function VotacoesDaCasa({ casa, votacoes, temas = [], temaInicial
 
         <EmDestaque casa={casa} maisImportantes={maisImportantes} emAlta={emAlta} />
 
-        <div style={{ marginBottom: '12px' }}>
-          <CampoBusca valor={busca} aoMudar={aoFiltrar(setBusca)} placeholder="Buscar por assunto, proposta ou autor… (ex.: saúde, imposto, PEC 45)" aoLabel="Buscar votações" />
-        </div>
-
+        {/* Busca, período, tema e resultado numa linha só (07/11/2026). A busca ocupa o que sobrar;
+            no celular os campos quebram e a busca fica sozinha na primeira linha. */}
         <div style={{ display: 'flex', gap: '10px', marginBottom: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
-          <div style={{ flex: '0 1 200px', minWidth: '160px' }}>
+          <div style={{ flex: '1 1 260px', minWidth: '220px' }}>
+            <CampoBusca valor={busca} aoMudar={aoFiltrar(setBusca)} placeholder="Buscar por assunto, proposta ou autor… (ex.: saúde, imposto, PEC 45)" aoLabel="Buscar votações" />
+          </div>
+          <div style={{ flex: '0 1 190px', minWidth: '150px' }}>
             <CampoSelect opcoes={PERIODOS} valor={periodo} aoSelecionar={aoFiltrar(setPeriodo)} placeholder="Qualquer período" aoLabel="Filtrar por período" buscavel={false} />
           </div>
           {temas.length > 0 && (
-            <div style={{ flex: '0 1 220px', minWidth: '170px' }}>
+            <div style={{ flex: '0 1 210px', minWidth: '160px' }}>
               <CampoSelect
                 opcoes={[{ valor: '', rotulo: 'Qualquer tema' }, ...temas.map((c) => ({ valor: c.nome_categoria, rotulo: c.nome_categoria }))]}
                 valor={tema} aoSelecionar={aoFiltrar(setTema)} placeholder="Qualquer tema" aoLabel="Filtrar por tema" buscavel={false}
@@ -204,6 +256,7 @@ export default function VotacoesDaCasa({ casa, votacoes, temas = [], temaInicial
               const status = statusGrupo(g);
               const exp = explicarTipo(`${g.titulo || ''} ${g.ementa || ''}`, casa);
               const varias = g.votacoes.length > 1;
+              const principal = votacaoPrincipal(g.votacoes);
               const urgencia = /urg[êe]ncia/i.test(g.regime || '') || g.votacoes.some((v) => /urg[êe]ncia/i.test(papelVotacao(v.descricao)));
               const sitCidada = situacaoCidada(g.situacao);
               const virouLei = /virou lei/i.test(sitCidada || '');
@@ -237,25 +290,10 @@ export default function VotacoesDaCasa({ casa, votacoes, temas = [], temaInicial
                     {g.url_inteiro_teor && <a href={g.url_inteiro_teor} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.76rem', color: t.cor.ouroTexto, fontWeight: 700, textDecoration: 'underline dotted' }}>texto completo<Seta direcao="direita" size={13} emTexto /></a>}
                   </div>
 
-                  <div style={{ marginTop: '10px', borderTop: `1px solid ${t.cor.papelQuente2}`, paddingTop: '10px', display: 'grid', gap: '4px' }}>
-                    {g.votacoes.map((v, i) => {
-                      const h = hv(v);
-                      const papel = papelVotacao(v.descricao);
-                      const aprov = h.status === 'Aprovado';
-                      return (
-                        <Link key={i} href={`/votacao/${v.votacao_id_externa}`} className="etapa-linha" style={{ textDecoration: 'none', color: 'inherit', padding: '8px 10px', borderRadius: t.raio.sm, background: t.cor.papelQuente, transition: 'background .12s' }}
-                          onMouseOver={(e) => { e.currentTarget.style.background = t.cor.papelQuente2; }}
-                          onMouseOut={(e) => { e.currentTarget.style.background = t.cor.papelQuente; }}>
-                          <span style={{ flexShrink: 0, width: '8px', height: '8px', borderRadius: '50%', background: h.status ? (aprov ? t.cor.sim : t.cor.nao) : t.cor.cinza }} />
-                          <span style={{ flexShrink: 0, fontSize: '0.8rem', fontWeight: 700, color: t.cor.tinta, minWidth: '96px' }} className="etapa-papel">{papel}</span>
-                          <span className="etapa-res" style={{ flex: 1, minWidth: 0, fontSize: '0.8rem', color: h.status ? (aprov ? t.cor.sim : t.cor.nao) : t.cor.cinza, fontWeight: 600 }}>
-                            {h.status || 'Sem resultado'}{h.sim != null ? ` · ${h.sim}×${h.nao}` : ''}
-                          </span>
-                          <span style={{ flexShrink: 0, fontSize: '0.74rem', color: t.cor.cinza }}>{dataBR(v.data_voto)}</span>
-                          <span style={{ flexShrink: 0, fontSize: '0.74rem', fontWeight: 700, color: t.cor.ouroTexto }}>quem votou<Seta direcao="direita" size={13} emTexto /></span>
-                        </Link>
-                      );
-                    })}
+                  <div style={{ marginTop: '10px', borderTop: `1px solid ${t.cor.papelQuente2}`, paddingTop: '10px', display: 'grid', gap: '6px' }}>
+                    {varias && <p style={{ margin: 0, fontSize: '0.74rem', fontWeight: 800, letterSpacing: '0.04em', textTransform: 'uppercase', color: t.cor.cinza }}>Votação principal do processo</p>}
+                    <LinhaEtapa v={principal} />
+                    {varias && <OutrasEtapas votacoes={g.votacoes.filter((v) => v.votacao_id_externa !== principal.votacao_id_externa)} />}
                   </div>
                 </div>
               );
