@@ -415,6 +415,8 @@ export default function App({ Component, pageProps }) {
         @media (max-width: 520px) {
           .etapa-linha { flex-wrap: wrap; gap: 6px 10px; }
           .etapa-linha .etapa-papel { min-width: 0; }
+          /* 07/11/2026: o resultado tinha flex:1 e min-width:0, entao no celular ele encolhia a ~20px e o texto "Aprovado" passava por cima da data. Agora ele ocupa o que o texto precisa e a linha quebra em duas quando nao cabe tudo. */
+          .etapa-linha .etapa-res { flex: 1 1 auto !important; min-width: max-content; }
         }
 
         @keyframes surgir {
