@@ -1,5 +1,6 @@
 import ReportarErro from './ReportarErro';
 import { dataBr } from '../src/lib/datas';
+import { explicarStatus } from '../src/lib/destaques';
 
 // **trecho** vira negrito. Só isso: o texto vem do banco e nunca entra como HTML.
 const comNegrito = (texto) => String(texto).split('**').map((parte, i) => (i % 2 ? <strong key={i}>{parte}</strong> : parte));
@@ -9,7 +10,9 @@ const comNegrito = (texto) => String(texto).split('**').map((parte, i) => (i % 2
 // Estilo em pages/_app.js (classes .entenda-*), para a grade virar coluna única no celular.
 export default function EntendaEmUmMinuto({ dados, assunto }) {
   if (!dados) return null;
-  const { mudancas, barras, dias, fluxo, excecoes, fontes, consultadoEm } = dados;
+  const { mudancas, barras, dias, fluxo, excecoes, fontes, consultadoEm, status } = dados;
+  // O cartão da lista usa palavra simples; aqui o termo oficial ganha a explicação.
+  const explicaStatus = status ? explicarStatus(status.rotulo) : null;
   return (
     <section className="entenda-sec" aria-labelledby="entenda-titulo">
       <h2 id="entenda-titulo">Entenda em 1 minuto</h2>
@@ -17,6 +20,7 @@ export default function EntendaEmUmMinuto({ dados, assunto }) {
         Resumo escrito por inteligência artificial a partir do texto oficial, com os dados conferidos nas fontes abaixo. Descreve o que o texto faz, sem opinar.
         {' '}<ReportarErro assunto={`Resumo: ${String(assunto || 'votação').slice(0, 80)}`} />
       </p>
+      {explicaStatus && <p className="entenda-status"><strong>{explicaStatus.termo}:</strong> {explicaStatus.texto}</p>}
       <div className="entenda-grade">
         {mudancas.length > 0 && (
           <div className="entenda-cartao">

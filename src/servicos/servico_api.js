@@ -510,6 +510,29 @@ const ServicoAPI = {
         );
     },
 
+    // "Mais importante" de uma casa (07/11/2026): lista curada em destaques_votacoes, o texto do
+    // cartao em resumos_entenda e, como destino, a votacao MAIS RECENTE de cada materia.
+    // Falha aqui nunca derruba a pagina: sem destaques, a secao some.
+    listarMaisImportantes: async (casa) => {
+        try {
+            const { data: destaques } = await supabase.from('destaques_votacoes').select('proposicao_id, ordem').eq('casa', casa).order('ordem', { ascending: true });
+            if (!destaques || destaques.length === 0) return { destaques: [], resumos: {}, alvos: {} };
+            const ids = destaques.map((d) => d.proposicao_id);
+            const [{ data: res }, { data: vots }] = await Promise.all([
+                supabase.from('resumos_entenda').select('chave, conteudo').in('chave', ids.map((i) => `${casa}:${i}`)),
+                ServicoAPI._filtrarCasa(supabase.from('votacoes').select('votacao_id_externa, proposicao_id, data_voto').in('proposicao_id', ids), casa).order('data_voto', { ascending: false }),
+            ]);
+            const resumos = {};
+            for (const r of res || []) resumos[r.chave] = r.conteudo;
+            const alvos = {};
+            for (const v of vots || []) if (!alvos[v.proposicao_id]) alvos[v.proposicao_id] = v.votacao_id_externa;
+            return { destaques, resumos, alvos };
+        } catch (e) {
+            console.error(`listarMaisImportantes(${casa}):`, e.message);
+            return { destaques: [], resumos: {}, alvos: {} };
+        }
+    },
+
     // PAINEL DE ENTRADA da /votacoes: por casa, quantas votacoes, que periodo cobrem e as
     // ultimas. Nao traz a lista inteira de ninguem: a /votacoes deixou de ser uma lista.
     //

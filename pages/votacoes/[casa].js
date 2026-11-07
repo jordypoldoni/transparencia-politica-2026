@@ -28,6 +28,8 @@ import { t } from '../../src/estilo/tokens';
 import { Seta } from '../../components/icones';
 import { dataBr, anoDe } from '../../src/lib/datas';
 import SeloAtualizacao from '../../components/SeloAtualizacao';
+import EmDestaque from '../../components/EmDestaque';
+import { montarMaisImportantes } from '../../src/lib/destaques';
 
 const POR_PAGINA = 20;
 
@@ -82,7 +84,7 @@ function passaPeriodo(v, periodo) {
   return true;
 }
 
-export default function VotacoesDaCasa({ casa, votacoes, temas = [], temaInicial = '' }) {
+export default function VotacoesDaCasa({ casa, votacoes, temas = [], temaInicial = '', maisImportantes = [] }) {
   const [busca, setBusca] = useState('');
   const [filtro, setFiltro] = useState('todas');
   const [periodo, setPeriodo] = useState('');
@@ -152,6 +154,8 @@ export default function VotacoesDaCasa({ casa, votacoes, temas = [], temaInicial
           quem propôs.
         </p>
         <SeloAtualizacao fonte={casa.chave === 'senado' ? 'votos_senado' : casa.chave === 'rs' ? 'votos_alergs' : 'votos_camara'} escopo={casa.chave === 'rs' ? 'RS' : ''} style={{ margin: '-8px 0 18px' }} />
+
+        <EmDestaque casa={casa} maisImportantes={maisImportantes} />
 
         <div style={{ marginBottom: '12px' }}>
           <CampoBusca valor={busca} aoMudar={aoFiltrar(setBusca)} placeholder="Buscar por assunto, proposta ou autor… (ex.: saúde, imposto, PEC 45)" aoLabel="Buscar votações" />
@@ -281,11 +285,12 @@ export async function getServerSideProps({ params, query }) {
   const casa = casaVotacaoPorChave(String(params.casa || '').toLowerCase());
   if (!casa) return { notFound: true };
 
-  let votacoes = [], temas = [];
+  let votacoes = [], temas = [], destaque = null;
   try {
-    [votacoes, temas] = await Promise.all([
+    [votacoes, temas, destaque] = await Promise.all([
       ServicoAPI.listarVotacoesDaCasa(casa.chave),
       ServicoAPI.listarTemas(),
+      ServicoAPI.listarMaisImportantes(casa.chave),
     ]);
   } catch (e) { console.error(`VotacoesDaCasa(${casa.chave}):`, e.message); }
 
@@ -294,6 +299,7 @@ export async function getServerSideProps({ params, query }) {
       casa,
       votacoes: JSON.parse(JSON.stringify(votacoes)),
       temas: JSON.parse(JSON.stringify(temas)),
+      maisImportantes: destaque ? montarMaisImportantes({ casa: casa.chave, ...destaque }) : [],
       temaInicial: temas.some((c) => c.nome_categoria === query?.tema) ? String(query.tema) : '',
     },
   };

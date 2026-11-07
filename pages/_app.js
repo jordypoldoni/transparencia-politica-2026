@@ -50,6 +50,24 @@ export default function App({ Component, pageProps }) {
         .secao-home { padding-left: 24px; padding-right: 24px; }
         .leitura { width: 100%; }
         /* Resumo "Entenda em 1 minuto" (pagina de uma votacao), 07/11/2026. Desenho aprovado pelo Jordy. Sem borda colorida: destaque por sombra e fundo. */
+        .dest-sec { margin: 26px 0 12px; }
+        .dest-sec h2 { font-family: "Fraunces", Georgia, serif; font-weight: 600; font-size: 1.6rem; margin: 0 0 4px; color: #191C20; }
+        .dest-sub-titulo { margin: 18px 0 6px; font-size: 1rem; }
+        .dest-tag { font-size: 0.7rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; padding: 4px 10px; border-radius: 6px; }
+        .dest-imp { background: #241E52; color: #fff; }
+        .dest-sub { margin: 0 0 14px; font-size: 0.92rem; line-height: 1.5; color: #666E7B; }
+        .dest-grade { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+        .dest-cartao { background: #fff; border-radius: 24px; box-shadow: 0 1px 2px rgba(74,52,30,.06), 0 4px 16px rgba(74,52,30,.05); padding: 20px 22px; display: flex; flex-direction: column; text-decoration: none; color: inherit; transition: box-shadow .15s; }
+        .dest-cartao:hover { box-shadow: 0 12px 30px rgba(74,52,30,.16); }
+        .dest-topo { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; }
+        .dest-st { font-size: 0.7rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; padding: 4px 10px; border-radius: 6px; background: #F4ECE1; color: #7A4B00; }
+        .dest-st.ok { background: #E7F3EC; color: #1F7A4D; }
+        .dest-rot { font-size: 0.76rem; color: #666E7B; margin: 0 0 6px; }
+        .dest-cartao h4 { font-family: "Fraunces", Georgia, serif; font-weight: 600; font-size: 1.18rem; line-height: 1.25; margin: 0 0 8px; color: #191C20; }
+        .dest-txt { margin: 0 0 12px; font-size: 0.9rem; line-height: 1.5; color: #666E7B; flex: 1; }
+        .dest-link { font-size: 0.85rem; font-weight: 800; color: #A85B00; }
+        .dest-mais { display: flex; justify-content: center; margin-top: 14px; }
+        .entenda-status { margin: 0 0 14px; font-size: 0.92rem; line-height: 1.5; color: #191C20; }
         .entenda-sec { margin: 28px 0 8px; }
         .entenda-sec h2 { font-family: "Fraunces", Georgia, serif; font-weight: 600; font-size: 1.5rem; margin: 0 0 6px; color: #191C20; }
         .entenda-sub { margin: 0 0 16px; font-size: 0.9rem; line-height: 1.5; color: #666E7B; }
@@ -87,6 +105,8 @@ export default function App({ Component, pageProps }) {
         .entenda-fonte a { color: #A85B00; font-weight: 700; }
         @media (max-width: 760px) {
           .entenda-grade { grid-template-columns: 1fr; }
+          .dest-grade { grid-template-columns: 1fr; }
+          .dest-sec h2 { font-size: 1.4rem; }
           .entenda-fluxo { grid-template-columns: 1fr !important; }
           .entenda-seta { justify-content: center; transform: rotate(90deg); }
           .entenda-linha { grid-template-columns: 1fr; }
