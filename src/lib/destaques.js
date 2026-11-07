@@ -64,3 +64,17 @@ export function montarMaisImportantes({ casa, destaques, resumos, alvos }) {
     })
     .filter(Boolean);
 }
+
+// "Em alta": as matérias da lista "Mais importante" que o coletor achou em alta agora, na ordem
+// dele, cada uma com as etiquetas das fontes. linhas: em_alta_votacoes já filtrada por validade.
+export function montarEmAlta({ casa, cartoes, linhas, rotulos, max = 5 }) {
+  const porChave = new Map((cartoes || []).map((c) => [c.chave, c]));
+  return [...(linhas || [])]
+    .sort((a, b) => b.pontos - a.pontos)
+    .map((l) => {
+      const c = porChave.get(`${casa}:${l.proposicao_id}`);
+      return c ? { ...c, fontes: (l.fontes || []).map((f) => (rotulos || {})[f]).filter(Boolean) } : null;
+    })
+    .filter(Boolean)
+    .slice(0, max);
+}

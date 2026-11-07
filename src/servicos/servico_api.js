@@ -533,6 +533,19 @@ const ServicoAPI = {
         }
     },
 
+    // "Em alta" (07/11/2026): linhas gravadas pelo coletor_em_alta. So valem se recentes: coletor
+    // parado = secao some, em vez de ranking velho apresentado como de agora.
+    listarEmAlta: async (casa, validadeHoras = 12) => {
+        try {
+            const desde = new Date(Date.now() - validadeHoras * 3600000).toISOString();
+            const { data } = await supabase.from('em_alta_votacoes').select('proposicao_id, fontes, pontos').eq('casa', casa).gte('atualizado_em', desde).order('pontos', { ascending: false });
+            return data || [];
+        } catch (e) {
+            console.error(`listarEmAlta(${casa}):`, e.message);
+            return [];
+        }
+    },
+
     // PAINEL DE ENTRADA da /votacoes: por casa, quantas votacoes, que periodo cobrem e as
     // ultimas. Nao traz a lista inteira de ninguem: a /votacoes deixou de ser uma lista.
     //

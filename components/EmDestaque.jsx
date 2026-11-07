@@ -8,7 +8,7 @@ import { Seta } from './icones';
 // Estilo em pages/_app.js (classes .dest-*), para a grade virar coluna única no celular.
 const INICIAL = 6;
 
-export default function EmDestaque({ casa, maisImportantes }) {
+export default function EmDestaque({ casa, maisImportantes, emAlta = [] }) {
   const [tudo, setTudo] = useState(false);
   if (!maisImportantes || maisImportantes.length === 0) return null;
   const visiveis = tudo ? maisImportantes : maisImportantes.slice(0, INICIAL);
@@ -47,6 +47,28 @@ export default function EmDestaque({ casa, maisImportantes }) {
             {tudo ? 'Mostrar menos' : `Ver mais ${resto} ${resto === 1 ? 'votação importante' : 'votações importantes'}`}
           </button>
         </div>
+      )}
+      {emAlta.length > 0 && (
+        <>
+          <h3 className="dest-sub-titulo"><span className="dest-tag dest-alta">Em alta</span></h3>
+          <p className="dest-sub">
+            Votações cujo assunto está em alta no país agora: nas buscas do Google ou nas notícias.
+            Quanto mais fontes, mais acima. Atualizado várias vezes ao dia.
+          </p>
+          <div className="dest-rank">
+            {emAlta.map((c, i) => (
+              <Link key={c.chave} href={c.href} className="dest-linha">
+                <span className="dest-n" aria-hidden="true">{i + 1}</span>
+                <span className="dest-x">
+                  <b>{c.apelido}</b>
+                  {c.rotuloProposicao && <small>{c.rotuloProposicao}</small>}
+                  {c.fontes && c.fontes.length > 0 && <span className="dest-porque">{c.fontes.map((f) => <span key={f} className="dest-fonte">{f}</span>)}</span>}
+                </span>
+                <span className="dest-link">Entenda<Seta direcao="direita" size={13} emTexto /></span>
+              </Link>
+            ))}
+          </div>
+        </>
       )}
     </section>
   );

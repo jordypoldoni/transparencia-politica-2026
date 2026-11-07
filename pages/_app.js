@@ -66,6 +66,16 @@ export default function App({ Component, pageProps }) {
         .dest-cartao h4 { font-family: "Fraunces", Georgia, serif; font-weight: 600; font-size: 1.18rem; line-height: 1.25; margin: 0 0 8px; color: #191C20; }
         .dest-txt { margin: 0 0 12px; font-size: 0.9rem; line-height: 1.5; color: #666E7B; flex: 1; }
         .dest-link { font-size: 0.85rem; font-weight: 800; color: #A85B00; }
+        .dest-alta { background: #FF8A00; color: #171238; }
+        .dest-rank { display: grid; gap: 10px; }
+        .dest-linha { background: #fff; border-radius: 20px; box-shadow: 0 1px 2px rgba(74,52,30,.06), 0 4px 16px rgba(74,52,30,.05); padding: 14px 18px; display: flex; align-items: center; gap: 14px; text-decoration: none; color: inherit; transition: box-shadow .15s; }
+        .dest-linha:hover { box-shadow: 0 12px 30px rgba(74,52,30,.16); }
+        .dest-n { flex: none; width: 34px; height: 34px; border-radius: 999px; background: #241E52; color: #FF8A00; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+        .dest-x { flex: 1; min-width: 0; }
+        .dest-x b { font-family: "Fraunces", Georgia, serif; font-weight: 600; font-size: 1.08rem; color: #191C20; display: block; }
+        .dest-x small { font-size: 0.76rem; color: #666E7B; display: block; }
+        .dest-porque { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+        .dest-fonte { font-size: 0.7rem; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: #F4ECE1; color: #5C3A00; }
         .dest-mais { display: flex; justify-content: center; margin-top: 14px; }
         .entenda-status { margin: 0 0 14px; font-size: 0.92rem; line-height: 1.5; color: #191C20; }
         .entenda-sec { margin: 28px 0 8px; }
