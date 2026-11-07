@@ -3,6 +3,7 @@ import { t } from '../src/estilo/tokens';
 import { Seta } from './icones';
 import { pilulaPagina, realcePagina } from '../src/estilo/botoes';
 import { dataBr } from '../src/lib/datas';
+import { ordenarNotas, ehDivulgacaoAtividade } from '../src/lib/ordemNotas';
 
 // NOTAS DE UMA CATEGORIA, SEPARADAS POR TIPO DE DESPESA (29/09/2026).
 //
@@ -80,7 +81,7 @@ function BlocoDoTipo({ tipo, notas, subtotal, anoSel, palavraNota, sozinho }) {
       {mostradas.map((it, i) => <Nota key={i} it={it} anoSel={anoSel} />)}
       <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap', marginTop: '6px' }}>
         <span style={{ fontSize: '0.78rem', color: t.cor.cinza }}>
-          Mostrando {mostradas.length} de {plural(notas.length)}, da maior para a menor.
+          Mostrando {mostradas.length} de {plural(notas.length)}, {ehDivulgacaoAtividade(tipo) ? 'da mais recente para a mais antiga' : 'da maior para a menor'}.
         </span>
         {faltam > 0 && (
           <button type="button" onClick={() => setVisiveis((v) => v + PASSO)}
@@ -107,7 +108,7 @@ export default function NotasDaCategoria({ notas, anoSel, temNotaFiscal = true }
       g.subtotal += parseFloat(it.valor_liquido || 0);
     }
     const lista = [...porTipo.values()];
-    for (const g of lista) g.notas.sort((a, b) => parseFloat(b.valor_liquido || 0) - parseFloat(a.valor_liquido || 0));
+    for (const g of lista) g.notas = ordenarNotas(g.tipo, g.notas);
     return lista.sort((a, b) => b.subtotal - a.subtotal);
   }, [notas]);
 
