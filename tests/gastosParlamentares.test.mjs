@@ -143,3 +143,37 @@ test('somaFechados: soma só meses fechados e os mesmos meses do ano anterior', 
   assert.equal(somaFechados(at, []).anterior, null);
   assert.equal(somaFechados([{ total: 1, temDado: true, aberto: true }], an), null);
 });
+
+import { resumoDoRadar, totaisTodasAsCasas, anosTodasAsCasas } from '../src/lib/gastosParlamentares.js';
+
+test('todas as casas: soma Câmara, Senado e as Assembleias com dado, sem estimar', () => {
+  const radar = [
+    { casa: 'Câmara', total: 10 }, { casa: 'Câmara', total: 20 }, { casa: 'Senado', total: 5 },
+    { casa: 'Assembleia (RS)', total: 7 }, { casa: 'Assembleia (MG)', total: 3 }, { casa: 'Assembleia (SP)', total: 0 },
+  ];
+  const agreg = [
+    { casa: 'Câmara', ano: 2026, mes: 1, total: '100' }, { casa: 'Câmara', ano: 2026, mes: 2, total: '50' },
+    { casa: 'Senado', ano: 2026, mes: 1, total: '30' }, { casa: 'Câmara', ano: 2025, mes: 1, total: '999' },
+  ];
+  const r = totaisTodasAsCasas(resumoDoRadar(radar), agreg, 2026, new Date('2026-11-07'));
+  assert.equal(r.casas.find((c) => c.chave === 'camara').total, 150);
+  assert.equal(r.casas.find((c) => c.chave === 'camara').parlamentares, 2);
+  assert.equal(r.casas.find((c) => c.chave === 'senado').total, 30);
+  const ass = r.casas.find((c) => c.chave === 'assembleias');
+  assert.equal(ass.total, 10);
+  assert.deepEqual(ass.estados.sort(), ['MG', 'RS']);      // SP com total 0 não entra
+  assert.equal(r.total, 190);
+  assert.equal(r.mensal[0].total, 130);                     // jan: Câmara + Senado
+  assert.equal(r.mensal[1].total, 50);
+  assert.equal(r.mensal[5].temDado, false);
+});
+
+test('todas as casas: ano sem Câmara nem Senado não inventa linha', () => {
+  const r = totaisTodasAsCasas(resumoDoRadar([{ casa: 'Assembleia (SP)', total: 4 }]), [], 2024, new Date('2026-11-07'));
+  assert.deepEqual(r.casas.map((c) => c.chave), ['assembleias']);
+  assert.equal(r.total, 4);
+});
+
+test('anos de todas as casas: união, do mais novo ao mais antigo', () => {
+  assert.deepEqual(anosTodasAsCasas({ 'Câmara': [2025, 2026], 'Assembleia (SP)': [2024, 2026] }), [2026, 2025, 2024]);
+});

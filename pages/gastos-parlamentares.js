@@ -21,7 +21,7 @@ import { NOMES_UF, CEAP_FONTE, CEAPS_FONTE, ATO_MESA_DIVULGACAO } from '../src/l
 import { grafo, organizacao, site, migalhas, pagina as paginaLd } from '../src/lib/dadosEstruturados';
 import {
   CASAS, MINIMOS, MINIMO_PADRAO, linhasDaCasa, comparacaoJusta, partidosDe, ufsDe, usoPorEstado,
-  serieMensal, porTipo, ehDivulgacao, divulgacaoMensal, passagensPorAno, resumoRecursosSenado, escalaY, somaFechados, anosDisponiveis, chaveDaCasa,
+  serieMensal, resumoDoRadar, totaisTodasAsCasas, anosTodasAsCasas, porTipo, ehDivulgacao, divulgacaoMensal, passagensPorAno, resumoRecursosSenado, escalaY, somaFechados, anosDisponiveis, chaveDaCasa,
 } from '../src/lib/gastosParlamentares';
 
 // PÁGINA NOVA (21/10/2026, pedido do Jordy, item 6): a análise dos gastos dos parlamentares num lugar só.
@@ -33,6 +33,7 @@ import {
 
 const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
 const POR_VEZ = 20;
+const TODAS = { chave: 'todas', rotulo: 'Todas as casas' };
 const OPCOES_UF = Object.entries(NOMES_UF).map(([uf, nome]) => ({ valor: uf, rotulo: `${uf} · ${nome}`, busca: `${uf} ${nome}` }));
 
 const mi = (v) => `R$ ${(v / 1e6).toFixed(1).replace('.', ',')} mi`;
@@ -442,7 +443,101 @@ function ComoLemos({ casa }) {
   );
 }
 
-function PaginaGastos({ casaChave, ano, anosDaCasa, radar, agreg, recursos, ufInicial, canonical }) {
+// TODAS AS CASAS (07/11/2026): o total gasto somando as casas que o Lume tem, com a divisão por casa e o gasto mês a mês.
+// Cada casa entra só se tem dado no ano; as Assembleias são as dos estados com dado (hoje MG, RS e SP) e não têm série mensal.
+const bi = (v) => (v >= 1e9 ? `R$ ${(v / 1e9).toFixed(2).replace('.', ',')} bi` : mi(v));
+
+function TodasAsCasas({ resumo, agreg, ano }) {
+  const r = useMemo(() => totaisTodasAsCasas(resumo, agreg, ano), [resumo, agreg, ano]);
+  const [sel, setSel] = useState(null);
+  const maior = Math.max(...r.mensal.map((m) => m.total), 1);
+  const eixo = useMemo(() => escalaY(maior / 1e6, 4), [maior]);
+  const topo = eixo.topo * 1e6;
+  const soma = useMemo(() => somaFechados(r.mensal, null), [r]);
+  if (r.casas.length === 0) return <p style={{ color: t.cor.cinza }}>Ainda não há dado de gastos para {ano}.</p>;
+  const cobertas = r.casas.map((c) => (c.chave === 'assembleias' ? `Assembleias (${c.estados.join(', ')})` : c.rotulo));
+  const abertos = r.mensal.filter((m) => m.temDado && m.aberto).map((m) => MESES[m.mes - 1]);
+  const detalhe = (i) => `${MESES[i]}/${ano}: ${r.mensal[i].temDado ? mi(r.mensal[i].total) : 'sem dado'}${r.mensal[i].aberto && r.mensal[i].temDado ? ' (mês aberto, valor parcial)' : ''}`;
+  return (
+    <>
+      <section className="gp-cartao" aria-labelledby="gp-total">
+        <p className="gp-sobre">Total de {ano}</p>
+        <h2 className="gp-h2" id="gp-total">Quanto as casas legislativas gastaram da verba pública</h2>
+        <p style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(2rem, 6vw, 3rem)', lineHeight: 1.1, margin: '6px 0 4px', color: t.cor.tinta }}>{bi(r.total)}</p>
+        <p className="gp-sub">Soma de {cobertas.join(', ')}, em {ano}. Quem não tem dado publicado no Lume para o ano fica de fora da soma.</p>
+        <ul className="gp-lista" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+          {r.casas.map((c) => (
+            <li key={c.chave}>
+              <div className="gp-linha">
+                <span style={{ display: 'block', minWidth: 0 }}>
+                  <span style={{ display: 'block', fontWeight: 700 }}>{c.rotulo}</span>
+                  <span style={{ display: 'block', fontSize: '0.78rem', color: t.cor.cinza }}>
+                    {c.parlamentares.toLocaleString('pt-BR')} {c.parlamentares === 1 ? 'parlamentar' : 'parlamentares'} com gasto{c.estados ? ` · ${c.estados.join(', ')}` : ''}
+                  </span>
+                </span>
+                <Trilho pct={(c.total / r.total) * 100} />
+                <span className="gp-num">
+                  {bi(c.total)}
+                  <small>{Math.round((c.total / r.total) * 100)}% do total</small>
+                </span>
+              </div>
+            </li>
+          ))}
+        </ul>
+        {r.assembleias.length > 0 && (
+          <div className="gp-faixa">
+            <p><strong>Assembleias por estado:</strong> {r.assembleias.map((a) => `${a.uf} ${bi(a.total)}`).join(' · ')}.</p>
+            <p>O Lume só tem o gasto das Assembleias de alguns estados, e cada uma publica no seu ritmo (a do RS, por exemplo, ainda não tem o ano fechado). Por isso a soma das Assembleias é parcial e não representa todos os estados.</p>
+          </div>
+        )}
+      </section>
+
+      <section className="gp-cartao" aria-labelledby="gp-total-mes">
+        <p className="gp-sobre">Por mês</p>
+        <h2 className="gp-h2" id="gp-total-mes">Gasto mês a mês, Câmara e Senado juntos</h2>
+        <p className="gp-sub">As Assembleias não entram neste gráfico porque não têm o gasto mês a mês na base do Lume. Meses ainda abertos, que seguem recebendo notas, aparecem mais claros e com valor parcial. Toque em um mês para ver o valor.</p>
+        <p className="gp-eixo-tit">R$ milhões por mês</p>
+        <div className="gp-graf">
+          <div className="gp-y" aria-hidden="true">
+            {eixo.marcas.map((v) => <span key={v} style={{ bottom: `${(v / eixo.topo) * 100}%` }}>{v.toLocaleString('pt-BR')}</span>)}
+          </div>
+          <div className="gp-plot">
+            {eixo.marcas.slice(1).map((v) => <i className="gp-gl" key={v} style={{ bottom: `${(v / eixo.topo) * 100}%` }} />)}
+            <div className="gp-cols2" role="group" aria-label={`Gasto por mês em ${ano}, Câmara e Senado`}>
+              {r.mensal.map((m, i) => (
+                <button type="button" key={m.mes} className="gp-col2" aria-pressed={sel === i} aria-label={detalhe(i)} onClick={() => setSel(sel === i ? null : i)}>
+                  <span className="gp-barra">
+                    <i style={{ height: `${(m.total / topo) * 100}%`, background: sel === i ? t.cor.ouro : t.cor.verde, opacity: m.aberto ? 0.4 : 1 }}>
+                      {m.temDado && <b className="gp-val" style={{ opacity: 1 }}>{mesTxt(m.total)}</b>}
+                    </i>
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+          <span />
+          <div className="gp-x" aria-hidden="true">{r.mensal.map((m, i) => <span key={m.mes} style={sel === i ? { color: t.cor.tinta, fontWeight: 800 } : undefined}>{MESES[i]}</span>)}</div>
+        </div>
+        {abertos.length > 0 && <p className="gp-legenda"><span>Em aberto: {abertos.join(', ')}</span></p>}
+        <div className="gp-faixa" aria-live="polite">
+          {sel != null
+            ? <p><strong>{detalhe(sel)}</strong></p>
+            : soma && <p><strong>{MESES[soma.de - 1]} a {MESES[soma.ate - 1]}, só meses fechados:</strong> {mi(soma.atual)} em {ano}.</p>}
+        </div>
+      </section>
+
+      <section className="gp-cartao" aria-labelledby="gp-total-como">
+        <h2 className="gp-h2" id="gp-total-como" style={{ fontSize: '1.05rem' }}>Como lemos</h2>
+        <p className="gp-sub" style={{ margin: 0 }}>
+          Câmara e Senado: total do ano na base de gastos do Lume, que vem dos dados abertos de cada casa. Assembleias: soma do gasto de cada deputado estadual dos estados que o Lume acompanha. Gasto alto ou baixo, sozinho, não mede o trabalho de ninguém, e as casas têm tamanhos e regras de verba diferentes. Para comparar parlamentares de forma justa, use as abas de cada casa.
+        </p>
+      </section>
+    </>
+  );
+}
+
+function PaginaGastos({ casaChave, ano, anosDaCasa, radar, agreg, recursos, resumo, ufInicial, canonical }) {
+  const ehTodas = casaChave === 'todas';
   const router = useRouter();
   const casa = CASAS.find((c) => c.chave === casaChave) || CASAS[0];
   const linhas = useMemo(() => linhasDaCasa(radar, casa.chave), [radar, casa.chave]);
@@ -454,12 +549,12 @@ function PaginaGastos({ casaChave, ano, anosDaCasa, radar, agreg, recursos, ufIn
   const setFiltro = (parcial) => setFiltros((f) => ({ ...f, ...parcial }));
 
   const irPara = (parcial) => {
-    const q = { casa: casa.chave, ano, ...parcial };
+    const q = { casa: casaChave, ano, ...parcial };
     router.push({ pathname: '/gastos-parlamentares', query: { casa: q.casa, ano: q.ano } });
   };
 
-  const titulo = 'Gastos parlamentares: quanto cada um usou da verba pública | Lume';
-  const desc = 'Compare os gastos de deputados federais, senadores e deputados estaduais de forma justa: pela cota do estado de cada um e só pelos meses em exercício. Com a fonte oficial de cada número.';
+  const titulo = ehTodas ? 'Gastos de todas as casas legislativas: total e mês a mês | Lume' : 'Gastos parlamentares: quanto cada um usou da verba pública | Lume';
+  const desc = ehTodas ? 'Quanto Câmara, Senado e Assembleias gastaram da verba pública no ano, somando as casas, com a divisão por casa e o gasto mês a mês. Com a fonte oficial de cada número.' : 'Compare os gastos de deputados federais, senadores e deputados estaduais de forma justa: pela cota do estado de cada um e só pelos meses em exercício. Com a fonte oficial de cada número.';
   const ld = grafo(
     organizacao(), site(),
     migalhas([{ nome: 'Início', caminho: '/' }, { nome: 'Gastos parlamentares', caminho: '/gastos-parlamentares' }]),
@@ -490,33 +585,34 @@ function PaginaGastos({ casaChave, ano, anosDaCasa, radar, agreg, recursos, ufIn
 
         <div className="gp-controles">
           <div className="so-celular gp-ctl">
-            <EscolhaCompacta rotulo="Casa" valor={casa.chave} aoEscolher={(c) => router.push({ pathname: '/gastos-parlamentares', query: { casa: c, ano } })}
-              opcoes={CASAS.map((c) => ({ valor: c.chave, rotulo: c.rotulo }))} />
+            <EscolhaCompacta rotulo="Casa" valor={casaChave} aoEscolher={(c) => router.push({ pathname: '/gastos-parlamentares', query: { casa: c, ano } })}
+              opcoes={[...CASAS, TODAS].map((c) => ({ valor: c.chave, rotulo: c.rotulo }))} />
           </div>
           <div className="so-computador">
-            <Segmentado aria="Casa" itens={CASAS.map((c) => ({ chave: c.chave, rotulo: c.rotulo, ativo: c.chave === casa.chave, aoClicar: () => router.push({ pathname: '/gastos-parlamentares', query: { casa: c.chave, ano } }) }))} />
+            <Segmentado aria="Casa" itens={[...CASAS, TODAS].map((c) => ({ chave: c.chave, rotulo: c.rotulo, ativo: c.chave === casaChave, aoClicar: () => router.push({ pathname: '/gastos-parlamentares', query: { casa: c.chave, ano } }) }))} />
           </div>
           <div className="gp-ctl">
             <EscolhaCompacta rotulo="Ano" prefixo="Ano" valor={String(ano)} aoEscolher={(a) => irPara({ ano: a })} opcoes={anos.map((a) => ({ valor: String(a), rotulo: String(a) }))} />
           </div>
-          <div className="gp-ctl-uf">
+          {!ehTodas && <div className="gp-ctl-uf">
             <CampoSelect opcoes={opcoesUf} valor={filtros.uf} placeholder={casa.chave === 'assembleias' ? 'Escolher estado' : 'Todos os estados'} aoLabel="Filtrar por estado" icone={<Pino />}
               aoSelecionar={(u) => setFiltro({ uf: u })} />
-          </div>
-          <div className="gp-ctl">
+          </div>}
+          {!ehTodas && <div className="gp-ctl">
             <EscolhaCompacta rotulo="Partido" prefixo="Partido" valor={filtros.partido} aoEscolher={(p) => setFiltro({ partido: p })}
               opcoes={[{ valor: '', rotulo: 'Todos' }, ...partidos.map((p) => ({ valor: p, rotulo: p }))]} />
-          </div>
-          <div className="gp-ctl">
+          </div>}
+          {!ehTodas && <div className="gp-ctl">
             <EscolhaCompacta rotulo="Mínimo de meses" prefixo="Mínimo" valor={String(filtros.minMeses)} aoEscolher={(m) => setFiltro({ minMeses: Number(m) })}
               opcoes={MINIMOS.map((m) => ({ valor: String(m), rotulo: m === 0 ? 'Sem mínimo' : `${m} ${m === 1 ? 'mês' : 'meses'}` }))} />
-          </div>
-          {(filtros.uf || filtros.partido) && (
+          </div>}
+          {!ehTodas && (filtros.uf || filtros.partido) && (
             <button type="button" style={{ ...botao, padding: '8px 16px' }} onClick={() => setFiltro({ uf: '', partido: '' })} onMouseOver={(e) => realce(e, true)} onMouseOut={(e) => realce(e, false)}>Limpar filtros</button>
           )}
         </div>
-        {selo && <div style={{ margin: '0 0 16px' }}><SeloAtualizacao {...selo} /></div>}
+        {!ehTodas && selo && <div style={{ margin: '0 0 16px' }}><SeloAtualizacao {...selo} /></div>}
 
+        {ehTodas ? <TodasAsCasas resumo={resumo} agreg={agreg} ano={ano} /> : (<>
         <Comparacao casa={casa} linhas={linhas} filtros={filtros} setFiltro={setFiltro} ano={ano} />
 
         {casa.temTeto && (
@@ -529,6 +625,7 @@ function PaginaGastos({ casaChave, ano, anosDaCasa, radar, agreg, recursos, ufIn
         {casa.casaAgregada && <Passagens agreg={agreg} casa={casa} anoAtual={ano} />}
         {casa.chave === 'senado' && <ForaDaCota recursos={recursos} ano={ano} />}
         <ComoLemos casa={casa} />
+        </>)}
 
         <p style={{ marginTop: '24px' }}><ReportarErro assunto="Página Gastos parlamentares" /></p>
       </div>
@@ -542,28 +639,31 @@ export default function PaginaGastosParlamentares(props) { return <PaginaGastos 
 const UF_VALIDA = /^(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)$/;
 
 export async function getServerSideProps({ query, req }) {
-  const casaChave = CASAS.some((c) => c.chave === query.casa) ? query.casa : 'camara';
+  const casaChave = query.casa === 'todas' || CASAS.some((c) => c.chave === query.casa) ? query.casa : 'camara';
+  const ehTodas = casaChave === 'todas';
   // Só oferece anos que existem para a casa (o RS só tem 2026, o MG 2025 e 2026, o SP 2024 a 2026).
   const anosPorCasaRadar = await ServicoAPI.getAnosDoRadar();
-  const anosDaCasa = [...new Set(Object.entries(anosPorCasaRadar).filter(([c]) => chaveDaCasa(c) === casaChave).flatMap(([, a]) => a))].sort((a, b) => b - a);
+  const anosDaCasa = ehTodas ? anosTodasAsCasas(anosPorCasaRadar) : [...new Set(Object.entries(anosPorCasaRadar).filter(([c]) => chaveDaCasa(c) === casaChave).flatMap(([, a]) => a))].sort((a, b) => b - a);
   const anoPedido = parseInt(query.ano, 10);
   const ano = anosDaCasa.includes(anoPedido) ? anoPedido : (anosDaCasa[0] || 2026);
   const [radarTudo, agreg, recursos] = await Promise.all([ServicoAPI.getRadarCompleto(ano), ServicoAPI.getGastosAgregados(), casaChave === 'senado' ? ServicoAPI.getRecursosSenado(ano) : Promise.resolve([])]);
   // Só a casa pedida vai para o navegador, e só os campos que a tela usa (o payload cheio passava de 190 kB; com foto só para a lista de comparação, ~40 kB a mais na Câmara).
-  const radar = linhasDaCasa(radarTudo, casaChave).map(({ d }) => ({
+  // Em "todas" o navegador recebe só o resumo por casa (poucas linhas), não os 700 parlamentares.
+  const resumo = ehTodas ? resumoDoRadar(radarTudo) : [];
+  const radar = ehTodas ? [] : linhasDaCasa(radarTudo, casaChave).map(({ d }) => ({
     id: d.id, slug: d.slug, nome_urna: d.nome_urna, partido_atual: d.partido_atual, uf_sede: d.uf_sede,
     // Foto na lista de comparação (07/11/2026). O Senado manda http://, e a página é https: sobe para https aqui.
     foto_url: d.foto_url ? String(d.foto_url).replace(/^http:\/\//, 'https://') : null,
     casa: d.casa, total: d.total, meses_com_gasto: d.meses_com_gasto, meses_base: d.meses_base ?? null, total_base: d.total_base ?? null,
     situacao_atual: d.situacao_atual ?? null, condicao_eleitoral: d.condicao_eleitoral ?? null,
   }));
-  const casaAgregada = CASAS.find((c) => c.chave === casaChave).casaAgregada;
-  const agregCasa = casaAgregada ? agreg.filter((r) => r.casa === casaAgregada) : [];
+  const casaAgregada = ehTodas ? null : CASAS.find((c) => c.chave === casaChave).casaAgregada;
+  const agregCasa = ehTodas ? agreg.filter((r) => r.casa === 'Câmara' || r.casa === 'Senado') : (casaAgregada ? agreg.filter((r) => r.casa === casaAgregada) : []);
   const ufCookie = String(req.cookies?.[COOKIE_UF] || '').toUpperCase();
   const ufAssembleia = UF_VALIDA.test(ufCookie) && radar.some((d) => d.uf_sede === ufCookie) ? ufCookie : '';
   const ufUrl = String(query.uf || '').toUpperCase();
   const ufInicial = UF_VALIDA.test(ufUrl) ? ufUrl : (casaChave === 'assembleias' ? ufAssembleia : '');
   const proto = req.headers['x-forwarded-proto'] || 'http';
   const canonical = `${proto}://${req.headers.host}/gastos-parlamentares`;
-  return { props: { casaChave, ano, anosDaCasa, radar: JSON.parse(JSON.stringify(radar)), agreg: JSON.parse(JSON.stringify(agregCasa)), recursos: JSON.parse(JSON.stringify(recursos)), ufInicial, canonical } };
+  return { props: { casaChave, ano, anosDaCasa, radar: JSON.parse(JSON.stringify(radar)), agreg: JSON.parse(JSON.stringify(agregCasa)), recursos: JSON.parse(JSON.stringify(recursos)), resumo: JSON.parse(JSON.stringify(resumo)), ufInicial, canonical } };
 }

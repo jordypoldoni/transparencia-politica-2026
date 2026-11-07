@@ -235,3 +235,60 @@ export function resumoRecursosSenado(linhas) {
     beneficios: [...bens.values()],
   };
 }
+
+// ---------------------------------------------------------------------------------------------
+// TODAS AS CASAS (07/11/2026, pedido do Jordy): o total gasto somando Câmara, Senado e as
+// Assembleias que o Lume tem. Três fontes, três coberturas, e a tela diz isso:
+//  - Câmara e Senado: total do ano na tabela gastos_agregados (a mesma da página de cada casa).
+//  - Assembleias: soma de radar_gastos, só dos estados com dado (hoje MG, RS e SP). Sem série mensal.
+//  - Quantidade de parlamentares: linhas do radar_gastos de cada casa no ano.
+// Nada é estimado: casa sem dado no ano fica de fora, e a tela lista quem entrou.
+
+// Resume o radar em linhas pequenas (uma por casa/estado), para não mandar 700 parlamentares ao navegador.
+export function resumoDoRadar(radar) {
+  const mapa = new Map();
+  for (const d of radar || []) {
+    const chave = d.casa || '';
+    if (!chaveDaCasa(chave)) continue;
+    const m = mapa.get(chave) || { casa: chave, n: 0, total: 0 };
+    m.n += 1;
+    m.total += Number(d.total) || 0;
+    mapa.set(chave, m);
+  }
+  return [...mapa.values()];
+}
+
+export function totaisTodasAsCasas(resumo, agreg, ano, hoje = new Date()) {
+  const linhas = resumo || [];
+  const nDe = (casa) => linhas.filter((l) => l.casa === casa).reduce((s, l) => s + l.n, 0);
+  const totalAgreg = (casa) => linhasAgreg(agreg, casa, ano).reduce((s, r) => s + (Number(r.total) || 0), 0);
+  const casas = [];
+  for (const [chave, rotulo, casaAgregada] of [['camara', 'Câmara dos Deputados', 'Câmara'], ['senado', 'Senado Federal', 'Senado']]) {
+    const tem = linhasAgreg(agreg, casaAgregada, ano).length > 0;
+    if (tem) casas.push({ chave, rotulo, total: totalAgreg(casaAgregada), parlamentares: nDe(casaAgregada) });
+  }
+  const assembleias = linhas
+    .filter((l) => chaveDaCasa(l.casa) === 'assembleias' && l.total > 0)
+    .map((l) => ({ casa: l.casa, uf: (l.casa.match(/\(([A-Z]{2})\)/) || [])[1] || '', total: l.total, parlamentares: l.n }))
+    .sort((a, b) => b.total - a.total);
+  if (assembleias.length) {
+    casas.push({
+      chave: 'assembleias', rotulo: 'Assembleias Legislativas',
+      total: assembleias.reduce((s, a) => s + a.total, 0),
+      parlamentares: assembleias.reduce((s, a) => s + a.parlamentares, 0),
+      estados: assembleias.map((a) => a.uf).filter(Boolean),
+    });
+  }
+  const total = casas.reduce((s, c) => s + c.total, 0);
+  const camara = serieMensal(agreg, 'Câmara', ano, hoje);
+  const senado = serieMensal(agreg, 'Senado', ano, hoje);
+  const mensal = camara.map((m, i) => ({
+    mes: m.mes, total: m.total + senado[i].total, temDado: m.temDado || senado[i].temDado, aberto: m.aberto,
+  }));
+  return { ano, casas, total, assembleias, mensal };
+}
+
+// Anos em que alguma casa tem dado (Câmara e Senado pela agregada, Assembleias pelo radar).
+export function anosTodasAsCasas(anosPorCasaRadar) {
+  return [...new Set(Object.values(anosPorCasaRadar || {}).flat().map(Number))].sort((a, b) => b - a);
+}
