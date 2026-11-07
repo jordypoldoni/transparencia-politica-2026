@@ -18,8 +18,8 @@ import { casaDoPerfil } from './casa.js';
 import { pctDoTeto, TETO_CEAP, TETO_CEAPS, TETO_ALESP_SP } from './cotas.js';
 
 export const GRUPOS = [
-  { chave: 'federal', titulo: 'Deputados federais', singular: 'deputado federal', plural: 'deputados federais', verba: 'cota parlamentar da Câmara', daPara: (c) => !c.ehSenado && !c.ehEstadual },
-  { chave: 'senado', titulo: 'Senadores', singular: 'senador', plural: 'senadores', verba: 'cota do Senado', daPara: (c) => c.ehSenado },
+  { chave: 'federal', titulo: 'Deputados federais', singular: 'deputado federal', plural: 'deputados federais', verba: 'cota parlamentar da Câmara dos Deputados', daPara: (c) => !c.ehSenado && !c.ehEstadual },
+  { chave: 'senado', titulo: 'Senadores', singular: 'senador', plural: 'senadores', verba: 'cota do Senado Federal', daPara: (c) => c.ehSenado },
   { chave: 'estadual', titulo: 'Deputados estaduais', singular: 'deputado estadual', plural: 'deputados estaduais', verba: 'verba de gabinete da Assembleia', daPara: (c) => c.ehEstadual },
 ];
 
@@ -156,7 +156,7 @@ export function fraseResumo(grupo, resumo, ano = 2026) {
     f = `Em ${ano}, a média mensal de gasto dos ${comMedia} ${grupo.plural} do estado vai de ${reais(min)} a ${reais(max)}`;
     f += comMedia >= 4 ? `, com mediana de ${reais(med)}.` : '.';
   }
-  if (teto) f += ` O teto mensal ${grupo.chave === 'senado' ? 'da cota do Senado' : grupo.chave === 'federal' ? 'da cota da Câmara' : 'da verba'} para o estado é ${reais(teto)}.`;
+  if (teto) f += ` O teto mensal ${grupo.chave === 'senado' ? 'da cota do Senado Federal' : grupo.chave === 'federal' ? 'da cota da Câmara dos Deputados' : 'da verba'} para o estado é ${reais(teto)}.`;
   return f;
 }
 

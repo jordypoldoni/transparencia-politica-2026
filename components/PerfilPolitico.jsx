@@ -63,7 +63,7 @@ const dicionario = {
   'Alimentação': 'Refeições do parlamentar em atividade.',
   'Segurança': 'Serviços de segurança para o mandato.',
   'Outros Operacionais': 'Demais despesas operacionais do mandato.',
-  'Outras despesas': 'Lançamentos que o arquivo da verba do Senado traz sem tipo de despesa, sem detalhamento e sem número de documento. O total oficial das cotas que o Senado publica para o senador não os inclui (conferimos no portal), por isso não entram no total do Lume. Mostramos à parte, exatamente como publicados. Em alguns casos o número de lançamentos coincide com os meses de auxílio-moradia que o Senado informa (veja "Fora da cota e benefícios"), mas o arquivo não os classifica e não afirmamos de que se tratam.',
+  'Outras despesas': 'Lançamentos que o arquivo da verba do Senado Federal traz sem tipo de despesa, sem detalhamento e sem número de documento. O total oficial das cotas que o Senado Federal publica para o senador não os inclui (conferimos no portal), por isso não entram no total do Lume. Mostramos à parte, exatamente como publicados. Em alguns casos o número de lançamentos coincide com os meses de auxílio-moradia que o Senado Federal informa (veja "Fora da cota e benefícios"), mas o arquivo não os classifica e não afirmamos de que se tratam.',
 };
 
 const MES_LETRA = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'];
@@ -701,7 +701,7 @@ export default function PerfilPolitico({ dados }) {
         </p>
         {explicaCota && (
           <p style={{ margin: '12px 0 0', fontSize: '0.9rem', background: 'rgba(255,255,255,0.1)', padding: '12px 14px', borderRadius: t.raio.sm, lineHeight: 1.5 }}>
-            <strong>Cota parlamentar:</strong> uma verba mensal, paga com o seu imposto, para o parlamentar tocar o mandato: passagens, aluguel de escritório, combustível, divulgação. O <strong>teto muda conforme o estado</strong> (quem é de estado mais distante de Brasília recebe mais, por causa das passagens) e é <strong>diferente entre Câmara, Senado e as Assembleias estaduais</strong>. Por isso comparamos cada um dentro da própria casa.{' '}
+            <strong>Cota parlamentar:</strong> uma verba mensal, paga com o seu imposto, para o parlamentar tocar o mandato: passagens, aluguel de escritório, combustível, divulgação. O <strong>teto muda conforme o estado</strong> (quem é de estado mais distante de Brasília recebe mais, por causa das passagens) e é <strong>diferente entre Câmara dos Deputados, Senado Federal e as Assembleias estaduais</strong>. Por isso comparamos cada um dentro da própria casa.{' '}
             <a href="/entenda#cotas" style={{ color: t.cor.ouro, fontWeight: 700, textDecoration: 'underline' }}>Ver os valores e tetos por estado<Seta direcao="direita" size={14} emTexto /></a>
           </p>
         )}
@@ -720,7 +720,7 @@ export default function PerfilPolitico({ dados }) {
             </p>
             {ehSenado && (
               <p style={{ margin: '8px 0 0', fontSize: '0.8rem', opacity: 0.8, lineHeight: 1.5 }}>
-                <strong>Sobre este teto:</strong> usamos a tabela oficial da cota do Senado (R$ 15.000 por mês mais 5 passagens aéreas de ida e volta, que variam por estado), publicada em documento sem data. O Senado pode ter atualizado os valores, e a norma permite usar em um mês o saldo de outro dentro do mesmo ano. Passar de 100% na média, sozinho, não prova irregularidade. <a href={CEAPS_FONTE} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>Ver a tabela do Senado</a>.
+                <strong>Sobre este teto:</strong> usamos a tabela oficial da cota do Senado Federal (R$ 15.000 por mês mais 5 passagens aéreas de ida e volta, que variam por estado), publicada em documento sem data. O Senado Federal pode ter atualizado os valores, e a norma permite usar em um mês o saldo de outro dentro do mesmo ano. Passar de 100% na média, sozinho, não prova irregularidade. <a href={CEAPS_FONTE} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>Ver a tabela do Senado Federal</a>.
               </p>
             )}
           </div>
@@ -1240,14 +1240,14 @@ export default function PerfilPolitico({ dados }) {
               <p style={{ margin: 0, fontSize: '0.9rem', color: t.cor.cinza }}>Buscando na fonte oficial…</p>
             ) : cpis.length === 0 ? (
               <p style={{ margin: 0, fontSize: '0.9rem', color: t.cor.cinza }}>
-                O cadastro de comissões do Senado não registra participação de {perfil.nome_urna} em CPI ou CPMI.
+                O cadastro de comissões do Senado Federal não registra participação de {perfil.nome_urna} em CPI ou CPMI.
               </p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {cpis.map((c) => (
                   <div key={c.codigo} style={{ background: t.cor.papelQuente, borderRadius: t.raio.md, padding: '12px 14px' }}>
                     <span style={{ display: 'inline-block', fontSize: '0.72rem', fontWeight: 700, color: t.cor.ouroTexto, marginBottom: '3px' }}>
-                      {c.casa === 'CN' ? 'Comissão mista (Câmara e Senado)' : 'Comissão do Senado'}
+                      {c.casa === 'CN' ? 'Comissão mista (Câmara dos Deputados e Senado Federal)' : 'Comissão do Senado Federal'}
                     </span>
                     <p style={{ margin: 0, fontSize: '0.92rem', fontWeight: 600, lineHeight: 1.4, color: t.cor.tinta }}>{c.nome || c.sigla}</p>
                     <ul style={{ margin: '6px 0 0', padding: 0, listStyle: 'none', fontSize: '0.84rem', lineHeight: 1.5, color: t.cor.cinza }}>
@@ -1405,7 +1405,7 @@ export default function PerfilPolitico({ dados }) {
           <div onClick={(e) => e.stopPropagation()} style={{ background: '#fff', borderRadius: t.raio.lg, padding: '28px', maxWidth: '420px', textAlign: 'center' }}>
             <h3 style={{ fontFamily: t.fonte.titulo, margin: '0 0 12px' }}>Você vai conferir na fonte</h3>
             <p style={{ color: t.cor.cinza, fontSize: '0.92rem', lineHeight: 1.5, margin: '0 0 22px' }}>
-              Para garantir a transparência, você será levado ao portal oficial da <strong>{perfil.casa_legislativa || 'Câmara'}</strong> para auditar os dados na origem.
+              Para garantir a transparência, você será levado ao portal oficial da <strong>{(!perfil.casa_legislativa || perfil.casa_legislativa === 'Câmara') ? 'Câmara dos Deputados' : perfil.casa_legislativa === 'Senado' ? 'Senado Federal' : perfil.casa_legislativa}</strong> para auditar os dados na origem.
             </p>
             <div style={{ display: 'flex', gap: '10px' }}>
               <button onClick={() => setModal(false)} style={{ ...pilula, flex: 1, justifyContent: 'center', background: '#fff', color: t.cor.tinta, boxShadow: t.sombra.botao }}>Cancelar</button>

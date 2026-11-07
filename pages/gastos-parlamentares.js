@@ -262,7 +262,7 @@ function PorMes({ agreg, casa, ano }) {
   return (
     <section className="gp-cartao" aria-labelledby="gp-mes">
       <p className="gp-sobre">Por mês</p>
-      <h2 className="gp-h2" id="gp-mes">Gasto {casa.rotulo === 'Câmara' ? 'da Câmara' : 'do Senado'} mês a mês</h2>
+      <h2 className="gp-h2" id="gp-mes">Gasto {casa.de} mês a mês</h2>
       <p className="gp-sub">{temAnterior ? `${ano} contra ${ano - 1}.` : `${ano}.`} Meses ainda abertos, que seguem recebendo notas, aparecem mais claros e com valor parcial. Toque em um mês para ver os valores.</p>
       <p className="gp-eixo-tit">R$ milhões por mês</p>
       <div className="gp-graf">
@@ -297,7 +297,7 @@ function PorMes({ agreg, casa, ano }) {
         {sel != null
           ? <p><strong>{detalhe(sel)}</strong></p>
           : soma && <p><strong>{MESES[soma.de - 1]} a {MESES[soma.ate - 1]}, só meses fechados:</strong> {mi(soma.atual)} em {ano}{soma.anterior != null ? ` e ${mi(soma.anterior)} em ${ano - 1}` : ''}.</p>}
-        {semSigepa && <p>Em {ano} o arquivo oficial da Câmara não traz as passagens SIGEPA, que em {ano - 1} somam parte do gasto. Compare {ano} com {ano - 1} sabendo disso.</p>}
+        {semSigepa && <p>Em {ano} o arquivo oficial da Câmara dos Deputados não traz as passagens SIGEPA, que em {ano - 1} somam parte do gasto. Compare {ano} com {ano - 1} sabendo disso.</p>}
       </div>
     </section>
   );
@@ -320,7 +320,7 @@ function OndeVai({ agreg, casa, ano }) {
   return (
     <section className="gp-cartao" aria-labelledby="gp-tipo">
       <p className="gp-sobre">Onde o dinheiro vai</p>
-      <h2 className="gp-h2" id="gp-tipo">Gasto {casa.rotulo === 'Câmara' ? 'da Câmara' : casa.rotulo === 'Senado' ? 'do Senado' : `das ${casa.rotulo}`} por tipo, {ano}</h2>
+      <h2 className="gp-h2" id="gp-tipo">Gasto {casa.de} por tipo, {ano}</h2>
       <p className="gp-sub">Total do ano: {mi(total)}. A divulgação da atividade parlamentar aparece em âmbar porque tem regra própria nas eleições.</p>
       <ul className="gp-lista">
         {topo.map((x) => (
@@ -361,7 +361,7 @@ function Passagens({ agreg, casa, anoAtual }) {
   return (
     <section className="gp-cartao" aria-labelledby="gp-pass">
       <p className="gp-sobre">Passagens aéreas</p>
-      <h2 className="gp-h2" id="gp-pass">{ehCamara ? 'Passagens aéreas da Câmara' : 'Passagens do Senado'}</h2>
+      <h2 className="gp-h2" id="gp-pass">{ehCamara ? 'Passagens aéreas da Câmara dos Deputados' : 'Passagens do Senado Federal'}</h2>
       <p className="gp-sub">
         {dados.filter((d) => d.total > 0).map((d) => `${mi(d.total)} em ${d.ano}`).join(', ')}.
         {' '}Valores mensais de {destaque.ano}, em reais.
@@ -376,7 +376,7 @@ function Passagens({ agreg, casa, anoAtual }) {
       </div>
       {faltando.length > 0 && (
         <div className="gp-faixa">
-          <p><strong>{faltando.map((d) => d.ano).join(' e ')}:</strong> o arquivo oficial da Câmara não traz as passagens aéreas emitidas pelo sistema SIGEPA nesse ano. Só essa parte falta: as demais passagens (reembolso, RPA, missão oficial) e a divulgação entram na comparação acima. Como o SIGEPA pesa cerca de 15% do gasto da Câmara em 2024 e 2025, quem mais viaja de avião tende a aparecer com uso menor em 2026 do que realmente teve. Se a Câmara voltar a publicar, elas entram aqui.</p>
+          <p><strong>{faltando.map((d) => d.ano).join(' e ')}:</strong> o arquivo oficial da Câmara dos Deputados não traz as passagens aéreas emitidas pelo sistema SIGEPA nesse ano. Só essa parte falta: as demais passagens (reembolso, RPA, missão oficial) e a divulgação entram na comparação acima. Como o SIGEPA pesa cerca de 15% do gasto da Câmara dos Deputados em 2024 e 2025, quem mais viaja de avião tende a aparecer com uso menor em 2026 do que realmente teve. Se a Câmara dos Deputados voltar a publicar, elas entram aqui.</p>
         </div>
       )}
     </section>
@@ -391,8 +391,8 @@ function ForaDaCota({ recursos, ano }) {
   return (
     <section className="gp-cartao" aria-labelledby="gp-fora">
       <p className="gp-sobre">Fora da cota e benefícios</p>
-      <h2 className="gp-h2" id="gp-fora">O que o Senado paga além da cota, {ano}</h2>
-      <p className="gp-sub">Total de {r.n} senadores: {mi(r.total)}. Esses valores não entram na média nem no uso do teto acima. Os nomes são os que o Senado usa.</p>
+      <h2 className="gp-h2" id="gp-fora">O que o Senado Federal paga além da cota, {ano}</h2>
+      <p className="gp-sub">Total de {r.n} senadores: {mi(r.total)}. Esses valores não entram na média nem no uso do teto acima. Os nomes são os que o Senado Federal usa.</p>
       <ul className="gp-lista">
         {r.itens.map((x) => (
           <li key={x.recurso} className="gp-linha gp-linha-tipo">
@@ -409,7 +409,7 @@ function ForaDaCota({ recursos, ano }) {
           ))}
         </div>
       )}
-      <p className="gp-sub" style={{ margin: '8px 0 0' }}>Fonte: <a href="https://adm.senado.gov.br/adm-dadosabertos" target="_blank" rel="noopener noreferrer" style={{ color: t.cor.ouroTexto, fontWeight: 600 }}>dados abertos do Senado (recursos utilizados)</a>.</p>
+      <p className="gp-sub" style={{ margin: '8px 0 0' }}>Fonte: <a href="https://adm.senado.gov.br/adm-dadosabertos" target="_blank" rel="noopener noreferrer" style={{ color: t.cor.ouroTexto, fontWeight: 600 }}>dados abertos do Senado Federal (recursos utilizados)</a>.</p>
     </section>
   );
 }
@@ -427,8 +427,8 @@ function ComoLemos({ casa }) {
       {aberto && (
         <div>
           <p style={p}><strong>Média por mês:</strong> soma das notas dos meses em que a pessoa esteve em exercício por 15 dias ou mais e que já fecharam (30 dias depois do fim do mês, quando quase todas as notas já foram emitidas), dividida por esses meses. Mês em exercício sem gasto entra na conta.</p>
-          <p style={p}><strong>O que entra:</strong> todos os tipos de despesa, inclusive divulgação e passagens. Única ausência conhecida: as passagens SIGEPA da Câmara em 2026, que o arquivo oficial não traz.</p>
-          {casa.chave !== 'assembleias' && <p style={p}><strong>Uso do teto:</strong> a média por mês dividida pelo teto mensal da {casa.chave === 'senado' ? 'cota do Senado' : 'cota da Câmara'} para o estado de cada um (<a href={casa.chave === 'senado' ? CEAPS_FONTE : CEAP_FONTE} target="_blank" rel="noopener noreferrer" style={link}>tabela oficial</a>). Acima de 100% quer dizer que a média ficou acima do valor dessa tabela; confira na fonte.</p>}
+          <p style={p}><strong>O que entra:</strong> todos os tipos de despesa, inclusive divulgação e passagens. Única ausência conhecida: as passagens SIGEPA da Câmara dos Deputados em 2026, que o arquivo oficial não traz.</p>
+          {casa.chave !== 'assembleias' && <p style={p}><strong>Uso do teto:</strong> a média por mês dividida pelo teto mensal da {casa.chave === 'senado' ? 'cota do Senado Federal' : 'cota da Câmara dos Deputados'} para o estado de cada um (<a href={casa.chave === 'senado' ? CEAPS_FONTE : CEAP_FONTE} target="_blank" rel="noopener noreferrer" style={link}>tabela oficial</a>). Acima de 100% quer dizer que a média ficou acima do valor dessa tabela; confira na fonte.</p>}
           {casa.chave === 'camara' && <p style={p}><strong>Valores negativos:</strong> alguns deputados têm, em 2026, lançamentos negativos de "Complementação do auxílio-moradia", de até R$ 4.148,80 por mês, o limite fixado pelo <a href="https://www2.camara.leg.br/legin/int/atomes/2023/atodamesa-270-19-janeiro-2023-793708-publicacaooriginal-166895-cd-mesa.html" target="_blank" rel="noopener noreferrer" style={link}>Ato da Mesa nº 270/2023</a>. A fonte os registra com sinal negativo e eles entram na soma. O significado do sinal não foi confirmado.</p>}
           {casa.chave === 'senado' && <p style={p}>Os senadores são poucos por estado, então a lista mostra os valores sem número de posição.</p>}
           {casa.chave === 'assembleias' && <p style={p}>O Lume só tem o teto da verba de gabinete da Assembleia de SP. Nas outras, a comparação é em reais por mês, dentro do mesmo estado.</p>}
@@ -464,8 +464,8 @@ function PaginaGastos({ casaChave, ano, anosDaCasa, radar, agreg, recursos, ufIn
     paginaLd({ nome: titulo, descricao: desc, caminho: '/gastos-parlamentares', tipo: 'CollectionPage' }),
   );
   const opcoesUf = casa.chave === 'assembleias' ? OPCOES_UF.filter((o) => ufsComDado.includes(o.valor)) : OPCOES_UF;
-  const selo = casa.chave === 'camara' ? { fonte: 'gastos_camara', nome: 'Gastos da Câmara' }
-    : casa.chave === 'senado' ? { fonte: 'gastos_senado', nome: 'Gastos do Senado' }
+  const selo = casa.chave === 'camara' ? { fonte: 'gastos_camara', nome: 'Gastos da Câmara dos Deputados' }
+    : casa.chave === 'senado' ? { fonte: 'gastos_senado', nome: 'Gastos do Senado Federal' }
     : (filtros.uf && fonteGastosEstadual(filtros.uf) ? { ...fonteGastosEstadual(filtros.uf), nome: `Gastos da Assembleia (${filtros.uf})` } : null);
 
   return (

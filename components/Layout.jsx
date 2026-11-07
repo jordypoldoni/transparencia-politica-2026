@@ -54,7 +54,7 @@ const NAV_BASE = [
       // estaduais eram abas dentro de /deputados, ao lado dos federais.
       // `curto`: nome no cabeçalho do CELULAR, ao lado da pílula da conta. Medido em 29/09 a
       // 360px: logado, "Deputados estaduais" (151px) virava "Deputados es…".
-      { href: '/deputados', rotulo: 'Deputados federais', curto: 'Dep. federais', nota: 'os 513 da Câmara' },
+      { href: '/deputados', rotulo: 'Deputados federais', curto: 'Dep. federais', nota: 'os 513 da Câmara dos Deputados' },
       { href: '/deputados-estaduais', rotulo: 'Deputados estaduais', curto: 'Dep. estaduais', nota: 'as Assembleias dos estados' },
       { href: '/senadores', rotulo: 'Senadores', nota: 'os 81 em exercício' },
     ],

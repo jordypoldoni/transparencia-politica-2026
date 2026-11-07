@@ -23,8 +23,8 @@ export function textoDevolucao(d) {
   if (!d) return null;
   const total = reais(d.total);
   const umDia = d.de && d.de === d.ate;
-  if (d.n === 1) return { rotulo: 'Devolução à Câmara:', texto: d.de ? `${total} em ${dataBr(d.de)}` : total };
-  if (umDia) return { rotulo: 'Devolução à Câmara:', texto: `${total} em ${dataBr(d.de)} (${d.n} lançamentos)` };
-  if (d.de && d.ate) return { rotulo: 'Devoluções à Câmara:', texto: `${total} em ${d.n} lançamentos, de ${dataBr(d.de)} a ${dataBr(d.ate)}` };
-  return { rotulo: 'Devoluções à Câmara:', texto: `${total} em ${d.n} lançamentos` };
+  if (d.n === 1) return { rotulo: 'Devolução à Câmara dos Deputados:', texto: d.de ? `${total} em ${dataBr(d.de)}` : total };
+  if (umDia) return { rotulo: 'Devolução à Câmara dos Deputados:', texto: `${total} em ${dataBr(d.de)} (${d.n} lançamentos)` };
+  if (d.de && d.ate) return { rotulo: 'Devoluções à Câmara dos Deputados:', texto: `${total} em ${d.n} lançamentos, de ${dataBr(d.de)} a ${dataBr(d.ate)}` };
+  return { rotulo: 'Devoluções à Câmara dos Deputados:', texto: `${total} em ${d.n} lançamentos` };
 }
