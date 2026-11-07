@@ -49,6 +49,11 @@ export default function App({ Component, pageProps }) {
         .pagina { width: 100%; padding: 24px; }
         .secao-home { padding-left: 24px; padding-right: 24px; }
         .leitura { width: 100%; }
+        /* Faixa "Como o Lume nasceu" (pagina Sobre), 07/11/2026: sangra ate as bordas da tela e devolve o mesmo recuo por dentro, para o texto alinhar com o resto da pagina. */
+        .nasceu-etiqueta, .nasceu-faixa { margin-left: -24px; margin-right: -24px; padding-left: 24px; padding-right: 24px; }
+        .nasceu-etiqueta { display: flex; align-items: center; padding-top: 13px; padding-bottom: 13px; background: #FF8A00; color: #171238; font-family: 'Fraunces', Georgia, serif; font-size: 0.95rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; border-radius: 6px 6px 0 0; }
+        .nasceu-faixa { position: relative; overflow: hidden; padding-top: 36px; padding-bottom: 40px; margin-bottom: 44px; background: #241E52; box-shadow: 0 8px 30px rgba(74,52,30,0.18); border-radius: 0 0 6px 6px; }
+        .nasceu-marca { position: absolute; right: 30px; top: 8%; bottom: 8%; aspect-ratio: 82.99 / 100; pointer-events: none; background: linear-gradient(90deg, rgba(255,138,0,0.10) 0%, rgba(255,138,0,0.30) 55%, rgba(255,138,0,0.38) 100%); transform: perspective(700px) rotateY(-35deg); -webkit-mask: url(/simbolo-lume.svg) no-repeat center / contain; mask: url(/simbolo-lume.svg) no-repeat center / contain; }
 
         /* flex-wrap: nowrap + flex-shrink: 0 desde 18/09/2026.
            O menu estava EMPILHANDO os nomes uns sobre os outros ao diminuir a tela. Causa: o
@@ -148,6 +153,8 @@ export default function App({ Component, pageProps }) {
         @media (max-width: 640px) {
           html { font-size: 15px; }
           .pagina { padding: 16px 14px; }
+          .nasceu-etiqueta, .nasceu-faixa { margin-left: -14px; margin-right: -14px; padding-left: 14px; padding-right: 14px; }
+          .nasceu-marca { display: none; }
           .secao-home { padding-left: 14px; padding-right: 14px; }
           .pagina h1 { font-size: 1.75rem !important; line-height: 1.15 !important; }
           .topo-linha { padding: 10px 14px !important; }
