@@ -148,7 +148,7 @@ export default function VotacoesDaCasa({ casa, votacoes, temas = [], temaInicial
         </h1>
         <p style={{ color: t.cor.cinza, margin: '0 0 20px', lineHeight: 1.5 }}>
           Cada matéria reúne <strong>todas as votações do seu processo</strong> (urgência, destaques,
-          texto, redação final) em ordem. Busque por assunto, pela proposta (ex.: "PEC 6") ou por
+          texto, redação final) em ordem. Busque por assunto, pela proposta (ex.: "PEC 6", que é uma Proposta de Emenda à Constituição) ou por
           quem propôs.
         </p>
         <SeloAtualizacao fonte={casa.chave === 'senado' ? 'votos_senado' : casa.chave === 'rs' ? 'votos_alergs' : 'votos_camara'} escopo={casa.chave === 'rs' ? 'RS' : ''} style={{ margin: '-8px 0 18px' }} />

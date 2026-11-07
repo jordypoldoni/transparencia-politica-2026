@@ -79,9 +79,9 @@ export function hrefPerfil(perfil) {
 // `preposicao` existe porque o artigo varia por casa e montar na mao produz "no plenario de
 // Camara". Mesmo motivo do `nomeCom` em assembleias.js.
 export const CASAS_VOTACAO = [
-  { chave: 'camara', nome: 'Câmara dos Deputados', curto: 'Câmara', ambito: 'Federal', preposicao: 'da' },
-  { chave: 'senado', nome: 'Senado Federal', curto: 'Senado', ambito: 'Federal', preposicao: 'do' },
-  { chave: 'rs', nome: 'Assembleia Legislativa do RS', curto: 'Assembleia do RS', ambito: 'Estadual', preposicao: 'da' },
+  { chave: 'camara', nome: 'Câmara dos Deputados', curto: 'Câmara dos Deputados', ambito: 'Federal', preposicao: 'da' },
+  { chave: 'senado', nome: 'Senado Federal', curto: 'Senado Federal', ambito: 'Federal', preposicao: 'do' },
+  { chave: 'rs', nome: 'Assembleia Legislativa do Rio Grande do Sul', curto: 'Assembleia Legislativa do Rio Grande do Sul', ambito: 'Estadual', preposicao: 'da' },
 ];
 
 export const casaVotacaoPorChave = (chave) => CASAS_VOTACAO.find((c) => c.chave === chave) || null;

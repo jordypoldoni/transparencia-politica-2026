@@ -44,13 +44,13 @@ export function explicarTipo(descricao, casa) {
   if (d.includes('emenda à constitui') || d.includes('emenda a constitui') || /\bpec\b/.test(d))
     return estadual
       ? { termo: 'PEC (Proposta de Emenda à Constituição)', texto: 'é uma proposta para mudar a Constituição do estado, que está acima das leis estaduais. Exige quórum reforçado e votação em dois turnos.' }
-      : { termo: 'PEC (Proposta de Emenda à Constituição)', texto: 'é uma proposta para mudar a Constituição, a lei máxima do país. Exige três quintos dos votos, em dois turnos, nas duas Casas do Congresso.' };
+      : { termo: 'PEC (Proposta de Emenda à Constituição)', texto: 'é uma proposta para mudar a Constituição, a lei máxima do país. Exige três quintos dos votos, em dois turnos, na Câmara dos Deputados e no Senado Federal.' };
   if (d.includes('medida provis') || /\bmpv?\b/.test(d))
     return { termo: 'MP (Medida Provisória)', texto: `é uma norma urgente editada pelo ${chefeExecutivo}, que já vale na hora, mas precisa do aval do Legislativo para continuar valendo.` };
   if (d.includes('lei complementar') || /\bplp\b/.test(d))
     return estadual
       ? { termo: 'PLP (Projeto de Lei Complementar)', texto: 'regula temas que a Constituição do estado manda detalhar. Exige maioria absoluta (metade de todos os deputados estaduais, mais um).' }
-      : { termo: 'PLP (Projeto de Lei Complementar)', texto: 'regula temas que a própria Constituição manda detalhar. Exige maioria absoluta (metade de todos os parlamentares da Casa, mais um).' };
+      : { termo: 'PLP (Projeto de Lei Complementar)', texto: 'regula temas que a própria Constituição manda detalhar. Exige maioria absoluta (metade de todos os parlamentares da Câmara dos Deputados ou do Senado Federal, mais um).' };
   if (d.includes('reda') && d.includes('final'))
     return { termo: 'Redação Final', texto: 'é a votação do texto final já acordado, antes de a proposta seguir para a próxima etapa.' };
   if (d.includes('substitutivo'))
@@ -138,7 +138,7 @@ export function situacaoCidada(situacao) {
   if (s.includes('vetad') || s.includes('veto')) return 'Vetada';
   if (s.includes('arquivad')) return 'Arquivada';
   if (s.includes('sanç') || s.includes('sanc')) return 'Aguardando sanção';
-  if (s.includes('senado')) return 'Enviada ao Senado';
+  if (s.includes('senado')) return 'Enviada ao Senado Federal';
   if (s.includes('câmara dos deputados') || s.includes('camara dos deputados')) return 'Na Câmara dos Deputados';
   if (s.includes('remetida') || s.includes('remessa')) return 'Enviada para revisão';
   if (s.includes('pronta') && s.includes('pauta')) return 'Pronta para votar';
