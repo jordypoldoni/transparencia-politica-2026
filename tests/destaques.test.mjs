@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { statusSimples, explicarStatus, trechoCurto, montarMaisImportantes } from '../src/lib/destaques.js';
+import { statusSimples, explicarStatus, trechoCurto, montarMaisImportantes, montarEmAlta } from '../src/lib/destaques.js';
 
 test('rótulos simples no cartão, termo oficial explicado à parte', () => {
   assert.deepEqual(statusSimples('Promulgada'), { rotulo: 'Já vale', tom: 'ok' });
@@ -39,4 +39,16 @@ test('monta na ordem e descarta quem não tem resumo ou votação', () => {
 
 test('entrada vazia não quebra', () => {
   assert.deepEqual(montarMaisImportantes({ casa: 'camara' }), []);
+});
+
+test('em alta: segue a ordem do coletor, só com cartões da lista, e traduz as fontes', () => {
+  const cartoes = [{ chave: 'camara:1', apelido: 'Um' }, { chave: 'camara:2', apelido: 'Dois' }];
+  const r = montarEmAlta({
+    casa: 'camara', cartoes, rotulos: { google: 'Google', noticias: 'Notícias' },
+    linhas: [{ proposicao_id: '9', pontos: 500, fontes: ['google'] }, { proposicao_id: '2', pontos: 200, fontes: ['google', 'noticias'] }, { proposicao_id: '1', pontos: 100, fontes: ['noticias', 'x'] }],
+  });
+  assert.deepEqual(r.map((c) => c.apelido), ['Dois', 'Um']);
+  assert.deepEqual(r[0].fontes, ['Google', 'Notícias']);
+  assert.deepEqual(r[1].fontes, ['Notícias']);
+  assert.deepEqual(montarEmAlta({ casa: 'camara' }), []);
 });

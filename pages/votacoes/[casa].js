@@ -29,7 +29,8 @@ import { Seta } from '../../components/icones';
 import { dataBr, anoDe } from '../../src/lib/datas';
 import SeloAtualizacao from '../../components/SeloAtualizacao';
 import EmDestaque from '../../components/EmDestaque';
-import { montarMaisImportantes } from '../../src/lib/destaques';
+import { montarMaisImportantes, montarEmAlta } from '../../src/lib/destaques';
+import { ROTULO_FONTE } from '../../src/lib/emAlta';
 
 const POR_PAGINA = 20;
 
@@ -84,7 +85,7 @@ function passaPeriodo(v, periodo) {
   return true;
 }
 
-export default function VotacoesDaCasa({ casa, votacoes, temas = [], temaInicial = '', maisImportantes = [] }) {
+export default function VotacoesDaCasa({ casa, votacoes, temas = [], temaInicial = '', maisImportantes = [], emAlta = [] }) {
   const [busca, setBusca] = useState('');
   const [filtro, setFiltro] = useState('todas');
   const [periodo, setPeriodo] = useState('');
@@ -155,7 +156,7 @@ export default function VotacoesDaCasa({ casa, votacoes, temas = [], temaInicial
         </p>
         <SeloAtualizacao fonte={casa.chave === 'senado' ? 'votos_senado' : casa.chave === 'rs' ? 'votos_alergs' : 'votos_camara'} escopo={casa.chave === 'rs' ? 'RS' : ''} style={{ margin: '-8px 0 18px' }} />
 
-        <EmDestaque casa={casa} maisImportantes={maisImportantes} />
+        <EmDestaque casa={casa} maisImportantes={maisImportantes} emAlta={emAlta} />
 
         <div style={{ marginBottom: '12px' }}>
           <CampoBusca valor={busca} aoMudar={aoFiltrar(setBusca)} placeholder="Buscar por assunto, proposta ou autor… (ex.: saúde, imposto, PEC 45)" aoLabel="Buscar votações" />
@@ -285,21 +286,24 @@ export async function getServerSideProps({ params, query }) {
   const casa = casaVotacaoPorChave(String(params.casa || '').toLowerCase());
   if (!casa) return { notFound: true };
 
-  let votacoes = [], temas = [], destaque = null;
+  let votacoes = [], temas = [], destaque = null, linhasAlta = [];
   try {
-    [votacoes, temas, destaque] = await Promise.all([
+    [votacoes, temas, destaque, linhasAlta] = await Promise.all([
       ServicoAPI.listarVotacoesDaCasa(casa.chave),
       ServicoAPI.listarTemas(),
       ServicoAPI.listarMaisImportantes(casa.chave),
+      ServicoAPI.listarEmAlta(casa.chave),
     ]);
   } catch (e) { console.error(`VotacoesDaCasa(${casa.chave}):`, e.message); }
 
+  const maisImportantes = destaque ? montarMaisImportantes({ casa: casa.chave, ...destaque }) : [];
   return {
     props: {
       casa,
       votacoes: JSON.parse(JSON.stringify(votacoes)),
       temas: JSON.parse(JSON.stringify(temas)),
-      maisImportantes: destaque ? montarMaisImportantes({ casa: casa.chave, ...destaque }) : [],
+      maisImportantes,
+      emAlta: montarEmAlta({ casa: casa.chave, cartoes: maisImportantes, linhas: linhasAlta, rotulos: ROTULO_FONTE }),
       temaInicial: temas.some((c) => c.nome_categoria === query?.tema) ? String(query.tema) : '',
     },
   };
