@@ -111,7 +111,13 @@ export default function Votacao({ meta, votos, entenda }) {
         <script key="ld-votacao" type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonSeguro(dadosVotacao) }} />
       </Head>
       <div className="pagina">
-        <BotaoVoltar />
+        {/* Voltar + o nome da proposta ao lado (07/11/2026): quem chega por um cartão da lista vê logo em que proposta está. Só quando existe apelido no resumo. */}
+        {entenda && entenda.apelido ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', margin: '0 0 20px' }}>
+            <BotaoVoltar margem="0" />
+            <p style={{ margin: 0, minWidth: 0, fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.15rem,2.8vw,1.5rem)', lineHeight: 1.25, color: t.cor.tinta, overflowWrap: 'anywhere' }}>{entenda.apelido}</p>
+          </div>
+        ) : <BotaoVoltar />}
 
         <div style={{ background: t.cor.verde, color: '#fff', borderRadius: t.raio.lg, padding: 'clamp(22px,4vw,36px)' }}>
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap' }}>

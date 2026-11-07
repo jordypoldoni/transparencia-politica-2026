@@ -855,8 +855,11 @@ const ServicoAPI = {
             // Etapas do fluxo que apontam para uma votacao do site (07/11/2026): a votacao principal
             // daquela casa. A propria votacao aberta nao vira link para si mesma.
             if (entenda && entenda.fluxo) {
+                const casaAtual = casaDaVotacao({ votacao_id_externa: id }).chave;
                 await Promise.all(entenda.fluxo.etapas.map(async (e) => {
                     if (!e.casa || !e.proposicao) return;
+                    // "Você está aqui": a etapa da casa e da proposição desta votacao.
+                    if (e.casa === casaAtual && String(e.proposicao) === String(meta.proposicao_id)) e.atual = true;
                     try {
                         const { data: vs } = await ServicoAPI._filtrarCasa(
                             supabase.from('votacoes').select('votacao_id_externa, descricao, data_voto').eq('proposicao_id', e.proposicao), e.casa,

@@ -3,6 +3,8 @@ import ReportarErro from './ReportarErro';
 import { dataBr } from '../src/lib/datas';
 import { explicarStatus } from '../src/lib/destaques';
 
+const QUEM = { camara: 'dos deputados federais', senado: 'dos senadores', rs: 'dos deputados estaduais' };
+
 // **trecho** vira negrito. Só isso: o texto vem do banco e nunca entra como HTML.
 const comNegrito = (texto) => String(texto).split('**').map((parte, i) => (i % 2 ? <strong key={i}>{parte}</strong> : parte));
 
@@ -71,13 +73,14 @@ export default function EntendaEmUmMinuto({ dados, assunto }) {
               {fluxo.etapas.map((e, i) => (
                 <span key={i} style={{ display: 'contents' }}>
                   {i > 0 && <div className="entenda-seta" aria-hidden="true">→</div>}
-                  {e.votacaoId ? (
-                    <Link href={`/votacao/${encodeURIComponent(e.votacaoId)}`} className={`entenda-etapa entenda-etapa-link${e.final ? ' fim' : ''}`}>
-                      <b>{e.titulo}</b>{e.texto && <span>{e.texto}</span>}<i className="entenda-ver">Ver a votação ›</i>
-                    </Link>
-                  ) : (
-                    <div className={`entenda-etapa${e.final ? ' fim' : ''}`}><b>{e.titulo}</b>{e.texto && <span>{e.texto}</span>}</div>
-                  )}
+                  {(() => {
+                    const aqui = e.atual ? <i className="entenda-aqui">Você está vendo a votação {QUEM[e.casa] || 'desta etapa'}</i> : null;
+                    const classe = `entenda-etapa${e.votacaoId ? ' entenda-etapa-link' : ''}${e.atual ? ' atual' : ''}${e.final ? ' fim' : ''}`;
+                    const corpo = (<>{aqui}<b>{e.titulo}</b>{e.texto && <span>{e.texto}</span>}{e.votacaoId && <i className="entenda-ver">Ver a votação ›</i>}</>);
+                    return e.votacaoId
+                      ? <Link href={`/votacao/${encodeURIComponent(e.votacaoId)}`} className={classe}>{corpo}</Link>
+                      : <div className={classe}>{corpo}</div>;
+                  })()}
                 </span>
               ))}
             </div>
