@@ -37,6 +37,22 @@ export default function Sobre() {
       </p>
       </div>
 
+      <span className="nasceu-etiqueta">Nossa história</span>
+      <section className="nasceu-faixa" aria-labelledby="como-o-lume-nasceu">
+        <div aria-hidden="true" className="nasceu-marca" />
+        <div style={{ position: 'relative' }}>
+          <h2 id="como-o-lume-nasceu" style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.6rem, 3.6vw, 2.1rem)', lineHeight: 1.15, margin: '0 0 16px', color: '#FFFFFF' }}>Como o Lume nasceu</h2>
+          <p style={{ margin: '0 0 14px', fontSize: '1.08rem', lineHeight: 1.65, color: '#FFFFFF' }}>
+            O Lume nasceu de uma ideia de Rafael Pires de Barros Lima. O nome diz o que o projeto quer ser: <strong style={{ color: t.cor.ouro }}>luz para o cidadão</strong>.
+            Queremos ajudar cada pessoa a entender o país em que vive e como ele funciona, e mostrar que temos direitos e deveres.
+            Com dados, fatos e informação, podemos acompanhar e fiscalizar quem nos representa e fazer do Brasil um país mais justo e próspero.
+          </p>
+          <p style={{ margin: 0, fontFamily: t.fonte.titulo, fontStyle: 'italic', fontSize: '1.2rem', lineHeight: 1.5, color: '#FFFFFF' }}>
+            Quando a informação chega de forma simples, ela ajuda todos. Acreditamos numa democracia de verdade, feita por pessoas que querem o melhor para o país e para os brasileiros.
+          </p>
+        </div>
+      </section>
+
       <h2 style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: '1.5rem', margin: '0 0 16px' }}>Nossos princípios</h2>
       <div style={{ display: 'grid', gap: '12px', marginBottom: '44px' }}>
         {principios.map((p) => (
