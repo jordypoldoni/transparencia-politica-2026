@@ -10,13 +10,13 @@ test('sem devolução: nulo e sem linha', () => {
 });
 test('uma devolução', () => {
   const r = textoDevolucao(resumoDevolucoes([{ valor_restituido: '57000.00', data_restituicao: '2026-09-25' }]));
-  assert.equal(r.rotulo, 'Devolução à Câmara:');
+  assert.equal(r.rotulo, 'Devolução à Câmara dos Deputados:');
   assert.equal(nbsp(r.texto), 'R$ 57.000,00 em 25/09/2026');
 });
 test('vários lançamentos no mesmo dia', () => {
   const l = [12000, 12000, 12000].map((v) => ({ valor_restituido: v, data_restituicao: '2026-05-06' }));
   const r = textoDevolucao(resumoDevolucoes(l));
-  assert.equal(r.rotulo, 'Devolução à Câmara:');
+  assert.equal(r.rotulo, 'Devolução à Câmara dos Deputados:');
   assert.equal(nbsp(r.texto), 'R$ 36.000,00 em 06/05/2026 (3 lançamentos)');
 });
 test('vários dias: soma em centavos sem erro de ponto flutuante', () => {
@@ -24,7 +24,7 @@ test('vários dias: soma em centavos sem erro de ponto flutuante', () => {
   const d = resumoDevolucoes(l);
   assert.equal(d.total, 0.3);
   const r = textoDevolucao(d);
-  assert.equal(r.rotulo, 'Devoluções à Câmara:');
+  assert.equal(r.rotulo, 'Devoluções à Câmara dos Deputados:');
   assert.equal(nbsp(r.texto), 'R$ 0,30 em 2 lançamentos, de 26/08/2026 a 23/09/2026');
 });
 test('sem data: mostra só valor e quantidade', () => {

@@ -18,9 +18,9 @@ import { mediaMensal, mediana } from './bancadaEstado.js';
 import { TETO_CEAP, TETO_CEAPS, TETO_ALESP_SP } from './cotas.js';
 
 export const CASAS = [
-  { chave: 'camara', rotulo: 'Câmara', singular: 'deputado federal', plural: 'deputados federais', casaAgregada: 'Câmara', temTeto: true },
-  { chave: 'senado', rotulo: 'Senado', singular: 'senador', plural: 'senadores', casaAgregada: 'Senado', temTeto: true },
-  { chave: 'assembleias', rotulo: 'Assembleias', singular: 'deputado estadual', plural: 'deputados estaduais', casaAgregada: null, temTeto: false },
+  { chave: 'camara', rotulo: 'Câmara dos Deputados', de: 'da Câmara dos Deputados', singular: 'deputado federal', plural: 'deputados federais', casaAgregada: 'Câmara', temTeto: true },
+  { chave: 'senado', rotulo: 'Senado Federal', de: 'do Senado Federal', singular: 'senador', plural: 'senadores', casaAgregada: 'Senado', temTeto: true },
+  { chave: 'assembleias', rotulo: 'Assembleias Legislativas', de: 'das Assembleias Legislativas', singular: 'deputado estadual', plural: 'deputados estaduais', casaAgregada: null, temTeto: false },
 ];
 
 export function chaveDaCasa(casaRadar) {
