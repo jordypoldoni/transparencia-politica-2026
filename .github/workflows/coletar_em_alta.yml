@@ -1,0 +1,25 @@
+name: Coletar Em alta (buscas e notícias)
+
+on:
+  schedule:
+    # A cada 3 horas, com minuto quebrado de propósito (o GitHub enfileira os horários redondos).
+    # O horário é um pedido, não uma promessa: atrasos de horas já aconteceram neste repositório.
+    - cron: '23 */3 * * *'
+  workflow_dispatch:
+
+jobs:
+  em-alta:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Instalar dependências
+        run: npm install --ignore-scripts
+      - name: Rodar coletor do Em alta
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node coletores/coletor_em_alta.js
