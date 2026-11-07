@@ -28,7 +28,7 @@ export function casaDoPerfil(perfil) {
   // A sigla oficial da assembleia gaucha e ALRS (tambem grafada AL-RS); "ALERGS" e forma
   // corrente mas incorreta. No credito vai por extenso: "AL-RS" nao diz nada ao leitor comum,
   // e a regra do site e nao pressupor conhecimento. ALESP fica na sigla porque e reconhecida.
-  const fonteNome = ehAlergs ? 'Assembleia Legislativa do RS'
+  const fonteNome = ehAlergs ? 'Assembleia Legislativa'
     : ehAlmg ? 'Assembleia Legislativa de MG'
     : ehAlesp ? 'ALESP'
     : ehEstadual ? 'Assembleia Legislativa'
@@ -81,7 +81,7 @@ export function hrefPerfil(perfil) {
 export const CASAS_VOTACAO = [
   { chave: 'camara', nome: 'Câmara dos Deputados', curto: 'Câmara dos Deputados', ambito: 'Federal', preposicao: 'da' },
   { chave: 'senado', nome: 'Senado Federal', curto: 'Senado Federal', ambito: 'Federal', preposicao: 'do' },
-  { chave: 'rs', nome: 'Assembleia Legislativa do Rio Grande do Sul', curto: 'Assembleia Legislativa do Rio Grande do Sul', ambito: 'Estadual', preposicao: 'da' },
+  { chave: 'rs', nome: 'Assembleia Legislativa', curto: 'Assembleia Legislativa', ambito: 'Estadual', preposicao: 'da' },
 ];
 
 export const casaVotacaoPorChave = (chave) => CASAS_VOTACAO.find((c) => c.chave === chave) || null;

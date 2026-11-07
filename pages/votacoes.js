@@ -57,7 +57,7 @@ export default function PainelVotacoes({ resumo }) {
   return (
     <>
       <Head>
-        <title>{`Votações da Câmara dos Deputados, do Senado Federal e da Assembleia Legislativa do Rio Grande do Sul | Lume`}</title>
+        <title>{`Votações da Câmara dos Deputados, do Senado Federal e da Assembleia Legislativa | Lume`}</title>
         <meta name="description" content={`${totalGeral} votações em plenário, separadas por casa, com o que cada tipo de decisão alcança na sua vida e quem votou o quê.`} />
         <link rel="canonical" href="https://www.lumecidadao.com.br/votacoes" />
       </Head>
@@ -74,7 +74,7 @@ export default function PainelVotacoes({ resumo }) {
         <div style={{ margin: '-14px 0 24px' }}>
           <SeloAtualizacao fonte="votos_camara" nome="Câmara dos Deputados" semLink style={{ margin: '0 0 2px' }} />
           <SeloAtualizacao fonte="votos_senado" nome="Senado Federal" semLink style={{ margin: '0 0 2px' }} />
-          <SeloAtualizacao fonte="votos_alergs" escopo="RS" nome="Assembleia Legislativa do Rio Grande do Sul" style={{ margin: 0 }} />
+          <SeloAtualizacao fonte="votos_alergs" escopo="RS" nome="Assembleia Legislativa" style={{ margin: 0 }} />
         </div>
 
         <div style={{ display: 'grid', gap: '18px' }}>
