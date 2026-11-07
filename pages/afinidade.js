@@ -32,7 +32,7 @@ import SeloAtualizacao from '../components/SeloAtualizacao';
 //   e a posição da rolagem (sessionStorage, que vale só para esta aba).
 
 const UFS = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
-const CASA = { senado: 'no Senado Federal', camara: 'na Câmara dos Deputados', alergs: 'na Assembleia Legislativa do Rio Grande do Sul' };
+const CASA = { senado: 'no Senado Federal', camara: 'na Câmara dos Deputados', alergs: 'na Assembleia Legislativa' };
 const MES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
 const quando = (iso) => { const [a, m] = String(iso).split('-'); return `${MES[Number(m) - 1]}/${a}`; };
 const ROTULO = { a_favor: 'a favor', contra: 'contra', sem_opiniao: 'sem opinião' };
@@ -333,7 +333,7 @@ function ResultadoParlamentares({ r, casa, setCasa, busca, setBusca }) {
       {grupo.semDados ? (
         <p style={{ ...caixa, background: t.cor.papelQuente, boxShadow: 'none', color: t.cor.tinta, fontSize: '0.9rem', lineHeight: 1.6 }}>
           A Assembleia Legislativa do {r.uf} não publica como cada deputado estadual votou, ou o site ainda não coleta esses votos.
-          Sem o voto registrado não há como comparar. Hoje o site tem os votos da Assembleia Legislativa do Rio Grande do Sul.
+          Sem o voto registrado não há como comparar. Hoje o site tem os votos da Assembleia Legislativa.
         </p>
       ) : (
         <>
@@ -461,7 +461,7 @@ function CartaoPartido({ g, p, cargoRotulo, filtrado, aoVerVotoReal }) {
 function avisoEstadual(uf, indisponivel) {
   if (indisponivel) return 'Não foi possível consultar o TSE agora para listar os candidatos a deputado estadual. Tente de novo em instantes.';
   if (uf === 'DF') return 'No Distrito Federal o cargo é o de deputado distrital, que ainda não está no site.';
-  return `Para deputado estadual, a estimativa usa sobretudo votos do Congresso${uf === 'RS' ? ' (e as cinco votações da Assembleia Legislativa do Rio Grande do Sul)' : ''}. Na Assembleia, o mesmo partido pode votar diferente.`;
+  return `Para deputado estadual, a estimativa usa sobretudo votos do Congresso${uf === 'RS' ? ' (e as cinco votações da Assembleia Legislativa)' : ''}. Na Assembleia, o mesmo partido pode votar diferente.`;
 }
 
 function ResultadoCandidatos({ r, cargo, setCargo, busca, setBusca, aoVerVotoReal }) {
@@ -700,7 +700,7 @@ export default function Afinidade({ ufInicial }) {
         <div style={{ margin: '0 0 16px' }}>
           <SeloAtualizacao fonte="votos_camara" nome="Votos da Câmara dos Deputados" semLink style={{ margin: '0 0 2px' }} />
           <SeloAtualizacao fonte="votos_senado" nome="Votos do Senado Federal" semLink style={{ margin: '0 0 2px' }} />
-          <SeloAtualizacao fonte="votos_alergs" escopo="RS" nome="Votos da Assembleia Legislativa do Rio Grande do Sul" style={{ margin: 0 }} />
+          <SeloAtualizacao fonte="votos_alergs" escopo="RS" nome="Votos da Assembleia Legislativa" style={{ margin: 0 }} />
         </div>
         {/* Quem já respondeu não precisa reler a explicação: ela vira uma linha que abre (27/09/2026,
             para o resumo e o resultado ficarem perto do topo). */}
@@ -708,7 +708,7 @@ export default function Afinidade({ ufInicial }) {
           <details style={{ marginBottom: '18px' }}>
             <summary style={{ cursor: 'pointer', fontSize: '0.88rem', fontWeight: 700, color: t.cor.ouroTexto }}>Como funciona a comparação</summary>
             <div style={{ ...caixa, background: t.cor.papelQuente, boxShadow: 'none', marginTop: '8px', fontSize: '0.92rem', color: t.cor.tinta, lineHeight: 1.6 }}>
-              <strong>Cada pergunta abaixo é uma votação que já aconteceu</strong> no plenário da Câmara dos Deputados, do Senado Federal ou da Assembleia Legislativa do Rio Grande do Sul.
+              <strong>Cada pergunta abaixo é uma votação que já aconteceu</strong> no plenário da Câmara dos Deputados, do Senado Federal ou da Assembleia Legislativa.
               Você diz o que pensa e nós comparamos com o <strong>voto registrado</strong> de cada parlamentar naquela votação: sem
               interpretação e sem inteligência artificial. Responda só as que quiser; em cada uma há uma explicação simples do assunto.
               Sem conta, suas respostas ficam só neste navegador. Com conta e autorização no perfil, elas aparecem também nos seus outros aparelhos.
@@ -716,7 +716,7 @@ export default function Afinidade({ ufInicial }) {
           </details>
         ) : (
           <div style={{ ...caixa, background: t.cor.papelQuente, boxShadow: 'none', marginBottom: '22px', fontSize: '0.92rem', color: t.cor.tinta, lineHeight: 1.6 }}>
-            <strong>Cada pergunta abaixo é uma votação que já aconteceu</strong> no plenário da Câmara dos Deputados, do Senado Federal ou da Assembleia Legislativa do Rio Grande do Sul.
+            <strong>Cada pergunta abaixo é uma votação que já aconteceu</strong> no plenário da Câmara dos Deputados, do Senado Federal ou da Assembleia Legislativa.
             Você diz o que pensa e nós comparamos com o <strong>voto registrado</strong> de cada parlamentar naquela votação: sem
             interpretação e sem inteligência artificial. Responda só as que quiser; em cada uma há uma explicação simples do assunto.
             Sem conta, suas respostas ficam só neste navegador. Com conta e autorização no perfil, elas aparecem também nos seus outros aparelhos.

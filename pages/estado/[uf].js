@@ -147,7 +147,7 @@ function ComoLer({ grupo, nome, temTeto, temVotos, totalVotos, ehRS }) {
   if (grupo.chave === 'estadual') visiveis.push('Cada Assembleia tem a sua verba e publica no seu ritmo: não compare com outro estado nem com os federais.');
   visiveis.push('Gasto alto ou baixo, sozinho, não mede o trabalho de ninguém.');
   if (temVotos) visiveis.push('Votos registrados não contam ausência justificada (licença, missão), e quem assumiu depois teve menos votações para participar.');
-  if (temVotos && grupo.chave === 'estadual' && ehRS) visiveis.push('A Assembleia Legislativa do Rio Grande do Sul só publica votos Sim e Não: quem se absteve ou faltou aparece igual, sem voto.');
+  if (temVotos && grupo.chave === 'estadual' && ehRS) visiveis.push('A Assembleia Legislativa só publica votos Sim e Não: quem se absteve ou faltou aparece igual, sem voto.');
   if (grupo.chave === 'estadual' && (!temTeto || !temVotos)) {
     const faltam = [!temTeto && 'o teto desta verba', !temVotos && 'a presença nas votações desta Assembleia'].filter(Boolean).join(' nem ');
     visiveis.push(`O Lume ainda não tem ${faltam}, por isso ${!temTeto && !temVotos ? 'essas colunas não aparecem' : 'essa coluna não aparece'}.`);
@@ -170,7 +170,7 @@ function ComoLer({ grupo, nome, temTeto, temVotos, totalVotos, ehRS }) {
           {grupo.chave === 'federal' && <p style={p(1)}><strong>Divulgação da atividade parlamentar:</strong> no perfil de cada deputado essa categoria aparece em linha separada, já incluída na média. Nos 120 dias antes da eleição (a partir de 6 de junho de 2026), o <a href={ATO_MESA_DIVULGACAO} target="_blank" rel="noopener noreferrer" style={link}>Ato da Mesa nº 108/2013, art. 11</a> veda a impressão e a distribuição de produtos gráficos de divulgação por deputado candidato, salvo se ele não for candidato. Por isso o gasto dessa categoria pode variar entre quem concorre e quem não concorre.</p>}
           {temTeto && <p style={p(1)}><strong>Uso do teto:</strong> gasto por mês dividido pelo teto mensal da {grupo.chave === 'senado' ? 'cota do Senado Federal' : 'cota da Câmara dos Deputados'} para o estado{fonteTeto && <> (<a href={fonteTeto} target="_blank" rel="noopener noreferrer" style={link}>tabela oficial</a>)</>}. Acima de 100% quer dizer que a média ficou acima do valor dessa tabela; confira na fonte.</p>}
           {temVotos && <p style={p(1)}><strong>Votos registrados:</strong> votações nominais em que a pessoa votou Sim, Não, Abstenção ou Obstrução, entre as {totalVotos} que o Lume tem desta casa.</p>}
-          {ehRS && grupo.chave === 'estadual' && <p style={p(1)}>A Assembleia Legislativa do Rio Grande do Sul publica só o total mensal por categoria, sem as notas.</p>}
+          {ehRS && grupo.chave === 'estadual' && <p style={p(1)}>A Assembleia Legislativa publica só o total mensal por categoria, sem as notas.</p>}
         </div>
       )}
     </div>

@@ -77,7 +77,7 @@ test('descrição do perfil: Assembleia do RS não fala em nota fiscal e usa "ve
   const d = descricaoDoPerfil({ ...base }, casaRs);
   assert.ok(!d.includes('notas fiscais'));
   assert.match(d, /da verba de gabinete/);
-  assert.match(d, /Fonte: Assembleia Legislativa do RS\./);
+  assert.match(d, /Fonte: Assembleia Legislativa\./);
 });
 
 test('descrição do perfil: nunca passa muito de 320 caracteres', () => {

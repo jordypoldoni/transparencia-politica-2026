@@ -19,7 +19,7 @@ export const CASAS_AFINIDADE = [
 // Assembleias com voto nominal no site. `casaVotacao` é o valor de `casa` nas votações do
 // catálogo de perguntas.
 export const ASSEMBLEIAS_COM_VOTO = {
-  RS: { casaVotacao: 'alergs', nome: 'Assembleia Legislativa do RS' },
+  RS: { casaVotacao: 'alergs', nome: 'Assembleia Legislativa' },
 };
 
 export const casaAfinidade = (id) => CASAS_AFINIDADE.find((c) => c.id === id) || null;

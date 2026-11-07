@@ -80,7 +80,7 @@ export default function Entenda() {
 
         <div style={{ ...cartao, marginBottom: '48px' }}>
           <p style={{ margin: 0, fontSize: '0.95rem', lineHeight: 1.6 }}>
-            <strong>E quem vota as leis?</strong> Tanto deputados quanto senadores. Uma proposta normalmente precisa passar pelas <strong>duas casas</strong> (Câmara dos Deputados e Senado Federal) antes de virar lei. Hoje este site mostra os <strong>votos nominais da Câmara dos Deputados</strong>; os votos do Senado Federal entram em breve.
+            <strong>E quem vota as leis?</strong> Tanto deputados quanto senadores. Uma proposta normalmente precisa passar pelas <strong>duas casas</strong> (Câmara dos Deputados e Senado Federal) antes de virar lei. Hoje este site mostra os <strong>votos nominais da Câmara dos Deputados, do Senado Federal e da Assembleia Legislativa</strong>.
           </p>
         </div>
 
