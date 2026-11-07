@@ -135,7 +135,10 @@ export function papelVotacao(descricao) {
 // ordem cronológica. As demais ficam recolhidas atrás de "Ver as outras N votações".
 export function votacaoPrincipal(votacoes) {
   const lista = Array.isArray(votacoes) ? votacoes : [];
-  const principais = lista.filter((v) => /texto principal|reda|substitutivo/i.test(papelVotacao(v.descricao)));
+  // "Aprovado o Substitutivo ao Projeto de Lei... ressalvados os destaques" é o texto principal, mas
+  // papelVotacao o chama de Destaque por causa da palavra "destaques": olha o começo da frase.
+  const ehSubstitutivo = (d) => /^\s*(aprovad|rejeitad)[oa]\s+(o|a)\s+substitutivo/i.test(d || '');
+  const principais = lista.filter((v) => /texto principal|reda|substitutivo/i.test(papelVotacao(v.descricao)) || ehSubstitutivo(v.descricao));
   return principais[principais.length - 1] || lista[lista.length - 1] || null;
 }
 
