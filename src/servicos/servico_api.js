@@ -616,7 +616,7 @@ const ServicoAPI = {
     getRadarCompleto: async (ano = 2026) => {
         const linhas = await buscarTudo(
             () => supabase.from('radar_gastos')
-                .select('id, slug, nome_urna, partido_atual, uf_sede, casa, total, meses_com_gasto, situacao_atual, condicao_eleitoral')
+                .select('id, slug, nome_urna, partido_atual, uf_sede, foto_url, casa, total, meses_com_gasto, situacao_atual, condicao_eleitoral')
                 .eq('ano', ano).order('id'),
             'getRadarCompleto',
         );

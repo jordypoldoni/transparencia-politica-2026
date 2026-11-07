@@ -13,6 +13,7 @@ import ReportarErro from '../components/ReportarErro';
 import SeloAtualizacao from '../components/SeloAtualizacao';
 import DadosEstruturados from '../components/DadosEstruturados';
 import { hrefPerfil } from '../src/lib/casa';
+import Avatar from '../components/Avatar';
 import { fonteGastosEstadual } from '../src/lib/selosFonte';
 import { reais } from '../src/lib/bancadaEstado';
 import { COOKIE_UF } from '../src/lib/perfilUsuario';
@@ -48,7 +49,7 @@ const CSS = `
   .gp-controles .so-computador { flex: 0 0 auto; }
   @media (min-width: 1240px) { .gp-controles { flex-wrap: nowrap; } .gp-ctl, .gp-ctl-uf { flex-basis: 0; min-width: 0; } }
   .gp-lista { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; }
-  .gp-linha { display: grid; grid-template-columns: minmax(180px, 320px) 1fr 170px; align-items: center; column-gap: 16px; padding: 8px 10px; border-radius: ${t.raio.sm}; text-decoration: none; color: inherit; transition: background .15s; }
+  .gp-linha { display: grid; grid-template-columns: minmax(232px, 372px) 1fr 170px; align-items: center; column-gap: 16px; padding: 8px 10px; border-radius: ${t.raio.sm}; text-decoration: none; color: inherit; transition: background .15s; }
   a.gp-linha:hover, button.gp-linha:hover { background: ${t.cor.papelQuente}; }
   .gp-linha:focus-visible { outline: none; box-shadow: inset 0 0 0 2.5px ${t.cor.ouro}, ${t.sombra.anelFoco}; }
   button.gp-linha { border: none; background: transparent; font: inherit; text-align: left; cursor: pointer; width: 100%; }
@@ -161,7 +162,8 @@ function Comparacao({ casa, linhas, filtros, setFiltro, ano }) {
               return (
                 <li key={d.id}>
                   <Link href={hrefPerfil(d)} className="gp-linha">
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0 }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
+                      <Avatar nome={d.nome_urna} foto={d.foto_url} size={42} />
                       <span style={{ minWidth: 0 }}>
                         <span style={{ display: 'block', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{d.nome_urna}</span>
                         <span style={{ display: 'block', fontSize: '0.78rem', color: t.cor.cinza }}>{d.partido_atual} · {d.uf_sede}</span>
@@ -547,9 +549,11 @@ export async function getServerSideProps({ query, req }) {
   const anoPedido = parseInt(query.ano, 10);
   const ano = anosDaCasa.includes(anoPedido) ? anoPedido : (anosDaCasa[0] || 2026);
   const [radarTudo, agreg, recursos] = await Promise.all([ServicoAPI.getRadarCompleto(ano), ServicoAPI.getGastosAgregados(), casaChave === 'senado' ? ServicoAPI.getRecursosSenado(ano) : Promise.resolve([])]);
-  // Só a casa pedida vai para o navegador, e só os campos que a tela usa (o payload cheio passava de 190 kB; sem foto, que a lista não mostra).
+  // Só a casa pedida vai para o navegador, e só os campos que a tela usa (o payload cheio passava de 190 kB; com foto só para a lista de comparação, ~40 kB a mais na Câmara).
   const radar = linhasDaCasa(radarTudo, casaChave).map(({ d }) => ({
     id: d.id, slug: d.slug, nome_urna: d.nome_urna, partido_atual: d.partido_atual, uf_sede: d.uf_sede,
+    // Foto na lista de comparação (07/11/2026). O Senado manda http://, e a página é https: sobe para https aqui.
+    foto_url: d.foto_url ? String(d.foto_url).replace(/^http:\/\//, 'https://') : null,
     casa: d.casa, total: d.total, meses_com_gasto: d.meses_com_gasto, meses_base: d.meses_base ?? null, total_base: d.total_base ?? null,
     situacao_atual: d.situacao_atual ?? null, condicao_eleitoral: d.condicao_eleitoral ?? null,
   }));
