@@ -4,6 +4,7 @@ import { garantirResumo } from '../lib/siconfi.js';
 import { agruparPorMateria } from '../lib/votacao.js';
 import { casaDoPerfil, casaDaVotacao } from '../lib/casa.js';
 import { chaveEntenda, normalizarEntenda } from '../lib/entenda.js';
+import { cargoProcurado, rotuloCargoAutor, escolherPerfilUnico } from '../lib/autorVotacao.js';
 import { todosCandidatosEstaduais } from '../lib/candidatosEstaduais.js';
 import { mandatoEstadual } from '../lib/mandatoEstadual.js';
 import { ASSEMBLEIAS } from '../lib/assembleias.js';
@@ -790,6 +791,23 @@ const ServicoAPI = {
                 rota: casaDoPerfil(r.agentes_politicos || {}).rota,
             }))
             .sort((a, b) => (a.nome || '').localeCompare(b.nome || ''));
+        // Autor da materia (07/11/2026): liga ao perfil e diz se e deputado federal ou estadual.
+        // So quando o autor e deputado e a casa tem cargo definido; nome repetido nao vira link.
+        try {
+            const casaV = casaDaVotacao({ votacao_id_externa: id }).chave;
+            const cargoAlvo = cargoProcurado(casaV);
+            if (vm?.autor_nome && vm.autor_tipo === 'Deputado(a)' && cargoAlvo) {
+                const padrao = String(vm.autor_nome).replace(/[%_\\]/g, '\\$&');
+                const campos = 'slug, nome_urna, partido_atual, uf_sede, sexo, cargo_atual, fonte_api, casa_legislativa';
+                let { data: achados } = await supabase.from('agentes_politicos').select(campos).eq('cargo_atual', cargoAlvo).ilike('nome_urna', padrao).limit(3);
+                if (!achados || achados.length === 0) {
+                    ({ data: achados } = await supabase.from('agentes_politicos').select(campos).eq('cargo_atual', cargoAlvo).ilike('nome_completo', padrao).limit(3));
+                }
+                const perfil = escolherPerfilUnico(achados);
+                meta.autor_rotulo = rotuloCargoAutor(perfil, casaV);
+                if (perfil) meta.autor_perfil = { slug: perfil.slug, rota: casaDoPerfil(perfil).rota, partido: perfil.partido_atual || null, uf: perfil.uf_sede || null };
+            }
+        } catch { /* sem perfil: a pagina mostra o nome sem link */ }
         // Resumo visual por proposicao. Falha aqui nunca derruba a pagina: sem resumo, tela igual a de antes.
         let entenda = null;
         try {

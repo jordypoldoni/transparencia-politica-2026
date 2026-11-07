@@ -167,7 +167,14 @@ export default function Votacao({ meta, votos, entenda }) {
           )}
 
           {meta.autor_nome && (
-            <p style={{ margin: '0 0 16px', opacity: 0.85, fontSize: '0.95rem' }}>Proposta por <strong>{meta.autor_nome}</strong>{meta.autor_tipo ? ` · ${meta.autor_tipo}` : ''}</p>
+            <p style={{ margin: '0 0 16px', opacity: 0.85, fontSize: '0.95rem' }}>
+              Proposta por{' '}
+              {meta.autor_perfil
+                ? <Link href={`/${meta.autor_perfil.rota}/${meta.autor_perfil.slug}`} style={{ fontWeight: 700, color: 'inherit', textDecoration: 'underline' }}>{meta.autor_nome}</Link>
+                : <strong>{meta.autor_nome}</strong>}
+              {meta.autor_rotulo || meta.autor_tipo ? ` · ${meta.autor_rotulo || meta.autor_tipo}` : ''}
+              {meta.autor_perfil && (meta.autor_perfil.partido || meta.autor_perfil.uf) ? ` · ${[meta.autor_perfil.partido, meta.autor_perfil.uf].filter(Boolean).join('-')}` : ''}
+            </p>
           )}
 
           {/* EMENTA OFICIAL: desceu de título para camada, mas continua visível sem clique.
