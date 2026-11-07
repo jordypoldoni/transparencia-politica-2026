@@ -60,13 +60,13 @@ function Cedula({ uf, cedula }) {
   return (
     <>
       <BlocoCargo ordem={1} cargo="Deputado Federal"
-        nota={`${federais.total.toLocaleString('pt-BR')} pessoas disputam as cadeiras ${deUf(uf)} na Câmara.${federais.comMandato.length > 0 ? ` Abaixo, ${federais.comMandato.length === 1 ? 'o único que já tem' : `os ${federais.comMandato.length} que já têm`} mandato hoje: desses o site mostra também em que gastaram a cota e como votaram.` : ''}`}>
+        nota={`${federais.total.toLocaleString('pt-BR')} pessoas disputam as cadeiras ${deUf(uf)} na Câmara dos Deputados.${federais.comMandato.length > 0 ? ` Abaixo, ${federais.comMandato.length === 1 ? 'o único que já tem' : `os ${federais.comMandato.length} que já têm`} mandato hoje: desses o site mostra também em que gastaram a cota e como votaram.` : ''}`}>
         {federais.comMandato.length > 0 ? (
           <div className="grade-parl">
             {federais.comMandato.map((d) => <CardCandidato key={d.id} d={d} hrefBase="/deputado-federal" selo="já tem mandato" votar ufVoto={uf} />)}
           </div>
         ) : (
-          <AindaNaoTemos texto={`Nenhum candidato ${deUf(uf)} tem mandato na Câmara hoje.`} />
+          <AindaNaoTemos texto={`Nenhum candidato ${deUf(uf)} tem mandato na Câmara dos Deputados hoje.`} />
         )}
         <div style={{ marginTop: '14px' }}>
           <Link href={`/eleicoes?cargo=deputado-federal&uf=${uf}`}
@@ -113,7 +113,7 @@ function Cedula({ uf, cedula }) {
             {senadores.map((s) => <CardCandidato key={s.id} d={s} hrefBase="/candidato-senador" selo={s.agente_id ? 'já tem mandato' : null} votar ufVoto={uf} />)}
           </div>
         ) : (
-          <AindaNaoTemos texto={`Nenhum candidato ao Senado coletado ${paraUf(uf)} até agora.`} />
+          <AindaNaoTemos texto={`Nenhum candidato ao Senado Federal coletado ${paraUf(uf)} até agora.`} />
         )}
       </BlocoCargo>
 
