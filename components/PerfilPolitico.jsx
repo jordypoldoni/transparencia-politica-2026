@@ -6,7 +6,7 @@ import Avatar from './Avatar';
 import { pctDoTeto, CATEGORIA_FORA_DO_TOTAL, CEAPS_FONTE, ATO_MESA_DIVULGACAO, arquivoCotaCamara } from '../src/lib/cotas';
 import { textoDevolucao } from '../src/lib/devolucoes';
 import { nomeTipoProposicao, legendaDosTipos } from '../src/lib/proposicoes';
-import { explicarTipo, agruparPorMateria, papelVotacao, situacaoCidada } from '../src/lib/votacao';
+import { explicarTipo, agruparPorMateria, papelVotacao, situacaoCidada, tituloCidadao } from '../src/lib/votacao';
 import { casaDoPerfil, hrefPerfil } from '../src/lib/casa';
 import TrajetoriaEleitoral from './TrajetoriaEleitoral';
 import { Seta } from './icones';
@@ -1327,7 +1327,7 @@ export default function PerfilPolitico({ dados }) {
                   const urgencia = /urg[êe]ncia/i.test(g.regime || '');
                   // Mesma regra da página de detalhe e da /votacoes: a frase em linguagem
                   // comum titula; sem ela, a ementa.
-                  const tituloExib = g.explicacao_cidada || g.ementa || g.votacoes[0]?.ementa_resumida_voto || g.titulo || 'Votação';
+                  const tituloExib = tituloCidadao(g) || g.votacoes[0]?.ementa_resumida_voto || g.titulo || 'Votação';
                   return (
                     <div key={g.chave} style={{ background: t.cor.papelQuente, borderRadius: t.raio.md, padding: '14px 16px', boxShadow: t.sombra.sutil }}>
                       <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '6px' }}>

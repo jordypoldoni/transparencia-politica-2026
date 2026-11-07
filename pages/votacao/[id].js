@@ -56,7 +56,7 @@ export default function Votacao({ meta, votos, entenda }) {
   //
   // Enquanto o lote não termina, boa parte das votações ainda não tem resumo. Sem resumo a
   // tela volta a ser exatamente a de antes (a ementa vira o título), sem buraco nem "em breve".
-  const resumo = meta.explicacao_cidada || null;
+  const resumo = meta.explicacao_cidada || meta.resumo_simples || null;
   const titulo = resumo || assunto;
   const temContexto = !!meta.contexto_extra;
 

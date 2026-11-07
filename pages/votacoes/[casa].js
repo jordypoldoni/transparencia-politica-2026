@@ -20,7 +20,7 @@ import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import Head from 'next/head';
 import ServicoAPI from '../../src/servicos/servico_api';
-import { humanizarVotacao, explicarTipo, agruparPorMateria, papelVotacao, situacaoCidada, votacaoPrincipal } from '../../src/lib/votacao';
+import { humanizarVotacao, explicarTipo, agruparPorMateria, papelVotacao, situacaoCidada, votacaoPrincipal, tituloCidadao } from '../../src/lib/votacao';
 import { CASAS_VOTACAO, casaVotacaoPorChave } from '../../src/lib/casa';
 import CampoBusca from '../../components/CampoBusca';
 import CampoSelect from '../../components/CampoSelect';
@@ -247,9 +247,8 @@ export default function VotacoesDaCasa({ casa, votacoes, temas = [], temaInicial
         ) : (
           <div style={{ display: 'grid', gap: '14px' }}>
             <p style={{ margin: 0, fontSize: '0.82rem', lineHeight: 1.5, color: t.cor.cinza }}>
-              Quando existe, o título abaixo é um resumo em linguagem comum escrito por
-              inteligência artificial a partir da ementa oficial. Onde ele ainda não existe,
-              aparece a ementa oficial. A ementa na íntegra está na página de cada votação.
+              O título abaixo é um resumo em linguagem comum, escrito a partir da ementa oficial.
+              A ementa oficial aparece logo abaixo e, na íntegra, na página de cada votação.
             </p>
 
             {visiveis.map((g) => {
@@ -263,7 +262,7 @@ export default function VotacoesDaCasa({ casa, votacoes, temas = [], temaInicial
               const inicio = dataBR(g.votacoes[0]?.data_voto);
               const fim = dataBR(g.votacoes[g.votacoes.length - 1]?.data_voto);
               const periodoTxt = inicio === fim ? fim : `${inicio} a ${fim}`;
-              const tituloExib = g.explicacao_cidada || g.ementa || g.votacoes[0]?.descricao || 'Votação';
+              const tituloExib = tituloCidadao(g) || g.votacoes[0]?.descricao || 'Votação';
               return (
                 <div key={g.chave} style={{ background: t.cor.papelCartao, borderRadius: t.raio.md, padding: '18px 20px', boxShadow: t.sombra.sutil }}>
                   <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap' }}>
@@ -274,6 +273,9 @@ export default function VotacoesDaCasa({ casa, votacoes, temas = [], temaInicial
                   </div>
 
                   <p style={{ margin: '0 0 6px', fontSize: '1.02rem', fontWeight: 600, lineHeight: 1.4, color: t.cor.tinta }}>{tituloExib}</p>
+                  {g.ementa && tituloExib !== g.ementa && (
+                    <p style={{ margin: '0 0 8px', fontSize: '0.78rem', color: t.cor.cinza, lineHeight: 1.45, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}><strong style={{ fontWeight: 700 }}>Ementa oficial:</strong> {g.ementa}</p>
+                  )}
                   <p style={{ margin: '0 0 6px', fontSize: '0.84rem', color: t.cor.cinza, lineHeight: 1.45 }}><strong style={{ color: t.cor.tinta, fontWeight: 700 }}>{exp.termo}:</strong> {exp.texto}</p>
                   {g.ementa_detalhada && <p style={{ margin: '0 0 6px', fontSize: '0.82rem', color: t.cor.tinta, lineHeight: 1.45 }}>{g.ementa_detalhada}</p>}
                   {g.keywords && g.keywords.trim() && (

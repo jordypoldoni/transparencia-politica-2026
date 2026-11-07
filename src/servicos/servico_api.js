@@ -231,7 +231,7 @@ const ServicoAPI = {
         if (idsVotacoes.length > 0) {
             const { data: votacoesData } = await supabase
                 .from('votacoes')
-                .select('votacao_id_externa, ementa, proposicao_titulo, descricao, situacao, keywords, ementa_detalhada, regime, url_inteiro_teor, explicacao_cidada')
+                .select('votacao_id_externa, ementa, proposicao_titulo, descricao, situacao, keywords, ementa_detalhada, regime, url_inteiro_teor, explicacao_cidada, resumo_simples')
                 .in('votacao_id_externa', idsVotacoes);
             for (const v of votacoesData || []) {
                 metaVotacoes[v.votacao_id_externa] = v;
@@ -245,6 +245,7 @@ const ServicoAPI = {
                 ementa_votacao: m.ementa || null,
                 ementa: m.ementa || null,            // p/ agruparPorMateria
                 explicacao_cidada: m.explicacao_cidada || null,
+                resumo_simples: m.resumo_simples || null,
                 descricao: m.descricao || null,       // p/ papelVotacao (etapa do processo)
                 proposicao_titulo: m.proposicao_titulo || null,
                 situacao: m.situacao || null,
@@ -456,7 +457,7 @@ const ServicoAPI = {
         // Votações recentes AGRUPADAS por matéria (1 card por proposta, com a linha do tempo + contexto).
         const { data } = await supabase
             .from('votacoes')
-            .select('votacao_id_externa, descricao, aprovacao, data_voto, proposicao_id, proposicao_titulo, ementa, descricao_tipo, resultado, autor_nome, keywords, situacao, ementa_detalhada, regime, url_inteiro_teor, explicacao_cidada')
+            .select('votacao_id_externa, descricao, aprovacao, data_voto, proposicao_id, proposicao_titulo, ementa, descricao_tipo, resultado, autor_nome, keywords, situacao, ementa_detalhada, regime, url_inteiro_teor, explicacao_cidada, resumo_simples')
             .order('data_voto', { ascending: false })
             .limit(250);
         return agruparPorMateria(data || []).slice(0, limite);
@@ -464,7 +465,7 @@ const ServicoAPI = {
 
     // Todas as votações (para a página de lista, com busca por assunto/autor/data)
     // CAMPOS DA LISTA. A pagina de detalhe busca o resto; aqui so vai o que o cartao mostra.
-    _camposVotacaoLista: 'votacao_id_externa, descricao, aprovacao, data_voto, proposicao_titulo, ementa, descricao_tipo, resultado, autor_nome, keywords, situacao, ementa_detalhada, regime, url_inteiro_teor, explicacao_cidada',
+    _camposVotacaoLista: 'votacao_id_externa, descricao, aprovacao, data_voto, proposicao_titulo, ementa, descricao_tipo, resultado, autor_nome, keywords, situacao, ementa_detalhada, regime, url_inteiro_teor, explicacao_cidada, resumo_simples',
 
     // FILTRO POR CASA, em um lugar so. O discriminador e o prefixo do votacao_id_externa;
     // a explicacao de por que nao existe coluna `casa` esta em src/lib/casa.js.
@@ -811,6 +812,7 @@ const ServicoAPI = {
             proposicao_id: vm?.proposicao_id ?? null,
             url_inteiro_teor: vm?.url_inteiro_teor || null,
             explicacao_cidada: vm?.explicacao_cidada || null,
+            resumo_simples: vm?.resumo_simples || null,
             contexto_extra: vm?.contexto_extra || null,
             explicacao_modelo: vm?.explicacao_modelo || null,
             explicacao_gerada_em: vm?.explicacao_gerada_em || null,
