@@ -2,6 +2,7 @@
 # Um passo por estado, cada um com o seu coletor. Todos fazem upsert por (uf, ano, mes): rodar de novo é seguro.
 # Cadência: dia 9 de cada mês, 08:07 de Brasília (depois do dia 8, quando outras fontes publicam).
 # Falha barulhenta de propósito: sem continue-on-error. Se um portal mudar o formato, o run fica vermelho.
+# PE NÃO roda aqui: o portal da ALEPE não abre a partir do GitHub (fetch failed em 08/11). O coletor fica em coletores/coletor_totais_alepe.js e roda no PC do Jordy; o resultado é gravado por SQL.
 # SEGREDOS: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY.
 name: Coletar totais das Assembleias
 
@@ -46,20 +47,3 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: node coletores/coletor_totais_alba.js ${{ inputs.anos }}
-
-  pe:
-    # Pernambuco em job próprio: o portal é lento e devolve lista vazia sob carga, então o coletor faz duas passadas (uns 12 min cada por ano).
-    name: Totais das Assembleias (PE)
-    runs-on: ubuntu-latest
-    timeout-minutes: 150
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - run: npm install --ignore-scripts
-      - name: PE (ALEPE, verba indenizatória)
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-        run: node coletores/coletor_totais_alepe.js ${{ inputs.anos }}
