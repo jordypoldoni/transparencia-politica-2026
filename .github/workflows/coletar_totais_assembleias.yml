@@ -46,3 +46,20 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: node coletores/coletor_totais_alba.js ${{ inputs.anos }}
+
+  pe:
+    # Pernambuco em job próprio: o portal é lento e devolve lista vazia sob carga, então o coletor faz duas passadas (uns 12 min cada por ano).
+    name: Totais das Assembleias (PE)
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --ignore-scripts
+      - name: PE (ALEPE, verba indenizatória)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node coletores/coletor_totais_alepe.js ${{ inputs.anos }}
