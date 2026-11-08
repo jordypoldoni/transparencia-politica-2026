@@ -514,7 +514,7 @@ function TodasAsCasas({ resumo, agreg, ano, totais }) {
               <b>{c.rotulo}</b>
               <strong>{mi(c.total)}</strong>
               <small>
-                {Math.round((c.total / r.total) * 100)}% do total · {c.chave === 'assembleias' ? `${c.estados.length} ${c.estados.length === 1 ? 'estado' : 'estados'}` : `${c.parlamentares.toLocaleString('pt-BR')} ${c.chave === 'senado' ? 'senadores' : 'deputados'}`}
+                {Math.round((c.total / r.total) * 100)}% do total · {c.chave === 'assembleias' ? `${c.estados.length} ${c.estados.length === 1 ? 'estado' : 'estados'}` : `${c.parlamentares.toLocaleString('pt-BR')} parlamentares com gasto`}
               </small>
             </li>
           ))}
