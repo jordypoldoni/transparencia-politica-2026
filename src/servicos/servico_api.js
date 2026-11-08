@@ -664,6 +664,16 @@ const ServicoAPI = {
         );
     },
 
+    // Totais mensais das Assembleias (tabela gastos_assembleia_totais, 08/11/2026): um total já somado por estado, ano e mês,
+    // com o texto "o que inclui" e o link da fonte. Poucas linhas (~290 por ano). Alimenta a aba "Todas as casas".
+    getTotaisAssembleias: async () => {
+        const { data, error } = await supabase.from('gastos_assembleia_totais')
+            .select('uf, ano, mes, total, n_deputados, o_que_inclui, fonte_url, fonte')
+            .order('uf').order('ano').order('mes');
+        if (error) { console.error('getTotaisAssembleias:', error.message); return []; }
+        return data || [];
+    },
+
     // Senado: gastos fora da cota e benefícios de todos os senadores de um ano (81 linhas; página /gastos-parlamentares).
     getRecursosSenado: async (ano) => {
         const { data, error } = await supabase.from('senado_recursos')
