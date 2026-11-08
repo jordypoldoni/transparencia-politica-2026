@@ -144,7 +144,7 @@ test('somaFechados: soma só meses fechados e os mesmos meses do ano anterior', 
   assert.equal(somaFechados([{ total: 1, temDado: true, aberto: true }], an), null);
 });
 
-import { resumoDoRadar, totaisTodasAsCasas, anosTodasAsCasas } from '../src/lib/gastosParlamentares.js';
+import { resumoDoRadar, totaisTodasAsCasas, anosTodasAsCasas, assembleiasDoAno } from '../src/lib/gastosParlamentares.js';
 
 test('todas as casas: soma Câmara, Senado e as Assembleias com dado, sem estimar', () => {
   const radar = [
@@ -176,4 +176,41 @@ test('todas as casas: ano sem Câmara nem Senado não inventa linha', () => {
 
 test('anos de todas as casas: união, do mais novo ao mais antigo', () => {
   assert.deepEqual(anosTodasAsCasas({ 'Câmara': [2025, 2026], 'Assembleia (SP)': [2024, 2026] }), [2026, 2025, 2024]);
+});
+
+// 08/11/2026: totais das Assembleias vindos da tabela gastos_assembleia_totais (MS, SC, BA...), somados aos do radar (MG, RS, SP).
+const lin = (uf, ano, mes, total, extra = {}) => ({ uf, ano, mes, total: String(total), n_deputados: 10, o_que_inclui: `texto ${uf}`, fonte_url: `https://fonte/${uf}`, fonte: `f_${uf}`, ...extra });
+
+test('assembleiasDoAno: soma os meses do ano, usa o maior nº de deputados e o último mês', () => {
+  const r = assembleiasDoAno([], [lin('MS', 2025, 1, 100, { n_deputados: 20 }), lin('MS', 2025, 2, 50, { n_deputados: 24 }), lin('MS', 2024, 1, 999)], 2025);
+  assert.equal(r.length, 1);
+  assert.equal(r[0].total, 150);
+  assert.equal(r[0].parlamentares, 24);
+  assert.equal(r[0].ultimoMes, 2);
+  assert.equal(r[0].inclui, 'texto MS');
+  assert.equal(r[0].fonteUrl, 'https://fonte/MS');
+});
+
+test('assembleiasDoAno: SC conta gabinetes; estado do radar vale mais que a tabela; ordem do maior para o menor', () => {
+  const resumo = [{ casa: 'Assembleia (SP)', n: 90, total: 500 }];
+  const r = assembleiasDoAno(resumo, [lin('SP', 2025, 1, 9999), lin('SC', 2025, 1, 700, { fonte: 'alesc_gabinetes' }), lin('BA', 2025, 1, 100)], 2025);
+  assert.deepEqual(r.map((a) => a.uf), ['SC', 'SP', 'BA']);
+  assert.equal(r[0].unidade, 'gabinetes');
+  assert.equal(r[1].total, 500);          // radar, não os 9999 da tabela
+  assert.equal(r[1].ultimoMes, null);
+  assert.ok(r[1].inclui.length > 0);      // SP tem texto próprio
+});
+
+test('todas as casas: Assembleias da tabela entram no total e em "faltam"', () => {
+  const agreg = [{ casa: 'Câmara', ano: 2025, mes: 1, total: '1000' }];
+  const r = totaisTodasAsCasas(resumoDoRadar([{ casa: 'Assembleia (MG)', total: 200 }]), agreg, 2025, new Date('2026-11-07'), [lin('MS', 2025, 1, 300)]);
+  const ass = r.casas.find((c) => c.chave === 'assembleias');
+  assert.equal(ass.total, 500);
+  assert.deepEqual(ass.estados.sort(), ['MG', 'MS']);
+  assert.equal(r.total, 1500);
+  assert.equal(r.faltam, 25);
+});
+
+test('anos de todas as casas: inclui anos só da tabela de totais', () => {
+  assert.deepEqual(anosTodasAsCasas({ 'Assembleia (SP)': [2024] }, [2026, 2023]), [2026, 2024, 2023]);
 });

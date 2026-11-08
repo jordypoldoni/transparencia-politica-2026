@@ -87,6 +87,18 @@ const CSS = `
   .gp-faixa p { margin: 0; } .gp-faixa p + p { margin-top: 6px; }
   .gp-legenda { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 0.78rem; color: ${t.cor.cinza}; margin: 10px 0 0; }
   .gp-legenda i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
+  .gp-emp { display: flex; height: 22px; border-radius: ${t.raio.pill}; overflow: hidden; background: ${t.cor.papelQuente2}; margin: 0 0 14px; }
+  .gp-emp i { display: block; height: 100%; }
+  .gp-leg { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; }
+  .gp-leg li { background: ${t.cor.papelQuente}; border-radius: ${t.raio.sm}; padding: 12px 14px; }
+  .gp-leg b { display: flex; align-items: center; gap: 8px; font-size: 0.92rem; }
+  .gp-leg b::before { content: ""; flex: none; width: 12px; height: 12px; border-radius: 50%; background: var(--cor); }
+  .gp-leg strong { display: block; font-family: ${t.fonte.titulo}; font-weight: 600; font-size: 1.25rem; margin: 4px 0 0; }
+  .gp-leg small { color: ${t.cor.cinza}; font-size: 0.8rem; }
+  .gp-zebra:nth-child(odd) { background: ${t.cor.papelQuente}; }
+  .gp-rec { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; background: none; border: none; padding: 0; margin: 0; text-align: left; cursor: pointer; color: inherit; font: inherit; }
+  .gp-rec:focus-visible { outline: none; box-shadow: ${t.sombra.anelFoco}; border-radius: ${t.raio.sm}; }
+  .gp-rec-ver { flex: none; display: inline-flex; align-items: center; gap: 6px; font-size: 0.8rem; font-weight: 700; color: ${t.cor.ouroTexto}; }
   @media (max-width: 959px) { .gp-duas { grid-template-columns: 1fr; } .gp-duas > .gp-cartao { margin: 0 0 20px; } }
   @media (max-width: 719px) {
     .gp-cartao { padding: 18px 16px; }
@@ -443,100 +455,154 @@ function ComoLemos({ casa }) {
   );
 }
 
-// TODAS AS CASAS (07/11/2026): o total gasto somando as casas que o Lume tem, com a divisão por casa e o gasto mês a mês.
-// Cada casa entra só se tem dado no ano; as Assembleias são as dos estados com dado (hoje MG, RS e SP) e não têm série mensal.
-const bi = (v) => (v >= 1e9 ? `R$ ${(v / 1e9).toFixed(2).replace('.', ',')} bi` : mi(v));
+// TODAS AS CASAS (redesenhada em 08/11/2026, pedido do Jordy: "muito simples e fácil para uma pessoa comum entender").
+// Ordem da tela: uma frase com o número grande; a divisão por casa; as Assembleias estado por estado; o que entra em cada uma
+// (recolhido); o mês a mês (recolhido); como ler. Cada casa entra só se tem dado no ano e nada é estimado: quem falta é dito.
+const extenso = (v) => (v >= 1e9 ? `R$ ${(v / 1e9).toFixed(2).replace('.', ',')} bilhões` : `R$ ${Math.round(v / 1e6).toLocaleString('pt-BR')} milhões`);
+const COR_ASSEMBLEIAS = '#7A74B8'; // tom claro do índigo, para separar a faixa das Assembleias da Câmara e do Senado
+const CORES_CASA = { camara: t.cor.verde, senado: t.cor.ouro, assembleias: COR_ASSEMBLEIAS };
 
-function TodasAsCasas({ resumo, agreg, ano }) {
-  const r = useMemo(() => totaisTodasAsCasas(resumo, agreg, ano), [resumo, agreg, ano]);
+// Bloco que abre e fecha, no padrão do site (botão inteiro, "Ver/Recolher" com a Seta dourada).
+function Recolhivel({ sobre, titulo, resumo, children, inicio = false, idTitulo }) {
+  const [aberto, setAberto] = useState(inicio);
+  return (
+    <section className="gp-cartao" aria-labelledby={idTitulo}>
+      <button type="button" className="gp-rec" onClick={() => setAberto((v) => !v)} aria-expanded={aberto}>
+        <span style={{ minWidth: 0 }}>
+          {sobre && <span className="gp-sobre" style={{ display: 'block' }}>{sobre}</span>}
+          <span className="gp-h2" id={idTitulo} style={{ display: 'block', margin: 0 }}>{titulo}</span>
+          {resumo && <span style={{ display: 'block', marginTop: '4px', fontSize: '0.88rem', color: t.cor.cinza, lineHeight: 1.45 }}>{resumo}</span>}
+        </span>
+        <span className="gp-rec-ver">{aberto ? 'Recolher' : 'Ver'}<Seta aberta={aberto} size={14} /></span>
+      </button>
+      {aberto && <div style={{ marginTop: '16px' }}>{children}</div>}
+    </section>
+  );
+}
+
+function TodasAsCasas({ resumo, agreg, ano, totais }) {
+  const r = useMemo(() => totaisTodasAsCasas(resumo, agreg, ano, new Date(), totais), [resumo, agreg, ano, totais]);
   const [sel, setSel] = useState(null);
   const maior = Math.max(...r.mensal.map((m) => m.total), 1);
   const eixo = useMemo(() => escalaY(maior / 1e6, 4), [maior]);
   const topo = eixo.topo * 1e6;
   const soma = useMemo(() => somaFechados(r.mensal, null), [r]);
   if (r.casas.length === 0) return <p style={{ color: t.cor.cinza }}>Ainda não há dado de gastos para {ano}.</p>;
-  const cobertas = r.casas.map((c) => (c.chave === 'assembleias' ? `Assembleias (${c.estados.join(', ')})` : c.rotulo));
   const abertos = r.mensal.filter((m) => m.temDado && m.aberto).map((m) => MESES[m.mes - 1]);
   const detalhe = (i) => `${MESES[i]}/${ano}: ${r.mensal[i].temDado ? mi(r.mensal[i].total) : 'sem dado'}${r.mensal[i].aberto && r.mensal[i].temDado ? ' (mês aberto, valor parcial)' : ''}`;
+  const emAndamento = ano === new Date().getFullYear();
+  const totalAss = r.casas.find((c) => c.chave === 'assembleias')?.total || 0;
+  const nomeUf = (uf) => NOMES_UF[uf] || uf;
+  const temMes = r.mensal.some((m) => m.temDado);
   return (
     <>
       <section className="gp-cartao" aria-labelledby="gp-total">
         <p className="gp-sobre">Total de {ano}</p>
-        <h2 className="gp-h2" id="gp-total">Quanto as casas legislativas gastaram da verba pública</h2>
-        <p style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(2rem, 6vw, 3rem)', lineHeight: 1.1, margin: '6px 0 4px', color: t.cor.tinta }}>{bi(r.total)}</p>
-        <p className="gp-sub">Soma de {cobertas.join(', ')}, em {ano}. Quem não tem dado publicado no Lume para o ano fica de fora da soma.</p>
-        <ul className="gp-lista" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+        <h2 className="gp-h2" id="gp-total" style={{ fontSize: '1.05rem', fontWeight: 400, fontFamily: t.fonte.corpo, lineHeight: 1.5, margin: 0 }}>
+          {emAndamento ? `Em ${ano}, até agora, as` : `Em ${ano}, as`} casas legislativas que o Lume acompanha gastaram
+        </h2>
+        <p style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(2.2rem, 7vw, 3.4rem)', lineHeight: 1.08, margin: '4px 0 6px', color: t.cor.tinta }}>{extenso(r.total)}</p>
+        <p style={{ fontSize: '1.02rem', lineHeight: 1.55, margin: '0 0 16px' }}>
+          da verba pública dos seus parlamentares. É o dinheiro de aluguel de escritório, passagens, divulgação, assessoria e outras despesas do gabinete. Não é salário.
+        </p>
+        <div className="gp-emp" role="img" aria-label={`Divisão do total: ${r.casas.map((c) => `${c.rotulo} ${Math.round((c.total / r.total) * 100)}%`).join(', ')}`}>
+          {r.casas.map((c) => <i key={c.chave} style={{ width: `${(c.total / r.total) * 100}%`, background: CORES_CASA[c.chave] }} />)}
+        </div>
+        <ul className="gp-leg">
           {r.casas.map((c) => (
-            <li key={c.chave}>
-              <div className="gp-linha">
-                <span style={{ display: 'block', minWidth: 0 }}>
-                  <span style={{ display: 'block', fontWeight: 700 }}>{c.rotulo}</span>
-                  <span style={{ display: 'block', fontSize: '0.78rem', color: t.cor.cinza }}>
-                    {c.parlamentares.toLocaleString('pt-BR')} {c.parlamentares === 1 ? 'parlamentar' : 'parlamentares'} com gasto{c.estados ? ` · ${c.estados.join(', ')}` : ''}
-                  </span>
-                </span>
-                <Trilho pct={(c.total / r.total) * 100} />
-                <span className="gp-num">
-                  {bi(c.total)}
-                  <small>{Math.round((c.total / r.total) * 100)}% do total</small>
-                </span>
-              </div>
+            <li key={c.chave} style={{ '--cor': CORES_CASA[c.chave] }}>
+              <b>{c.rotulo}</b>
+              <strong>{mi(c.total)}</strong>
+              <small>
+                {Math.round((c.total / r.total) * 100)}% do total · {c.chave === 'assembleias' ? `${c.estados.length} ${c.estados.length === 1 ? 'estado' : 'estados'}` : `${c.parlamentares.toLocaleString('pt-BR')} parlamentares com gasto`}
+              </small>
             </li>
           ))}
         </ul>
-        {r.assembleias.length > 0 && (
-          <div className="gp-faixa">
-            <p><strong>Assembleias por estado:</strong> {r.assembleias.map((a) => `${a.uf} ${bi(a.total)}`).join(' · ')}.</p>
-            <p>O Lume só tem o gasto das Assembleias de alguns estados, e cada uma publica no seu ritmo (a do RS, por exemplo, ainda não tem o ano fechado). Por isso a soma das Assembleias é parcial e não representa todos os estados.</p>
-          </div>
-        )}
       </section>
 
-      <section className="gp-cartao" aria-labelledby="gp-total-mes">
-        <p className="gp-sobre">Por mês</p>
-        <h2 className="gp-h2" id="gp-total-mes">Gasto mês a mês, Câmara e Senado juntos</h2>
-        <p className="gp-sub">As Assembleias não entram neste gráfico porque não têm o gasto mês a mês na base do Lume. Meses ainda abertos, que seguem recebendo notas, aparecem mais claros e com valor parcial. Toque em um mês para ver o valor.</p>
-        <p className="gp-eixo-tit">R$ milhões por mês</p>
-        <div className="gp-graf">
-          <div className="gp-y" aria-hidden="true">
-            {eixo.marcas.map((v) => <span key={v} style={{ bottom: `${(v / eixo.topo) * 100}%` }}>{v.toLocaleString('pt-BR')}</span>)}
+      {r.assembleias.length > 0 && (
+        <section className="gp-cartao" aria-labelledby="gp-estados">
+          <p className="gp-sobre">Assembleias Legislativas</p>
+          <h2 className="gp-h2" id="gp-estados">Estado por estado</h2>
+          <p className="gp-sub">Cada estado paga e publica de um jeito. Por isso mostramos o que cada valor inclui.</p>
+          <ul className="gp-lista" style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+            {r.assembleias.map((a) => (
+              <li key={a.uf} className="gp-linha gp-zebra">
+                <span style={{ display: 'block', minWidth: 0 }}>
+                  <span style={{ display: 'block', fontWeight: 700 }}>{nomeUf(a.uf)}</span>
+                  <span style={{ display: 'block', fontSize: '0.78rem', color: t.cor.cinza }}>{a.parlamentares.toLocaleString('pt-BR')} {a.unidade} com gasto</span>
+                </span>
+                <Trilho pct={(a.total / r.assembleias[0].total) * 100} />
+                <span className="gp-num">{mi(a.total)}<small>{Math.round((a.total / totalAss) * 100)}% das Assembleias</small></span>
+              </li>
+            ))}
+          </ul>
+          <div className="gp-faixa">
+            <p><strong>{r.faltam === 1 ? 'Falta 1 Assembleia.' : `Faltam ${r.faltam} Assembleias.`}</strong> Entram aqui só as que publicam o gasto de um jeito que o Lume consegue ler. Estamos incluindo uma a uma. Nenhum valor é estimado.</p>
           </div>
-          <div className="gp-plot">
-            {eixo.marcas.slice(1).map((v) => <i className="gp-gl" key={v} style={{ bottom: `${(v / eixo.topo) * 100}%` }} />)}
-            <div className="gp-cols2" role="group" aria-label={`Gasto por mês em ${ano}, Câmara e Senado`}>
-              {r.mensal.map((m, i) => (
-                <button type="button" key={m.mes} className="gp-col2" aria-pressed={sel === i} aria-label={detalhe(i)} onClick={() => setSel(sel === i ? null : i)}>
-                  <span className="gp-barra">
-                    <i style={{ height: `${(m.total / topo) * 100}%`, background: sel === i ? t.cor.ouro : t.cor.verde, opacity: m.aberto ? 0.4 : 1 }}>
-                      {m.temDado && <b className="gp-val" style={{ opacity: 1 }}>{mesTxt(m.total)}</b>}
-                    </i>
-                  </span>
-                </button>
-              ))}
+        </section>
+      )}
+
+      {r.assembleias.length > 0 && (
+        <Recolhivel idTitulo="gp-inclui" titulo="O que entra no valor de cada estado?" resumo="Cada Assembleia tem a sua verba. Veja o que ela cobre e a fonte oficial.">
+          <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'grid', gap: '10px' }}>
+            {r.assembleias.map((a) => (
+              <li key={a.uf} style={{ background: t.cor.papelQuente, borderRadius: t.raio.sm, padding: '12px 14px', fontSize: '0.88rem', lineHeight: 1.5 }}>
+                <strong>{nomeUf(a.uf)}.</strong> {a.inclui}
+                {a.ultimoMes ? <span style={{ display: 'block', color: t.cor.cinza, marginTop: '2px' }}>Último mês com dado: {MESES[a.ultimoMes - 1]}/{ano}. O mês mais recente pode estar incompleto.</span> : null}
+                {a.fonteUrl ? <a href={a.fonteUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-block', marginTop: '4px', color: t.cor.ouroTexto, fontWeight: 700 }}>Ver na fonte oficial</a> : null}
+              </li>
+            ))}
+          </ul>
+        </Recolhivel>
+      )}
+
+      {temMes && (
+        <Recolhivel idTitulo="gp-total-mes" sobre="Por mês" titulo="Gasto mês a mês, Câmara e Senado juntos">
+          <p className="gp-sub">As Assembleias não entram neste gráfico porque os estados publicam o gasto em formatos diferentes. Meses ainda abertos, que seguem recebendo notas, aparecem mais claros e com valor parcial. Toque em um mês para ver o valor.</p>
+          <p className="gp-eixo-tit">R$ milhões por mês</p>
+          <div className="gp-graf">
+            <div className="gp-y" aria-hidden="true">
+              {eixo.marcas.map((v) => <span key={v} style={{ bottom: `${(v / eixo.topo) * 100}%` }}>{v.toLocaleString('pt-BR')}</span>)}
             </div>
+            <div className="gp-plot">
+              {eixo.marcas.slice(1).map((v) => <i className="gp-gl" key={v} style={{ bottom: `${(v / eixo.topo) * 100}%` }} />)}
+              <div className="gp-cols2" role="group" aria-label={`Gasto por mês em ${ano}, Câmara e Senado`}>
+                {r.mensal.map((m, i) => (
+                  <button type="button" key={m.mes} className="gp-col2" aria-pressed={sel === i} aria-label={detalhe(i)} onClick={() => setSel(sel === i ? null : i)}>
+                    <span className="gp-barra">
+                      <i style={{ height: `${(m.total / topo) * 100}%`, background: sel === i ? t.cor.ouro : t.cor.verde, opacity: m.aberto ? 0.4 : 1 }}>
+                        {m.temDado && <b className="gp-val" style={{ opacity: 1 }}>{mesTxt(m.total)}</b>}
+                      </i>
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <span />
+            <div className="gp-x" aria-hidden="true">{r.mensal.map((m, i) => <span key={m.mes} style={sel === i ? { color: t.cor.tinta, fontWeight: 800 } : undefined}>{MESES[i]}</span>)}</div>
           </div>
-          <span />
-          <div className="gp-x" aria-hidden="true">{r.mensal.map((m, i) => <span key={m.mes} style={sel === i ? { color: t.cor.tinta, fontWeight: 800 } : undefined}>{MESES[i]}</span>)}</div>
-        </div>
-        {abertos.length > 0 && <p className="gp-legenda"><span>Em aberto: {abertos.join(', ')}</span></p>}
-        <div className="gp-faixa" aria-live="polite">
-          {sel != null
-            ? <p><strong>{detalhe(sel)}</strong></p>
-            : soma && <p><strong>{MESES[soma.de - 1]} a {MESES[soma.ate - 1]}, só meses fechados:</strong> {mi(soma.atual)} em {ano}.</p>}
-        </div>
-      </section>
+          {abertos.length > 0 && <p className="gp-legenda"><span>Em aberto: {abertos.join(', ')}</span></p>}
+          <div className="gp-faixa" aria-live="polite">
+            {sel != null
+              ? <p><strong>{detalhe(sel)}</strong></p>
+              : soma && <p><strong>{MESES[soma.de - 1]} a {MESES[soma.ate - 1]}, só meses fechados:</strong> {mi(soma.atual)} em {ano}.</p>}
+          </div>
+        </Recolhivel>
+      )}
 
       <section className="gp-cartao" aria-labelledby="gp-total-como">
-        <h2 className="gp-h2" id="gp-total-como" style={{ fontSize: '1.05rem' }}>Como lemos</h2>
+        <h2 className="gp-h2" id="gp-total-como" style={{ fontSize: '1.05rem' }}>Como ler estes números</h2>
         <p className="gp-sub" style={{ margin: 0 }}>
-          Câmara e Senado: total do ano na base de gastos do Lume, que vem dos dados abertos de cada casa. Assembleias: soma do gasto de cada deputado estadual dos estados que o Lume acompanha. Gasto alto ou baixo, sozinho, não mede o trabalho de ninguém, e as casas têm tamanhos e regras de verba diferentes. Para comparar parlamentares de forma justa, use as abas de cada casa.
+          Os valores vêm dos portais oficiais de cada casa. Gasto alto ou baixo, sozinho, não mede o trabalho de ninguém. O último mês de cada casa pode estar incompleto, porque as notas ainda chegam. Os totais de estados diferentes não são comparáveis entre si, porque cada Assembleia tem a sua verba.
         </p>
       </section>
     </>
   );
 }
 
-function PaginaGastos({ casaChave, ano, anosDaCasa, radar, agreg, recursos, resumo, ufInicial, canonical }) {
+function PaginaGastos({ casaChave, ano, anosDaCasa, radar, agreg, recursos, resumo, totais, ufInicial, canonical }) {
   const ehTodas = casaChave === 'todas';
   const router = useRouter();
   const casa = CASAS.find((c) => c.chave === casaChave) || CASAS[0];
@@ -612,7 +678,7 @@ function PaginaGastos({ casaChave, ano, anosDaCasa, radar, agreg, recursos, resu
         </div>
         {!ehTodas && selo && <div style={{ margin: '0 0 16px' }}><SeloAtualizacao {...selo} /></div>}
 
-        {ehTodas ? <TodasAsCasas resumo={resumo} agreg={agreg} ano={ano} /> : (<>
+        {ehTodas ? <TodasAsCasas resumo={resumo} agreg={agreg} ano={ano} totais={totais} /> : (<>
         <Comparacao casa={casa} linhas={linhas} filtros={filtros} setFiltro={setFiltro} ano={ano} />
 
         {casa.temTeto && (
@@ -642,8 +708,8 @@ export async function getServerSideProps({ query, req }) {
   const casaChave = query.casa === 'todas' || CASAS.some((c) => c.chave === query.casa) ? query.casa : 'camara';
   const ehTodas = casaChave === 'todas';
   // Só oferece anos que existem para a casa (o RS só tem 2026, o MG 2025 e 2026, o SP 2024 a 2026).
-  const anosPorCasaRadar = await ServicoAPI.getAnosDoRadar();
-  const anosDaCasa = ehTodas ? anosTodasAsCasas(anosPorCasaRadar) : [...new Set(Object.entries(anosPorCasaRadar).filter(([c]) => chaveDaCasa(c) === casaChave).flatMap(([, a]) => a))].sort((a, b) => b - a);
+  const [anosPorCasaRadar, totaisAssembleias] = await Promise.all([ServicoAPI.getAnosDoRadar(), ehTodas ? ServicoAPI.getTotaisAssembleias() : Promise.resolve([])]);
+  const anosDaCasa = ehTodas ? anosTodasAsCasas(anosPorCasaRadar, totaisAssembleias.map((x) => x.ano)) : [...new Set(Object.entries(anosPorCasaRadar).filter(([c]) => chaveDaCasa(c) === casaChave).flatMap(([, a]) => a))].sort((a, b) => b - a);
   const anoPedido = parseInt(query.ano, 10);
   const ano = anosDaCasa.includes(anoPedido) ? anoPedido : (anosDaCasa[0] || 2026);
   const [radarTudo, agreg, recursos] = await Promise.all([ServicoAPI.getRadarCompleto(ano), ServicoAPI.getGastosAgregados(), casaChave === 'senado' ? ServicoAPI.getRecursosSenado(ano) : Promise.resolve([])]);
@@ -665,5 +731,5 @@ export async function getServerSideProps({ query, req }) {
   const ufInicial = UF_VALIDA.test(ufUrl) ? ufUrl : (casaChave === 'assembleias' ? ufAssembleia : '');
   const proto = req.headers['x-forwarded-proto'] || 'http';
   const canonical = `${proto}://${req.headers.host}/gastos-parlamentares`;
-  return { props: { casaChave, ano, anosDaCasa, radar: JSON.parse(JSON.stringify(radar)), agreg: JSON.parse(JSON.stringify(agregCasa)), recursos: JSON.parse(JSON.stringify(recursos)), resumo: JSON.parse(JSON.stringify(resumo)), ufInicial, canonical } };
+  return { props: { casaChave, ano, anosDaCasa, radar: JSON.parse(JSON.stringify(radar)), agreg: JSON.parse(JSON.stringify(agregCasa)), recursos: JSON.parse(JSON.stringify(recursos)), resumo: JSON.parse(JSON.stringify(resumo)), totais: JSON.parse(JSON.stringify(totaisAssembleias)), ufInicial, canonical } };
 }

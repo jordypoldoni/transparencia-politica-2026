@@ -258,7 +258,40 @@ export function resumoDoRadar(radar) {
   return [...mapa.values()];
 }
 
-export function totaisTodasAsCasas(resumo, agreg, ano, hoje = new Date()) {
+// O que a verba de cada Assembleia com dado em radar_gastos cobre (as demais trazem o texto na própria tabela de totais).
+const INCLUI_RADAR = {
+  MG: 'Verba indenizatória: reembolso de despesas do mandato, nota a nota, publicado pela Assembleia.',
+  SP: 'Verba de gabinete: despesas do gabinete de cada deputado, publicadas pela Assembleia.',
+  RS: 'Cota do gabinete: gastos por categoria (passagens aéreas, telefones, uso de veículo e outros), publicados por mês.',
+};
+const UFS_COM_ASSEMBLEIA = 27; // 26 estados + Distrito Federal (Câmara Legislativa)
+
+// Assembleias com dado no ano, uma linha por estado. Duas origens, sem estimar nada:
+//  - radar_gastos (MG, RS, SP): soma do gasto de cada deputado;
+//  - gastos_assembleia_totais (08/11/2026): total mensal já somado pelo coletor de cada estado.
+// Se um estado estiver nas duas, vale o radar. "ultimoMes" só existe para a tabela de totais: o último mês pode estar incompleto.
+export function assembleiasDoAno(resumo, totais, ano) {
+  const out = new Map();
+  for (const l of resumo || []) {
+    if (chaveDaCasa(l.casa) !== 'assembleias' || !(l.total > 0)) continue;
+    const uf = (String(l.casa).match(/\(([A-Z]{2})\)/) || [])[1];
+    if (!uf) continue;
+    out.set(uf, { uf, total: l.total, parlamentares: l.n, unidade: 'deputados', inclui: INCLUI_RADAR[uf] || '', fonteUrl: null, ultimoMes: null });
+  }
+  const porUf = new Map();
+  for (const r of totais || []) {
+    if (Number(r.ano) !== Number(ano) || out.has(r.uf)) continue;
+    const g = porUf.get(r.uf) || { uf: r.uf, total: 0, parlamentares: 0, unidade: r.fonte === 'alesc_gabinetes' ? 'gabinetes' : 'deputados', inclui: r.o_que_inclui, fonteUrl: r.fonte_url, ultimoMes: 0 };
+    g.total += Number(r.total) || 0;
+    g.parlamentares = Math.max(g.parlamentares, Number(r.n_deputados) || 0);
+    g.ultimoMes = Math.max(g.ultimoMes, Number(r.mes) || 0);
+    porUf.set(r.uf, g);
+  }
+  for (const g of porUf.values()) if (g.total > 0) out.set(g.uf, g);
+  return [...out.values()].sort((a, b) => b.total - a.total);
+}
+
+export function totaisTodasAsCasas(resumo, agreg, ano, hoje = new Date(), totais = []) {
   const linhas = resumo || [];
   const nDe = (casa) => linhas.filter((l) => l.casa === casa).reduce((s, l) => s + l.n, 0);
   const totalAgreg = (casa) => linhasAgreg(agreg, casa, ano).reduce((s, r) => s + (Number(r.total) || 0), 0);
@@ -267,16 +300,13 @@ export function totaisTodasAsCasas(resumo, agreg, ano, hoje = new Date()) {
     const tem = linhasAgreg(agreg, casaAgregada, ano).length > 0;
     if (tem) casas.push({ chave, rotulo, total: totalAgreg(casaAgregada), parlamentares: nDe(casaAgregada) });
   }
-  const assembleias = linhas
-    .filter((l) => chaveDaCasa(l.casa) === 'assembleias' && l.total > 0)
-    .map((l) => ({ casa: l.casa, uf: (l.casa.match(/\(([A-Z]{2})\)/) || [])[1] || '', total: l.total, parlamentares: l.n }))
-    .sort((a, b) => b.total - a.total);
+  const assembleias = assembleiasDoAno(linhas, totais, ano);
   if (assembleias.length) {
     casas.push({
       chave: 'assembleias', rotulo: 'Assembleias Legislativas',
       total: assembleias.reduce((s, a) => s + a.total, 0),
       parlamentares: assembleias.reduce((s, a) => s + a.parlamentares, 0),
-      estados: assembleias.map((a) => a.uf).filter(Boolean),
+      estados: assembleias.map((a) => a.uf),
     });
   }
   const total = casas.reduce((s, c) => s + c.total, 0);
@@ -285,10 +315,10 @@ export function totaisTodasAsCasas(resumo, agreg, ano, hoje = new Date()) {
   const mensal = camara.map((m, i) => ({
     mes: m.mes, total: m.total + senado[i].total, temDado: m.temDado || senado[i].temDado, aberto: m.aberto,
   }));
-  return { ano, casas, total, assembleias, mensal };
+  return { ano, casas, total, assembleias, faltam: Math.max(0, UFS_COM_ASSEMBLEIA - assembleias.length), mensal };
 }
 
 // Anos em que alguma casa tem dado (Câmara e Senado pela agregada, Assembleias pelo radar).
-export function anosTodasAsCasas(anosPorCasaRadar) {
-  return [...new Set(Object.values(anosPorCasaRadar || {}).flat().map(Number))].sort((a, b) => b - a);
+export function anosTodasAsCasas(anosPorCasaRadar, anosDosTotais = []) {
+  return [...new Set([...Object.values(anosPorCasaRadar || {}).flat(), ...anosDosTotais].map(Number))].sort((a, b) => b - a);
 }
