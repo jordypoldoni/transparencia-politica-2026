@@ -43,7 +43,9 @@ export default function Sobre() {
         <div style={{ position: 'relative' }}>
           <h2 id="como-o-lume-nasceu" style={{ fontFamily: t.fonte.titulo, fontWeight: 600, fontSize: 'clamp(1.6rem, 3.6vw, 2.1rem)', lineHeight: 1.15, margin: '0 0 16px', color: '#FFFFFF' }}>Como o Lume nasceu</h2>
           <p style={{ margin: '0 0 14px', fontSize: '1.08rem', lineHeight: 1.65, color: '#FFFFFF' }}>
-            O Lume nasceu de uma ideia de Rafael Pires de Barros Lima. O nome diz o que o projeto quer ser: <strong style={{ color: t.cor.ouro }}>luz para o cidadão</strong>.
+            O Lume nasceu de uma ideia de <strong>Rafael Pires de Barros Lima</strong>, administrador de Porto Alegre, especialista em supply chain e comércio exterior.
+            Foi dele o primeiro insight: o cidadão precisa de informação clara e confiável para cobrar de quem o representa.
+            O nome diz o que o projeto quer ser: <strong style={{ color: t.cor.ouro }}>luz para o cidadão</strong>.
             Queremos ajudar cada pessoa a entender o país em que vive e como ele funciona, e mostrar que temos direitos e deveres.
             Com dados, fatos e informação, podemos acompanhar e fiscalizar quem nos representa e fazer do Brasil um país mais justo e próspero.
           </p>
