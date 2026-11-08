@@ -22,14 +22,15 @@ const ANOS = anos.length ? anos : [hoje - 1, hoje];
 const NUM = (s) => { const t = String(s); const n = Number(t.includes(',') ? t.replace(/\./g, '').replace(',', '.') : t); if (!Number.isFinite(n)) throw new Error(`valor inválido: ${s}`); return n; };
 
 async function json(url) {
-  for (let i = 1; i <= 6; i++) {
+  for (let i = 1; i <= 8; i++) {
     try {
+      await new Promise((r) => setTimeout(r, 250));
       const res = await fetch(url, { headers: { 'User-Agent': 'LumeCidadao/1.0 (transparencia)' } });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return await res.json();
     } catch (e) {
-      if (i === 6) throw new Error(`Falha em ${url}: ${e.message}`);
-      await new Promise((r) => setTimeout(r, 4000 * i));
+      if (i === 8) throw new Error(`Falha em ${url}: ${e.message}`);
+      await new Promise((r) => setTimeout(r, 5000 * i));
     }
   }
 }
@@ -45,7 +46,7 @@ if (!Array.isArray(deps) || deps.length < 40) throw new Error('PE: lista de depu
 
 const saida = [];
 for (const ano of ANOS) {
-  const regs = (await emParalelo(deps, 4, async (d) => {
+  const regs = (await emParalelo(deps, 2, async (d) => {
     const meses = await json(`${B}/adm/verbaindenizatoria-dep-meses.php?dep=${d.id}&ano=${ano}`);
     const r = [];
     for (const m of meses) {
