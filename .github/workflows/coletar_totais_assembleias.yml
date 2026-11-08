@@ -22,7 +22,7 @@ concurrency:
 
 jobs:
   totais:
-    name: Totais das Assembleias (MS, SC)
+    name: Totais das Assembleias (MS, SC, BA)
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -41,3 +41,8 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: node coletores/coletor_totais_alesc.js ${{ inputs.anos }}
+      - name: BA (ALBA, verba indenizatória)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node coletores/coletor_totais_alba.js ${{ inputs.anos }}
