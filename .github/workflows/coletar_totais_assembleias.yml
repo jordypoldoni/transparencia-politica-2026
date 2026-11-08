@@ -1,0 +1,43 @@
+# coletar_totais_assembleias.yml: totais mensais de gasto das Assembleias (tabela gastos_assembleia_totais). (08/11/2026)
+# Um passo por estado, cada um com o seu coletor. Todos fazem upsert por (uf, ano, mes): rodar de novo é seguro.
+# Cadência: dia 9 de cada mês, 08:07 de Brasília (depois do dia 8, quando outras fontes publicam).
+# Falha barulhenta de propósito: sem continue-on-error. Se um portal mudar o formato, o run fica vermelho.
+# SEGREDOS: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY.
+name: Coletar totais das Assembleias
+
+on:
+  schedule:
+    - cron: '7 11 9 * *'
+  workflow_dispatch:
+    inputs:
+      anos:
+        description: 'Anos separados por espaço (vazio = ano anterior e atual)'
+        type: string
+        required: false
+        default: ''
+
+concurrency:
+  group: coletar-totais-assembleias
+  cancel-in-progress: false
+
+jobs:
+  totais:
+    name: Totais das Assembleias (MS, SC)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --ignore-scripts
+      - name: MS (ALEMS, CEAP)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node coletores/coletor_totais_alems.js ${{ inputs.anos }}
+      - name: SC (ALESC, gabinetes)
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node coletores/coletor_totais_alesc.js ${{ inputs.anos }}
